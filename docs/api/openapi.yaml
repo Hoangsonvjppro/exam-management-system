@@ -1,0 +1,586 @@
+openapi: "3.0.3"
+info:
+  title: Exam Management System API
+  description: API Documentation for the Online Exam Management System
+  version: "1.0.0"
+  contact:
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000/api
+    description: Development server
+  - url: https://api.exam.example.com/api
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints
+  - name: Users
+    description: User management
+  - name: Subjects
+    description: Subject and chapter management
+  - name: Questions
+    description: Question bank management
+  - name: Exams
+    description: Exam management
+  - name: CourseGroups
+    description: Course group management
+  - name: Attendance
+    description: Attendance management
+  - name: Student
+    description: Student-specific endpoints
+
+paths:
+  # ===========================================
+  # Authentication
+  # ===========================================
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        401:
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: User logout
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Logout successful
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Current user data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ===========================================
+  # Users
+  # ===========================================
+  /users:
+    get:
+      tags: [Users]
+      summary: List users
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [admin, lecturer, student]
+      responses:
+        200:
+          description: Users list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedUsers"
+
+    post:
+      tags: [Users]
+      summary: Create user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        201:
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ===========================================
+  # Subjects
+  # ===========================================
+  /subjects:
+    get:
+      tags: [Subjects]
+      summary: List subjects
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Subjects list
+
+    post:
+      tags: [Subjects]
+      summary: Create subject
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubjectRequest"
+      responses:
+        201:
+          description: Subject created
+
+  /subjects/{id}:
+    get:
+      tags: [Subjects]
+      summary: Get subject detail
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        200:
+          description: Subject detail
+
+    put:
+      tags: [Subjects]
+      summary: Update subject
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        200:
+          description: Subject updated
+
+    delete:
+      tags: [Subjects]
+      summary: Delete subject
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        204:
+          description: Subject deleted
+
+  /subjects/{id}/chapters:
+    get:
+      tags: [Subjects]
+      summary: List chapters
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        200:
+          description: Chapters list
+
+    post:
+      tags: [Subjects]
+      summary: Create chapter
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        201:
+          description: Chapter created
+
+  # ===========================================
+  # Questions
+  # ===========================================
+  /questions:
+    get:
+      tags: [Questions]
+      summary: List questions
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+        - name: subject_id
+          in: query
+          schema:
+            type: integer
+        - name: chapter_id
+          in: query
+          schema:
+            type: integer
+        - name: difficulty_id
+          in: query
+          schema:
+            type: integer
+        - name: question_type
+          in: query
+          schema:
+            type: string
+            enum: [single_choice, multiple_choice, true_false]
+      responses:
+        200:
+          description: Questions list
+
+    post:
+      tags: [Questions]
+      summary: Create question
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuestionRequest"
+      responses:
+        201:
+          description: Question created
+
+  /questions/import:
+    post:
+      tags: [Questions]
+      summary: Import questions from file
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                subject_id:
+                  type: integer
+      responses:
+        200:
+          description: Import result
+
+  # ===========================================
+  # Exams
+  # ===========================================
+  /exams:
+    get:
+      tags: [Exams]
+      summary: List exams
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Exams list
+
+    post:
+      tags: [Exams]
+      summary: Create exam
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExamRequest"
+      responses:
+        201:
+          description: Exam created
+
+  /exams/{id}/auto-generate:
+    post:
+      tags: [Exams]
+      summary: Auto-generate questions for exam
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        200:
+          description: Questions generated
+
+  # ===========================================
+  # Course Groups
+  # ===========================================
+  /course-groups:
+    get:
+      tags: [CourseGroups]
+      summary: List course groups
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Course groups list
+
+    post:
+      tags: [CourseGroups]
+      summary: Create course group
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCourseGroupRequest"
+      responses:
+        201:
+          description: Course group created
+
+  /course-groups/{id}/attendance:
+    post:
+      tags: [Attendance]
+      summary: Create attendance session with QR
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        201:
+          description: Attendance session created
+
+  # ===========================================
+  # Student Endpoints
+  # ===========================================
+  /student/exams/{id}/start:
+    post:
+      tags: [Student]
+      summary: Start exam session
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        200:
+          description: Exam started
+
+  /student/exams/{id}/submit:
+    post:
+      tags: [Student]
+      summary: Submit exam
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        200:
+          description: Exam submitted
+
+  /student/attendance/check-in:
+    post:
+      tags: [Student]
+      summary: Check in with QR code
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                qr_code:
+                  type: string
+      responses:
+        200:
+          description: Check in successful
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+    PerPage:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        default: 15
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+        user:
+          $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        email:
+          type: string
+        full_name:
+          type: string
+        role:
+          type: string
+
+    CreateUserRequest:
+      type: object
+      required: [code, email, password, full_name, role_id]
+      properties:
+        code:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        full_name:
+          type: string
+        role_id:
+          type: integer
+
+    CreateSubjectRequest:
+      type: object
+      required: [code, name, credits]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        credits:
+          type: integer
+        theory_hours:
+          type: integer
+        practice_hours:
+          type: integer
+        coefficient:
+          type: number
+
+    CreateQuestionRequest:
+      type: object
+      required: [subject_id, difficulty_id, question_type, content, answers]
+      properties:
+        subject_id:
+          type: integer
+        chapter_id:
+          type: integer
+        difficulty_id:
+          type: integer
+        question_type:
+          type: string
+          enum: [single_choice, multiple_choice, true_false]
+        content:
+          type: string
+        points:
+          type: number
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              content:
+                type: string
+              is_correct:
+                type: boolean
+
+    CreateExamRequest:
+      type: object
+      required: [name, subject_id, duration, total_questions]
+      properties:
+        name:
+          type: string
+        subject_id:
+          type: integer
+        course_group_id:
+          type: integer
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+        total_questions:
+          type: integer
+        difficulty_config:
+          type: object
+        shuffle_questions:
+          type: boolean
+        shuffle_answers:
+          type: boolean
+
+    CreateCourseGroupRequest:
+      type: object
+      required: [name, subject_id, academic_year, semester]
+      properties:
+        name:
+          type: string
+        subject_id:
+          type: integer
+        academic_year:
+          type: string
+        semester:
+          type: integer
+        note:
+          type: string
+        max_students:
+          type: integer
+
+    PaginatedUsers:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+            per_page:
+              type: integer
+            total:
+              type: integer

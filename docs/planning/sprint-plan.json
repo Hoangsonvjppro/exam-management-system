@@ -1,0 +1,615 @@
+{
+    "project": "Exam Management System",
+    "version": "1.0.0",
+    "created_at": "2026-01-15",
+    "sprint_duration_weeks": 2,
+    "total_sprints": 12,
+    "sprints": [
+        {
+            "id": 1,
+            "name": "Sprint 1: Foundation Setup",
+            "start_date": "2026-01-15",
+            "end_date": "2026-01-28",
+            "status": "planned",
+            "goals": [
+                "Setup development environment",
+                "Configure Podman containers",
+                "Setup database schema"
+            ],
+            "tasks": [
+                {
+                    "id": "DEV-001",
+                    "title": "Cấu hình Podman containers",
+                    "type": "task",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "assignee": null,
+                    "status": "todo"
+                },
+                {
+                    "id": "DEV-002",
+                    "title": "Setup Laravel project structure",
+                    "type": "task",
+                    "priority": "high",
+                    "estimated_hours": 8,
+                    "assignee": null,
+                    "status": "todo"
+                },
+                {
+                    "id": "DEV-003",
+                    "title": "Setup ReactJS + Vite frontend",
+                    "type": "task",
+                    "priority": "high",
+                    "estimated_hours": 8,
+                    "assignee": null,
+                    "status": "todo"
+                },
+                {
+                    "id": "DB-001",
+                    "title": "Design database ERD",
+                    "type": "task",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "assignee": null,
+                    "status": "todo"
+                },
+                {
+                    "id": "DB-002",
+                    "title": "Create all migrations",
+                    "type": "task",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "assignee": null,
+                    "status": "todo"
+                },
+                {
+                    "id": "DB-003",
+                    "title": "Create seeders for test data",
+                    "type": "task",
+                    "priority": "medium",
+                    "estimated_hours": 8,
+                    "assignee": null,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 21
+        },
+        {
+            "id": 2,
+            "name": "Sprint 2: Authentication & Core",
+            "start_date": "2026-01-29",
+            "end_date": "2026-02-11",
+            "status": "planned",
+            "goals": [
+                "Implement authentication system",
+                "Setup role-based access control",
+                "Create base API structure"
+            ],
+            "tasks": [
+                {
+                    "id": "AUTH-001",
+                    "title": "Implement Laravel Sanctum auth",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "AUTH-002",
+                    "title": "Create Login/Register API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "AUTH-003",
+                    "title": "Implement RBAC permission system",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                },
+                {
+                    "id": "CORE-001",
+                    "title": "Setup API response format",
+                    "type": "task",
+                    "priority": "high",
+                    "estimated_hours": 8,
+                    "status": "todo"
+                },
+                {
+                    "id": "FE-001",
+                    "title": "Create login/register pages",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 24
+        },
+        {
+            "id": 3,
+            "name": "Sprint 3: User & Subject Management",
+            "start_date": "2026-02-12",
+            "end_date": "2026-02-25",
+            "status": "planned",
+            "goals": [
+                "CRUD Users",
+                "CRUD Subjects and Chapters",
+                "Admin dashboard"
+            ],
+            "tasks": [
+                {
+                    "id": "USER-001",
+                    "title": "CRUD Users API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "USER-002",
+                    "title": "User management frontend",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                },
+                {
+                    "id": "SUBJ-001",
+                    "title": "CRUD Subjects API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "SUBJ-002",
+                    "title": "CRUD Chapters API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 12,
+                    "status": "todo"
+                },
+                {
+                    "id": "SUBJ-003",
+                    "title": "Subject management frontend",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 20,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 26
+        },
+        {
+            "id": 4,
+            "name": "Sprint 4: Assignments & Question Bank",
+            "start_date": "2026-02-26",
+            "end_date": "2026-03-11",
+            "status": "planned",
+            "goals": [
+                "Teaching assignments management",
+                "Question bank CRUD"
+            ],
+            "tasks": [
+                {
+                    "id": "ASGN-001",
+                    "title": "CRUD Assignments API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "ASGN-002",
+                    "title": "Assignment management frontend",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "QUES-001",
+                    "title": "CRUD Questions API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                },
+                {
+                    "id": "QUES-002",
+                    "title": "Multiple choice answers support",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "QUES-003",
+                    "title": "Question filtering and search",
+                    "type": "feature",
+                    "priority": "medium",
+                    "estimated_hours": 12,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 25
+        },
+        {
+            "id": 5,
+            "name": "Sprint 5: Question Bank Frontend",
+            "start_date": "2026-03-12",
+            "end_date": "2026-03-25",
+            "status": "planned",
+            "goals": [
+                "Question bank UI",
+                "Question import/export"
+            ],
+            "tasks": [
+                {
+                    "id": "QUES-004",
+                    "title": "Question list page with filters",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                },
+                {
+                    "id": "QUES-005",
+                    "title": "Question create/edit form",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                },
+                {
+                    "id": "IE-001",
+                    "title": "Import questions from Excel",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 20,
+                    "status": "todo"
+                },
+                {
+                    "id": "IE-002",
+                    "title": "Export questions to Excel",
+                    "type": "feature",
+                    "priority": "medium",
+                    "estimated_hours": 12,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 24
+        },
+        {
+            "id": 6,
+            "name": "Sprint 6: Course Groups",
+            "start_date": "2026-03-26",
+            "end_date": "2026-04-08",
+            "status": "planned",
+            "goals": [
+                "Course group management",
+                "Student enrollment"
+            ],
+            "tasks": [
+                {
+                    "id": "CG-001",
+                    "title": "CRUD Course Groups API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "CG-002",
+                    "title": "Student enrollment API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "CG-003",
+                    "title": "Course group frontend pages",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                },
+                {
+                    "id": "CG-004",
+                    "title": "Import student list",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 22
+        },
+        {
+            "id": 7,
+            "name": "Sprint 7: QR Attendance",
+            "start_date": "2026-04-09",
+            "end_date": "2026-04-22",
+            "status": "planned",
+            "goals": [
+                "QR code attendance system",
+                "Attendance history"
+            ],
+            "tasks": [
+                {
+                    "id": "QR-001",
+                    "title": "Generate QR code API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "QR-002",
+                    "title": "Attendance check-in API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "QR-003",
+                    "title": "QR display and scanner UI",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                },
+                {
+                    "id": "QR-004",
+                    "title": "Attendance history and reports",
+                    "type": "feature",
+                    "priority": "medium",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 22
+        },
+        {
+            "id": 8,
+            "name": "Sprint 8: Exam Management",
+            "start_date": "2026-04-23",
+            "end_date": "2026-05-06",
+            "status": "planned",
+            "goals": [
+                "Exam CRUD",
+                "Auto-generate from question bank"
+            ],
+            "tasks": [
+                {
+                    "id": "EXAM-001",
+                    "title": "CRUD Exams API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "EXAM-002",
+                    "title": "Auto-generate questions",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                },
+                {
+                    "id": "EXAM-003",
+                    "title": "Shuffle questions and answers",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 12,
+                    "status": "todo"
+                },
+                {
+                    "id": "EXAM-004",
+                    "title": "Exam builder frontend",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 32,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 26
+        },
+        {
+            "id": 9,
+            "name": "Sprint 9: Online Testing",
+            "start_date": "2026-05-07",
+            "end_date": "2026-05-20",
+            "status": "planned",
+            "goals": [
+                "Student exam interface",
+                "Auto-grading"
+            ],
+            "tasks": [
+                {
+                    "id": "TEST-001",
+                    "title": "Start exam session API",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "TEST-002",
+                    "title": "Answer submission and timer",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 20,
+                    "status": "todo"
+                },
+                {
+                    "id": "TEST-003",
+                    "title": "Auto-grading and results",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 20,
+                    "status": "todo"
+                },
+                {
+                    "id": "TEST-004",
+                    "title": "Exam taking UI",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 32,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 27
+        },
+        {
+            "id": 10,
+            "name": "Sprint 10: Student Features",
+            "start_date": "2026-05-21",
+            "end_date": "2026-06-03",
+            "status": "planned",
+            "goals": [
+                "Student dashboard",
+                "Results and history"
+            ],
+            "tasks": [
+                {
+                    "id": "STU-001",
+                    "title": "Student dashboard",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 20,
+                    "status": "todo"
+                },
+                {
+                    "id": "STU-002",
+                    "title": "View enrolled courses",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 12,
+                    "status": "todo"
+                },
+                {
+                    "id": "STU-003",
+                    "title": "View exam results history",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "STU-004",
+                    "title": "Mobile QR scanner for attendance",
+                    "type": "feature",
+                    "priority": "medium",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 20
+        },
+        {
+            "id": 11,
+            "name": "Sprint 11: Reports & Polish",
+            "start_date": "2026-06-04",
+            "end_date": "2026-06-17",
+            "status": "planned",
+            "goals": [
+                "Statistics and reports",
+                "UI/UX improvements"
+            ],
+            "tasks": [
+                {
+                    "id": "RPT-001",
+                    "title": "Exam statistics dashboard",
+                    "type": "feature",
+                    "priority": "medium",
+                    "estimated_hours": 20,
+                    "status": "todo"
+                },
+                {
+                    "id": "RPT-002",
+                    "title": "Student performance reports",
+                    "type": "feature",
+                    "priority": "medium",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                },
+                {
+                    "id": "RPT-003",
+                    "title": "Export results to Excel",
+                    "type": "feature",
+                    "priority": "high",
+                    "estimated_hours": 12,
+                    "status": "todo"
+                },
+                {
+                    "id": "UX-001",
+                    "title": "UI/UX improvements",
+                    "type": "task",
+                    "priority": "medium",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 22
+        },
+        {
+            "id": 12,
+            "name": "Sprint 12: Testing & Deployment",
+            "start_date": "2026-06-18",
+            "end_date": "2026-07-01",
+            "status": "planned",
+            "goals": [
+                "Testing and bug fixes",
+                "Production deployment"
+            ],
+            "tasks": [
+                {
+                    "id": "QA-001",
+                    "title": "Unit and integration tests",
+                    "type": "task",
+                    "priority": "high",
+                    "estimated_hours": 32,
+                    "status": "todo"
+                },
+                {
+                    "id": "QA-002",
+                    "title": "E2E tests",
+                    "type": "task",
+                    "priority": "medium",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                },
+                {
+                    "id": "BUG-001",
+                    "title": "Bug fixes",
+                    "type": "bug",
+                    "priority": "high",
+                    "estimated_hours": 24,
+                    "status": "todo"
+                },
+                {
+                    "id": "DEPLOY-001",
+                    "title": "Production deployment",
+                    "type": "task",
+                    "priority": "high",
+                    "estimated_hours": 16,
+                    "status": "todo"
+                }
+            ],
+            "story_points": 30
+        }
+    ],
+    "summary": {
+        "total_story_points": 289,
+        "total_tasks": 60,
+        "estimated_completion": "2026-07-01"
+    }
+}
