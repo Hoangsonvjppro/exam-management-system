@@ -1,323 +1,317 @@
+---
+config:
+  layout: elk
+---
 erDiagram
-    %% Identity & Access Management
-    roles {
-        bigint id PK
-        varchar name UK
-        varchar display_name
-        varchar description
-    }
-    permissions {
-        bigint id PK
-        varchar name UK
-        varchar display_name
-        varchar module
-        text description
-    }
-    role_permissions {
-        bigint role_id PK, FK
-        bigint permission_id PK, FK
-    }
-    users {
-        bigint id PK
-        varchar code UK
-        varchar email UK
-        varchar password
-        varchar full_name
-        varchar phone
-        varchar avatar
-        enum gender
-        date date_of_birth
-        text address
-        varchar department
-        bigint role_id FK
-        enum status
-        timestamp email_verified_at
-        timestamp last_login_at
-    }
-    personal_access_tokens {
-        bigint id PK
-        varchar tokenable_type
-        bigint tokenable_id
-        varchar token UK
-        text abilities
-    }
+	direction TB
+	vai_tro {
+		bigint ma_vai_tro PK "Mã vai trò"  
+		varchar ten_vai_tro UK "Tên vai trò"  
+	}
 
-    roles ||--o{ users : "has"
-    roles ||--o{ role_permissions : "has"
-    permissions ||--o{ role_permissions : "granted_to"
+	quyen {
+		bigint ma_quyen PK "Mã quyền"  
+		varchar ten_quyen UK "Tên quyền"  
+		varchar module  "Module"  
+	}
 
-    %% Subjects & Chapters
-    subjects {
-        bigint id PK
-        varchar code UK
-        varchar name
-        tinyint credits
-        smallint theory_hours
-        smallint practice_hours
-        decimal coefficient
-        text description
-        enum status
-        bigint created_by FK
-    }
-    chapters {
-        bigint id PK
-        bigint subject_id FK
-        varchar code
-        varchar name
-        text description
-        int order_index
-    }
-    teaching_materials {
-        bigint id PK
-        bigint chapter_id FK
-        varchar title
-        enum file_type
-        varchar file_path
-        varchar file_url
-        bigint file_size
-        int order_index
-        bigint created_by FK
-    }
+	khoa_phong {
+		bigint ma_khoa PK "Mã khoa"  
+		varchar ma_khoa_viet_tat UK "Mã viết tắt"  
+		varchar ten_khoa  "Tên khoa"  
+	}
 
-    subjects ||--o{ chapters : "contains"
-    chapters ||--o{ teaching_materials : "contains"
-    users ||--o{ subjects : "creates"
-    users ||--o{ teaching_materials : "uploads"
+	vai_tro_quyen {
+		bigint ma_vai_tro PK,FK "Mã vai trò"  
+		bigint ma_quyen PK,FK "Mã quyền"  
+	}
 
-    %% Assignments (Teaching)
-    assignments {
-        bigint id PK
-        varchar code UK
-        bigint lecturer_id FK
-        bigint subject_id FK
-        varchar academic_year
-        tinyint semester
-        enum status
-        bigint assigned_by FK
-    }
+	nguoi_dung {
+		bigint ma_nguoi_dung PK "Mã người dùng"  
+		varchar ma_dinh_danh UK "Mã định danh (MSSV/MSGV)"  
+		varchar email UK "Email"  
+		varchar mat_khau  "Mật khẩu"  
+		varchar ho_ten  "Họ tên"  
+		varchar so_dien_thoai  "Số điện thoại"  
+		varchar anh_dai_dien  "Ảnh đại diện"  
+		enum gioi_tinh  "Giới tính"  
+		date ngay_sinh  "Ngày sinh"  
+		text dia_chi  "Địa chỉ"  
+		bigint ma_khoa FK "Mã khoa"  
+		bigint ma_vai_tro FK "Mã vai trò"  
+		enum trang_thai  "Trạng thái"  
+		timestamp xac_thuc_email  "Xác thực email"  
+		timestamp dang_nhap_cuoi  "Đăng nhập cuối"  
+	}
 
-    users ||--o{ assignments : "assigned_as_lecturer"
-    users ||--o{ assignments : "assigned_by"
-    subjects ||--o{ assignments : "assigned_to"
+	token_truy_cap {
+		bigint ma_token PK "Mã token"  
+		varchar loai_doi_tuong  "Loại đối tượng"  
+		bigint ma_doi_tuong  "Mã đối tượng"  
+		varchar token UK "Token"  
+		text quyen_han  "Quyền hạn"  
+	}
 
-    %% Course Groups & Attendance
-    course_groups {
-        bigint id PK
-        varchar code
-        varchar name
-        bigint subject_id FK
-        bigint lecturer_id FK
-        varchar academic_year
-        tinyint semester
-        int max_students
-        enum status
-    }
-    course_group_students {
-        bigint id PK
-        bigint course_group_id FK
-        bigint student_id FK
-        timestamp enrolled_at
-        enum status
-    }
-    attendance_sessions {
-        bigint id PK
-        bigint course_group_id FK
-        varchar session_name
-        date session_date
-        time start_time
-        time end_time
-        varchar qr_code
-        timestamp qr_expires_at
-        enum status
-        bigint created_by FK
-    }
-    attendance_records {
-        bigint id PK
-        bigint session_id FK
-        bigint student_id FK
-        timestamp checked_in_at
-        enum check_in_method
-        enum status
-        varchar ip_address
-    }
+	mon_hoc {
+		bigint ma_mon PK "Mã môn"  
+		varchar ma_mon_viet_tat UK "Mã viết tắt"  
+		varchar ten_mon  "Tên môn"  
+		tinyint so_tin_chi  "Số tín chỉ"  
+		smallint so_tiet_ly_thuyet  "Số tiết lý thuyết"  
+		smallint so_tiet_thuc_hanh  "Số tiết thực hành"  
+		decimal he_so  "Hệ số"  
+		text mo_ta  "Mô tả"  
+		enum trang_thai  "Trạng thái"  
+		bigint nguoi_tao FK "Người tạo"  
+	}
 
-    subjects ||--o{ course_groups : "has_groups"
-    users ||--o{ course_groups : "manages"
-    course_groups ||--o{ course_group_students : "enrolls"
-    users ||--o{ course_group_students : "studies_in"
-    course_groups ||--o{ attendance_sessions : "has_sessions"
-    attendance_sessions ||--o{ attendance_records : "records"
-    users ||--o{ attendance_records : "attends"
+	tai_lieu {
+		bigint ma_tai_lieu PK "Mã tài liệu"  
+		bigint ma_chuong FK "Mã chương"  
+		varchar tieu_de  "Tiêu đề"  
+		enum loai_file  "Loại file"  
+		varchar duong_dan  "Đường dẫn"  
+		varchar url  "URL"  
+		bigint kich_thuoc  "Kích thước"  
+		int thu_tu  "Thứ tự"  
+		bigint nguoi_tao FK "Người tạo"  
+	}
 
-    %% Question Bank
-    difficulty_levels {
-        bigint id PK
-        varchar name
-        varchar code UK
-        tinyint level
-        varchar color
-    }
-    questions {
-        bigint id PK
-        varchar code
-        bigint subject_id FK
-        bigint chapter_id FK
-        bigint difficulty_id FK
-        enum question_type
-        text content
-        text explanation
-        varchar image
-        varchar audio
-        decimal points
-        int time_limit
-        json tags
-        enum status
-        int usage_count
-        bigint created_by FK
-    }
-    answers {
-        bigint id PK
-        bigint question_id FK
-        text content
-        varchar image
-        boolean is_correct
-        int order_index
-        text explanation
-    }
+	phan_cong {
+		bigint ma_phan_cong PK "Mã phân công"  
+		varchar ma_phan_cong_viet_tat UK "Mã viết tắt"  
+		bigint ma_giang_vien FK "Mã giảng viên"  
+		bigint ma_mon FK "Mã môn"  
+		varchar nam_hoc  "Năm học"  
+		tinyint hoc_ky  "Học kỳ"  
+		enum trang_thai  "Trạng thái"  
+		bigint nguoi_phan_cong FK "Người phân công"  
+	}
 
-    subjects ||--o{ questions : "has_bank"
-    chapters ||--o{ questions : "categorizes"
-    difficulty_levels ||--o{ questions : "ranks"
-    users ||--o{ questions : "authors"
-    questions ||--o{ answers : "has_options"
+	lop_hoc_phan {
+		bigint ma_lop PK "Mã lớp"  
+		varchar ma_lop_viet_tat  "Mã viết tắt"  
+		varchar ten_lop  "Tên lớp"  
+		bigint ma_mon FK "Mã môn"  
+		bigint ma_giang_vien FK "Mã giảng viên"  
+		varchar nam_hoc  "Năm học"  
+		tinyint hoc_ky  "Học kỳ"  
+		int so_sv_toi_da  "Số SV tối đa"  
+		enum trang_thai  "Trạng thái"  
+	}
 
-    %% Exams
-    exams {
-        bigint id PK
-        varchar code
-        varchar name
-        bigint subject_id FK
-        bigint course_group_id FK
-        text description
-        datetime start_date
-        datetime end_date
-        int duration
-        int total_questions
-        decimal total_points
-        decimal passing_score
-        json difficulty_config
-        boolean auto_generate
-        boolean shuffle_questions
-        boolean shuffle_answers
-        boolean show_result
-        boolean allow_review
-        int max_attempts
-        enum status
-        bigint created_by FK
-    }
-    exam_questions {
-        bigint id PK
-        bigint exam_id FK
-        bigint question_id FK
-        int order_index
-        decimal points
-    }
+	sinh_vien_lop {
+		bigint ma_dang_ky PK "Mã đăng ký"  
+		bigint ma_lop FK "Mã lớp"  
+		bigint ma_sinh_vien FK "Mã sinh viên"  
+		timestamp ngay_dang_ky  "Ngày đăng ký"  
+		enum trang_thai  "Trạng thái"  
+	}
 
-    subjects ||--o{ exams : "has_exams"
-    course_groups ||--o{ exams : "assigned_exams"
-    users ||--o{ exams : "creates"
-    exams ||--o{ exam_questions : "includes"
-    questions ||--o{ exam_questions : "used_in"
+	buoi_diem_danh {
+		bigint ma_buoi PK "Mã buổi"  
+		bigint ma_lop FK "Mã lớp"  
+		varchar ten_buoi  "Tên buổi"  
+		date ngay  "Ngày"  
+		time gio_bat_dau  "Giờ bắt đầu"  
+		time gio_ket_thuc  "Giờ kết thúc"  
+		varchar ma_qr  "Mã QR"  
+		timestamp het_han_qr  "Hết hạn QR"  
+		enum trang_thai  "Trạng thái"  
+		bigint nguoi_tao FK "Người tạo"  
+	}
 
-    %% Exam Results
-    exam_sessions {
-        bigint id PK
-        bigint exam_id FK
-        bigint student_id FK
-        int attempt_number
-        timestamp started_at
-        timestamp submitted_at
-        int time_spent
-        json question_order
-        varchar ip_address
-        enum status
-    }
-    exam_answers {
-        bigint id PK
-        bigint session_id FK
-        bigint question_id FK
-        json selected_answers
-        boolean is_correct
-        decimal points_earned
-        timestamp answered_at
-        int time_spent
-    }
-    exam_results {
-        bigint id PK
-        bigint session_id FK
-        bigint exam_id FK
-        bigint student_id FK
-        int total_questions
-        int correct_answers
-        int wrong_answers
-        int unanswered
-        decimal score
-        decimal max_score
-        decimal percentage
-        boolean is_passed
-        int rank
-        timestamp graded_at
-        bigint graded_by FK
-    }
+	ban_ghi_diem_danh {
+		bigint ma_ban_ghi PK "Mã bản ghi"  
+		bigint ma_buoi FK "Mã buổi"  
+		bigint ma_sinh_vien FK "Mã sinh viên"  
+		timestamp thoi_gian_diem_danh  "Thời gian điểm danh"  
+		enum phuong_thuc  "Phương thức"  
+		enum trang_thai  "Trạng thái"  
+		varchar dia_chi_ip  "Địa chỉ IP"  
+	}
 
-    exams ||--o{ exam_sessions : "instances"
-    users ||--o{ exam_sessions : "attempts"
-    exam_sessions ||--o{ exam_answers : "contains_responses"
-    questions ||--o{ exam_answers : "responded_to"
-    exam_sessions ||--|| exam_results : "results_in"
-    exams ||--o{ exam_results : "has_results"
-    users ||--o{ exam_results : "achieves"
+	dap_an {
+		bigint ma_dap_an PK "Mã đáp án"  
+		bigint ma_cau_hoi FK "Mã câu hỏi"  
+		text noi_dung  "Nội dung"  
+		varchar hinh_anh  "Hình ảnh"  
+		boolean dap_an_dung  "Đáp án đúng"  
+		int thu_tu  "Thứ tự"  
+		text giai_thich  "Giải thích"  
+	}
 
-    %% System
-    settings {
-        bigint id PK
-        varchar key UK
-        text value
-        enum type
-        varchar group
-    }
-    activity_logs {
-        bigint id PK
-        bigint user_id FK
-        varchar action
-        varchar model_type
-        bigint model_id
-        text description
-        json old_values
-        json new_values
-        varchar ip_address
-    }
-    notifications {
-        char id PK
-        varchar type
-        varchar notifiable_type
-        bigint notifiable_id
-        json data
-        timestamp read_at
-    }
-    import_export_jobs {
-        bigint id PK
-        bigint user_id FK
-        enum type
-        varchar entity
-        varchar file_path
-        enum status
-        int total_rows
-        int processed_rows
-        int success_rows
-        int failed_rows
-        json errors
-    }
+	de_thi {
+		bigint ma_de PK "Mã đề"  
+		varchar ma_de_viet_tat  "Mã viết tắt"  
+		varchar ten_de  "Tên đề"  
+		bigint ma_mon FK "Mã môn"  
+		bigint ma_lop FK "Mã lớp"  
+		text mo_ta  "Mô tả"  
+		datetime thoi_gian_bat_dau  "Thời gian bắt đầu"  
+		datetime thoi_gian_ket_thuc  "Thời gian kết thúc"  
+		int thoi_luong  "Thời lượng (phút)"  
+		int tong_so_cau  "Tổng số câu"  
+		decimal tong_diem  "Tổng điểm"  
+		decimal diem_dat  "Điểm đạt"  
+		json cau_hinh_do_kho  "Cấu hình độ khó"  
+		boolean tu_dong_tao  "Tự động tạo"  
+		boolean xao_tron_cau_hoi  "Xáo trộn câu hỏi"  
+		boolean xao_tron_dap_an  "Xáo trộn đáp án"  
+		boolean hien_ket_qua  "Hiện kết quả"  
+		boolean cho_xem_lai  "Cho xem lại"  
+		int so_lan_thi_toi_da  "Số lần thi tối đa"  
+		enum trang_thai  "Trạng thái"  
+		bigint nguoi_tao FK "Người tạo"  
+	}
 
-    users ||--o{ activity_logs : "generates"
-    users ||--o{ import_export_jobs : "requests"
+	cau_hoi_de_thi {
+		bigint ma_cau_hoi_de PK "Mã câu hỏi đề"  
+		bigint ma_de FK "Mã đề"  
+		bigint ma_cau_hoi FK "Mã câu hỏi"  
+		int thu_tu  "Thứ tự"  
+		decimal diem  "Điểm"  
+	}
+
+	phien_thi {
+		bigint ma_phien PK "Mã phiên"  
+		bigint ma_de FK "Mã đề"  
+		bigint ma_sinh_vien FK "Mã sinh viên"  
+		int lan_thi_thu  "Lần thi thứ"  
+		timestamp bat_dau  "Bắt đầu"  
+		timestamp nop_bai  "Nộp bài"  
+		int thoi_gian_lam  "Thời gian làm"  
+		json thu_tu_cau_hoi  "Thứ tự câu hỏi"  
+		varchar dia_chi_ip  "Địa chỉ IP"  
+		enum trang_thai  "Trạng thái"  
+	}
+
+	bai_lam {
+		bigint ma_bai_lam PK "Mã bài làm"  
+		bigint ma_phien FK "Mã phiên"  
+		bigint ma_cau_hoi FK "Mã câu hỏi"  
+		json dap_an_chon  "Đáp án chọn"  
+		boolean dung  "Đúng"  
+		decimal diem_dat_duoc  "Điểm đạt được"  
+		timestamp thoi_gian_tra_loi  "Thời gian trả lời"  
+		int thoi_gian_lam  "Thời gian làm"  
+	}
+
+	ket_qua_thi {
+		bigint ma_ket_qua PK "Mã kết quả"  
+		bigint ma_phien FK "Mã phiên"  
+		bigint ma_de FK "Mã đề"  
+		bigint ma_sinh_vien FK "Mã sinh viên"  
+		int tong_so_cau  "Tổng số câu"  
+		int so_cau_dung  "Số câu đúng"  
+		int so_cau_sai  "Số câu sai"  
+		int chua_tra_loi  "Chưa trả lời"  
+		decimal diem  "Điểm"  
+		decimal diem_toi_da  "Điểm tối đa"  
+		decimal ty_le_phan_tram  "Tỷ lệ %"  
+		boolean dat  "Đạt"  
+		int xep_hang  "Xếp hạng"  
+		timestamp thoi_gian_cham  "Thời gian chấm"  
+		bigint nguoi_cham FK "Người chấm"  
+	}
+
+	nhat_ky_hoat_dong {
+		bigint ma_log PK "Mã log"  
+		bigint ma_nguoi_dung FK "Mã người dùng"  
+		varchar hanh_dong  "Hành động"  
+		varchar loai_doi_tuong  "Loại đối tượng"  
+		bigint ma_doi_tuong  "Mã đối tượng"  
+		text mo_ta  "Mô tả"  
+		json gia_tri_cu  "Giá trị cũ"  
+		json gia_tri_moi  "Giá trị mới"  
+		varchar dia_chi_ip  "Địa chỉ IP"  
+	}
+
+	thong_bao {
+		char ma_thong_bao PK "Mã thông báo"  
+		varchar loai  "Loại"  
+		varchar loai_nguoi_nhan  "Loại người nhận"  
+		bigint ma_nguoi_nhan  "Mã người nhận"  
+		json du_lieu  "Dữ liệu"  
+		timestamp thoi_gian_doc  "Thời gian đọc"  
+	}
+
+	cong_viec_nhap_xuat {
+		bigint ma_cong_viec PK "Mã công việc"  
+		bigint ma_nguoi_dung FK "Mã người dùng"  
+		enum loai  "Loại"  
+		varchar doi_tuong  "Đối tượng"  
+		varchar duong_dan_file  "Đường dẫn file"  
+		enum trang_thai  "Trạng thái"  
+		int tong_dong  "Tổng dòng"  
+		int da_xu_ly  "Đã xử lý"  
+		int thanh_cong  "Thành công"  
+		int that_bai  "Thất bại"  
+		json loi  "Lỗi"  
+	}
+
+	do_kho {
+		bigint ma_do_kho PK "Mã độ khó"  
+		varchar ten  "Tên"  
+	}
+
+	cau_hoi {
+		bigint ma_cau_hoi PK "Mã câu hỏi"  
+		bigint ma_mon FK "Mã môn"  
+		bigint ma_chuong FK "Mã chương"  
+		bigint ma_do_kho FK "Mã độ khó"  
+		enum loai_cau_hoi  "Loại câu hỏi"  
+		text noi_dung  "Nội dung"  
+		text giai_thich  "Giải thích"  
+		varchar hinh_anh  "Hình ảnh"  
+		decimal diem  "Điểm"  
+		int thoi_gian_gioi_han  "Thời gian giới hạn"  
+		enum trang_thai  "Trạng thái"  
+		bigint nguoi_tao FK "Người tạo"  
+	}
+
+	chuong {
+		bigint ma_chuong PK "Mã chương"  
+		bigint ma_mon FK "Mã môn"  
+		varchar ma_chuong_viet_tat  "Mã viết tắt"  
+		varchar ten_chuong  "Tên chương"  
+		int thu_tu  "Thứ tự"  
+	}
+
+	vai_tro||--o{nguoi_dung:"có"
+	vai_tro||--o{vai_tro_quyen:"có"
+	quyen||--o{vai_tro_quyen:"được_gán"
+	khoa_phong||--o{nguoi_dung:"thuộc"
+	mon_hoc||--o{chuong:"chứa"
+	chuong||--o{tai_lieu:"chứa"
+	nguoi_dung||--o{mon_hoc:"tạo"
+	nguoi_dung||--o{tai_lieu:"tải_lên"
+	nguoi_dung||--o{phan_cong:"được_phân_công"
+	nguoi_dung||--o{phan_cong:"phân_công"
+	mon_hoc||--o{phan_cong:"được_gán"
+	mon_hoc||--o{lop_hoc_phan:"có_lớp"
+	nguoi_dung||--o{lop_hoc_phan:"quản_lý"
+	lop_hoc_phan||--o{sinh_vien_lop:"đăng_ký"
+	nguoi_dung||--o{sinh_vien_lop:"học"
+	lop_hoc_phan||--o{buoi_diem_danh:"có_buổi"
+	buoi_diem_danh||--o{ban_ghi_diem_danh:"ghi_nhận"
+	nguoi_dung||--o{ban_ghi_diem_danh:"điểm_danh"
+	mon_hoc||--o{cau_hoi:"có_ngân_hàng"
+	chuong||--o{cau_hoi:"phân_loại"
+	do_kho||--o{cau_hoi:"xếp_hạng"
+	nguoi_dung||--o{cau_hoi:"tạo"
+	cau_hoi||--o{dap_an:"có_đáp_án"
+	mon_hoc||--o{de_thi:"có_đề_thi"
+	lop_hoc_phan||--o{de_thi:"được_gán"
+	nguoi_dung||--o{de_thi:"tạo"
+	de_thi||--o{cau_hoi_de_thi:"gồm"
+	cau_hoi||--o{cau_hoi_de_thi:"sử_dụng"
+	de_thi||--o{phien_thi:"có_phiên"
+	nguoi_dung||--o{phien_thi:"thi"
+	phien_thi||--o{bai_lam:"chứa"
+	cau_hoi||--o{bai_lam:"được_trả_lời"
+	phien_thi||--||ket_qua_thi:"có_kết_quả"
+	de_thi||--o{ket_qua_thi:"có_kết_quả"
+	nguoi_dung||--o{ket_qua_thi:"đạt_được"
+	nguoi_dung||--o{nhat_ky_hoat_dong:"tạo"
+	nguoi_dung||--o{cong_viec_nhap_xuat:"yêu_cầu"
