@@ -1,0 +1,323 @@
+erDiagram
+    %% Identity & Access Management
+    roles {
+        bigint id PK
+        varchar name UK
+        varchar display_name
+        varchar description
+    }
+    permissions {
+        bigint id PK
+        varchar name UK
+        varchar display_name
+        varchar module
+        text description
+    }
+    role_permissions {
+        bigint role_id PK, FK
+        bigint permission_id PK, FK
+    }
+    users {
+        bigint id PK
+        varchar code UK
+        varchar email UK
+        varchar password
+        varchar full_name
+        varchar phone
+        varchar avatar
+        enum gender
+        date date_of_birth
+        text address
+        varchar department
+        bigint role_id FK
+        enum status
+        timestamp email_verified_at
+        timestamp last_login_at
+    }
+    personal_access_tokens {
+        bigint id PK
+        varchar tokenable_type
+        bigint tokenable_id
+        varchar token UK
+        text abilities
+    }
+
+    roles ||--o{ users : "has"
+    roles ||--o{ role_permissions : "has"
+    permissions ||--o{ role_permissions : "granted_to"
+
+    %% Subjects & Chapters
+    subjects {
+        bigint id PK
+        varchar code UK
+        varchar name
+        tinyint credits
+        smallint theory_hours
+        smallint practice_hours
+        decimal coefficient
+        text description
+        enum status
+        bigint created_by FK
+    }
+    chapters {
+        bigint id PK
+        bigint subject_id FK
+        varchar code
+        varchar name
+        text description
+        int order_index
+    }
+    teaching_materials {
+        bigint id PK
+        bigint chapter_id FK
+        varchar title
+        enum file_type
+        varchar file_path
+        varchar file_url
+        bigint file_size
+        int order_index
+        bigint created_by FK
+    }
+
+    subjects ||--o{ chapters : "contains"
+    chapters ||--o{ teaching_materials : "contains"
+    users ||--o{ subjects : "creates"
+    users ||--o{ teaching_materials : "uploads"
+
+    %% Assignments (Teaching)
+    assignments {
+        bigint id PK
+        varchar code UK
+        bigint lecturer_id FK
+        bigint subject_id FK
+        varchar academic_year
+        tinyint semester
+        enum status
+        bigint assigned_by FK
+    }
+
+    users ||--o{ assignments : "assigned_as_lecturer"
+    users ||--o{ assignments : "assigned_by"
+    subjects ||--o{ assignments : "assigned_to"
+
+    %% Course Groups & Attendance
+    course_groups {
+        bigint id PK
+        varchar code
+        varchar name
+        bigint subject_id FK
+        bigint lecturer_id FK
+        varchar academic_year
+        tinyint semester
+        int max_students
+        enum status
+    }
+    course_group_students {
+        bigint id PK
+        bigint course_group_id FK
+        bigint student_id FK
+        timestamp enrolled_at
+        enum status
+    }
+    attendance_sessions {
+        bigint id PK
+        bigint course_group_id FK
+        varchar session_name
+        date session_date
+        time start_time
+        time end_time
+        varchar qr_code
+        timestamp qr_expires_at
+        enum status
+        bigint created_by FK
+    }
+    attendance_records {
+        bigint id PK
+        bigint session_id FK
+        bigint student_id FK
+        timestamp checked_in_at
+        enum check_in_method
+        enum status
+        varchar ip_address
+    }
+
+    subjects ||--o{ course_groups : "has_groups"
+    users ||--o{ course_groups : "manages"
+    course_groups ||--o{ course_group_students : "enrolls"
+    users ||--o{ course_group_students : "studies_in"
+    course_groups ||--o{ attendance_sessions : "has_sessions"
+    attendance_sessions ||--o{ attendance_records : "records"
+    users ||--o{ attendance_records : "attends"
+
+    %% Question Bank
+    difficulty_levels {
+        bigint id PK
+        varchar name
+        varchar code UK
+        tinyint level
+        varchar color
+    }
+    questions {
+        bigint id PK
+        varchar code
+        bigint subject_id FK
+        bigint chapter_id FK
+        bigint difficulty_id FK
+        enum question_type
+        text content
+        text explanation
+        varchar image
+        varchar audio
+        decimal points
+        int time_limit
+        json tags
+        enum status
+        int usage_count
+        bigint created_by FK
+    }
+    answers {
+        bigint id PK
+        bigint question_id FK
+        text content
+        varchar image
+        boolean is_correct
+        int order_index
+        text explanation
+    }
+
+    subjects ||--o{ questions : "has_bank"
+    chapters ||--o{ questions : "categorizes"
+    difficulty_levels ||--o{ questions : "ranks"
+    users ||--o{ questions : "authors"
+    questions ||--o{ answers : "has_options"
+
+    %% Exams
+    exams {
+        bigint id PK
+        varchar code
+        varchar name
+        bigint subject_id FK
+        bigint course_group_id FK
+        text description
+        datetime start_date
+        datetime end_date
+        int duration
+        int total_questions
+        decimal total_points
+        decimal passing_score
+        json difficulty_config
+        boolean auto_generate
+        boolean shuffle_questions
+        boolean shuffle_answers
+        boolean show_result
+        boolean allow_review
+        int max_attempts
+        enum status
+        bigint created_by FK
+    }
+    exam_questions {
+        bigint id PK
+        bigint exam_id FK
+        bigint question_id FK
+        int order_index
+        decimal points
+    }
+
+    subjects ||--o{ exams : "has_exams"
+    course_groups ||--o{ exams : "assigned_exams"
+    users ||--o{ exams : "creates"
+    exams ||--o{ exam_questions : "includes"
+    questions ||--o{ exam_questions : "used_in"
+
+    %% Exam Results
+    exam_sessions {
+        bigint id PK
+        bigint exam_id FK
+        bigint student_id FK
+        int attempt_number
+        timestamp started_at
+        timestamp submitted_at
+        int time_spent
+        json question_order
+        varchar ip_address
+        enum status
+    }
+    exam_answers {
+        bigint id PK
+        bigint session_id FK
+        bigint question_id FK
+        json selected_answers
+        boolean is_correct
+        decimal points_earned
+        timestamp answered_at
+        int time_spent
+    }
+    exam_results {
+        bigint id PK
+        bigint session_id FK
+        bigint exam_id FK
+        bigint student_id FK
+        int total_questions
+        int correct_answers
+        int wrong_answers
+        int unanswered
+        decimal score
+        decimal max_score
+        decimal percentage
+        boolean is_passed
+        int rank
+        timestamp graded_at
+        bigint graded_by FK
+    }
+
+    exams ||--o{ exam_sessions : "instances"
+    users ||--o{ exam_sessions : "attempts"
+    exam_sessions ||--o{ exam_answers : "contains_responses"
+    questions ||--o{ exam_answers : "responded_to"
+    exam_sessions ||--|| exam_results : "results_in"
+    exams ||--o{ exam_results : "has_results"
+    users ||--o{ exam_results : "achieves"
+
+    %% System
+    settings {
+        bigint id PK
+        varchar key UK
+        text value
+        enum type
+        varchar group
+    }
+    activity_logs {
+        bigint id PK
+        bigint user_id FK
+        varchar action
+        varchar model_type
+        bigint model_id
+        text description
+        json old_values
+        json new_values
+        varchar ip_address
+    }
+    notifications {
+        char id PK
+        varchar type
+        varchar notifiable_type
+        bigint notifiable_id
+        json data
+        timestamp read_at
+    }
+    import_export_jobs {
+        bigint id PK
+        bigint user_id FK
+        enum type
+        varchar entity
+        varchar file_path
+        enum status
+        int total_rows
+        int processed_rows
+        int success_rows
+        int failed_rows
+        json errors
+    }
+
+    users ||--o{ activity_logs : "generates"
+    users ||--o{ import_export_jobs : "requests"
