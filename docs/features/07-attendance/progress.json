@@ -1,0 +1,214 @@
+{
+    "module": "Điểm danh (Attendance)",
+    "module_id": "07-attendance",
+    "priority": "Phase 2",
+    "overall_status": "not_started",
+    "overall_progress": 0,
+    "features": [
+        {
+            "id": "F7.1",
+            "name": "Tạo buổi điểm danh",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Model & Migration (attendance_sessions)",
+                    "done": false
+                },
+                {
+                    "task": "Controller / Livewire Component",
+                    "done": false
+                },
+                {
+                    "task": "Blade View (create form)",
+                    "done": false
+                },
+                {
+                    "task": "Route & Policy",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F7.2",
+            "name": "Điểm danh thủ công",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Model (attendance_records)",
+                    "done": false
+                },
+                {
+                    "task": "Livewire checklist component",
+                    "done": false
+                },
+                {
+                    "task": "Bulk status update",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F7.3",
+            "name": "Điểm danh bằng mã PIN",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "PIN generation logic",
+                    "done": false
+                },
+                {
+                    "task": "Student PIN input form",
+                    "done": false
+                },
+                {
+                    "task": "Validate expiry + enrollment",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F7.4",
+            "name": "Chỉnh sửa điểm danh",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Edit status per student",
+                    "done": false
+                },
+                {
+                    "task": "Add note field",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F7.5",
+            "name": "SV xem lịch sử điểm danh",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Query student records",
+                    "done": false
+                },
+                {
+                    "task": "Blade View (history list)",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F7.6",
+            "name": "Thống kê chuyên cần",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Statistics query (% present per student)",
+                    "done": false
+                },
+                {
+                    "task": "Blade View (stats table)",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F7.7",
+            "name": "Điểm danh bằng QR Code",
+            "priority": "nice-to-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "QR generation (simple-qrcode)",
+                    "done": false
+                },
+                {
+                    "task": "QR display page",
+                    "done": false
+                },
+                {
+                    "task": "QR scan on mobile",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F7.8",
+            "name": "GPS validation",
+            "priority": "nice-to-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Geolocation API (client)",
+                    "done": false
+                },
+                {
+                    "task": "Distance calculation (server)",
+                    "done": false
+                },
+                {
+                    "task": "Reject/flag if too far",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F7.9",
+            "name": "Cảnh báo vắng quá mức",
+            "priority": "nice-to-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Threshold check logic",
+                    "done": false
+                },
+                {
+                    "task": "Warning indicator in UI",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        }
+    ],
+    "last_updated": "2026-02-15"
+}

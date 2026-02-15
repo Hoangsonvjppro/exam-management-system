@@ -1,0 +1,262 @@
+{
+    "module": "Ngân hàng Câu hỏi (Question Bank)",
+    "module_id": "04-question-bank",
+    "priority": "Phase 1",
+    "overall_status": "not_started",
+    "overall_progress": 0,
+    "features": [
+        {
+            "id": "F4.1",
+            "name": "Tạo câu hỏi trắc nghiệm (MCQ)",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Model & Migration (questions, question_options)",
+                    "done": false
+                },
+                {
+                    "task": "Controller / Livewire Component",
+                    "done": false
+                },
+                {
+                    "task": "Blade View (dynamic option form)",
+                    "done": false
+                },
+                {
+                    "task": "Route & Policy",
+                    "done": false
+                },
+                {
+                    "task": "Validation",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F4.2",
+            "name": "Tạo câu hỏi Đúng/Sai",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Reuse MCQ form with fixed 2 options",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F4.3",
+            "name": "Danh sách câu hỏi + Filter",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Controller / Livewire Component",
+                    "done": false
+                },
+                {
+                    "task": "Blade View (table + filters)",
+                    "done": false
+                },
+                {
+                    "task": "Filter: subject, chapter, difficulty, status",
+                    "done": false
+                },
+                {
+                    "task": "Search by content",
+                    "done": false
+                },
+                {
+                    "task": "Pagination",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F4.4",
+            "name": "Sửa/Xoá câu hỏi",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Edit form (version increment)",
+                    "done": false
+                },
+                {
+                    "task": "Soft delete",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F4.5",
+            "name": "Trạng thái câu hỏi",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Status transition logic",
+                    "done": false
+                },
+                {
+                    "task": "UI status badges + actions",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F4.6",
+            "name": "Phân loại theo Bloom",
+            "priority": "must-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Difficulty enum selector",
+                    "done": false
+                },
+                {
+                    "task": "Display in list & detail",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F4.7",
+            "name": "Tag/gắn nhãn câu hỏi",
+            "priority": "nice-to-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Model (question_tags)",
+                    "done": false
+                },
+                {
+                    "task": "Tag input component",
+                    "done": false
+                },
+                {
+                    "task": "Filter by tag",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F4.8",
+            "name": "Import câu hỏi từ Excel",
+            "priority": "nice-to-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Import class (Maatwebsite)",
+                    "done": false
+                },
+                {
+                    "task": "Template Excel file",
+                    "done": false
+                },
+                {
+                    "task": "Validation & error handling",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F4.9",
+            "name": "Hỗ trợ hình ảnh",
+            "priority": "nice-to-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Image upload component",
+                    "done": false
+                },
+                {
+                    "task": "FK to files table",
+                    "done": false
+                },
+                {
+                    "task": "Display in question view",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F4.10",
+            "name": "Thống kê câu hỏi",
+            "priority": "nice-to-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Calculate correct_rate after exam",
+                    "done": false
+                },
+                {
+                    "task": "Display stats in question detail",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        },
+        {
+            "id": "F4.11",
+            "name": "Hỗ trợ MathJax/KaTeX",
+            "priority": "nice-to-have",
+            "status": "not_started",
+            "tasks": [
+                {
+                    "task": "Include KaTeX JS library",
+                    "done": false
+                },
+                {
+                    "task": "Render in question content",
+                    "done": false
+                },
+                {
+                    "task": "Testing",
+                    "done": false
+                }
+            ]
+        }
+    ],
+    "last_updated": "2026-02-15"
+}
