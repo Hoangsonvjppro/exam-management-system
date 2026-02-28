@@ -13,12 +13,22 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
+            $table->string('name')->comment('Họ và tên');
+            $table->string('email')->unique()->comment('Email đăng nhập');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('phone', 20)->nullable()->comment('Số điện thoại');
+            $table->unsignedBigInteger('avatar_file_id')->nullable()->comment('FK → files (thêm sau)');
+            $table->string('student_code', 20)->nullable()->unique()->comment('Mã số sinh viên (MSSV)');
+            $table->string('lecturer_code', 20)->nullable()->unique()->comment('Mã giảng viên');
+            $table->string('class_name', 100)->nullable()->comment('Lớp sinh hoạt (dành cho SV)');
+            $table->string('department')->nullable()->comment('Khoa / Bộ môn');
+            $table->boolean('is_active')->default(true)->comment('1=Hoạt động, 0=Bị khoá');
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('department');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

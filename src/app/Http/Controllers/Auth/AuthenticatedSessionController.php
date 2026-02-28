@@ -28,7 +28,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended($this->roleBasedRedirect());
     }
 
     /**
@@ -42,6 +42,33 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('login');
+    }
+
+    /**
+     * Determine the redirect URL based on the authenticated user's role.
+     */
+    protected function roleBasedRedirect(): string
+    {
+        $user = Auth::user();
+
+        if ($user->hasRole('admin')) {
+            return route('admin.dashboard');
+        }
+
+        if ($user->hasRole('department_admin')) {
+            return route('admin.dashboard');
+        }
+
+        if ($user->hasRole('lecturer') || $user->hasRole('teaching_assistant')) {
+            return route('lecturer.dashboard');
+        }
+
+        if ($user->hasRole('student')) {
+            return route('student.dashboard');
+        }
+
+        // Fallback nếu user chưa được gán role
+        return route('dashboard');
     }
 }
