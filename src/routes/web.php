@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CourseSectionController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Trang chủ → redirect thông minh ─────────────────────────────────────────
@@ -42,6 +43,9 @@ Route::prefix('admin')
             return view('admin.dashboard');
         })->name('dashboard');
 
+        Route::resource('course-sections', CourseSectionController::class)
+        ->except('show');
+        
         // P1 sẽ thêm: User CRUD routes tại đây (Tuần 2)
         // Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     });
