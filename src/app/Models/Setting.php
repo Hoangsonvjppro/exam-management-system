@@ -4,18 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Setting Model — Cấu hình hệ thống.
+ *
+ * @property int    $id
+ * @property string $key_name     Khoá cấu hình
+ * @property string $value        Giá trị
+ * @property string $description  Mô tả
+ */
 class Setting extends Model
 {
-    protected $fillable = [
-        'key_name',
-        'value',
-        'description',
-    ];
-
-    protected $primaryKey = 'id';
+    protected $fillable = ['key_name', 'value', 'description'];
 
     /**
-     * Get a setting value by key, with optional default.
+     * Lấy giá trị setting theo key.
+     *
+     * @param string $key     Khoá cấu hình
+     * @param mixed  $default Giá trị mặc định nếu không tìm thấy
      */
     public static function get(string $key, mixed $default = null): mixed
     {
@@ -25,7 +30,7 @@ class Setting extends Model
     }
 
     /**
-     * Set (upsert) a setting value by key.
+     * Cập nhật hoặc tạo mới setting.
      */
     public static function set(string $key, mixed $value, ?string $description = null): static
     {

@@ -5,6 +5,11 @@ namespace Database\Seeders;
 use App\Models\Setting;
 use Illuminate\Database\Seeder;
 
+/**
+ * ============================================================
+ * SettingSeeder — Cấu hình hệ thống mặc định
+ * ============================================================
+ */
 class SettingSeeder extends Seeder
 {
     public function run(): void
