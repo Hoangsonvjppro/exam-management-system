@@ -44,8 +44,13 @@ Route::prefix('admin')
         })->name('dashboard');
 
         Route::resource('course-sections', CourseSectionController::class)
-        ->except('show');
-        
+            ->except('show');
+
+        // P2: Semester, Subject, Chapter routes
+        Route::resource('semesters', \App\Http\Controllers\SemesterController::class)->except('show');
+        Route::resource('subjects', \App\Http\Controllers\SubjectController::class)->except('show');
+        Route::resource('chapters', \App\Http\Controllers\ChapterController::class)->except('show');
+
         // P1 sẽ thêm: User CRUD routes tại đây (Tuần 2)
         // Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     });
@@ -81,4 +86,4 @@ Route::prefix('student')
         // P5: Document download routes
     });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
