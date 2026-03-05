@@ -2,10 +2,27 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+/**
+ * ============================================================
+ * DatabaseSeeder — Điều phối toàn bộ seeders
+ * ============================================================
+ * Thứ tự chạy tuân theo FK dependency:
+ *   1. Roles       → (không phụ thuộc gì)
+ *   2. Users       → (phụ thuộc roles)
+ *   3. Semesters   → (không phụ thuộc gì)
+ *   4. Subjects    → (không phụ thuộc gì, tạo luôn chapters)
+ *   5. QuestionTypes → (không phụ thuộc gì)
+ *   6. CourseSections → (phụ thuộc subjects, semesters, users)
+ *   7. Questions   → (phụ thuộc subjects, chapters, qt, users)
+ *   8. Settings    → (không phụ thuộc gì)
+ *
+ * Chạy: php artisan db:seed
+ * Chạy lại: php artisan migrate:fresh --seed
+ * ============================================================
+ */
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
@@ -15,11 +32,30 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->command->info('');
+        $this->command->info('╔════════════════════════════════════════════╗');
+        $this->command->info('║  EMS — Seeding Database                   ║');
+        $this->command->info('╚════════════════════════════════════════════╝');
+        $this->command->info('');
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            RoleSeeder::class,          // 1. Vai trò
+            UserSeeder::class,          // 2. Người dùng (admin, GV, SV)
+            SemesterSeeder::class,      // 3. Học kỳ
+            SubjectSeeder::class,       // 4. Môn học + Chương
+            QuestionTypeSeeder::class,  // 5. Loại câu hỏi
+            CourseSectionSeeder::class, // 6. Lớp HP + Lịch + Gán SV
+            QuestionSeeder::class,      // 7. Câu hỏi mẫu + Options
+            SettingSeeder::class,       // 8. Cấu hình hệ thống
         ]);
+
+        $this->command->info('');
+        $this->command->info('════════════════════════════════════════════');
+        $this->command->info('  ✅ Seed hoàn tất!');
+        $this->command->info('  📧 Admin: admin@ems.local / password');
+        $this->command->info('  📧 GV:    tuan.tm@ems.local / password');
+        $this->command->info('  📧 SV:    20240001@ems.local / password');
+        $this->command->info('════════════════════════════════════════════');
+        $this->command->info('');
     }
 }
