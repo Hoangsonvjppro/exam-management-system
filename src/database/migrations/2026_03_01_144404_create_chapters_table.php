@@ -13,7 +13,17 @@ return new class extends Migration
     {
         Schema::create('chapters', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('subject_id')
+                  ->constrained('subjects')
+                  ->cascadeOnDelete()
+                  ->cascadeOnUpdate();
+            $table->string('name')->comment('Tên chương');
+            $table->unsignedInteger('order')->default(0)->comment('Thứ tự sắp xếp');
+            $table->text('description')->nullable;
             $table->timestamps();
+
+            $table->index('subject_id', 'idx_chapters_subject');
+            $table->index(['subject_id', 'order'], 'idx_chapters_order');
         });
     }
 
