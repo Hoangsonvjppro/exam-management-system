@@ -13,19 +13,21 @@ return new class extends Migration
             $table->string('code', 50)->unique();    // VD: "CS101-01-HK1-2526"
 
             $table->foreignId('subject_id')
-                  ->constrained()
+                  ->constrained('subjects')
+                  ->cascadeOnUpdate()
                   ->restrictOnDelete();
 
             $table->foreignId('semester_id')
-                  ->constrained()
+                  ->constrained('semesters')
+                  ->cascadeOnUpdate()
                   ->restrictOnDelete();
 
-            $table->unsignedBigInteger('lecturer_id');
-            $table->foreign('lecturer_id')
-                  ->references('id')->on('users')
+            $table->foreignId('lecturer_id')
+                  ->constrained('users')
+                  ->cascadeOnUpdate()
                   ->restrictOnDelete();
 
-            $table->unsignedInteger('max_students')->default(50);
+            $table->unsignedInteger('max_students')->default(100);
             $table->enum('status', ['active', 'archived', 'cancelled'])->default('active');
             $table->timestamps();
 

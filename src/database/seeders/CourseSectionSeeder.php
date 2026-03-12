@@ -32,7 +32,7 @@ class CourseSectionSeeder extends Seeder
         }
 
         // Lấy danh sách giảng viên
-        $lecturers = User::whereHas('roles', fn($q) => $q->where('code', 'lecturer'))
+        $lecturers = User::whereHas('roles', fn($q) => $q->where('name', 'lecturer'))
             ->get();
 
         if ($lecturers->isEmpty()) {
@@ -41,7 +41,7 @@ class CourseSectionSeeder extends Seeder
         }
 
         // Lấy danh sách SV
-        $students = User::whereHas('roles', fn($q) => $q->where('code', 'student'))
+        $students = User::whereHas('roles', fn($q) => $q->where('name', 'student'))
             ->get();
 
         // Lấy tất cả môn học
@@ -55,10 +55,6 @@ class CourseSectionSeeder extends Seeder
                 'lecturer' => 0, // index trong $lecturers
                 'group' => '01',
                 'max' => 40,
-                'schedules' => [
-                    ['day' => 2, 'start' => 1, 'end' => 3, 'room' => 'A101'], // Thứ 2, tiết 1-3
-                    ['day' => 5, 'start' => 1, 'end' => 3, 'room' => 'A101'], // Thứ 5, tiết 1-3
-                ],
                 'students' => range(0, 14), // 15 SV đầu
             ],
             [
@@ -66,10 +62,6 @@ class CourseSectionSeeder extends Seeder
                 'lecturer' => 1,
                 'group' => '02',
                 'max' => 40,
-                'schedules' => [
-                    ['day' => 3, 'start' => 4, 'end' => 6, 'room' => 'A102'],
-                    ['day' => 6, 'start' => 4, 'end' => 6, 'room' => 'A102'],
-                ],
                 'students' => range(15, 29), // 15 SV còn lại
             ],
 
@@ -79,10 +71,6 @@ class CourseSectionSeeder extends Seeder
                 'lecturer' => 2,
                 'group' => '01',
                 'max' => 45,
-                'schedules' => [
-                    ['day' => 2, 'start' => 7, 'end' => 9, 'room' => 'B201'],
-                    ['day' => 4, 'start' => 7, 'end' => 9, 'room' => 'B201'],
-                ],
                 'students' => range(0, 9),
             ],
 
@@ -92,10 +80,6 @@ class CourseSectionSeeder extends Seeder
                 'lecturer' => 0,
                 'group' => '01',
                 'max' => 40,
-                'schedules' => [
-                    ['day' => 3, 'start' => 1, 'end' => 3, 'room' => 'Lab01'],
-                    ['day' => 5, 'start' => 7, 'end' => 9, 'room' => 'Lab01'],
-                ],
                 'students' => range(10, 24),
             ],
 
@@ -105,10 +89,6 @@ class CourseSectionSeeder extends Seeder
                 'lecturer' => 3,
                 'group' => '01',
                 'max' => 40,
-                'schedules' => [
-                    ['day' => 4, 'start' => 1, 'end' => 3, 'room' => 'A201'],
-                    ['day' => 6, 'start' => 1, 'end' => 3, 'room' => 'A201'],
-                ],
                 'students' => range(0, 12),
             ],
 
@@ -118,10 +98,6 @@ class CourseSectionSeeder extends Seeder
                 'lecturer' => 1,
                 'group' => '01',
                 'max' => 35,
-                'schedules' => [
-                    ['day' => 2, 'start' => 4, 'end' => 6, 'room' => 'Lab02'],
-                    ['day' => 4, 'start' => 4, 'end' => 6, 'room' => 'Lab02'],
-                ],
                 'students' => range(0, 14),
             ],
             [
@@ -129,10 +105,6 @@ class CourseSectionSeeder extends Seeder
                 'lecturer' => 4,
                 'group' => '02',
                 'max' => 35,
-                'schedules' => [
-                    ['day' => 3, 'start' => 7, 'end' => 9, 'room' => 'Lab03'],
-                    ['day' => 6, 'start' => 7, 'end' => 9, 'room' => 'Lab03'],
-                ],
                 'students' => range(15, 29),
             ],
 
@@ -142,9 +114,6 @@ class CourseSectionSeeder extends Seeder
                 'lecturer' => 3,
                 'group' => '01',
                 'max' => 50,
-                'schedules' => [
-                    ['day' => 5, 'start' => 4, 'end' => 6, 'room' => 'C301'],
-                ],
                 'students' => range(0, 19),
             ],
         ];
@@ -174,21 +143,6 @@ class CourseSectionSeeder extends Seeder
                     'status' => 'active',
                 ]
             );
-
-            // Tạo lịch học
-            foreach ($sectionData['schedules'] as $schedule) {
-                ClassSchedule::updateOrCreate(
-                    [
-                        'course_section_id' => $section->id,
-                        'day_of_week' => $schedule['day'],
-                        'start_period' => $schedule['start'],
-                    ],
-                    [
-                        'end_period' => $schedule['end'],
-                        'room' => $schedule['room'],
-                    ]
-                );
-            }
 
             // Gán sinh viên
             foreach ($sectionData['students'] as $studentIndex) {

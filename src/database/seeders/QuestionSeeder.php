@@ -24,7 +24,7 @@ class QuestionSeeder extends Seeder
     public function run(): void
     {
         // Lấy giảng viên đầu tiên làm creator
-        $lecturer = User::whereHas('roles', fn($q) => $q->where('code', 'lecturer'))->first();
+        $lecturer = User::whereHas('roles', fn($q) => $q->where('name', 'lecturer'))->first();
         if (!$lecturer) {
             $this->command->warn('⚠ Không tìm thấy giảng viên. Bỏ qua QuestionSeeder.');
             return;
