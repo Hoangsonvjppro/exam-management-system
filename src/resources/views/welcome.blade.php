@@ -28,10 +28,36 @@
         </nav>
 
         @auth
-            <a href="{{ url('/dashboard') }}"
-               class="bg-ems-primary text-white px-6 py-2 brutal-border brutal-shadow font-black uppercase tracking-wider brutal-btn inline-block">
-                Dashboard
-            </a>
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="flex items-center gap-2 focus:outline-none">
+                    <img src="{{ auth()->user()->avatar_url }}"
+                         alt="{{ auth()->user()->name }}"
+                         class="w-10 h-10 rounded-full brutal-border object-cover"
+                         referrerpolicy="no-referrer">
+                    <span class="hidden md:inline font-bold text-sm">{{ auth()->user()->name }}</span>
+                </button>
+                <div x-show="open"
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-95"
+                     @click.away="open = false"
+                     class="absolute right-0 mt-2 w-48 bg-white brutal-border brutal-shadow z-50">
+                    <a href="{{ url('/dashboard') }}"
+                       class="block px-4 py-3 font-bold text-sm hover:bg-background-light border-b-2 border-black">
+                        Dashboard
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                                class="w-full text-left px-4 py-3 font-bold text-sm text-red-600 hover:bg-red-50">
+                            Đăng xuất
+                        </button>
+                    </form>
+                </div>
+            </div>
         @endauth
         @guest
             <a href="{{ route('google.redirect') }}"
@@ -61,7 +87,7 @@
                 @guest
                     <a href="{{ route('google.redirect') }}"
                        class="bg-ems-primary text-white px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
-                        Bắt đầu ngay
+                        Đăng nhập với Google
                     </a>
                 @endguest
                 <a href="#notifications"

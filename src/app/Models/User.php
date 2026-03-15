@@ -34,6 +34,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'avatar_file_id',
+        'google_avatar',
         'student_code',
         'lecturer_code',
         'class_name',
@@ -138,6 +139,10 @@ class User extends Authenticatable
      */
     public function getAvatarUrlAttribute(): string
     {
+        if ($this->google_avatar) {
+            return $this->google_avatar;
+        }
+
         if ($this->avatar_file_id && $this->avatar) {
             return asset('storage/' . $this->avatar->path);
         }

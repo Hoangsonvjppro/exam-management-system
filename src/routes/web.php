@@ -17,7 +17,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/onboarding', [StudentOnboardingController::class, 'store'])->name('onboarding.store');
 });
 
-Route::middleware(['auth', 'ensure_student_code'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');

@@ -64,16 +64,18 @@ class GoogleLoginController extends Controller
             $user->name = $googleUser->getName() ?: 'Google User';
             $user->email = $email;
             $user->google_id = $googleUser->getId();
+            $user->google_avatar = $googleUser->getAvatar();
             $user->password = null;
             $user->email_verified_at = Carbon::now();
             $user->save();
-        } elseif (! $user->google_id) {
-            $user->google_id = $googleUser->getId();
+        } else {
+            $user->google_id = $user->google_id ?: $googleUser->getId();
+            $user->google_avatar = $googleUser->getAvatar();
             $user->save();
         }
 
         Auth::login($user);
 
-        return redirect()->route('dashboard');
+        return redirect('/');
     }
 }

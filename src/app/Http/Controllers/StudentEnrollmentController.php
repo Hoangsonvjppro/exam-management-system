@@ -10,6 +10,12 @@ class StudentEnrollmentController extends Controller
 {
     public function joinClass(Request $request): RedirectResponse
     {
+        // Yêu cầu xác thực MSSV trước khi join lớp học phần
+        if (! auth()->user()->student_code) {
+            return redirect()->route('onboarding.show')
+                ->with('info', 'Vui lòng nhập MSSV và lớp trước khi tham gia lớp học phần.');
+        }
+
         $validated = $request->validate([
             'invite_code' => ['required', 'string'],
         ]);
