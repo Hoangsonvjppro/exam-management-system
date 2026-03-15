@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
+use Illuminate\Support\Carbon;
 
 class GoogleLoginController extends Controller
 {
@@ -64,7 +65,7 @@ class GoogleLoginController extends Controller
             $user->email = $email;
             $user->google_id = $googleUser->getId();
             $user->password = null;
-            $user->email_verified_at = now();
+            $user->email_verified_at = Carbon::now();
             $user->save();
         } elseif (! $user->google_id) {
             $user->google_id = $googleUser->getId();
