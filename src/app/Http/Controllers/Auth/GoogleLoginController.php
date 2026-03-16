@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserStateService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,10 @@ use Illuminate\Support\Carbon;
 
 class GoogleLoginController extends Controller
 {
+    public function __construct(private readonly UserStateService $userStateService)
+    {
+    }
+
     public function redirect(): RedirectResponse
     {
         try {
@@ -23,7 +28,7 @@ class GoogleLoginController extends Controller
                 'message' => $e->getMessage(),
             ]);
 
-            return redirect()->route('login')->withErrors([
+            return redirect()->route('landing')->withErrors([
                 'google_auth' => 'Không thể kết nối Google. Vui lòng thử lại.',
             ]);
         }
@@ -32,7 +37,7 @@ class GoogleLoginController extends Controller
     public function callback(Request $request): RedirectResponse
     {
         if ($request->filled('error')) {
-            return redirect()->route('login')->withErrors([
+            return redirect()->route('landing')->withErrors([
                 'google_auth' => 'Đăng nhập Google đã bị hủy.',
             ]);
         }
@@ -44,7 +49,7 @@ class GoogleLoginController extends Controller
                 'message' => $e->getMessage(),
             ]);
 
-            return redirect()->route('login')->withErrors([
+            return redirect()->route('landing')->withErrors([
                 'google_auth' => 'Xác thực Google thất bại. Vui lòng thử lại.',
             ]);
         }
@@ -52,30 +57,37 @@ class GoogleLoginController extends Controller
         $email = $googleUser->getEmail();
 
         if (! $email) {
-            return redirect()->route('login')->withErrors([
+            return redirect()->route('landing')->withErrors([
                 'google_auth' => 'Tài khoản Google không cung cấp email hợp lệ.',
             ]);
         }
 
-        $user = User::where('email', $email)->first();
+        $googleId = $googleUser->getId();
+
+        $user = User::query()
+            ->where('google_id', $googleId)
+            ->orWhere('email', $email)
+            ->first();
 
         if (! $user) {
             $user = new User();
             $user->name = $googleUser->getName() ?: 'Google User';
             $user->email = $email;
-            $user->google_id = $googleUser->getId();
+            $user->google_id = $googleId;
             $user->google_avatar = $googleUser->getAvatar();
             $user->password = null;
             $user->email_verified_at = Carbon::now();
+            $user->is_active = true;
             $user->save();
         } else {
-            $user->google_id = $user->google_id ?: $googleUser->getId();
+            $user->google_id = $user->google_id ?: $googleId;
+            $user->name = $googleUser->getName() ?: $user->name;
             $user->google_avatar = $googleUser->getAvatar();
             $user->save();
         }
 
         Auth::login($user);
 
-        return redirect('/');
+        return redirect($this->userStateService->determineHomeRoute($user));
     }
 }

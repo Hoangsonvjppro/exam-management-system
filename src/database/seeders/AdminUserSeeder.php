@@ -13,19 +13,6 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // ─── Admin ─────────────────────────────────────────────────
-        $admin = User::updateOrCreate(
-            ['email' => 'admin@ems.local'],
-            [
-                'name'              => 'Administrator',
-                'password'          => Hash::make('password'),
-                'is_active'         => true,
-                'email_verified_at' => now(),
-            ]
-        );
-        $admin->assignRole('admin');
-
-        // ─── Demo Lecturer (để team test) ─────────────────────────
         $lecturer = User::updateOrCreate(
             ['email' => 'lecturer@ems.local'],
             [
@@ -37,9 +24,8 @@ class AdminUserSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        $lecturer->assignRole('lecturer');
+        $lecturer->syncRoles(['lecturer']);
 
-        // ─── Demo Student (để team test) ──────────────────────────
         $student = User::updateOrCreate(
             ['email' => 'student@ems.local'],
             [
@@ -52,13 +38,12 @@ class AdminUserSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-        $student->assignRole('student');
+        $student->syncRoles(['student']);
 
         $this->command->info('✅ Demo users seeded:');
         $this->command->table(
             ['Email', 'Password', 'Role'],
             [
-                ['admin@ems.local',    'password', 'admin'],
                 ['lecturer@ems.local', 'password', 'lecturer'],
                 ['student@ems.local',  'password', 'student'],
             ]

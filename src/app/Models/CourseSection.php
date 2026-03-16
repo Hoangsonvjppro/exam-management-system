@@ -22,6 +22,7 @@ class CourseSection extends Model
 {
     protected $fillable = [
         'code',
+        'invite_code',
         'subject_id',
         'semester_id',
         'lecturer_id',

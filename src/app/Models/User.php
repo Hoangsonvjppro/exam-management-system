@@ -31,6 +31,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'google_id',
         'password',
         'phone',
         'avatar_file_id',
@@ -40,6 +41,8 @@ class User extends Authenticatable
         'class_name',
         'department',
         'is_active',
+        'must_change_password',
+        'password_changed_at',
     ];
 
     /**
@@ -59,6 +62,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'is_active'         => 'boolean',
+            'must_change_password' => 'boolean',
+            'password_changed_at' => 'datetime',
         ];
     }
 
@@ -163,8 +168,15 @@ class User extends Authenticatable
      */
     public function getPrimaryRoleAttribute(): string
     {
-        $role = $this->roles->first();
-        return $role ? $role->name : 'Chưa phân quyền';
+        if ($this->hasRole('lecturer')) {
+            return 'Giảng viên';
+        }
+
+        if ($this->hasRole('student')) {
+            return 'Sinh viên';
+        }
+
+        return 'Người dùng đã đăng nhập';
     }
 
     /**
@@ -172,7 +184,7 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->hasRole('admin');
+        return false;
     }
 
     /**
