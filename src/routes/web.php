@@ -1,15 +1,15 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleLoginController;
+use App\Http\Controllers\LandingController;
+use App\Http\Controllers\Lecturer\CourseSectionController as LecturerSectionController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\StudentEnrollmentController;
 use App\Http\Controllers\StudentOnboardingController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-})->middleware('redirect_by_user_state')->name('landing');
+Route::get('/', LandingController::class)->middleware('redirect_by_user_state')->name('landing');
 
 Route::get('/auth/google', [GoogleLoginController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleLoginController::class, 'callback'])->name('google.callback');
@@ -25,6 +25,16 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         ->middleware('student_role')
         ->name('student.dashboard');
 
+    // Lecturer routes
+    Route::middleware('lecturer_role')->prefix('lecturer')->name('lecturer.')->group(function () {
+        Route::get('/dashboard', fn() => view('lecturer.dashboard'))->name('dashboard_redirect');
+        Route::resource('classes', LecturerSectionController::class)
+            ->parameters(['classes' => 'section']);
+        Route::post('/classes/{section}/regenerate-code', [LecturerSectionController::class, 'regenerateCode'])
+            ->name('classes.regenerate-code');
+    });
+
+    // Keep old route working for sidebar links
     Route::view('/dashboard/lecturer', 'lecturer.dashboard')
         ->middleware('lecturer_role')
         ->name('lecturer.dashboard');

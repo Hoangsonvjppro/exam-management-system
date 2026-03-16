@@ -41,7 +41,7 @@
             <div class="mb-8">
                 <h3 class="text-4xl font-black uppercase tracking-tight mb-2">Đăng nhập</h3>
                 <div class="h-2 w-20 bg-ems-primary mb-4"></div>
-                <p class="text-slate-600 font-medium">Giảng viên đăng nhập bằng email/mật khẩu. Người dùng mới có thể vào bằng Google.</p>
+                <p class="text-slate-600 font-medium">Giảng viên đăng nhập bằng email và mật khẩu. Sinh viên đăng nhập bằng Google bên dưới.</p>
             </div>
 
             @if (session('warning'))
@@ -102,11 +102,14 @@
                 <div class="h-[2px] flex-1 bg-black"></div>
             </div>
 
-            <a href="{{ route('google.redirect') }}"
-                class="w-full h-14 bg-white brutal-border shadow-brutal font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
-                <span class="material-symbols-outlined">account_circle</span>
-                Đăng nhập với Google
-            </a>
+            <div class="bg-blue-50 brutal-border p-4 mb-2">
+                <p class="text-xs font-black uppercase tracking-wider text-blue-700 mb-3">Dành cho Sinh viên</p>
+                <a href="{{ route('google.redirect') }}"
+                    class="w-full h-14 bg-white brutal-border shadow-brutal font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+                    <span class="material-symbols-outlined">account_circle</span>
+                    Đăng nhập với Google
+                </a>
+            </div>
 
             <div class="mt-8 pt-6 border-t-2 border-dashed border-slate-300">
                 <p class="text-sm font-bold text-slate-600 italic">

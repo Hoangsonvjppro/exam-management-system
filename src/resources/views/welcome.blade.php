@@ -22,8 +22,6 @@
         <nav class="hidden md:flex items-center gap-8 font-bold uppercase text-sm">
             <a class="hover:underline decoration-4 underline-offset-4" href="#">Trang chủ</a>
             <a class="hover:underline decoration-4 underline-offset-4" href="#notifications">Thông báo</a>
-            <a class="hover:underline decoration-4 underline-offset-4" href="#activity">Lịch học</a>
-            <a class="hover:underline decoration-4 underline-offset-4" href="#exams">Kỳ thi</a>
             <a class="hover:underline decoration-4 underline-offset-4" href="#footer">Hỗ trợ</a>
         </nav>
 
@@ -79,20 +77,32 @@
             </p>
             <div class="flex flex-wrap gap-4">
                 @auth
-                    <a href="{{ url('/dashboard') }}"
-                       class="bg-ems-primary text-white px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
-                        Vào Dashboard
-                    </a>
+                    @if(auth()->user()->hasRole('lecturer') || auth()->user()->hasRole('student'))
+                        <a href="{{ url('/dashboard') }}"
+                           class="bg-ems-primary text-white px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
+                            Vào Dashboard
+                        </a>
+                    @else
+                        {{-- Student logged in but no class yet: show join class CTA --}}
+                        <button onclick="document.getElementById('join-class-modal').classList.remove('hidden')"
+                           class="bg-ems-primary text-white px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
+                            Tham gia lớp học
+                        </button>
+                        <a href="{{ route('profile.edit') }}"
+                           class="bg-white text-black px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
+                            Hồ sơ cá nhân
+                        </a>
+                    @endif
                 @endauth
                 @guest
-                    <a href="{{ route('google.redirect') }}"
+                    <a href="{{ route('login') }}"
                        class="bg-ems-primary text-white px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
-                        Đăng nhập với Google
+                        Đăng nhập
                     </a>
                 @endguest
                 <a href="#notifications"
                    class="bg-white text-black px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
-                    Tìm hiểu thêm
+                    Xem thông báo
                 </a>
             </div>
         </div>
@@ -111,20 +121,20 @@
     {{-- ===== STATS SECTION ===== --}}
     <section class="px-6 md:px-20 py-12 grid grid-cols-2 md:grid-cols-4 gap-6 bg-white border-b-4 border-black">
         <div class="p-6 brutal-border bg-background-light">
-            <p class="text-4xl font-black">12k+</p>
+            <p class="text-4xl font-black">{{ $studentCount }}</p>
             <p class="font-bold uppercase text-xs text-ems-primary">Số sinh viên</p>
         </div>
         <div class="p-6 brutal-border bg-background-light">
-            <p class="text-4xl font-black">850</p>
+            <p class="text-4xl font-black">{{ $lecturerCount }}</p>
             <p class="font-bold uppercase text-xs text-ems-primary">Số giảng viên</p>
         </div>
         <div class="p-6 brutal-border bg-background-light">
-            <p class="text-4xl font-black">150</p>
+            <p class="text-4xl font-black">{{ $subjectCount }}</p>
             <p class="font-bold uppercase text-xs text-ems-primary">Số môn học</p>
         </div>
         <div class="p-6 brutal-border bg-background-light">
-            <p class="text-4xl font-black">45</p>
-            <p class="font-bold uppercase text-xs text-ems-primary">Số kỳ thi</p>
+            <p class="text-4xl font-black">{{ $sectionCount }}</p>
+            <p class="font-bold uppercase text-xs text-ems-primary">Số lớp học phần</p>
         </div>
     </section>
 
@@ -134,96 +144,37 @@
             <h3 class="text-4xl font-black uppercase italic whitespace-nowrap">Thông báo mới nhất</h3>
             <div class="h-2 flex-grow mx-8 bg-black hidden md:block"></div>
         </div>
-        <div class="grid md:grid-cols-3 gap-8">
-            {{-- Card 1 --}}
-            <div class="bg-white brutal-border brutal-shadow-lg p-6 flex flex-col gap-4">
-                <span class="bg-red-500 text-white px-3 py-1 text-xs font-black uppercase brutal-border w-fit">Khẩn cấp</span>
-                <h4 class="text-xl font-black">Thông báo lịch thi học kỳ phụ năm 2024</h4>
-                <p class="font-medium text-slate-600">Thời gian đăng ký kéo dài đến hết ngày 20/11...</p>
-                <div class="flex items-center justify-between mt-auto pt-4 border-t-2 border-dashed border-black">
-                    <span class="font-bold text-sm">15/10/2023</span>
-                    <button class="font-black uppercase text-ems-primary hover:underline">Xem chi tiết</button>
-                </div>
-            </div>
-            {{-- Card 2 --}}
-            <div class="bg-white brutal-border brutal-shadow-lg p-6 flex flex-col gap-4">
-                <span class="bg-blue-500 text-white px-3 py-1 text-xs font-black uppercase brutal-border w-fit">Học vụ</span>
-                <h4 class="text-xl font-black">Cập nhật quy chế thi trắc nghiệm trực tuyến</h4>
-                <p class="font-medium text-slate-600">Yêu cầu cài đặt phần mềm giám sát thi mới nhất...</p>
-                <div class="flex items-center justify-between mt-auto pt-4 border-t-2 border-dashed border-black">
-                    <span class="font-bold text-sm">12/10/2023</span>
-                    <button class="font-black uppercase text-ems-primary hover:underline">Xem chi tiết</button>
-                </div>
-            </div>
-            {{-- Card 3 --}}
-            <div class="bg-white brutal-border brutal-shadow-lg p-6 flex flex-col gap-4">
-                <span class="bg-green-500 text-white px-3 py-1 text-xs font-black uppercase brutal-border w-fit">Sự kiện</span>
-                <h4 class="text-xl font-black">Lịch nghỉ lễ Quốc khánh chính thức</h4>
-                <p class="font-medium text-slate-600">Toàn bộ sinh viên được nghỉ từ ngày 01/09 đến hết...</p>
-                <div class="flex items-center justify-between mt-auto pt-4 border-t-2 border-dashed border-black">
-                    <span class="font-bold text-sm">10/10/2023</span>
-                    <button class="font-black uppercase text-ems-primary hover:underline">Xem chi tiết</button>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    {{-- ===== ACTIVITY & EXAMS SPLIT SECTION ===== --}}
-    <section id="activity" class="px-6 md:px-20 py-16 grid lg:grid-cols-2 gap-16 border-t-4 border-black bg-white">
-        {{-- Calendar Side --}}
-        <div>
-            <h3 class="text-3xl font-black uppercase mb-8 underline decoration-ems-primary decoration-8 underline-offset-8">Lịch hoạt động</h3>
-            <div class="grid grid-cols-2 gap-6">
-                <div class="brutal-border brutal-shadow p-4 bg-background-light">
-                    <div class="border-b-4 border-black pb-2 mb-4 flex justify-between items-center">
-                        <span class="font-black uppercase">Tháng 10</span>
-                        <span class="material-symbols-outlined">calendar_today</span>
-                    </div>
-                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold">
-                        <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                        <span class="p-1">1</span><span class="p-1">2</span><span class="p-1">3</span><span class="p-1">4</span><span class="p-1">5</span><span class="p-1">6</span><span class="p-1">7</span>
-                        <span class="p-1">8</span><span class="p-1">9</span><span class="p-1">10</span><span class="p-1">11</span><span class="p-1 bg-ems-primary text-white">12</span><span class="p-1">13</span><span class="p-1">14</span>
-                        <span class="p-1">15</span><span class="p-1">16</span><span class="p-1">17</span><span class="p-1">18</span><span class="p-1">19</span><span class="p-1">20</span><span class="p-1">21</span>
-                    </div>
-                </div>
-                <div class="flex flex-col gap-4">
-                    <div class="p-4 brutal-border bg-yellow-300 font-bold text-sm">
-                        Họp hội đồng thi <br> <span class="text-xs opacity-70">08:00 - Phòng A102</span>
-                    </div>
-                    <div class="p-4 brutal-border bg-ems-primary text-white font-bold text-sm">
-                        Thi Giải tích 1 <br> <span class="text-xs opacity-70">13:30 - Hội trường</span>
-                    </div>
-                </div>
+        @if($announcements->isEmpty())
+            <div class="text-center py-16 brutal-border bg-white">
+                <span class="material-symbols-outlined text-6xl text-slate-300">notifications_none</span>
+                <p class="mt-4 font-bold text-slate-500 uppercase">Chưa có thông báo nào</p>
             </div>
-        </div>
-
-        {{-- Upcoming Exams Side --}}
-        <div id="exams">
-            <h3 class="text-3xl font-black uppercase mb-8 underline decoration-ems-primary decoration-8 underline-offset-8">Kỳ thi sắp tới</h3>
-            <div class="flex flex-col gap-4">
-                <div class="brutal-border p-4 flex items-center justify-between hover:bg-background-light transition-colors">
-                    <div>
-                        <p class="font-black text-lg">Cấu trúc dữ liệu &amp; Giải thuật</p>
-                        <p class="text-sm font-bold opacity-60">Phòng 402 - 14/11/2023</p>
+        @else
+            <div class="grid md:grid-cols-3 gap-8">
+                @foreach($announcements as $item)
+                    @php
+                        $colorMap = [
+                            'urgent'  => ['bg' => 'bg-red-500',    'label' => 'Khẩn cấp'],
+                            'warning' => ['bg' => 'bg-yellow-500', 'label' => 'Cảnh báo'],
+                            'event'   => ['bg' => 'bg-green-500',  'label' => 'Sự kiện'],
+                            'info'    => ['bg' => 'bg-blue-500',   'label' => 'Học vụ'],
+                        ];
+                        $color = $colorMap[$item->type] ?? $colorMap['info'];
+                    @endphp
+                    <div class="bg-white brutal-border brutal-shadow-lg p-6 flex flex-col gap-4">
+                        <span class="{{ $color['bg'] }} text-white px-3 py-1 text-xs font-black uppercase brutal-border w-fit">{{ $color['label'] }}</span>
+                        <h4 class="text-xl font-black">{{ $item->title }}</h4>
+                        @if($item->body)
+                            <p class="font-medium text-slate-600">{{ Str::limit($item->body, 80) }}</p>
+                        @endif
+                        <div class="flex items-center justify-between mt-auto pt-4 border-t-2 border-dashed border-black">
+                            <span class="font-bold text-sm">{{ $item->created_at->format('d/m/Y') }}</span>
+                        </div>
                     </div>
-                    <span class="bg-blue-200 text-blue-800 px-3 py-1 font-black text-xs brutal-border uppercase">Sắp diễn ra</span>
-                </div>
-                <div class="brutal-border p-4 flex items-center justify-between bg-ems-primary/10">
-                    <div>
-                        <p class="font-black text-lg">Lập trình Java nâng cao</p>
-                        <p class="text-sm font-bold opacity-60">Phòng 105 - Hôm nay</p>
-                    </div>
-                    <span class="bg-red-500 text-white px-3 py-1 font-black text-xs brutal-border uppercase">Đang diễn ra</span>
-                </div>
-                <div class="brutal-border p-4 flex items-center justify-between opacity-50 grayscale">
-                    <div>
-                        <p class="font-black text-lg">Kinh tế chính trị</p>
-                        <p class="text-sm font-bold opacity-60">Phòng 201 - 10/10/2023</p>
-                    </div>
-                    <span class="bg-slate-300 text-slate-800 px-3 py-1 font-black text-xs brutal-border uppercase">Hoàn thành</span>
-                </div>
+                @endforeach
             </div>
-        </div>
+        @endif
     </section>
 
     {{-- ===== FOOTER ===== --}}
@@ -265,6 +216,56 @@
             © {{ date('Y') }} EMS Project. All Rights Reserved.
         </div>
     </footer>
+
+    {{-- ===== JOIN CLASS MODAL (for students without a class) ===== --}}
+    @auth
+        @if(!auth()->user()->hasRole('lecturer') && !auth()->user()->hasRole('student'))
+        <div id="join-class-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div class="bg-white brutal-border brutal-shadow-lg w-full max-w-md p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-black uppercase">Tham gia lớp học</h3>
+                    <button onclick="document.getElementById('join-class-modal').classList.add('hidden')"
+                            class="font-black text-2xl leading-none hover:text-ems-primary">&times;</button>
+                </div>
+
+                @if(session('success'))
+                    <div class="mb-4 p-3 bg-green-100 brutal-border text-sm font-semibold text-green-800">
+                        {{ session('success') }}
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="mb-4 p-3 bg-red-100 brutal-border text-sm font-semibold text-red-800">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                @if(!auth()->user()->student_code)
+                    <p class="mb-4 font-semibold text-slate-600">Trước tiên hãy hoàn tất hồ sơ sinh viên (nhập MSSV).</p>
+                    <a href="{{ route('onboarding.show') }}"
+                       class="w-full block text-center h-12 bg-ems-primary text-white brutal-border font-black uppercase tracking-wider leading-[3rem]">
+                        Nhập thông tin sinh viên
+                    </a>
+                @else
+                    <form method="POST" action="{{ route('student.join-class') }}" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label class="block text-sm font-black uppercase mb-2">Mã lớp học</label>
+                            <input name="invite_code" type="text" required placeholder="Nhập mã lớp (VD: ABC123)"
+                                   class="w-full h-12 px-4 bg-white brutal-border font-bold text-lg focus:ring-0 uppercase tracking-widest">
+                            @error('invite_code')
+                                <p class="mt-1 text-xs font-semibold text-red-700">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <button type="submit"
+                                class="w-full h-12 bg-ems-primary text-white brutal-border font-black uppercase tracking-widest hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shadow-brutal">
+                            Tham gia
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+        @endif
+    @endauth
 
 </div>
 </body>

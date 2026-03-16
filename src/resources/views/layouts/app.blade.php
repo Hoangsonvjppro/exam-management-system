@@ -75,8 +75,7 @@
                 @role('lecturer|teaching_assistant')
                 <x-sidebar-section label="Giảng dạy">
                     <x-sidebar-link route="lecturer.dashboard" icon="grid">Tổng quan</x-sidebar-link>
-                    <x-sidebar-link route="lecturer.dashboard" icon="book-open">Lớp học phần</x-sidebar-link>
-                    <x-sidebar-link route="lecturer.dashboard" icon="users">Sinh viên</x-sidebar-link>
+                    <x-sidebar-link route="lecturer.classes.index" icon="book-open">Lớp học phần</x-sidebar-link>
                 </x-sidebar-section>
 
                 <x-sidebar-section label="Ngân hàng đề">

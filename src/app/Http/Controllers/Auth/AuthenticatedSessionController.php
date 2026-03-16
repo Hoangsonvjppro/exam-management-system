@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use App\Services\UserStateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,9 +34,21 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        /** @var User $user */
         $user = Auth::user();
 
-        if ($user->hasRole('lecturer') && $user->must_change_password) {
+        // Only lecturers may use email + password login.
+        if (! $user->hasRole('lecturer')) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->withErrors([
+                'email' => 'Email/mật khẩu chỉ dành cho giảng viên. Sinh viên vui lòng đăng nhập bằng Google.',
+            ])->onlyInput('email');
+        }
+
+        if ($user->must_change_password) {
             return redirect()->route('profile.edit')
                 ->with('warning', 'Bạn cần đổi mật khẩu tạm trước khi tiếp tục.');
         }

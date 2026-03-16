@@ -86,6 +86,13 @@ class GoogleLoginController extends Controller
             $user->save();
         }
 
+        // Lecturers must not log in via Google.
+        if ($user->hasRole('lecturer')) {
+            return redirect()->route('login')->withErrors([
+                'google_auth' => 'Giảng viên không thể đăng nhập bằng Google. Vui lòng dùng email và mật khẩu.',
+            ]);
+        }
+
         Auth::login($user);
 
         return redirect($this->userStateService->determineHomeRoute($user));
