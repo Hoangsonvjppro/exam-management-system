@@ -17,7 +17,7 @@
 
     @stack('styles')
 </head>
-<body class="font-sans antialiased bg-background text-gray-900">
+<body class="font-sans antialiased bg-background-light text-gray-900">
 
     <div class="flex h-screen overflow-hidden" x-data="{ sidebarOpen: false }">
 
@@ -35,20 +35,20 @@
         </div>
 
         <!-- Sidebar -->
-        <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar shadow-sidebar transform transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:static lg:z-auto flex flex-col"
+        <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-background-light border-r-[4px] border-black transform transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:static lg:z-auto flex flex-col"
                :class="sidebarOpen ? 'translate-x-0' : ''">
 
             <!-- Logo -->
-            <div class="flex items-center gap-3 px-5 h-16 border-b border-white/10 flex-shrink-0">
-                <div class="flex items-center justify-center w-10 h-10 bg-primary-500 rounded-xl">
+            <div class="flex items-center gap-3 px-5 h-16 border-b-[4px] border-black flex-shrink-0 bg-white">
+                <div class="flex items-center justify-center w-10 h-10 bg-ems-primary brutal-border">
                     <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                     </svg>
                 </div>
                 <div>
-                    <div class="font-bold text-white text-base leading-tight">EMS</div>
-                    <div class="text-sidebar-text text-xs">Quản lý Thi trắc nghiệm</div>
+                    <div class="font-black text-slate-900 text-base leading-tight uppercase">EMS</div>
+                    <div class="text-slate-500 text-xs font-bold uppercase tracking-wide">Quản ly Thi trac nghiem</div>
                 </div>
             </div>
 
@@ -75,8 +75,7 @@
                 @role('lecturer|teaching_assistant')
                 <x-sidebar-section label="Giảng dạy">
                     <x-sidebar-link route="lecturer.dashboard" icon="grid">Tổng quan</x-sidebar-link>
-                    <x-sidebar-link route="lecturer.dashboard" icon="book-open">Lớp học phần</x-sidebar-link>
-                    <x-sidebar-link route="lecturer.dashboard" icon="users">Sinh viên</x-sidebar-link>
+                    <x-sidebar-link route="lecturer.classes.index" icon="book-open">Lớp học phần</x-sidebar-link>
                 </x-sidebar-section>
 
                 <x-sidebar-section label="Ngân hàng đề">
@@ -110,15 +109,15 @@
 
             <!-- Help/Support Card -->
             <div class="flex-shrink-0 px-4 pb-4">
-                <div class="bg-sidebar-light/80 rounded-xl p-4 text-center">
-                    <div class="w-10 h-10 bg-primary-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-white brutal-border p-4 text-center brutal-shadow">
+                    <div class="w-10 h-10 bg-background-light brutal-border flex items-center justify-center mx-auto mb-2">
+                        <svg class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <p class="text-white text-sm font-semibold mb-1">Cần hỗ trợ?</p>
-                    <p class="text-sidebar-text text-xs mb-3">Liên hệ phòng đào tạo nếu bạn gặp sự cố.</p>
-                    <button class="w-full bg-white/10 hover:bg-white/20 text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors">
+                    <p class="text-slate-900 text-sm font-black uppercase mb-1">Can ho tro?</p>
+                    <p class="text-slate-500 text-xs font-semibold mb-3">Lien he phong dao tao neu ban gap su co.</p>
+                    <button class="w-full bg-ems-primary text-white text-xs font-black uppercase py-2 px-3 brutal-border brutal-btn">
                         Gửi yêu cầu
                     </button>
                 </div>
@@ -129,19 +128,19 @@
         <div class="flex flex-col flex-1 overflow-hidden">
 
             <!-- Top Navbar -->
-            <header class="sticky top-0 z-30 h-16 bg-white border-b border-border shadow-sm">
+            <header class="sticky top-0 z-30 h-16 bg-background-light border-b-[4px] border-black">
                 <div class="flex items-center justify-between h-full px-4 sm:px-6">
 
                     <!-- Left: Hamburger + Page title -->
                     <div class="flex items-center gap-4">
-                        <button class="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-surface-hover hover:text-gray-700 transition-colors"
+                        <button class="lg:hidden p-2 brutal-border bg-white text-gray-700 hover:bg-background-light transition-colors"
                                 x-on:click="sidebarOpen = !sidebarOpen">
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                             </svg>
                         </button>
 
-                        <h1 class="text-lg font-bold text-gray-900 leading-tight">
+                        <h1 class="text-lg font-black uppercase tracking-wide text-gray-900 leading-tight">
                             @yield('page-title', 'Dashboard')
                         </h1>
                     </div>
@@ -156,7 +155,7 @@
                             </div>
                             <input type="search"
                                    placeholder="Tìm kiếm khóa học..."
-                                   class="block w-full pl-10 pr-4 py-2 bg-surface-muted border border-border rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors">
+                                   class="block w-full pl-10 pr-4 py-2 bg-white border-[2px] border-black text-sm font-semibold text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-0 transition-colors">
                         </div>
                     </div>
 
@@ -164,7 +163,7 @@
                     <div class="flex items-center gap-2 sm:gap-3">
 
                         <!-- Notifications -->
-                        <button class="relative p-2 rounded-lg text-gray-500 hover:bg-surface-hover hover:text-gray-700 transition-colors" title="Thông báo">
+                        <button class="relative p-2 brutal-border bg-white text-gray-700 hover:bg-background-light transition-colors" title="Thông báo">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -177,23 +176,23 @@
                         </button>
 
                         <!-- Divider -->
-                        <div class="hidden sm:block w-px h-8 bg-border"></div>
+                        <div class="hidden sm:block w-px h-8 bg-black"></div>
 
                         <!-- User Dropdown -->
                         <div class="relative" x-data="{ open: false }">
-                            <button class="flex items-center gap-3 p-1.5 rounded-lg hover:bg-surface-hover transition-colors"
+                                <button class="flex items-center gap-3 p-1.5 brutal-border bg-white hover:bg-background-light transition-colors"
                                     x-on:click="open = !open">
                                 <div class="hidden sm:block text-right">
                                     <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
                                     <p class="text-xs text-gray-500">{{ auth()->user()->primary_role ?? 'Người dùng' }}</p>
                                 </div>
-                                <div class="w-9 h-9 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold text-sm">
+                                <div class="w-9 h-9 rounded-full bg-ems-primary flex items-center justify-center text-white font-semibold text-sm border-2 border-black">
                                     {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
                                 </div>
                             </button>
 
                             <!-- Dropdown menu -->
-                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-border py-1 z-50"
+                               <div class="absolute right-0 mt-2 w-56 bg-white brutal-border brutal-shadow py-1 z-50"
                                  x-show="open"
                                  x-on:click.outside="open = false"
                                  x-transition:enter="transition ease-out duration-100"
@@ -204,17 +203,17 @@
                                  x-transition:leave-end="opacity-0 scale-95"
                                  style="display:none">
                                 <a href="{{ route('profile.edit') }}"
-                                   class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-surface-hover">
+                                   class="flex items-center px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-background-light border-b border-black/20">
                                     <svg class="w-4 h-4 mr-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                     </svg>
                                     Hồ sơ cá nhân
                                 </a>
-                                <div class="border-t border-border my-1"></div>
+                                <div class="border-t border-black my-1"></div>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit"
-                                            class="flex items-center w-full px-4 py-2.5 text-sm text-danger-500 hover:bg-danger-50">
+                                            class="flex items-center w-full px-4 py-2.5 text-sm font-black text-danger-500 hover:bg-danger-50">
                                         <svg class="w-4 h-4 mr-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

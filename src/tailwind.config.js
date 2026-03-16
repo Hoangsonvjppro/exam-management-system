@@ -5,7 +5,10 @@ import forms from '@tailwindcss/forms';
 export default {
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
+        './vendor/filament/**/*.blade.php',
         './storage/framework/views/*.php',
+        './app/Filament/**/*.php',
+        './resources/views/filament/**/*.blade.php',
         './resources/views/**/*.blade.php',
     ],
 
@@ -13,10 +16,11 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
+                display: ['Inter', 'sans-serif'],
             },
             colors: {
                 primary: {
-                    50:  '#EEF4FF',
+                    50: '#EEF4FF',
                     100: '#DBE8FE',
                     200: '#BFD5FE',
                     300: '#93B8FD',
@@ -28,7 +32,7 @@ export default {
                     900: '#222E8A',
                 },
                 secondary: {
-                    50:  '#F5F3FF',
+                    50: '#F5F3FF',
                     100: '#EDE9FE',
                     200: '#DDD6FE',
                     300: '#C4B5FD',
@@ -41,33 +45,36 @@ export default {
                 },
                 sidebar: {
                     DEFAULT: '#1E293B',
-                    light:   '#334155',
-                    dark:    '#0F172A',
-                    text:    '#94A3B8',
-                    active:  '#4366F6',
+                    light: '#334155',
+                    dark: '#0F172A',
+                    text: '#94A3B8',
+                    active: '#4366F6',
                 },
                 surface: {
                     DEFAULT: '#FFFFFF',
-                    muted:   '#F8FAFC',
-                    hover:   '#F1F5F9',
+                    muted: '#F8FAFC',
+                    hover: '#F1F5F9',
                 },
                 border: {
                     DEFAULT: '#E2E8F0',
-                    dark:    '#CBD5E1',
+                    dark: '#CBD5E1',
                 },
                 background: '#F1F5F9',
+                'background-light': '#E0E1DD',
+                'background-dark': '#0f1c23',
+                'ems-primary': '#0077b8',
                 success: {
-                    50:  '#ECFDF5',
+                    50: '#ECFDF5',
                     500: '#10B981',
                     600: '#059669',
                 },
                 warning: {
-                    50:  '#FFFBEB',
+                    50: '#FFFBEB',
                     500: '#F59E0B',
                     600: '#D97706',
                 },
                 danger: {
-                    50:  '#FEF2F2',
+                    50: '#FEF2F2',
                     500: '#EF4444',
                     600: '#DC2626',
                 },
@@ -76,6 +83,8 @@ export default {
                 'card': '0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
                 'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06)',
                 'sidebar': '2px 0 8px rgba(0, 0, 0, 0.12)',
+                'brutal': '4px 4px 0px 0px #000000',
+                'brutal-lg': '8px 8px 0px 0px #000000',
             },
             borderRadius: {
                 'card': '0.75rem',

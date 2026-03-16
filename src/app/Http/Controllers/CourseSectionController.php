@@ -9,6 +9,8 @@ use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Throwable;
 
 class CourseSectionController extends Controller
 {
@@ -37,7 +39,10 @@ class CourseSectionController extends Controller
     {
         try {
             DB::transaction(function () use ($request) {
-                $section = CourseSection::create($request->safe()->except('schedules'));
+                $payload = $request->safe()->except('schedules');
+                $payload['invite_code'] = $payload['invite_code'] ?? strtoupper(Str::random(8));
+
+                $section = CourseSection::create($payload);
     
                 if ($schedules = $request->input('schedules')) {
                     $section->classSchedules()->createMany($schedules);
@@ -71,7 +76,12 @@ class CourseSectionController extends Controller
     {
         try {
             DB::transaction(function () use ($request, $courseSection) {
-                $courseSection->update($request->safe()->except('schedules'));
+                $payload = $request->safe()->except('schedules');
+                if (empty($payload['invite_code'])) {
+                    $payload['invite_code'] = $courseSection->invite_code ?: strtoupper(Str::random(8));
+                }
+
+                $courseSection->update($payload);
     
                 if ($request->has('schedules')) {
                     $courseSection->classSchedules()->delete();

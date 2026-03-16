@@ -8,113 +8,81 @@ use Spatie\Permission\Models\Permission;
 
 class RoleAndPermissionSeeder extends Seeder
 {
-    /**
-     * Seed roles and base permissions.
-     *
-     * Roles: admin, lecturer, student, teaching_assistant, department_admin
-     */
     public function run(): void
     {
-        // Reset cache trước khi seed
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // ─── Permissions ──────────────────────────────────────────
-        $permissions = [
-            // User management
-            'user.view', 'user.create', 'user.edit', 'user.delete', 'user.toggle-active',
-
-            // Semester
-            'semester.view', 'semester.create', 'semester.edit', 'semester.delete',
-
-            // Subject & Chapter
-            'subject.view', 'subject.create', 'subject.edit', 'subject.delete',
-            'chapter.view', 'chapter.create', 'chapter.edit', 'chapter.delete',
-
-            // Course section
-            'course-section.view', 'course-section.create', 'course-section.edit', 'course-section.delete',
-            'course-section.enroll-student',
-
-            // Question bank
-            'question.view', 'question.create', 'question.edit', 'question.delete', 'question.approve',
-
-            // Exam
-            'exam.view', 'exam.create', 'exam.edit', 'exam.delete', 'exam.publish', 'exam.schedule',
-
-            // Attendance
-            'attendance.view', 'attendance.create', 'attendance.edit',
-
-            // Document
-            'document.view', 'document.create', 'document.delete',
-
-            // Notification
+        $webPermissions = [
+            'course-section.view',
+            'course-section.join',
+            'course-section.leave',
+            'document.view',
+            'document.create',
+            'document.update',
+            'document.delete',
+            'assignment.view',
+            'assignment.create',
+            'assignment.update',
+            'assignment.delete',
+            'exam.view',
+            'exam.create',
+            'exam.update',
+            'exam.delete',
             'notification.view',
-
-            // Settings (admin only)
-            'setting.view', 'setting.edit',
-
-            // Reports
-            'report.view',
         ];
 
-        foreach ($permissions as $permission) {
+        $adminPermissions = [
+            'admin.users.view',
+            'admin.users.create',
+            'admin.users.update',
+            'admin.users.block',
+            'admin.users.reset-password',
+            'admin.admins.view',
+            'admin.admins.create',
+            'admin.admins.update',
+            'admin.settings.view',
+            'admin.settings.update',
+            'admin.reports.view',
+        ];
+
+        foreach ($webPermissions as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        // ─── Roles ────────────────────────────────────────────────
-        $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        foreach ($adminPermissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'admin']);
+        }
+
         $lecturer = Role::firstOrCreate(['name' => 'lecturer', 'guard_name' => 'web']);
         $student = Role::firstOrCreate(['name' => 'student', 'guard_name' => 'web']);
-        $ta = Role::firstOrCreate(['name' => 'teaching_assistant', 'guard_name' => 'web']);
-        $deptAdmin = Role::firstOrCreate(['name' => 'department_admin', 'guard_name' => 'web']);
 
-        // Admin: tất cả quyền
-        $admin->syncPermissions(Permission::all());
+        $rootAdmin = Role::firstOrCreate(['name' => 'root_admin', 'guard_name' => 'admin']);
+        $systemAdmin = Role::firstOrCreate(['name' => 'system_admin', 'guard_name' => 'admin']);
 
-        // Lecturer
         $lecturer->syncPermissions([
-            'semester.view',
-            'subject.view', 'chapter.view',
-            'course-section.view', 'course-section.enroll-student',
-            'question.view', 'question.create', 'question.edit', 'question.delete',
-            'exam.view', 'exam.create', 'exam.edit', 'exam.publish', 'exam.schedule',
-            'attendance.view', 'attendance.create', 'attendance.edit',
-            'document.view', 'document.create', 'document.delete',
-            'notification.view',
-            'report.view',
-        ]);
-
-        // Department Admin
-        $deptAdmin->syncPermissions([
-            'user.view',
-            'semester.view', 'semester.create', 'semester.edit',
-            'subject.view', 'subject.create', 'subject.edit', 'subject.delete',
-            'chapter.view', 'chapter.create', 'chapter.edit', 'chapter.delete',
-            'course-section.view', 'course-section.create', 'course-section.edit',
-            'question.view', 'question.approve',
-            'exam.view',
-            'report.view',
-            'notification.view',
-        ]);
-
-        // Teaching Assistant
-        $ta->syncPermissions([
-            'semester.view', 'subject.view', 'chapter.view',
             'course-section.view',
-            'question.view', 'question.create', 'question.edit',
-            'exam.view',
-            'attendance.view', 'attendance.create', 'attendance.edit',
-            'document.view', 'document.create',
+            'document.view', 'document.create', 'document.update', 'document.delete',
+            'assignment.view', 'assignment.create', 'assignment.update', 'assignment.delete',
+            'exam.view', 'exam.create', 'exam.update', 'exam.delete',
             'notification.view',
         ]);
 
-        // Student: quyền tối thiểu
         $student->syncPermissions([
-            'semester.view', 'subject.view', 'chapter.view',
-            'course-section.view',
-            'exam.view',
-            'attendance.view',
+            'course-section.view', 'course-section.join', 'course-section.leave',
             'document.view',
+            'assignment.view',
+            'exam.view',
             'notification.view',
+        ]);
+
+        $rootAdmin->syncPermissions(Permission::query()->where('guard_name', 'admin')->get());
+        $systemAdmin->syncPermissions([
+            'admin.users.view',
+            'admin.users.create',
+            'admin.users.update',
+            'admin.users.block',
+            'admin.users.reset-password',
+            'admin.reports.view',
         ]);
 
         $this->command->info('✅ Roles & Permissions seeded successfully.');

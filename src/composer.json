@@ -7,9 +7,12 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "doctrine/dbal": "^4.4",
+        "filament/filament": "^4.8",
         "laravel/framework": "^12.0",
+        "laravel/socialite": "^5.25",
         "laravel/tinker": "^2.10.1",
-        "livewire/livewire": "^4.1",
+        "livewire/livewire": "^3.7",
         "maatwebsite/excel": "^3.1",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-permission": "^7.1"

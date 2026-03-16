@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
+use App\Services\UserStateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +13,10 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
+    public function __construct(private readonly UserStateService $userStateService)
+    {
+    }
+
     /**
      * Display the login view.
      */
@@ -28,7 +34,26 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended($this->roleBasedRedirect());
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Only lecturers may use email + password login.
+        if (! $user->hasRole('lecturer')) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()->withErrors([
+                'email' => 'Email/mật khẩu chỉ dành cho giảng viên. Sinh viên vui lòng đăng nhập bằng Google.',
+            ])->onlyInput('email');
+        }
+
+        if ($user->must_change_password) {
+            return redirect()->route('profile.edit')
+                ->with('warning', 'Bạn cần đổi mật khẩu tạm trước khi tiếp tục.');
+        }
+
+        return redirect()->intended($this->userStateService->determineHomeRoute($user));
     }
 
     /**
@@ -45,30 +70,4 @@ class AuthenticatedSessionController extends Controller
         return redirect()->route('login');
     }
 
-    /**
-     * Determine the redirect URL based on the authenticated user's role.
-     */
-    protected function roleBasedRedirect(): string
-    {
-        $user = Auth::user();
-
-        if ($user->hasRole('admin')) {
-            return route('admin.dashboard');
-        }
-
-        if ($user->hasRole('department_admin')) {
-            return route('admin.dashboard');
-        }
-
-        if ($user->hasRole('lecturer') || $user->hasRole('teaching_assistant')) {
-            return route('lecturer.dashboard');
-        }
-
-        if ($user->hasRole('student')) {
-            return route('student.dashboard');
-        }
-
-        // Fallback nếu user chưa được gán role
-        return route('dashboard');
-    }
 }

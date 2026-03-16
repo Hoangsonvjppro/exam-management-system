@@ -4,128 +4,131 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Đăng nhập — EMS</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Đăng nhập - EMS</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="font-sans antialiased bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 min-h-screen flex items-center justify-center p-4">
+<body class="bg-background-light font-display text-slate-900 min-h-screen flex flex-col">
+<header class="w-full bg-white border-b-[3px] border-black px-6 md:px-20 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+        <div class="bg-ems-primary brutal-border p-1 flex items-center justify-center">
+            <span class="material-symbols-outlined text-white text-3xl">database</span>
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tighter italic">EMS</h1>
+    </div>
+    <a href="{{ route('landing') }}" class="text-lg font-bold border-b-[4px] border-black hover:bg-ems-primary/10 px-2 py-1 transition-colors">
+        Về trang chủ
+    </a>
+</header>
 
-    <div class="w-full max-w-md">
-
-        {{-- Logo & Title --}}
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-white/15 backdrop-blur rounded-2xl mb-4">
-                <svg class="w-9 h-9 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
+<main class="flex-grow flex items-center justify-center p-6 md:p-12">
+    <div class="max-w-5xl w-full bg-white brutal-border shadow-brutal-lg flex flex-col md:flex-row overflow-hidden">
+        <div class="md:w-1/2 bg-ems-primary/10 border-b-[3px] md:border-b-0 md:border-r-[3px] border-black p-12 flex flex-col items-center justify-center relative overflow-hidden">
+            <div class="relative z-10 text-center">
+                <div class="mb-8 flex justify-center gap-4">
+                    <div class="w-24 h-24 bg-ems-primary brutal-border flex items-center justify-center transform -rotate-6 shadow-brutal">
+                        <span class="material-symbols-outlined text-white text-5xl">school</span>
+                    </div>
+                    <div class="w-24 h-24 bg-white brutal-border flex items-center justify-center transform rotate-12 shadow-brutal">
+                        <span class="material-symbols-outlined text-ems-primary text-5xl">calendar_month</span>
+                    </div>
+                </div>
+                <h2 class="text-3xl font-black text-ems-primary leading-none uppercase mb-2">Hệ thống</h2>
+                <p class="text-xl font-bold bg-black text-white px-3 py-1 inline-block">Quản lý Khảo thí</p>
             </div>
-            <h1 class="text-3xl font-bold text-white">EMS</h1>
-            <p class="text-indigo-200 text-sm mt-1">Hệ thống Quản lý Thi trắc nghiệm</p>
         </div>
 
-        {{-- Card --}}
-        <div class="bg-white rounded-2xl shadow-2xl shadow-black/25 p-8">
+        <div class="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+            <div class="mb-8">
+                <h3 class="text-4xl font-black uppercase tracking-tight mb-2">Đăng nhập</h3>
+                <div class="h-2 w-20 bg-ems-primary mb-4"></div>
+                <p class="text-slate-600 font-medium">Giảng viên đăng nhập bằng email và mật khẩu. Sinh viên đăng nhập bằng Google bên dưới.</p>
+            </div>
 
-            <h2 class="text-xl font-semibold text-gray-900 mb-1">Đăng nhập</h2>
-            <p class="text-gray-500 text-sm mb-6">Nhập thông tin tài khoản được cấp</p>
-
-            {{-- Session status --}}
-            @if (session('status'))
-                <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-                    {{ session('status') }}
+            @if (session('warning'))
+                <div class="mb-4 p-3 bg-yellow-100 brutal-border text-sm font-semibold text-yellow-900">
+                    {{ session('warning') }}
                 </div>
             @endif
 
-            {{-- Error from EnsureUserIsActive --}}
             @if (session('error'))
-                <div class="mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex items-center gap-2">
-                    <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                    </svg>
+                <div class="mb-4 p-3 bg-red-100 brutal-border text-sm font-semibold text-red-800">
                     {{ session('error') }}
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}" class="space-y-4">
+            @if ($errors->has('google_auth'))
+                <div class="mb-4 p-3 bg-red-100 brutal-border text-sm font-semibold text-red-800">
+                    {{ $errors->first('google_auth') }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('login') }}" class="space-y-5">
                 @csrf
 
-                {{-- Email --}}
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Email
-                    </label>
-                    <input id="email"
-                           type="email"
-                           name="email"
-                           value="{{ old('email') }}"
-                           required
-                           autofocus
-                           autocomplete="email"
-                           placeholder="email@truong.edu.vn"
-                           class="w-full px-3.5 py-2.5 rounded-lg border text-sm transition
-                                  {{ $errors->has('email') ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-400' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500' }}
-                                  focus:outline-none focus:ring-2">
+                    <label for="email" class="block text-sm font-black uppercase mb-2 tracking-wide">Email giảng viên</label>
+                    <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus
+                        class="w-full h-14 px-4 bg-white brutal-border font-bold text-lg placeholder:text-slate-400 focus:ring-0"
+                        placeholder="lecturer@ems.local">
                     @error('email')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-xs font-semibold text-red-700">{{ $message }}</p>
                     @enderror
                 </div>
 
-                {{-- Password --}}
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Mật khẩu
-                    </label>
-                    <input id="password"
-                           type="password"
-                           name="password"
-                           required
-                           autocomplete="current-password"
-                           placeholder="••••••••"
-                           class="w-full px-3.5 py-2.5 rounded-lg border text-sm transition
-                                  {{ $errors->has('password') ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-400' : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500' }}
-                                  focus:outline-none focus:ring-2">
+                    <label for="password" class="block text-sm font-black uppercase mb-2 tracking-wide">Mật khẩu</label>
+                    <input id="password" name="password" type="password" required
+                        class="w-full h-14 px-4 bg-white brutal-border font-bold text-lg placeholder:text-slate-400 focus:ring-0"
+                        placeholder="••••••••">
                     @error('password')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-xs font-semibold text-red-700">{{ $message }}</p>
                     @enderror
                 </div>
 
-                {{-- Remember + Forgot --}}
-                <div class="flex items-center justify-between">
-                    <label class="inline-flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox"
-                               name="remember"
-                               id="remember_me"
-                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        <span class="text-sm text-gray-600">Ghi nhớ đăng nhập</span>
-                    </label>
-                    @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}"
-                           class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-                            Quên mật khẩu?
-                        </a>
-                    @endif
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="remember" name="remember" class="rounded border-black text-ems-primary focus:ring-0">
+                    <label for="remember" class="text-sm font-semibold">Ghi nhớ đăng nhập</label>
                 </div>
 
-                {{-- Submit --}}
                 <button type="submit"
-                        class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-sm">
+                    class="w-full h-14 bg-ems-primary text-white brutal-border shadow-brutal font-black uppercase tracking-widest hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
                     Đăng nhập
                 </button>
             </form>
 
-        </div>
+            <div class="my-6 flex items-center gap-3">
+                <div class="h-[2px] flex-1 bg-black"></div>
+                <span class="text-xs font-black uppercase tracking-widest">Hoặc</span>
+                <div class="h-[2px] flex-1 bg-black"></div>
+            </div>
 
-        {{-- Demo hint for dev --}}
-        @if(config('app.debug'))
-        <div class="mt-4 text-center text-indigo-300 text-xs space-y-0.5">
-            <p>Demo: <code class="bg-white/10 px-1 rounded">admin@ems.local</code> / <code class="bg-white/10 px-1 rounded">password</code></p>
-        </div>
-        @endif
+            <div class="bg-blue-50 brutal-border p-4 mb-2">
+                <p class="text-xs font-black uppercase tracking-wider text-blue-700 mb-3">Dành cho Sinh viên</p>
+                <a href="{{ route('google.redirect') }}"
+                    class="w-full h-14 bg-white brutal-border shadow-brutal font-black uppercase tracking-wider flex items-center justify-center gap-2 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+                    <span class="material-symbols-outlined">account_circle</span>
+                    Đăng nhập với Google
+                </a>
+            </div>
 
+            <div class="mt-8 pt-6 border-t-2 border-dashed border-slate-300">
+                <p class="text-sm font-bold text-slate-600 italic">
+                    Quên mật khẩu giảng viên? Liên hệ quản trị viên để được cấp lại mật khẩu tạm.
+                </p>
+            </div>
+        </div>
     </div>
+</main>
 
+<footer class="w-full bg-white border-t-[3px] border-black px-6 md:px-20 py-6">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-sm font-black uppercase tracking-widest">© {{ date('Y') }} EMS - EXAM MANAGEMENT SYSTEM</p>
+        <div class="flex gap-6">
+            <a class="text-sm font-bold hover:underline" href="#">Điều khoản</a>
+            <a class="text-sm font-bold hover:underline" href="#">Bảo mật</a>
+            <a class="text-sm font-bold hover:underline" href="#">Hỗ trợ kỹ thuật</a>
+        </div>
+    </div>
+</footer>
 </body>
 </html>
