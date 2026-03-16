@@ -14,6 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserResource extends Resource
@@ -21,6 +22,12 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static ?string $navigationLabel = 'Nguoi dung';
+
+    protected static ?string $modelLabel = 'Nguoi dung';
+
+    protected static ?string $pluralModelLabel = 'Nguoi dung';
 
     public static function form(Schema $schema): Schema
     {
@@ -54,5 +61,26 @@ class UserResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+
+    public static function canViewAny(): bool
+    {
+        $admin = auth('admin')->user();
+
+        return $admin ? Gate::forUser($admin)->allows('admin.users.view') : false;
+    }
+
+    public static function canCreate(): bool
+    {
+        $admin = auth('admin')->user();
+
+        return $admin ? Gate::forUser($admin)->allows('admin.users.create') : false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        $admin = auth('admin')->user();
+
+        return $admin ? Gate::forUser($admin)->allows('admin.users.update') : false;
     }
 }

@@ -13,12 +13,19 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Gate;
 
 class AdminResource extends Resource
 {
     protected static ?string $model = Admin::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static ?string $navigationLabel = 'Quan tri vien';
+
+    protected static ?string $modelLabel = 'Quan tri vien';
+
+    protected static ?string $pluralModelLabel = 'Quan tri vien';
 
     public static function form(Schema $schema): Schema
     {
@@ -44,5 +51,26 @@ class AdminResource extends Resource
             'create' => CreateAdmin::route('/create'),
             'edit' => EditAdmin::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        $admin = auth('admin')->user();
+
+        return $admin ? Gate::forUser($admin)->allows('admin.admins.view') : false;
+    }
+
+    public static function canCreate(): bool
+    {
+        $admin = auth('admin')->user();
+
+        return $admin ? Gate::forUser($admin)->allows('admin.admins.create') : false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        $admin = auth('admin')->user();
+
+        return $admin ? Gate::forUser($admin)->allows('admin.admins.update') : false;
     }
 }

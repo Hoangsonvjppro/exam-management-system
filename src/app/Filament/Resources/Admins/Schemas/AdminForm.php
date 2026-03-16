@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\Admins\Schemas;
 
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class AdminForm
@@ -10,7 +13,50 @@ class AdminForm
     {
         return $schema
             ->components([
-                //
+                TextInput::make('name')
+                    ->label('Ho ten')
+                    ->required()
+                    ->maxLength(255),
+
+                TextInput::make('email')
+                    ->label('Email')
+                    ->email()
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->maxLength(255),
+
+                Select::make('role_name')
+                    ->label('Vai tro quan tri')
+                    ->options([
+                        'root_admin' => 'Root Admin',
+                        'system_admin' => 'System Admin',
+                    ])
+                    ->default('system_admin')
+                    ->required()
+                    ->dehydrated(),
+
+                TextInput::make('password')
+                    ->label('Mat khau')
+                    ->password()
+                    ->revealable()
+                    ->required(fn (string $operation): bool => $operation === 'create')
+                    ->dehydrated(fn (?string $state): bool => filled($state)),
+
+                TextInput::make('password_confirmation')
+                    ->label('Nhap lai mat khau')
+                    ->password()
+                    ->revealable()
+                    ->same('password')
+                    ->dehydrated(false),
+
+                Toggle::make('is_active')
+                    ->label('Tai khoan hoat dong')
+                    ->default(true)
+                    ->required(),
+
+                Toggle::make('is_super_admin')
+                    ->label('Co quyen super admin')
+                    ->default(false),
             ]);
     }
 }
