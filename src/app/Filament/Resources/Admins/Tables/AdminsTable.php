@@ -40,6 +40,10 @@ class AdminsTable
                     ->label('Hoat dong')
                     ->boolean(),
 
+                IconColumn::make('must_change_password')
+                    ->label('Doi mat khau')
+                    ->boolean(),
+
                 TextColumn::make('last_login_at')
                     ->label('Dang nhap cuoi')
                     ->dateTime('d/m/Y H:i')

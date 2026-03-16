@@ -19,6 +19,8 @@ class AdminRootSeeder extends Seeder
             [
                 'name' => 'Root Administrator',
                 'password' => Hash::make($rootPassword),
+                'must_change_password' => true,
+                'password_changed_at' => null,
                 'is_super_admin' => true,
                 'is_active' => true,
             ]

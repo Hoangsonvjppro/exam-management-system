@@ -8,11 +8,19 @@ use Illuminate\Support\Str;
 
 class AdminUserLifecycleService
 {
+    public function __construct(private readonly AuditLogService $auditLogService)
+    {
+    }
+
     public function toggleActive(User $user): bool
     {
         $newState = ! $user->is_active;
 
         $user->update([
+            'is_active' => $newState,
+        ]);
+
+        $this->auditLogService->logAdminAction('users.toggle_active', $user, [
             'is_active' => $newState,
         ]);
 
@@ -31,6 +39,10 @@ class AdminUserLifecycleService
             'password' => $temporaryPassword,
             'must_change_password' => true,
             'password_changed_at' => null,
+        ]);
+
+        $this->auditLogService->logAdminAction('users.reset_password', $user, [
+            'must_change_password' => true,
         ]);
 
         return $temporaryPassword;

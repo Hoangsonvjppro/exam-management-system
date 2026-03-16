@@ -28,6 +28,9 @@ class EditAdmin extends EditRecord
 
         if (blank($data['password'] ?? null)) {
             unset($data['password']);
+        } else {
+            $data['must_change_password'] = false;
+            $data['password_changed_at'] = now();
         }
 
         return $data;

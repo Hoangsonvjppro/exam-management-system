@@ -19,6 +19,8 @@ class Admin extends Authenticatable
         'name',
         'email',
         'password',
+        'must_change_password',
+        'password_changed_at',
         'is_super_admin',
         'is_active',
         'last_login_at',
@@ -34,7 +36,9 @@ class Admin extends Authenticatable
         return [
             'is_super_admin' => 'boolean',
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
             'last_login_at' => 'datetime',
+            'password_changed_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
