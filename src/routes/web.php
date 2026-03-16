@@ -1,12 +1,15 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleLoginController;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\StudentEnrollmentController;
 use App\Http\Controllers\StudentOnboardingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    $user = auth()->user();
+    /** @var User|null $user */
+    $user = Auth::user();
 
     if (! $user) {
         return view('welcome');
@@ -43,11 +46,14 @@ Route::middleware('auth')->group(function () {
 
     // Backward compatible fallback for existing links.
     Route::get('/dashboard', function () {
-        if (auth()->user()->hasRole('lecturer')) {
+        /** @var User|null $user */
+        $user = Auth::user();
+
+        if ($user?->hasRole('lecturer')) {
             return redirect()->route('lecturer.dashboard');
         }
 
-        if (auth()->user()->hasRole('student')) {
+        if ($user?->hasRole('student')) {
             return redirect()->route('student.dashboard');
         }
 

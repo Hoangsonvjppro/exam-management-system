@@ -1,35 +1,68 @@
 <x-app-layout>
-    @section('title', 'Dashboard — Giảng viên')
-    @section('page-title', 'Dashboard')
+    @section('title', 'Dashboard - Giang vien')
+    @section('page-title', 'Tong quan giang day')
 
     <div class="space-y-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-900">Xin chào, {{ auth()->user()->name }} 👋</h2>
-            <p class="mt-1 text-sm text-gray-500">Tổng quan các hoạt động giảng dạy của bạn</p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            @foreach([
-                ['label' => 'Lớp học phần', 'color' => 'blue',   'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'],
-                ['label' => 'Đề thi',       'color' => 'violet', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
-                ['label' => 'Câu hỏi',     'color' => 'amber',  'icon' => 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
-            ] as $stat)
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-{{ $stat['color'] }}-50 flex items-center justify-center shrink-0">
-                    <svg class="w-6 h-6 text-{{ $stat['color'] }}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="{{ $stat['icon'] }}"/>
-                    </svg>
-                </div>
+        <section class="bg-background-light brutal-border shadow-brutal-lg p-6 md:p-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
-                    <div class="text-2xl font-bold text-gray-900">—</div>
-                    <div class="text-sm text-gray-500">{{ $stat['label'] }}</div>
+                    <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-600">Lecturer cockpit</p>
+                    <h2 class="mt-2 text-3xl md:text-4xl font-black uppercase tracking-tight">Xin chao, {{ auth()->user()->name }}</h2>
+                    <p class="mt-3 text-sm md:text-base font-semibold text-slate-700">Trang nay uu tien hanh dong nhanh: tao de thi, cap nhat cau hoi, theo doi lop hoc phan.</p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <a href="#" class="h-12 px-5 flex items-center justify-center bg-ems-primary text-white brutal-border brutal-shadow font-black uppercase tracking-wide brutal-btn">
+                        Tao de thi moi
+                    </a>
+                    <a href="#" class="h-12 px-5 flex items-center justify-center bg-white brutal-border brutal-shadow font-black uppercase tracking-wide brutal-btn">
+                        Quan ly cau hoi
+                    </a>
                 </div>
             </div>
-            @endforeach
-        </div>
+        </section>
 
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center">
-            <p class="text-gray-400 text-sm">Dashboard giảng viên đang được phát triển</p>
-        </div>
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <article class="bg-white brutal-border brutal-shadow p-5">
+                <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Hoc phan</p>
+                <p class="mt-3 text-4xl font-black leading-none">--</p>
+                <p class="mt-2 text-sm font-semibold text-slate-600">So lop hoc phan dang phu trach</p>
+            </article>
+
+            <article class="bg-white brutal-border brutal-shadow p-5">
+                <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">De thi</p>
+                <p class="mt-3 text-4xl font-black leading-none">--</p>
+                <p class="mt-2 text-sm font-semibold text-slate-600">Tong de thi da cau hinh</p>
+            </article>
+
+            <article class="bg-white brutal-border brutal-shadow p-5">
+                <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Cau hoi</p>
+                <p class="mt-3 text-4xl font-black leading-none">--</p>
+                <p class="mt-2 text-sm font-semibold text-slate-600">Ngan hang cau hoi ca nhan</p>
+            </article>
+        </section>
+
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <article class="bg-white brutal-border brutal-shadow p-6">
+                <div class="flex items-center justify-between gap-3">
+                    <h3 class="text-xl font-black uppercase">Viec can xu ly hom nay</h3>
+                    <span class="px-3 py-1 bg-red-100 brutal-border text-xs font-black uppercase">Uu tien</span>
+                </div>
+                <ul class="mt-4 space-y-3 text-sm font-semibold text-slate-700">
+                    <li class="p-3 bg-slate-50 brutal-border">Kiem tra lich thi cua cac lop trong tuan nay.</li>
+                    <li class="p-3 bg-slate-50 brutal-border">Duyet bo cau hoi sap su dung cho de thi giua ky.</li>
+                    <li class="p-3 bg-slate-50 brutal-border">Thong bao cho sinh vien ve han nop bai tap.</li>
+                </ul>
+            </article>
+
+            <article class="bg-white brutal-border brutal-shadow p-6">
+                <h3 class="text-xl font-black uppercase">Dong bo he thong</h3>
+                <p class="mt-3 text-sm font-semibold text-slate-700">
+                    Dashboard giang vien da duoc chuyen sang style neobrutalist action-first theo DESIGN.md.
+                    So lieu thuc se duoc noi vao cac card sau khi module exam/report hoan tat.
+                </p>
+                <div class="mt-4 h-2 w-full bg-black"></div>
+            </article>
+        </section>
     </div>
 </x-app-layout>
