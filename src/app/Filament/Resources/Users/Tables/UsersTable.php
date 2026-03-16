@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Tables;
 
 use App\Models\User;
+use App\Services\AdminUserLifecycleService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -18,7 +19,6 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Str;
 
 class UsersTable
 {
@@ -92,10 +92,10 @@ class UsersTable
                         return $admin ? Gate::forUser($admin)->allows('admin.users.block') : false;
                     })
                     ->action(function (User $record): void {
-                        $record->update(['is_active' => ! $record->is_active]);
+                        $isActive = app(AdminUserLifecycleService::class)->toggleActive($record);
 
                         Notification::make()
-                            ->title($record->is_active ? 'Da mo khoa tai khoan' : 'Da khoa tai khoan')
+                            ->title($isActive ? 'Da mo khoa tai khoan' : 'Da khoa tai khoan')
                             ->success()
                             ->send();
                     }),
@@ -111,13 +111,7 @@ class UsersTable
                             : false)
                     )
                     ->action(function (User $record): void {
-                        $tempPassword = Str::password(length: 10);
-
-                        $record->update([
-                            'password' => $tempPassword,
-                            'must_change_password' => true,
-                            'password_changed_at' => null,
-                        ]);
+                        $tempPassword = app(AdminUserLifecycleService::class)->resetLecturerPassword($record);
 
                         Notification::make()
                             ->title('Da reset mat khau tam')
