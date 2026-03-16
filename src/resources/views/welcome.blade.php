@@ -264,6 +264,9 @@
                 @endif
             </div>
         </div>
+        @if($errors->has('invite_code') || session('error'))
+            <script>document.getElementById('join-class-modal').classList.remove('hidden');</script>
+        @endif
         @endif
     @endauth
 

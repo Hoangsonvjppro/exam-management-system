@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use App\Services\UserStateService;
+use Illuminate\Support\Str;
 
 class StudentEnrollmentController extends Controller
 {
@@ -33,7 +34,26 @@ class StudentEnrollmentController extends Controller
             'invite_code' => ['required', 'string'],
         ]);
 
-        $section = CourseSection::where('invite_code', $validated['invite_code'])->firstOrFail();
+        $inviteCode = Str::upper(trim($validated['invite_code']));
+
+        $section = CourseSection::query()
+            ->where('invite_code', $inviteCode)
+            ->where('status', 'active')
+            ->first();
+
+        if (! $section) {
+            return back()->withErrors([
+                'invite_code' => 'Ma lop khong hop le hoac lop dang dong.',
+            ])->withInput();
+        }
+
+        $isFull = $section->students()->count() >= (int) $section->max_students;
+
+        if ($isFull) {
+            return back()->withErrors([
+                'invite_code' => 'Lop hoc da du so luong sinh vien.',
+            ])->withInput();
+        }
 
         $alreadyJoined = $section->students()
             ->where('student_id', $user->id)
@@ -48,7 +68,11 @@ class StudentEnrollmentController extends Controller
             $this->userStateService->syncStudentRole($user);
         }
 
-        return back()->with('success', 'Tham gia lớp học phần thành công.');
+        if ($alreadyJoined) {
+            return back()->with('success', 'Ban da tham gia lop hoc phan nay roi.');
+        }
+
+        return back()->with('success', 'Tham gia lop hoc phan thanh cong.');
     }
 
     public function leaveClass(CourseSection $courseSection): RedirectResponse
