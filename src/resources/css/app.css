@@ -6,10 +6,22 @@
 @tailwind utilities;
 
 @layer components {
-    .brutal-border { border: 3px solid #000000; }
-    .brutal-shadow { box-shadow: 4px 4px 0px 0px #000000; }
-    .brutal-shadow-lg { box-shadow: 8px 8px 0px 0px #000000; }
-    .brutal-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px 0px #000000; }
+    .brutal-border {
+        border: 3px solid #000000;
+    }
+
+    .brutal-shadow {
+        box-shadow: 4px 4px 0px 0px #000000;
+    }
+
+    .brutal-shadow-lg {
+        box-shadow: 8px 8px 0px 0px #000000;
+    }
+
+    .brutal-btn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 2px 2px 0px 0px #000000;
+    }
 }
 
 @layer base {
@@ -21,27 +33,36 @@
     .sidebar-scroll::-webkit-scrollbar {
         width: 4px;
     }
+
     .sidebar-scroll::-webkit-scrollbar-track {
         @apply bg-transparent;
     }
+
     .sidebar-scroll::-webkit-scrollbar-thumb {
         @apply bg-sidebar-light rounded-full;
     }
 }
 
 @layer components {
+
     /* Sidebar nav item base style */
     .sidebar-link {
-        @apply flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg
-               text-sidebar-text hover:bg-sidebar-light hover:text-white
-               transition-all duration-200 ease-in-out;
+        @apply flex items-center gap-3 px-4 py-2.5 text-sm font-black uppercase tracking-wide text-slate-800 bg-white border-[2px] border-black transition-all duration-200 ease-in-out;
     }
+
     .sidebar-link.active {
-        @apply bg-primary-500 text-white shadow-md;
+        @apply bg-ems-primary text-white;
+        box-shadow: 4px 4px 0px 0px #000000;
+    }
+
+    .sidebar-link:hover {
+        /* @apply bg-background-light; */
+        box-shadow: 4px 4px 0px 0px #000000;
+        transform: translate(-5px, -1px);
     }
 
     /* Sidebar section title */
     .sidebar-section-title {
-        @apply px-4 pt-5 pb-2 text-xs font-semibold uppercase tracking-wider text-sidebar-text/60;
+        @apply px-1 pt-5 pb-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500;
     }
 }
