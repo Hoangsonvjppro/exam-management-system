@@ -60,7 +60,7 @@
             </div>
         @endauth
         @guest
-            <a href="{{ route('google.redirect') }}"
+            <a href="{{ route('login') }}"
                class="bg-ems-primary text-white px-6 py-2 brutal-border brutal-shadow font-black uppercase tracking-wider brutal-btn inline-block">
                 Đăng nhập
             </a>
