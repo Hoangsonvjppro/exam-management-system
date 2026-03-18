@@ -42,7 +42,7 @@ class ExamController extends Controller
         $questions = Question::all();
 
         $selectedQuestionIds = $exam->questions()->pluck('question_id')->toArray();
-        return view('lecturer.exams.questions.manage', compact('exam', 'questions', 'selectedQuestionIds'));
+        return view('lecturer.exams.questions', compact('exam', 'questions', 'selectedQuestionIds'));
     }
 
     // Có danh sách câu hỏi rồi thì sẽ lưu thông tin câu hỏi vào bảng trung gian exam_questions
