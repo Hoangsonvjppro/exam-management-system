@@ -25,6 +25,10 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         ->middleware('student_role')
         ->name('student.dashboard');
 
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])
+        ->middleware('student_role')
+        ->name('student.notifications.index');
+
     // Lecturer routes
     Route::middleware('lecturer_role')->prefix('lecturer')->name('lecturer.')->group(function () {
         Route::get('/dashboard', fn() => view('lecturer.dashboard'))->name('dashboard_redirect');
@@ -32,6 +36,8 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             ->parameters(['classes' => 'section']);
         Route::post('/classes/{section}/regenerate-code', [LecturerSectionController::class, 'regenerateCode'])
             ->name('classes.regenerate-code');
+        Route::post('/classes/{section}/notifications', [\App\Http\Controllers\NotificationController::class, 'store'])
+            ->name('classes.notifications.store');
     });
 
     // Keep old route working for sidebar links

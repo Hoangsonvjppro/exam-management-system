@@ -19,7 +19,7 @@
 </head>
 <body class="font-sans antialiased bg-background-light text-gray-900">
 
-    <div class="flex h-screen overflow-hidden" x-data="{ sidebarOpen: false }">
+    <div class="flex h-screen overflow-hidden" x-data="{ sidebarOpen: false, searchQuery: '' }">
 
         {{-- ─── SIDEBAR ─────────────────────────────────────────── --}}
         <!-- Overlay (mobile) -->
@@ -54,24 +54,6 @@
 
             <!-- Navigation -->
             <nav class="flex-1 overflow-y-auto sidebar-scroll px-3 py-4 space-y-1">
-
-                @role('admin|department_admin')
-                <x-sidebar-section label="Quản trị">
-                    <x-sidebar-link route="admin.dashboard" icon="grid">Tổng quan</x-sidebar-link>
-                    <x-sidebar-link route="admin.dashboard" icon="users">Người dùng</x-sidebar-link>
-                </x-sidebar-section>
-
-                <x-sidebar-section label="Danh mục">
-                    <x-sidebar-link route="admin.dashboard" icon="academic-cap">Môn học</x-sidebar-link>
-                    <x-sidebar-link route="admin.dashboard" icon="calendar">Học kỳ</x-sidebar-link>
-                    <x-sidebar-link route="admin.dashboard" icon="book-open">Lớp học phần</x-sidebar-link>
-                </x-sidebar-section>
-
-                <x-sidebar-section label="Hệ thống">
-                    <x-sidebar-link route="admin.dashboard" icon="cog">Cài đặt</x-sidebar-link>
-                </x-sidebar-section>
-                @endrole
-
                 @role('lecturer|teaching_assistant')
                 <x-sidebar-section label="Giảng dạy">
                     <x-sidebar-link route="lecturer.dashboard" icon="grid">Tổng quan</x-sidebar-link>
@@ -79,29 +61,29 @@
                 </x-sidebar-section>
 
                 <x-sidebar-section label="Ngân hàng đề">
-                    <x-sidebar-link route="lecturer.dashboard" icon="question-mark-circle">Câu hỏi</x-sidebar-link>
-                    <x-sidebar-link route="lecturer.dashboard" icon="document-text">Đề thi</x-sidebar-link>
-                    <x-sidebar-link route="lecturer.dashboard" icon="clock">Lịch thi</x-sidebar-link>
+                    <x-sidebar-link route="lecturer.dashboard" icon="question-mark-circle" :active="false">Câu hỏi</x-sidebar-link>
+                    <x-sidebar-link route="lecturer.dashboard" icon="document-text" :active="false">Đề thi</x-sidebar-link>
+                    <x-sidebar-link route="lecturer.dashboard" icon="clock" :active="false">Lịch thi</x-sidebar-link>
                 </x-sidebar-section>
 
                 <x-sidebar-section label="Lớp học">
-                    <x-sidebar-link route="lecturer.dashboard" icon="check-circle">Điểm danh</x-sidebar-link>
-                    <x-sidebar-link route="lecturer.dashboard" icon="paper-clip">Tài liệu</x-sidebar-link>
+                    <x-sidebar-link route="lecturer.dashboard" icon="check-circle" :active="false">Điểm danh</x-sidebar-link>
+                    <x-sidebar-link route="lecturer.dashboard" icon="paper-clip" :active="false">Tài liệu</x-sidebar-link>
                 </x-sidebar-section>
                 @endrole
 
                 @role('student')
                 <x-sidebar-section label="Menu chính">
                     <x-sidebar-link route="student.dashboard" icon="grid">Tổng quan</x-sidebar-link>
-                    <x-sidebar-link route="student.dashboard" icon="book-open">Học phần của tôi</x-sidebar-link>
-                    <x-sidebar-link route="student.dashboard" icon="clipboard-list">Kỳ thi & Bài tập</x-sidebar-link>
-                    <x-sidebar-link route="student.dashboard" icon="chart-bar">Kết quả học tập</x-sidebar-link>
-                    <x-sidebar-link route="student.dashboard" icon="calendar">Lịch biểu</x-sidebar-link>
+                    <x-sidebar-link route="student.dashboard" icon="book-open" :active="false">Học phần của tôi</x-sidebar-link>
+                    <x-sidebar-link route="student.dashboard" icon="clipboard-list" :active="false">Kỳ thi & Bài tập</x-sidebar-link>
+                    <x-sidebar-link route="student.dashboard" icon="chart-bar" :active="false">Kết quả học tập</x-sidebar-link>
+                    <x-sidebar-link route="student.dashboard" icon="calendar" :active="false">Lịch biểu</x-sidebar-link>
                 </x-sidebar-section>
 
                 <x-sidebar-section label="Cài đặt">
-                    <x-sidebar-link route="student.dashboard" icon="user">Hồ sơ cá nhân</x-sidebar-link>
-                    <x-sidebar-link route="student.dashboard" icon="cog">Cài đặt hệ thống</x-sidebar-link>
+                    <x-sidebar-link route="profile.edit" icon="user">Hồ sơ cá nhân</x-sidebar-link>
+                    <x-sidebar-link route="student.dashboard" icon="cog" :active="false">Cài đặt hệ thống</x-sidebar-link>
                 </x-sidebar-section>
                 @endrole
 
@@ -154,6 +136,7 @@
                                 </svg>
                             </div>
                             <input type="search"
+                                   x-model="searchQuery"
                                    placeholder="Tìm kiếm khóa học..."
                                    class="block w-full pl-10 pr-4 py-2 bg-white border-[2px] border-black text-sm font-semibold text-gray-700 placeholder-gray-400 focus:bg-white focus:ring-0 transition-colors">
                         </div>
@@ -163,17 +146,31 @@
                     <div class="flex items-center gap-2 sm:gap-3">
 
                         <!-- Notifications -->
+                        @role('student')
+                        <a href="{{ route('student.notifications.index') }}" class="relative p-2 brutal-border bg-white text-gray-700 hover:bg-background-light transition-colors block" title="Thông báo">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            {{-- Unread badge --}}
+                            @php $unreadCount = auth()->user() ? \App\Models\Notification::where('user_id', auth()->id())->whereNull('read_at')->count() : 0; @endphp
+                            @if($unreadCount > 0)
+                                <span class="absolute bottom-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white" title="Có thông báo mới"></span>
+                            @endif
+                        </a>
+                        @else
                         <button class="relative p-2 brutal-border bg-white text-gray-700 hover:bg-background-light transition-colors" title="Thông báo">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
                             {{-- Unread badge --}}
-                            @php $unreadCount = auth()->user() ? \App\Models\Notification::where('user_id', auth()->id())->unread()->count() : 0; @endphp
+                            @php $unreadCount = auth()->user() ? \App\Models\Notification::where('user_id', auth()->id())->whereNull('read_at')->count() : 0; @endphp
                             @if($unreadCount > 0)
-                                <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-danger-500 rounded-full ring-2 ring-white"></span>
+                                <span class="absolute bottom-1 right-1 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-white" title="Có thông báo mới"></span>
                             @endif
                         </button>
+                        @endrole
 
                         <!-- Divider -->
                         <div class="hidden sm:block w-px h-8 bg-black"></div>
