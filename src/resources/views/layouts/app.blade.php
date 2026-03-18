@@ -54,24 +54,6 @@
 
             <!-- Navigation -->
             <nav class="flex-1 overflow-y-auto sidebar-scroll px-3 py-4 space-y-1">
-
-                @role('admin|department_admin')
-                <x-sidebar-section label="Quản trị">
-                    <x-sidebar-link route="admin.dashboard" icon="grid">Tổng quan</x-sidebar-link>
-                    <x-sidebar-link route="admin.dashboard" icon="users" :active="false">Người dùng</x-sidebar-link>
-                </x-sidebar-section>
-
-                <x-sidebar-section label="Danh mục">
-                    <x-sidebar-link route="admin.dashboard" icon="academic-cap" :active="false">Môn học</x-sidebar-link>
-                    <x-sidebar-link route="admin.dashboard" icon="calendar" :active="false">Học kỳ</x-sidebar-link>
-                    <x-sidebar-link route="admin.dashboard" icon="book-open" :active="false">Lớp học phần</x-sidebar-link>
-                </x-sidebar-section>
-
-                <x-sidebar-section label="Hệ thống">
-                    <x-sidebar-link route="admin.dashboard" icon="cog" :active="false">Cài đặt</x-sidebar-link>
-                </x-sidebar-section>
-                @endrole
-
                 @role('lecturer|teaching_assistant')
                 <x-sidebar-section label="Giảng dạy">
                     <x-sidebar-link route="lecturer.dashboard" icon="grid">Tổng quan</x-sidebar-link>
