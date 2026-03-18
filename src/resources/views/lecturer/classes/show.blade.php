@@ -9,10 +9,16 @@
                class="inline-flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-ems-primary">
                 ← Danh sách lớp
             </a>
-            <a href="{{ route('lecturer.classes.edit', $section) }}"
-               class="h-9 px-4 flex items-center bg-white brutal-border font-black text-xs uppercase brutal-btn brutal-shadow">
-                Chỉnh sửa
-            </a>
+            <div class="flex items-center gap-3">
+                <button onclick="document.getElementById('create-notification-modal').classList.remove('hidden')"
+                   class="h-9 px-4 flex items-center bg-ems-primary text-white brutal-border font-black text-xs uppercase brutal-btn brutal-shadow">
+                    Tạo thông báo
+                </button>
+                <a href="{{ route('lecturer.classes.edit', $section) }}"
+                   class="h-9 px-4 flex items-center bg-white brutal-border font-black text-xs uppercase brutal-btn brutal-shadow">
+                    Chỉnh sửa
+                </a>
+            </div>
         </div>
 
         @if(session('success'))
@@ -128,4 +134,30 @@
         @endif
 
     </div>
+
+    {{-- Notification Modal --}}
+    <div id="create-notification-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div class="bg-white brutal-border brutal-shadow-lg w-full max-w-lg p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-black uppercase">Tạo thông báo</h3>
+                <button onclick="document.getElementById('create-notification-modal').classList.add('hidden')" class="font-black text-2xl leading-none hover:text-ems-primary">&times;</button>
+            </div>
+
+            <form method="POST" action="{{ route('lecturer.classes.notifications.store', $section) }}" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">Tiêu đề</label>
+                    <input name="title" type="text" required placeholder="Nhập tiêu đề thông báo" class="w-full h-12 px-4 bg-white brutal-border font-bold focus:ring-0">
+                </div>
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">Nội dung</label>
+                    <textarea name="message" required rows="4" placeholder="Nội dung thông báo..." class="w-full p-4 bg-white brutal-border font-semibold focus:ring-0"></textarea>
+                </div>
+                <button type="submit" class="w-full h-12 bg-ems-primary text-white brutal-border font-black uppercase tracking-widest hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shadow-brutal">
+                    Gửi thông báo
+                </button>
+            </form>
+        </div>
+    </div>
 </x-app-layout>
+

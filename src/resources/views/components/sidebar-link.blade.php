@@ -1,7 +1,9 @@
-@props(['route', 'icon' => 'circle', 'badge' => null])
+@props(['route' => null, 'active' => null, 'icon' => 'circle', 'badge' => null])
 
 @php
-    $isActive = request()->routeIs($route) || request()->routeIs($route . '.*');
+    $isActive = $active ?? ($route && (request()->routeIs($route) || request()->routeIs($route . '.*')));
+    
+    // Support for legacy string icons if slot is not used
     $icons = [
         'grid'                => 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z',
         'chart-bar'           => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
@@ -19,14 +21,17 @@
         'user'                => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
         'circle'              => 'M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
     ];
-    $iconPath = $icons[$icon] ?? $icons['circle'];
 @endphp
 
-<a href="{{ route($route) }}"
-   class="sidebar-link {{ $isActive ? 'active' : '' }}">
-    <svg class="flex-shrink-0 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPath }}"/>
-    </svg>
+<a href="{{ $route ? route($route) : '#' }}"
+   {{ $attributes->merge(['class' => 'sidebar-link ' . ($isActive ? 'active' : '')]) }}>
+    @if(isset($icon) && !is_string($icon))
+        {{ $icon }}
+    @else
+        <svg class="flex-shrink-0 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icons[$icon] ?? $icons['circle'] }}"/>
+        </svg>
+    @endif
     <span class="sidebar-label truncate flex-1">{{ $slot }}</span>
     @if($badge)
         <span class="ml-auto bg-danger-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{{ $badge }}</span>
