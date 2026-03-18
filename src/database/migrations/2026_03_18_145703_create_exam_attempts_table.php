@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('exam_attempts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('exam_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->dateTime('started_at');
+            $table->dateTime('completed_at')->nullable();
+            $table->enum('status', ['in_progress', 'completed', 'abandoned'])->default('in_progress');
+            $table->decimal('total_score', 5, 2)->nullable();
             $table->timestamps();
         });
     }
