@@ -13,7 +13,14 @@ return new class extends Migration
     {
         Schema::create('exam_questions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('exam_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('question_id')->constrained()->cascadeOnDelete();
+            $table->decimal('points',5,2)->default(1.00); //điểm của câu hỏi trong bài kiểm tra
+            $table->integer('order_index')->default(0); //thứ tự câu hỏi trong bài kiểm tra
             $table->timestamps();
+
+            // Đảm bảo mỗi câu hỏi chỉ được thêm vào một bài kiểm tra một lần
+            $table->unique(['exam_id', 'question_id']);
         });
     }
 
