@@ -145,6 +145,11 @@ class User extends Authenticatable
         return $this->hasMany(File::class, 'uploaded_by');
     }
 
+    public function examAttempts(): HasMany
+    {
+        return $this->hasMany(ExamAttempt::class);
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────
 
     /**
