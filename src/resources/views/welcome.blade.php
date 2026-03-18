@@ -194,7 +194,7 @@
                 <ul class="font-bold flex flex-col gap-2">
                     <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">mail</span> contact@ems-edu.vn</li>
                     <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">call</span> +84 24 123 4567</li>
-                    <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">location_on</span> 123 Đường Học Thuật, Hà Nội</li>
+                    <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">location_on</span> 273 An Dương Vương, Tp.HCMl</li>
                 </ul>
             </div>
             <div class="flex flex-col gap-4">
