@@ -80,7 +80,11 @@
             @else
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     @foreach($enrolledSections as $section)
-                        <div class="brutal-border p-4 bg-background-light flex items-center justify-between gap-4">
+                        @php
+                            $searchableText = strtolower(($section->name ?? '') . ' ' . $section->code);
+                        @endphp
+                        <div class="brutal-border p-4 bg-background-light flex items-center justify-between gap-4"
+                             x-show="searchQuery === '' || '{{ $searchableText }}'.includes(searchQuery.toLowerCase())">
                             <div>
                                 <p class="font-black text-sm uppercase tracking-wide">{{ $section->name ?? $section->code }}</p>
                                 <p class="text-xs font-semibold text-slate-500 mt-0.5">{{ $section->code }}</p>

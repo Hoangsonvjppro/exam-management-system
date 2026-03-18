@@ -47,7 +47,11 @@
         @else
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 @foreach($sections as $section)
-                    <div class="bg-white brutal-border brutal-shadow flex flex-col">
+                    @php
+                        $searchableText = strtolower(($section->name ?? '') . ' ' . $section->code);
+                    @endphp
+                    <div class="bg-white brutal-border brutal-shadow flex flex-col"
+                         x-show="searchQuery === '' || '{{ $searchableText }}'.includes(searchQuery.toLowerCase())">
                         {{-- Card Top --}}
                         <div class="p-5 border-b-4 border-black
                             @if($section->status === 'active') bg-ems-primary/10

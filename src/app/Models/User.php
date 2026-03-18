@@ -112,6 +112,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Các thông báo nhận được.
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
      * Các lớp học phần mà giảng viên phụ trách.
      */
     public function courseSections(): HasMany

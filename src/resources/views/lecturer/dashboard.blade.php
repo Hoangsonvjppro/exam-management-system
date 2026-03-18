@@ -82,8 +82,12 @@
                 @else
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         @foreach($mySections->take(6) as $section)
+                            @php
+                                $searchableText = strtolower(($section->name ?? '') . ' ' . $section->code);
+                            @endphp
                             <a href="{{ route('lecturer.classes.show', $section) }}"
-                               class="brutal-border p-4 bg-background-light hover:bg-ems-primary/10 transition-colors flex items-start justify-between gap-3">
+                               class="brutal-border p-4 bg-background-light hover:bg-ems-primary/10 transition-colors flex items-start justify-between gap-3"
+                               x-show="searchQuery === '' || '{{ $searchableText }}'.includes(searchQuery.toLowerCase())">
                                 <div>
                                     <p class="font-black text-sm uppercase">{{ $section->name ?? $section->code }}</p>
                                     <p class="text-xs text-slate-500 font-semibold mt-0.5">{{ $section->students_count }} sinh viên</p>
