@@ -13,6 +13,13 @@ return new class extends Migration
     {
         Schema::create('student_answers', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('exam_attempt_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('question_id')->constrained()->cascadeOnDelete();
+        // ID của đáp án sinh viên chọn (nullable vì có thể là tự luận hoặc bỏ trống)
+            $table->foreignId('question_option_id')->nullable()->constrained()->nullOnDelete();
+            $table->text('answer_text')->nullable(); // Dành cho câu tự luận
+            $table->boolean('is_correct')->nullable(); // True nếu đúng, False nếu sai
+            $table->decimal('points_awarded', 5, 2)->default(0);
             $table->timestamps();
         });
     }
