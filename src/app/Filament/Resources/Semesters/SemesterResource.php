@@ -27,11 +27,11 @@ class SemesterResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationLabel = 'Hoc ky';
+    protected static ?string $navigationLabel = 'Học kỳ';
 
-    protected static ?string $modelLabel = 'Hoc ky';
+    protected static ?string $modelLabel = 'Học kỳ';
 
-    protected static ?string $pluralModelLabel = 'Hoc ky';
+    protected static ?string $pluralModelLabel = 'Học kỳ';
 
     protected static string | \UnitEnum | null $navigationGroup = 'Nội dung';
 
@@ -41,20 +41,20 @@ class SemesterResource extends Resource
     {
         return $schema->components([
             TextInput::make('name')
-                ->label('Ten hoc ky')
+                ->label('Tên học kỳ')
                 ->required()
                 ->maxLength(100)
                 ->columnSpanFull(),
 
             TextInput::make('year')
-                ->label('Nam hoc bat dau')
+                ->label('Năm học bắt đầu')
                 ->numeric()
                 ->minValue(2000)
                 ->maxValue(2100)
                 ->required(),
 
             Select::make('term')
-                ->label('Hoc ky')
+                ->label('Học kỳ')
                 ->options([
                     1 => 'HK1',
                     2 => 'HK2',
@@ -63,18 +63,18 @@ class SemesterResource extends Resource
                 ->required(),
 
             DatePicker::make('start_date')
-                ->label('Ngay bat dau')
+                ->label('Ngày bắt đầu')
                 ->native(false)
                 ->required(),
 
             DatePicker::make('end_date')
-                ->label('Ngay ket thuc')
+                ->label('Ngày kết thúc')
                 ->native(false)
                 ->required()
                 ->afterOrEqual('start_date'),
 
             Toggle::make('is_current')
-                ->label('Hoc ky hien tai')
+                ->label('Học kỳ hiện tại')
                 ->default(false),
         ]);
     }
@@ -84,16 +84,16 @@ class SemesterResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Ten hoc ky')
+                    ->label('Tên học kỳ')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('year')
-                    ->label('Nam')
+                    ->label('Năm học')
                     ->sortable(),
 
                 TextColumn::make('term')
-                    ->label('Ky')
+                    ->label('Học kỳ')
                     ->badge()
                     ->formatStateUsing(fn (int $state): string => match ($state) {
                         1 => 'HK1',
@@ -103,22 +103,22 @@ class SemesterResource extends Resource
                     }),
 
                 TextColumn::make('start_date')
-                    ->label('Bat dau')
+                    ->label('Ngày bắt đầu')
                     ->date('d/m/Y')
                     ->sortable(),
 
                 TextColumn::make('end_date')
-                    ->label('Ket thuc')
+                    ->label('Ngày kết thúc')
                     ->date('d/m/Y')
                     ->sortable(),
 
                 IconColumn::make('is_current')
-                    ->label('Hien tai')
+                    ->label('Học kỳ hiện tại')
                     ->boolean(),
             ])
             ->filters([
                 SelectFilter::make('term')
-                    ->label('Ky')
+                    ->label('Học kỳ')
                     ->options([
                         1 => 'HK1',
                         2 => 'HK2',
