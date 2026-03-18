@@ -38,7 +38,14 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             ->name('classes.regenerate-code');
         Route::post('/classes/{section}/notifications', [\App\Http\Controllers\NotificationController::class, 'store'])
             ->name('classes.notifications.store');
-    });
+        // Quản lý thông tin chung của Đề thi
+        Route::post('/course-sections/{courseSection}/exams', [\App\Http\Controllers\Lecturer\ExamController::class, 'store'])->name('course-sections.exams.store');
+        Route::get('/course-sections/{courseSection}/exams/create', [\App\Http\Controllers\Lecturer\ExamController::class, 'create'])->name('course-sections.exams.create');
+
+        // Quản lý việc thêm/bớt câu hỏi vào Đề thi
+        Route::get('/exams/{exam}/questions', [\App\Http\Controllers\Lecturer\ExamController::class, 'manageQuestions'])->name('exams.questions.manage');
+        Route::post('/exams/{exam}/questions', [\App\Http\Controllers\Lecturer\ExamController::class, 'storeQuestions'])->name('exams.questions.store');
+        });
 
     // Keep old route working for sidebar links
     Route::view('/dashboard/lecturer', 'lecturer.dashboard')

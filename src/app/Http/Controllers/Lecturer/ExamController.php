@@ -72,7 +72,7 @@ class ExamController extends Controller
     */
 
      /*
-     hàm sắp xếp câu hỏi
+     hàm sắp xếp câu hỏi (danh sách câu hỏi sẽ hiển thị theo thứ tự trước đó)
      {
      bốc câu hỏi đó lên và nhập vị trí mới cho nó
      trả về câu hỏi có vị trí được tùy chỉnh
