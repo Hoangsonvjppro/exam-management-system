@@ -92,6 +92,17 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         ->middleware('student_role')
         ->name('student.notifications.index');
 
+    // Student Exam routes
+    Route::middleware('student_role')->prefix('student')->name('student.')->group(function () {
+        Route::get('/exams/{exam}', [\App\Http\Controllers\Student\ExamController::class, 'show'])->name('exams.show');
+        Route::post('/exams/{exam}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('exams.start');
+        Route::get('/exams/{exam}/room', [\App\Http\Controllers\Student\ExamController::class, 'room'])->name('exams.room');
+        Route::post('/exams/{exam}/save-answer', [\App\Http\Controllers\Student\ExamController::class, 'saveAnswer'])->name('exams.save-answer');
+        Route::post('/exams/{exam}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('exams.submit');
+    });
+
+
+
 
     // ----------------------------------------------------------
     // 2c. LECTURER ROUTES
@@ -106,7 +117,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         ->group(function () {
 
             // Dashboard giảng viên (route mới, dùng closure)
-            Route::get('/dashboard', fn () => view('lecturer.dashboard'))
+            Route::get('/dashboard', fn() => view('lecturer.dashboard'))
                 ->name('dashboard_redirect');
 
             // ── Quản lý lớp học (Course Sections) ──────────────────
@@ -171,7 +182,6 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         // Fallback: chưa có vai trò → về trang chủ
         return redirect()->route('landing');
     })->name('dashboard');
-
 }); // end: protected routes
 
 
