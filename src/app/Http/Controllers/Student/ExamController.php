@@ -132,27 +132,28 @@ class ExamController extends Controller
             ->where('status', 'in_progress') // chỉ cho phép submit nếu đang trong trạng thái làm bài
             ->firstOrFail();
 
-        $totalScore = 0;
         $answers = $attempt->answers()->with('option')->get();
-        foreach ($exam->questions as $question) {
-            $isCorrect = $answers->option?->is_correct ?? false;
+        $totalScore = 0;
 
-            // Lấy điểm câu hỏi từ bảng trung gian exam_questions
+        foreach ($answers as $answer) {               // lặp đúng theo từng câu trả lời
+            $isCorrect = $answer->option?->is_correct ?? false;
+
             $point = $exam->questions()
-                ->where('questions.id', $answers->question_id)
+                ->where('questions.id', $answer->question_id) // dùng $answer (số ít)
                 ->first()?->pivot->points ?? 1.00;
+
             $awardedPoint = $isCorrect ? $point : 0;
             $totalScore += $awardedPoint;
 
-            $answers->update([
-                'is_correct' => $isCorrect,
-                'points_awarded' => $awardedPoint
+            $answer->update([                         // update từng bản ghi
+                'is_correct'     => $isCorrect,
+                'points_awarded' => $awardedPoint,
             ]);
         }
 
         $attempt->update(['status' => 'completed', 'completed_at' => now(), 'total_score' => $totalScore]);
 
         return redirect()->route('student.exams.show', $exam->id)
-            ->with('success', 'Bài thi đã được nộp thành công. Điểm của bạn là: ' . $totalScore .'');
+            ->with('success', 'Bài thi đã được nộp thành công. Điểm của bạn là: ' . $totalScore . '');
     }
 }

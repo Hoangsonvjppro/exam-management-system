@@ -58,11 +58,12 @@ class CourseSectionController extends Controller
 
     public function show(CourseSection $section): View
     {
-        $this->authorizeSection($section);
+        $this->authorizeSection($section); // ← nên authorize trước khi load data
 
-        $section->load(['students' => function ($q) {
-            $q->orderBy('name');
-        }]);
+        $section->load([
+            'students' => fn($q) => $q->orderBy('name'),
+            'exams'    => fn($q) => $q->withCount('questions'),
+        ]);
 
         return view('lecturer.classes.show', compact('section'));
     }
