@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('exam_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->unique(['exam_id', 'user_id']);
             $table->dateTime('started_at');
             $table->dateTime('completed_at')->nullable();
             $table->enum('status', ['in_progress', 'completed', 'abandoned'])->default('in_progress');
