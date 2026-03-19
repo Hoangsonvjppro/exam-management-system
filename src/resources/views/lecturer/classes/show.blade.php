@@ -7,7 +7,9 @@
         <div class="flex items-center justify-between">
             <a href="{{ route('lecturer.classes.index') }}"
                 class="inline-flex items-center gap-1.5 text-[13px] font-medium text-text-muted hover:text-navy-900 transition-colors">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
                 Danh sách lớp
             </a>
             <div class="flex items-center gap-3">
@@ -24,14 +26,14 @@
         </div>
 
         @if(session('success'))
-            <div class="p-4 bg-teal-50 border-[0.5px] border-teal-200 rounded-[6px] font-medium text-teal-800 text-[13px] hover:bg-teal-100 transition-colors cursor-pointer">
-                {{ session('success') }}
-            </div>
+        <div class="p-4 bg-teal-50 border-[0.5px] border-teal-200 rounded-[6px] font-medium text-teal-800 text-[13px] hover:bg-teal-100 transition-colors cursor-pointer">
+            {{ session('success') }}
+        </div>
         @endif
         @if(session('error'))
-            <div class="p-4 bg-red-50 border-[0.5px] border-red-200 rounded-[6px] font-medium text-red-800 text-[13px]">
-                {{ session('error') }}
-            </div>
+        <div class="p-4 bg-red-50 border-[0.5px] border-red-200 rounded-[6px] font-medium text-red-800 text-[13px]">
+            {{ session('error') }}
+        </div>
         @endif
 
         {{-- Class Info Card --}}
@@ -122,6 +124,105 @@
             @endif
         </x-card>
 
+        {{-- Exam List --}}
+        <x-card padding="true">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-[18px] font-bold text-navy-900">
+                    Đề thi
+                    <span class="ml-2 text-[13px] font-semibold text-text-muted">({{ $section->exams->count() }})</span>
+                </h3>
+                <x-button variant="secondary" href="{{ route('lecturer.course-sections.exams.create', $section) }}">
+                    + Tạo đề thi
+                </x-button>
+            </div>
+
+            @if($section->exams->isEmpty())
+            <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                <p class="text-[13px] font-medium text-text-muted mb-1">Chưa có đề thi nào trong lớp này.</p>
+                <p class="text-[12px] text-text-muted">Nhấn "Tạo đề thi" để bắt đầu.</p>
+            </div>
+            @else
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b-[1.5px] border-border-clean">
+                            <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Tên đề thi</th>
+                            <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Thời gian</th>
+                            <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Số câu</th>
+                            <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Trạng thái</th>
+                            <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y-[0.5px] divide-border-clean">
+                        @foreach($section->exams->sortByDesc('created_at') as $exam)
+                        <tr class="hover:bg-surface-0 transition-colors">
+                            <td class="py-4 px-4">
+                                <p class="text-[14px] font-semibold text-navy-900">{{ $exam->title }}</p>
+                                @if($exam->start_time)
+                                <p class="text-[12px] text-text-muted mt-0.5">
+                                    Mở: {{ $exam->start_time->format('d/m/Y H:i') }}
+                                    @if($exam->end_time) — Đóng: {{ $exam->end_time->format('d/m/Y H:i') }} @endif
+                                </p>
+                                @endif
+                            </td>
+                            <td class="py-4 px-4 text-[13px] font-medium text-navy-900">
+                                {{ $exam->duration_minutes }} phút
+                            </td>
+                            <td class="py-4 px-4 text-[13px] text-navy-900">
+                                {{ $exam->questions_count ?? $exam->questions_count }} câu
+                            </td>
+                            <td class="py-4 px-4">
+                                <span class="inline-block uppercase text-[10px] font-bold px-2 py-1 rounded-[4px]
+                                        @if($exam->status === 'published') bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
+                                        @elseif($exam->status === 'draft')   bg-amber-50 text-amber-700 border-[0.5px] border-amber-200
+                                        @else                                bg-slate-100 text-slate-600 border-[0.5px] border-slate-200 @endif">
+                                    {{ match($exam->status) {
+                                            'published' => 'Đang mở',
+                                            'draft'     => 'Bản nháp',
+                                            default     => 'Đã đóng',
+                                        } }}
+                                </span>
+                            </td>
+                            <td class="py-4 px-4">
+                                <div class="flex items-center gap-3">
+                                    {{-- Quản lý câu hỏi --}}
+                                    <a href="{{ route('lecturer.exams.questions.manage', $exam) }}"
+                                        class="text-[12px] font-semibold text-blue-500 hover:text-blue-700 transition-colors">
+                                        Câu hỏi
+                                    </a>
+
+                                    {{-- Publish / Unpublish --}}
+                                    @if($exam->status === 'draft')
+                                    <form method="POST" action="{{ route('lecturer.exams.publish', $exam) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit"
+                                            class="text-[12px] font-semibold text-teal-600 hover:text-teal-800 transition-colors"
+                                            onclick="return confirm('Mở đề thi này cho sinh viên?')">
+                                            Mở đề
+                                        </button>
+                                    </form>
+                                    @elseif($exam->status === 'published')
+                                    <form method="POST" action="{{ route('lecturer.exams.close', $exam) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit"
+                                            class="text-[12px] font-semibold text-red-500 hover:text-red-700 transition-colors"
+                                            onclick="return confirm('Đóng đề thi này lại?')">
+                                            Đóng đề
+                                        </button>
+                                    </form>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @endif
+        </x-card>
+
         {{-- Danger zone --}}
         @if($section->students->isEmpty())
         <div class="bg-red-50 border-[0.5px] border-red-200 rounded-[10px] p-6">
@@ -147,7 +248,9 @@
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-[20px] font-bold text-navy-900">Tạo thông báo</h3>
                 <button onclick="document.getElementById('create-notification-modal').classList.add('hidden')" class="text-text-muted hover:text-navy-900 transition-colors">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
             </div>
 

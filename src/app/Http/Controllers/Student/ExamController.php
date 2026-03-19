@@ -25,6 +25,20 @@ class ExamController extends Controller
     // Hiển thị bài thi khi thằng sinh viên nhấn vào nút bắt đầu
     public function start(Exam $exam)
     {
+        //Fix: Có lẽ nên thêm phần kiểm tra xem status bài thi đã được mở hay chưa rồi mới cho phép bắt đầu, tránh trường hợp sinh viên vào sảnh chờ rồi nhưng thầy chưa mở bài thi
+        if ($exam->status != 'published') {
+            abort(403, 'Bài thi nãy đã được mở đâu!?');
+        }
+
+        $now = now();
+        if ($exam->start_time  && $now->lt($exam->start_time)) {
+            return back()->with('error', 'Lo ôn bài tiếp đi, vì bài thi  chưa bắt đầu.');
+        }
+        if ($exam->end_time && $now->gt($exam->end_time)) {
+            return back()->with('error', 'Bài thi đã kết thúc.');
+        }
+
+
         $attempt = ExamAttempt::firstOrCreate(
             ['exam_id' => $exam->id, 'user_id' => Auth::id()],
             ['started_at' => now(), 'status' => 'in_progress']
@@ -60,14 +74,26 @@ class ExamController extends Controller
         $questions = $exam->questions()->with('options')->get();
 
         // Cần lưu những đáp án đã chọn, vì chẳng may thằng sinh viên nhấn f5 thì còn cứu được
-        $saveAnswers = $attempt->answers()->pluck('question_option_id', 'question_id')->toArray();
+        $savedAnswers = $attempt->answers()->pluck('question_option_id', 'question_id')->toArray();
 
-        return view('student.exams.room', compact('exam', 'attempt', 'questions', 'timeLeftSeconds', 'saveAnswers'));
+        return view('student.exams.room', compact(
+            'exam',
+            'attempt',
+            'questions',
+            'timeLeftSeconds',
+            'savedAnswers'
+        ));
     }
 
     // API lưu ngầm, không reload trang, mỗi lần sinh viên chọn đáp án nào đó thì sẽ gọi API này để lưu lại
     public function saveAnswer(Request $request, Exam $exam)
     {
+        $validated = $request->validate([
+            'question_id' => 'required|integer|exists:questions,id',
+            'question_option_id' => 'required|integer|exists:question_options,id',
+        ]);
+
+
         $attempt = ExamAttempt::where('exam_id', $exam->id)
             ->where('user_id', Auth::id())
             ->first();
@@ -76,13 +102,22 @@ class ExamController extends Controller
             return response()->json(['error' => 'Không thể lưu đáp án.'], 403);
         }
 
+        //Kiểm tra câu hỏi có thuộc đề thi này không, tránh trường hợp sinh viên gửi request lạ để lưu đáp án cho câu hỏi không thuộc đề thi
+        $questionBelongstoExam = $exam->questions()
+            ->where('questions.id', $validated['question_id'])
+            ->exists();
+
+        if (!$questionBelongstoExam) {
+            return response()->json(['error' => 'Câu hỏi không thuộc đề thi này.'], 422);
+        }
+
         StudentAnswer::updateOrCreate(
             [
                 'exam_attempt_id' => $attempt->id,
-                'question_id' => $request->question_id,
+                'question_id' => $validated['question_id'],
             ],
             [
-                'question_option_id' => $request->question_option_id,
+                'question_option_id' => $validated['question_option_id'],
             ]
         );
 
@@ -92,11 +127,33 @@ class ExamController extends Controller
     // Nộp bài thi, tính điểm và lưu kết quả
     public function submit(Request $request, Exam $exam)
     {
-        $attempt = ExamAttempt::where('exam_id', $exam->id)->where('user_id', Auth::id())->firstOrFail();
+        $attempt = ExamAttempt::where('exam_id', $exam->id)
+            ->where('user_id', Auth::id())
+            ->where('status', 'in_progress') // chỉ cho phép submit nếu đang trong trạng thái làm bài
+            ->firstOrFail();
 
-        $attempt->update(['status' => 'completed', 'completed_at' => now()]);
+        $answers = $attempt->answers()->with('option')->get();
+        $totalScore = 0;
+
+        foreach ($answers as $answer) {               // lặp đúng theo từng câu trả lời
+            $isCorrect = $answer->option?->is_correct ?? false;
+
+            $point = $exam->questions()
+                ->where('questions.id', $answer->question_id) // dùng $answer (số ít)
+                ->first()?->pivot->points ?? 1.00;
+
+            $awardedPoint = $isCorrect ? $point : 0;
+            $totalScore += $awardedPoint;
+
+            $answer->update([                         // update từng bản ghi
+                'is_correct'     => $isCorrect,
+                'points_awarded' => $awardedPoint,
+            ]);
+        }
+
+        $attempt->update(['status' => 'completed', 'completed_at' => now(), 'total_score' => $totalScore]);
 
         return redirect()->route('student.exams.show', $exam->id)
-            ->with('success', 'Bài thi đã được nộp thành công. Điểm số sẽ được cập nhật sau khi chấm bài.');
+            ->with('success', 'Bài thi đã được nộp thành công. Điểm của bạn là: ' . $totalScore . '');
     }
 }

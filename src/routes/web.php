@@ -47,6 +47,7 @@ Route::get('/auth/google/callback', [GoogleLoginController::class, 'callback'])
     ->name('google.callback');
 
 
+
 // ============================================================
 // 2. PROTECTED ROUTES
 //    Yêu cầu:
@@ -156,6 +157,9 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             // Thêm / cập nhật danh sách câu hỏi của đề thi
             Route::post('/exams/{exam}/questions', [ExamController::class, 'storeQuestions'])
                 ->name('exams.questions.store');
+            Route::patch('/exams/{exam}/publish', [ExamController::class, 'publish'])
+                ->name('exams.publish');
+            Route::patch('/exams/{exam}/close',   [ExamController::class, 'close'])->name('exams.close'); // 
         });
 
     // Dashboard cũ của giảng viên – giữ lại để tương thích với

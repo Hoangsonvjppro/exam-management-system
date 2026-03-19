@@ -87,7 +87,7 @@
                             },
                             body: JSON.stringify({
                                 question_id: questionId,
-                                option_id: optionId
+                                question_option_id: optionId
                             })
                         })
                         .then(response => response.json())

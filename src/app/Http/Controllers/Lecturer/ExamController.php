@@ -45,6 +45,19 @@ class ExamController extends Controller
         return view('lecturer.exams.questions', compact('exam', 'questions', 'selectedQuestionIds'));
     }
 
+    // Thêm một method publish đề thi, để tụi sinh viên có thể vào làm bài.
+    public function publish(Exam $exam)
+    {
+        // Kiểm tra bài thi có câu hỏi hay không? Nếu ko có thì khỏi publish
+        if ($exam->questions()->count() === 0) {
+            return back()->with('error','Đề kiểm tra phải có ít nhất một câu hỏi');
+        }
+
+        $exam->update(['status' => 'published']);
+
+        return back()->with('success','Đề thi đã được mở');
+    }
+
     // Có danh sách câu hỏi rồi thì sẽ lưu thông tin câu hỏi vào bảng trung gian exam_questions
     public function storeQuestions(Request $request, Exam $exam)
     {
@@ -55,12 +68,20 @@ class ExamController extends Controller
 
         // Chỗ này để mặc định mỗi câu hỏi 1 điểm, 
         // Ae thấy nếu có thể tùy chỉnh điểm cho mỗi câu thì viết logic tùy chỉnh điểm sau nhé
-        $exam->questions()->syncWithPivotValues($request->question_ids ?? [], [
-            'points' => 1.00,
-            'order_index' => 0, // Logic sắp xếp câu hỏi sẽ viết
-        ]);
+        $questionsData = collect($request->question_ids)->mapWithKeys(function ($id, $index) {
+            return [$id => ['points' => 1.00, 'order_index' => $index + 1]];
+        })->all();
+
+        $exam->questions()->sync($questionsData);
+        
         return redirect()->route('lecturer.classes.show', $exam->course_section_id)
             ->with('success', 'Câu hỏi đã được cập nhật cho đề thi.');
+    }
+    
+    public function close(Exam $exam)
+    {
+        $exam->update(['status' => 'closed']);
+        return back()->with('success', 'Đề thi đã được đóng lại.');
     }
 
     /*
