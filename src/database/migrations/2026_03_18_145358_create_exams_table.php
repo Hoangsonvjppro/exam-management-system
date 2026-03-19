@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('title'); //tên bài kiểm tra
             $table->text('description')->nullable(); //mô tả bài kiểm tra
             $table->integer('duration_minutes')->default(60); //thời gian làm bài (phút)
-            $table->dateTime('start_time'); //thời gian bắt đầu bài kiểm tra
+            $table->dateTime('start_time')->nullable(); //thời gian bắt đầu bài kiểm tra
             $table->dateTime('end_time')->nullable(); //thời gian kết thúc bài kiểm tra
             $table->enum('status', ['draft', 'published', 'closed'])->default('draft');// loai trạng thái của bài kiểm tra
             $table->decimal('total_points',5,2)->default(10.00); //tổng điểm của bài kiểm tra
