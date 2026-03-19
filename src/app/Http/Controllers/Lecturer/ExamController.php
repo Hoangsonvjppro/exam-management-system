@@ -7,6 +7,7 @@ use App\Models\CourseSection;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Models\Exam;
 
 class ExamController extends Controller
@@ -36,16 +37,18 @@ class ExamController extends Controller
         $exam = $courseSection->exams()->create($validated);
 
         return redirect()->route('lecturer.exams.questions.manage', $exam->id)
-        ->with('success',
+            ->with(
+                'success',
                 'Đề thi đã được tạo thành công 
                 || Bước tiếp theo là thêm câu hỏi vào đề thi.
-            ');
+            '
+            );
     }
 
     // Hiển thị form quản lý câu hỏi của đề thi
     public function manageQuestions(Exam $exam)
     {
-        $this->authorize('manageLecturer', $exam);
+        Gate::authorize('manageLecturer', $exam);
 
         // Lọc câu hỏi theo subject của lớp và status approved (High #8)
         $questions = Question::where('status', 'approved')
@@ -59,22 +62,22 @@ class ExamController extends Controller
     // Thêm một method publish đề thi, để tụi sinh viên có thể vào làm bài.
     public function publish(Exam $exam)
     {
-        $this->authorize('manageLecturer', $exam);
+        Gate::authorize('manageLecturer', $exam);
 
         // Kiểm tra bài thi có câu hỏi hay không? Nếu ko có thì khỏi publish
         if ($exam->questions()->count() === 0) {
-            return back()->with('error','Đề kiểm tra phải có ít nhất một câu hỏi');
+            return back()->with('error', 'Đề kiểm tra phải có ít nhất một câu hỏi');
         }
 
         $exam->update(['status' => 'published']);
 
-        return back()->with('success','Đề thi đã được mở');
+        return back()->with('success', 'Đề thi đã được mở');
     }
 
     // Có danh sách câu hỏi rồi thì sẽ lưu thông tin câu hỏi vào bảng trung gian exam_questions
     public function storeQuestions(Request $request, Exam $exam)
     {
-        $this->authorize('manageLecturer', $exam);
+        Gate::authorize('manageLecturer', $exam);
 
         $request->validate([
             'question_ids' => 'required|array',
@@ -95,14 +98,14 @@ class ExamController extends Controller
             'total_points' => $totalPoints,
             'pass_points' => min($exam->pass_points, $totalPoints),
         ]);
-        
+
         return redirect()->route('lecturer.classes.show', $exam->course_section_id)
             ->with('success', 'Câu hỏi đã được cập nhật cho đề thi.');
     }
-    
+
     public function close(Exam $exam)
     {
-        $this->authorize('manageLecturer', $exam);
+        Gate::authorize('manageLecturer', $exam);
 
         $exam->update(['status' => 'closed']);
         return back()->with('success', 'Đề thi đã được đóng lại.');
