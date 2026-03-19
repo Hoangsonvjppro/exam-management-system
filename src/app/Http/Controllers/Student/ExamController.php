@@ -88,6 +88,12 @@ class ExamController extends Controller
     // API lưu ngầm, không reload trang, mỗi lần sinh viên chọn đáp án nào đó thì sẽ gọi API này để lưu lại
     public function saveAnswer(Request $request, Exam $exam)
     {
+        $validated = $request->validate([
+            'question_id' => 'required|integer|exists:questions,id',
+            'question_option_id' => 'required|integer|exists:question_options,id',
+        ]);
+
+
         $attempt = ExamAttempt::where('exam_id', $exam->id)
             ->where('user_id', Auth::id())
             ->first();
@@ -96,13 +102,22 @@ class ExamController extends Controller
             return response()->json(['error' => 'Không thể lưu đáp án.'], 403);
         }
 
+        //Kiểm tra câu hỏi có thuộc đề thi này không, tránh trường hợp sinh viên gửi request lạ để lưu đáp án cho câu hỏi không thuộc đề thi
+        $questionBelongstoExam = $exam->questions()
+            ->where('questions.id', $validated['question_id'])
+            ->exists();
+
+        if (!$questionBelongstoExam) {
+            return response()->json(['error' => 'Câu hỏi không thuộc đề thi này.'], 422);
+        }
+
         StudentAnswer::updateOrCreate(
             [
                 'exam_attempt_id' => $attempt->id,
-                'question_id' => $request->question_id,
+                'question_id' => $validated['question_id'],
             ],
             [
-                'question_option_id' => $request->question_option_id,
+                'question_option_id' => $validated['question_option_id'],
             ]
         );
 
