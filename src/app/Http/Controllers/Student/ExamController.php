@@ -27,7 +27,7 @@ class ExamController extends Controller
     {
         //Fix: Có lẽ nên thêm phần kiểm tra xem status bài thi đã được mở hay chưa rồi mới cho phép bắt đầu, tránh trường hợp sinh viên vào sảnh chờ rồi nhưng thầy chưa mở bài thi
         if ($exam->status != 'published') {
-            abort(403,'Bài thi nãy đã được mở đâu!?');
+            abort(403, 'Bài thi nãy đã được mở đâu!?');
         }
 
         $now = now();
@@ -127,11 +127,32 @@ class ExamController extends Controller
     // Nộp bài thi, tính điểm và lưu kết quả
     public function submit(Request $request, Exam $exam)
     {
-        $attempt = ExamAttempt::where('exam_id', $exam->id)->where('user_id', Auth::id())->firstOrFail();
+        $attempt = ExamAttempt::where('exam_id', $exam->id)
+            ->where('user_id', Auth::id())
+            ->where('status', 'in_progress') // chỉ cho phép submit nếu đang trong trạng thái làm bài
+            ->firstOrFail();
 
-        $attempt->update(['status' => 'completed', 'completed_at' => now()]);
+        $totalScore = 0;
+        $answers = $attempt->answers()->with('option')->get();
+        foreach ($exam->questions as $question) {
+            $isCorrect = $answers->option?->is_correct ?? false;
+
+            // Lấy điểm câu hỏi từ bảng trung gian exam_questions
+            $point = $exam->questions()
+                ->where('questions.id', $answers->question_id)
+                ->first()?->pivot->points ?? 1.00;
+            $awardedPoint = $isCorrect ? $point : 0;
+            $totalScore += $awardedPoint;
+
+            $answers->update([
+                'is_correct' => $isCorrect,
+                'points_awarded' => $awardedPoint
+            ]);
+        }
+
+        $attempt->update(['status' => 'completed', 'completed_at' => now(), 'total_score' => $totalScore]);
 
         return redirect()->route('student.exams.show', $exam->id)
-            ->with('success', 'Bài thi đã được nộp thành công. Điểm số sẽ được cập nhật sau khi chấm bài.');
+            ->with('success', 'Bài thi đã được nộp thành công. Điểm của bạn là: ' . $totalScore .'');
     }
 }
