@@ -83,4 +83,10 @@ class CourseSection extends Model
     {
         return $this->students()->wherePivot('status', 'enrolled')->count();
     }
+
+    // 1 học phần thì sẽ có nhiều bài kiểm tra!
+    public function exams()
+    {
+        return $this->hasMany(Exam::class);
+    }
 }

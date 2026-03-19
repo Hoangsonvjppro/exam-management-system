@@ -25,11 +25,11 @@ class CourseSectionResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $navigationLabel = 'Lop hoc phan';
+    protected static ?string $navigationLabel = 'Lớp học phần';
 
-    protected static ?string $modelLabel = 'Lop hoc phan';
+    protected static ?string $modelLabel = 'Lớp học phần';
 
-    protected static ?string $pluralModelLabel = 'Lop hoc phan';
+    protected static ?string $pluralModelLabel = 'Lớp học phần';
 
     protected static string | \UnitEnum | null $navigationGroup = 'Nội dung';
 
@@ -39,30 +39,30 @@ class CourseSectionResource extends Resource
     {
         return $schema->components([
             TextInput::make('code')
-                ->label('Ma lop')
+                ->label('Mã lớp')
                 ->required()
                 ->maxLength(50)
                 ->unique(ignoreRecord: true),
 
             TextInput::make('name')
-                ->label('Ten lop hoc phan')
+                ->label('Tên lớp học phần')
                 ->maxLength(255)
                 ->columnSpanFull(),
 
             Select::make('subject_id')
-                ->label('Mon hoc')
+                ->label('Môn học')
                 ->relationship('subject', 'name')
                 ->searchable()
                 ->preload(),
 
             Select::make('semester_id')
-                ->label('Hoc ky')
+                ->label('Học kỳ')
                 ->relationship('semester', 'name')
                 ->searchable()
                 ->preload(),
 
             Select::make('lecturer_id')
-                ->label('Giang vien')
+                ->label('Giảng viên')
                 ->relationship(
                     name: 'lecturer',
                     titleAttribute: 'name',
@@ -73,7 +73,7 @@ class CourseSectionResource extends Resource
                 ->required(),
 
             TextInput::make('max_students')
-                ->label('Si so toi da')
+                ->label('Sĩ số tối đa')
                 ->numeric()
                 ->default(100)
                 ->minValue(1)
@@ -81,19 +81,19 @@ class CourseSectionResource extends Resource
                 ->required(),
 
             Select::make('status')
-                ->label('Trang thai')
+                ->label('Trạng thái')
                 ->options([
-                    'active' => 'Dang mo',
-                    'archived' => 'Luu tru',
-                    'cancelled' => 'Huy',
+                    'active' => 'Đang mở',
+                    'archived' => 'Lưu trữ',
+                    'cancelled' => 'Hủy',
                 ])
                 ->default('active')
                 ->required(),
 
             TextInput::make('invite_code')
-                ->label('Ma moi vao lop')
+                ->label('Mã mời vào lớp')
                 ->maxLength(20)
-                ->helperText('De trong de he thong tu sinh')
+                ->helperText('Để trống để hệ thống tự sinh')
                 ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? strtoupper($state) : null),
         ]);
     }
@@ -103,34 +103,34 @@ class CourseSectionResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('code')
-                    ->label('Ma lop')
+                    ->label('Mã lớp')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('name')
-                    ->label('Ten lop')
+                    ->label('Tên lớp')
                     ->searchable()
                     ->toggleable(),
 
                 TextColumn::make('subject.name')
-                    ->label('Mon hoc')
+                    ->label('Môn học')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('semester.name')
-                    ->label('Hoc ky')
+                    ->label('Học kỳ')
                     ->sortable(),
 
                 TextColumn::make('lecturer.name')
-                    ->label('Giang vien')
+                    ->label('Giảng viên')
                     ->searchable(),
 
                 TextColumn::make('max_students')
-                    ->label('Si so')
+                    ->label('Sĩ số')
                     ->sortable(),
 
                 TextColumn::make('status')
-                    ->label('Trang thai')
+                    ->label('Trạng thái')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'active' => 'success',
@@ -141,17 +141,17 @@ class CourseSectionResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->label('Trang thai')
+                    ->label('Trạng thái')
                     ->options([
-                        'active' => 'Dang mo',
-                        'archived' => 'Luu tru',
-                        'cancelled' => 'Huy',
+                        'active' => 'Đang mở',
+                        'archived' => 'Lưu trữ',
+                        'cancelled' => 'Hủy',
                     ]),
                 SelectFilter::make('subject_id')
-                    ->label('Mon hoc')
+                    ->label('Môn học')
                     ->relationship('subject', 'name'),
                 SelectFilter::make('semester_id')
-                    ->label('Hoc ky')
+                    ->label('Học kỳ')
                     ->relationship('semester', 'name'),
             ])
             ->recordActions([

@@ -6,26 +6,30 @@
 
         <div class="flex items-center justify-between">
             <a href="{{ route('lecturer.classes.index') }}"
-               class="inline-flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-ems-primary">
+                class="inline-flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-ems-primary">
                 ← Danh sách lớp
             </a>
             <div class="flex items-center gap-3">
                 <button onclick="document.getElementById('create-notification-modal').classList.remove('hidden')"
-                   class="h-9 px-4 flex items-center bg-ems-primary text-white brutal-border font-black text-xs uppercase brutal-btn brutal-shadow">
+                    class="h-9 px-4 flex items-center bg-ems-primary text-white brutal-border font-black text-xs uppercase brutal-btn brutal-shadow">
                     Tạo thông báo
                 </button>
+                <a href="{{ route('lecturer.course-sections.exams.create', $section) }}"
+                    class="h-9 px-4 flex items-center bg-ems-primary text-white brutal-border font-black text-xs uppercase brutal-btn brutal-shadow">
+                    Tạo bài kiểm tra
+                </a>
                 <a href="{{ route('lecturer.classes.edit', $section) }}"
-                   class="h-9 px-4 flex items-center bg-white brutal-border font-black text-xs uppercase brutal-btn brutal-shadow">
+                    class="h-9 px-4 flex items-center bg-white brutal-border font-black text-xs uppercase brutal-btn brutal-shadow">
                     Chỉnh sửa
                 </a>
             </div>
         </div>
 
         @if(session('success'))
-            <div class="p-4 bg-green-100 brutal-border font-semibold text-green-800 text-sm">{{ session('success') }}</div>
+        <div class="p-4 bg-green-100 brutal-border font-semibold text-green-800 text-sm">{{ session('success') }}</div>
         @endif
         @if(session('error'))
-            <div class="p-4 bg-red-100 brutal-border font-semibold text-red-800 text-sm">{{ session('error') }}</div>
+        <div class="p-4 bg-red-100 brutal-border font-semibold text-red-800 text-sm">{{ session('error') }}</div>
         @endif
 
         {{-- Class Info Card --}}
@@ -57,8 +61,8 @@
                     <form method="POST" action="{{ route('lecturer.classes.regenerate-code', $section) }}" class="mt-3">
                         @csrf
                         <button type="submit"
-                                onclick="return confirm('Tạo mã mới? Mã cũ sẽ không còn hoạt động.')"
-                                class="text-xs font-black uppercase text-ems-primary hover:underline">
+                            onclick="return confirm('Tạo mã mới? Mã cũ sẽ không còn hoạt động.')"
+                            class="text-xs font-black uppercase text-ems-primary hover:underline">
                             Tạo mã mới
                         </button>
                     </form>
@@ -86,33 +90,33 @@
             <h3 class="text-xl font-black uppercase mb-4">Danh sách sinh viên ({{ $section->students->count() }})</h3>
 
             @if($section->students->isEmpty())
-                <div class="text-center py-10">
-                    <p class="text-slate-400 font-semibold">Chưa có sinh viên nào tham gia lớp này.</p>
-                    <p class="text-slate-400 text-sm mt-1">Chia sẻ mã tham gia cho sinh viên của bạn.</p>
-                </div>
+            <div class="text-center py-10">
+                <p class="text-slate-400 font-semibold">Chưa có sinh viên nào tham gia lớp này.</p>
+                <p class="text-slate-400 text-sm mt-1">Chia sẻ mã tham gia cho sinh viên của bạn.</p>
+            </div>
             @else
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b-4 border-black">
-                                <th class="text-left py-2 px-3 font-black uppercase text-xs tracking-wide">Họ tên</th>
-                                <th class="text-left py-2 px-3 font-black uppercase text-xs tracking-wide">Email</th>
-                                <th class="text-left py-2 px-3 font-black uppercase text-xs tracking-wide">MSSV</th>
-                                <th class="text-left py-2 px-3 font-black uppercase text-xs tracking-wide">Ngày tham gia</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($section->students->sortBy('name') as $student)
-                                <tr class="border-b-2 border-dashed border-slate-200 hover:bg-slate-50">
-                                    <td class="py-3 px-3 font-semibold">{{ $student->name }}</td>
-                                    <td class="py-3 px-3 text-slate-600">{{ $student->email }}</td>
-                                    <td class="py-3 px-3 font-mono font-bold">{{ $student->student_code ?? '—' }}</td>
-                                    <td class="py-3 px-3 text-slate-500">{{ $student->pivot->enrolled_at ? \Carbon\Carbon::parse($student->pivot->enrolled_at)->format('d/m/Y') : '—' }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b-4 border-black">
+                            <th class="text-left py-2 px-3 font-black uppercase text-xs tracking-wide">Họ tên</th>
+                            <th class="text-left py-2 px-3 font-black uppercase text-xs tracking-wide">Email</th>
+                            <th class="text-left py-2 px-3 font-black uppercase text-xs tracking-wide">MSSV</th>
+                            <th class="text-left py-2 px-3 font-black uppercase text-xs tracking-wide">Ngày tham gia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($section->students->sortBy('name') as $student)
+                        <tr class="border-b-2 border-dashed border-slate-200 hover:bg-slate-50">
+                            <td class="py-3 px-3 font-semibold">{{ $student->name }}</td>
+                            <td class="py-3 px-3 text-slate-600">{{ $student->email }}</td>
+                            <td class="py-3 px-3 font-mono font-bold">{{ $student->student_code ?? '—' }}</td>
+                            <td class="py-3 px-3 text-slate-500">{{ $student->pivot->enrolled_at ? \Carbon\Carbon::parse($student->pivot->enrolled_at)->format('d/m/Y') : '—' }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
             @endif
         </div>
 
@@ -125,8 +129,8 @@
                 @csrf
                 @method('DELETE')
                 <button type="submit"
-                        onclick="return confirm('Bạn có chắc muốn xoá lớp này không?')"
-                        class="h-10 px-6 bg-red-500 text-white brutal-border font-black text-sm uppercase brutal-btn">
+                    onclick="return confirm('Bạn có chắc muốn xoá lớp này không?')"
+                    class="h-10 px-6 bg-red-500 text-white brutal-border font-black text-sm uppercase brutal-btn">
                     Xoá lớp
                 </button>
             </form>
@@ -160,4 +164,3 @@
         </div>
     </div>
 </x-app-layout>
-

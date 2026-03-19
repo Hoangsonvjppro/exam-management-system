@@ -30,11 +30,11 @@ class SubjectResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-academic-cap';
 
-    protected static ?string $navigationLabel = 'Mon hoc';
+    protected static ?string $navigationLabel = 'Môn học';
 
-    protected static ?string $modelLabel = 'Mon hoc';
+    protected static ?string $modelLabel = 'Môn học';
 
-    protected static ?string $pluralModelLabel = 'Mon hoc';
+    protected static ?string $pluralModelLabel = 'Môn học';
 
     protected static string | \UnitEnum | null $navigationGroup = 'Nội dung';
 
@@ -44,30 +44,30 @@ class SubjectResource extends Resource
     {
         return $schema->components([
             TextInput::make('code')
-                ->label('Ma mon hoc')
+                ->label('Mã môn học')
                 ->required()
                 ->maxLength(20)
                 ->unique(ignoreRecord: true),
 
             TextInput::make('name')
-                ->label('Ten mon hoc')
+                ->label('Tên môn học')
                 ->required()
                 ->maxLength(255)
                 ->columnSpanFull(),
 
             TextInput::make('credits')
-                ->label('So tin chi')
+                ->label('Số tín chỉ')
                 ->numeric()
                 ->minValue(1)
                 ->maxValue(10)
                 ->required(),
 
             TextInput::make('department')
-                ->label('Khoa phu trach')
+                ->label('Khoa phụ trách')
                 ->maxLength(255),
 
             Textarea::make('description')
-                ->label('Mo ta')
+                ->label('Mô tả môn học')
                 ->rows(4)
                 ->columnSpanFull(),
         ]);
@@ -78,17 +78,17 @@ class SubjectResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('code')
-                    ->label('Ma mon')
+                    ->label('Mã môn học')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('name')
-                    ->label('Ten mon hoc')
+                    ->label('Tên môn học')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('credits')
-                    ->label('Tin chi')
+                    ->label('Số tín chỉ')
                     ->sortable(),
 
                 TextColumn::make('department')
@@ -96,13 +96,13 @@ class SubjectResource extends Resource
                     ->toggleable(),
 
                 TextColumn::make('updated_at')
-                    ->label('Cap nhat')
+                    ->label('Cập nhật lần cuối')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('credits')
-                    ->label('Tin chi')
+                    ->label('Số tín chỉ')
                     ->options(fn (): array => Subject::query()
                         ->select('credits')
                         ->distinct()

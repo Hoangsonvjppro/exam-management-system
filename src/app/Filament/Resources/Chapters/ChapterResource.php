@@ -25,11 +25,11 @@ class ChapterResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-book-open';
 
-    protected static ?string $navigationLabel = 'Chuong';
+    protected static ?string $navigationLabel = 'Chương';
 
-    protected static ?string $modelLabel = 'Chuong';
+    protected static ?string $modelLabel = 'Chương';
 
-    protected static ?string $pluralModelLabel = 'Chuong';
+    protected static ?string $pluralModelLabel = 'Chương';
 
     protected static string | \UnitEnum | null $navigationGroup = 'Nội dung';
 
@@ -39,27 +39,27 @@ class ChapterResource extends Resource
     {
         return $schema->components([
             Select::make('subject_id')
-                ->label('Mon hoc')
+                ->label('Môn học')
                 ->relationship('subject', 'name')
                 ->searchable()
                 ->preload()
                 ->required(),
 
             TextInput::make('name')
-                ->label('Ten chuong')
+                ->label('Tên chương')
                 ->required()
                 ->maxLength(255)
                 ->columnSpanFull(),
 
             TextInput::make('order')
-                ->label('Thu tu')
+                ->label('Thứ tự')
                 ->numeric()
                 ->default(1)
                 ->minValue(1)
                 ->required(),
 
             Textarea::make('description')
-                ->label('Mo ta')
+                ->label('Mô tả')
                 ->rows(3)
                 ->columnSpanFull(),
         ]);
@@ -70,26 +70,26 @@ class ChapterResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('subject.code')
-                    ->label('Ma mon')
+                    ->label('Mã môn học')
                     ->searchable(),
 
                 TextColumn::make('subject.name')
-                    ->label('Mon hoc')
+                    ->label('Môn học')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('name')
-                    ->label('Ten chuong')
+                    ->label('Tên chương')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('order')
-                    ->label('Thu tu')
+                    ->label('Thứ tự')
                     ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('subject_id')
-                    ->label('Mon hoc')
+                    ->label('Môn học')
                     ->relationship('subject', 'name'),
             ])
             ->defaultSort('subject_id')

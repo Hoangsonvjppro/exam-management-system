@@ -14,7 +14,7 @@ class AdminForm
         return $schema
             ->components([
                 TextInput::make('name')
-                    ->label('Ho ten')
+                    ->label('Họ tên')
                     ->required()
                     ->maxLength(255),
 
@@ -26,7 +26,7 @@ class AdminForm
                     ->maxLength(255),
 
                 Select::make('role_name')
-                    ->label('Vai tro quan tri')
+                    ->label('Vai trò quản trị viên')
                     ->options([
                         'root_admin' => 'Root Admin',
                         'system_admin' => 'System Admin',
@@ -36,26 +36,26 @@ class AdminForm
                     ->dehydrated(),
 
                 TextInput::make('password')
-                    ->label('Mat khau')
+                    ->label('Mật khẩu')
                     ->password()
                     ->revealable()
                     ->required(fn (string $operation): bool => $operation === 'create')
                     ->dehydrated(fn (?string $state): bool => filled($state)),
 
                 TextInput::make('password_confirmation')
-                    ->label('Nhap lai mat khau')
+                    ->label('Nhập lại mật khẩu')
                     ->password()
                     ->revealable()
                     ->same('password')
                     ->dehydrated(false),
 
                 Toggle::make('is_active')
-                    ->label('Tai khoan hoat dong')
+                    ->label('Tài khoản hoạt động')
                     ->default(true)
                     ->required(),
 
                 Toggle::make('is_super_admin')
-                    ->label('Co quyen super admin')
+                    ->label('Có quyền super admin')
                     ->default(false),
             ]);
     }
