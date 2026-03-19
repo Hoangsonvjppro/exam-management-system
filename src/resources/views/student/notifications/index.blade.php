@@ -42,7 +42,7 @@
                                             currentTitle = '{{ addslashes($notification->title) }}';
                                             currentMessage = '{{ addslashes(str_replace(["\r\", \"\n\"], [\"\", \"\\n\"], $notification->message)) }}';
                                             currentDate = '{{ $notification->created_at->format('d/m/Y H:i') }}';
-                                            currentClass = '{{ addslashes($className) }}';
+                                            currentClass = '{{ addslashes($className) }}';E
                                             modalOpen = true;
                                         ">
                                         Xem chi tiết

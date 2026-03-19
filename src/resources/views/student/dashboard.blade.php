@@ -90,8 +90,16 @@
                 <div class="border-[0.5px] border-border-clean p-4 rounded-[8px] bg-white hover:border-blue-200 transition-colors flex flex-col justify-between">
                     <div class="mb-4">
                         <div class="flex items-center justify-between mb-2">
-                            <x-badge type="warning">Còn {{ $exam->duration_minutes }} phút</x-badge>
-                            <span class="text-[11px] text-text-muted">{{ $exam->created_at->format('d/m/Y') }}</span>
+                            @if($exam->isCompletedBy(auth()->id()))
+                                <x-badge type="success">Đã hoàn thành</x-badge>
+                            @elseif($exam->is_not_started)
+                                <x-badge type="neutral">Chưa đến giờ</x-badge>
+                            @elseif($exam->time_left_minutes > 0)
+                                <x-badge type="warning">{{ $exam->time_left_text }}</x-badge>
+                            @else
+                                <x-badge type="danger">Đã hết giờ</x-badge>
+                            @endif
+                            <span class="text-[11px] text-text-muted">{{ $exam->start_time->format('d/m/Y') }}</span>
                         </div>
                         <h4 class="font-semibold text-[15px] text-navy-900 leading-snug mb-1">{{ $exam->title }}</h4>
                         <p class="text-[12px] text-text-muted">{{ $exam->courseSection->name ?? $exam->courseSection->code }}</p>

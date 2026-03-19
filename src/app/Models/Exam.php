@@ -48,4 +48,39 @@ class Exam extends Model
         return $this->hasMany(ExamAttempt::class);
     }
 
+    public function getTimeLeftMinutesAttribute()
+    {
+        if (!$this->end_time) return $this->duration_minutes;
+        $now = now();
+        if ($now->gt($this->end_time)) return 0;
+        return $now->diffInMinutes($this->end_time, false);
+    }
+
+    public function getTimeLeftTextAttribute()
+    {
+        $minutes = $this->time_left_minutes;
+        if ($minutes <= 0) return 'Đã hết giờ';
+        
+        if ($minutes >= 60) {
+            $hours = floor($minutes / 60);
+            $rem = $minutes % 60;
+            return $rem > 0 ? "Còn {$hours} giờ {$rem} phút" : "Còn {$hours} giờ";
+        }
+        
+        return "Còn {$minutes} phút";
+    }
+
+    public function getIsNotStartedAttribute()
+    {
+        if (!$this->start_time) return false;
+        return now()->lt($this->start_time);
+    }
+
+    public function isCompletedBy($userId)
+    {
+        return $this->attempts()
+            ->where('user_id', $userId)
+            ->where('status', 'completed')
+            ->exists();
+    }
 }
