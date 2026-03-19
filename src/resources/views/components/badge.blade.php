@@ -4,14 +4,14 @@
 
 @php
     $types = [
-        'info'    => 'bg-primary-50 text-primary-700 ring-primary-500/20',
-        'success' => 'bg-success-50 text-success-600 ring-success-500/20',
-        'warning' => 'bg-warning-50 text-warning-600 ring-warning-500/20',
-        'danger'  => 'bg-danger-50 text-danger-600 ring-danger-500/20',
-        'neutral' => 'bg-gray-100 text-gray-600 ring-gray-500/20',
+        'info'    => 'bg-navy-50 text-navy-600',
+        'success' => 'bg-teal-50 text-teal-800',
+        'warning' => 'bg-amber-50 text-amber-600',
+        'danger'  => 'bg-red-50 text-red-600',
+        'neutral' => 'bg-surface-1 text-navy-900 border-[0.5px] border-border-clean',
     ];
 @endphp
 
-<span {{ $attributes->merge(['class' => 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ring-1 ring-inset ' . ($types[$type] ?? $types['info'])]) }}>
+<span {{ $attributes->merge(['class' => 'inline-flex items-center px-[10px] py-[3px] rounded-full text-[11px] font-medium ' . ($types[$type] ?? $types['info'])]) }}>
     {{ $slot }}
 </span>

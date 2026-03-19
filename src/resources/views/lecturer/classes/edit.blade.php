@@ -6,74 +6,69 @@
 
         <div>
             <a href="{{ route('lecturer.classes.show', $section) }}"
-               class="inline-flex items-center gap-1 text-sm font-bold text-slate-500 hover:text-ems-primary mb-4">
-                ← Quay lại chi tiết lớp
+               class="inline-flex items-center gap-1.5 text-[13px] font-medium text-text-muted hover:text-navy-900 mb-4 transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Quay lại chi tiết lớp
             </a>
-            <h2 class="text-2xl font-black uppercase">Chỉnh sửa: {{ $section->name ?? $section->code }}</h2>
+            <h2 class="text-[24px] font-bold text-navy-900 leading-tight">Chỉnh sửa: {{ $section->name ?? $section->code }}</h2>
         </div>
 
         @if(session('error'))
-            <div class="p-4 bg-red-100 brutal-border font-semibold text-red-800 text-sm">{{ session('error') }}</div>
+            <div class="p-4 bg-red-50 border-[0.5px] border-red-200 rounded-[6px] font-medium text-red-800 text-[13px]">{{ session('error') }}</div>
         @endif
 
-        <form method="POST" action="{{ route('lecturer.classes.update', $section) }}"
-              class="bg-white brutal-border brutal-shadow p-6 space-y-5">
-            @csrf
-            @method('PUT')
+        <x-card padding="true">
+            <form method="POST" action="{{ route('lecturer.classes.update', $section) }}" class="space-y-5">
+                @csrf
+                @method('PUT')
 
-            <div>
-                <label class="block text-sm font-black uppercase mb-2 tracking-wide" for="name">
-                    Tên lớp học phần <span class="text-red-500">*</span>
-                </label>
-                <input id="name" name="name" type="text" value="{{ old('name', $section->name) }}" required
-                       class="w-full h-12 px-4 brutal-border bg-white font-semibold focus:ring-0 @error('name') border-red-500 @enderror">
-                @error('name')
-                    <p class="mt-1 text-xs text-red-600 font-semibold">{{ $message }}</p>
-                @enderror
-            </div>
+                <div>
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5" for="name">
+                        Tên lớp học phần <span class="text-red-500">*</span>
+                    </label>
+                    <x-text-input id="name" name="name" type="text" value="{{ old('name', $section->name) }}" required class="{{ $errors->has('name') ? 'border-red-400 focus:border-red-500 focus:ring-red-100/50' : '' }}" />
+                    @error('name')
+                        <p class="mt-1.5 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
 
-            <div>
-                <label class="block text-sm font-black uppercase mb-2 tracking-wide" for="code">
-                    Mã lớp (nội bộ) <span class="text-red-500">*</span>
-                </label>
-                <input id="code" name="code" type="text" value="{{ old('code', $section->code) }}" required
-                       class="w-full h-12 px-4 brutal-border bg-white font-semibold uppercase tracking-widest focus:ring-0 @error('code') border-red-500 @enderror">
-                @error('code')
-                    <p class="mt-1 text-xs text-red-600 font-semibold">{{ $message }}</p>
-                @enderror
-            </div>
+                <div>
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5" for="code">
+                        Mã lớp (nội bộ) <span class="text-red-500">*</span>
+                    </label>
+                    <x-text-input id="code" name="code" type="text" value="{{ old('code', $section->code) }}" required class="uppercase {{ $errors->has('code') ? 'border-red-400 focus:border-red-500 focus:ring-red-100/50' : '' }}" />
+                    @error('code')
+                        <p class="mt-1.5 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
 
-            <div>
-                <label class="block text-sm font-black uppercase mb-2 tracking-wide" for="max_students">Sĩ số tối đa</label>
-                <input id="max_students" name="max_students" type="number"
-                       value="{{ old('max_students', $section->max_students) }}"
-                       min="1" max="500"
-                       class="w-full h-12 px-4 brutal-border bg-white font-semibold focus:ring-0">
-                @error('max_students')
-                    <p class="mt-1 text-xs text-red-600 font-semibold">{{ $message }}</p>
-                @enderror
-            </div>
+                <div>
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5" for="max_students">Sĩ số tối đa</label>
+                    <x-text-input id="max_students" name="max_students" type="number" value="{{ old('max_students', $section->max_students) }}" min="1" max="500" class="{{ $errors->has('max_students') ? 'border-red-400 focus:border-red-500 focus:ring-red-100/50' : '' }}" />
+                    @error('max_students')
+                        <p class="mt-1.5 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
 
-            <div>
-                <label class="block text-sm font-black uppercase mb-2 tracking-wide" for="status">Trạng thái</label>
-                <select id="status" name="status"
-                        class="w-full h-12 px-4 brutal-border bg-white font-semibold focus:ring-0">
-                    <option value="active"    @selected(old('status', $section->status) === 'active')>Đang mở</option>
-                    <option value="archived"  @selected(old('status', $section->status) === 'archived')>Lưu trữ</option>
-                    <option value="cancelled" @selected(old('status', $section->status) === 'cancelled')>Đã huỷ</option>
-                </select>
-            </div>
+                <div>
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5" for="status">Trạng thái</label>
+                    <select id="status" name="status"
+                            class="w-full px-4 py-2 border-[1.5px] border-border-clean rounded-[6px] text-navy-900 font-medium text-[14px] bg-white hover:border-blue-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none">
+                        <option value="active"    @selected(old('status', $section->status) === 'active')>Đang mở</option>
+                        <option value="archived"  @selected(old('status', $section->status) === 'archived')>Lưu trữ</option>
+                        <option value="cancelled" @selected(old('status', $section->status) === 'cancelled')>Đã huỷ</option>
+                    </select>
+                </div>
 
-            <div class="pt-2 flex gap-3">
-                <button type="submit"
-                        class="h-12 px-8 bg-ems-primary text-white brutal-border brutal-shadow font-black uppercase tracking-widest brutal-btn">
-                    Lưu thay đổi
-                </button>
-                <a href="{{ route('lecturer.classes.show', $section) }}"
-                   class="h-12 px-6 flex items-center bg-white brutal-border font-black uppercase tracking-wide brutal-btn text-sm">
-                    Huỷ
-                </a>
-            </div>
-        </form>
+                <div class="pt-4 flex gap-3">
+                    <x-button type="submit" variant="primary">
+                        Lưu thay đổi
+                    </x-button>
+                    <x-button variant="outline" href="{{ route('lecturer.classes.show', $section) }}">
+                        Huỷ
+                    </x-button>
+                </div>
+            </form>
+        </x-card>
     </div>
 </x-app-layout>
