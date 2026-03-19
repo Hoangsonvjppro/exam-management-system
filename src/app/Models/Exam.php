@@ -50,10 +50,10 @@ class Exam extends Model
 
     public function getTimeLeftMinutesAttribute()
     {
-        if (!$this->end_time) return $this->duration_minutes;
+        if (!$this->end_time) return (int) $this->duration_minutes;
         $now = now();
         if ($now->gt($this->end_time)) return 0;
-        return $now->diffInMinutes($this->end_time, false);
+        return (int) $now->diffInMinutes($this->end_time, false);
     }
 
     public function getTimeLeftTextAttribute()
