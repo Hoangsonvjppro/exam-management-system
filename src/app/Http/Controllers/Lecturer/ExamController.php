@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CourseSection;
 use App\Models\Question;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Exam;
 
 class ExamController extends Controller
@@ -13,12 +14,17 @@ class ExamController extends Controller
     // Hiển thị form tạo đề thi mới trong 1 lớp học phần
     public function create(CourseSection $courseSection)
     {
+        // Kiểm tra giảng viên có sở hữu lớp này không
+        $this->authorizeCourseSection($courseSection);
+
         return view("lecturer.exams.create", compact('courseSection'));
     }
 
     // Tạo 1 đề thi mới xong rồi thì phải lưu thông tin chung của đề thi vào DB
     public function store(Request $request, CourseSection $courseSection)
     {
+        $this->authorizeCourseSection($courseSection);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -39,7 +45,12 @@ class ExamController extends Controller
     // Hiển thị form quản lý câu hỏi của đề thi
     public function manageQuestions(Exam $exam)
     {
-        $questions = Question::all();
+        $this->authorize('manageLecturer', $exam);
+
+        // Lọc câu hỏi theo subject của lớp và status approved (High #8)
+        $questions = Question::where('status', 'approved')
+            ->where('subject_id', $exam->courseSection->subject_id)
+            ->get();
 
         $selectedQuestionIds = $exam->questions()->pluck('question_id')->toArray();
         return view('lecturer.exams.questions', compact('exam', 'questions', 'selectedQuestionIds'));
@@ -48,6 +59,8 @@ class ExamController extends Controller
     // Thêm một method publish đề thi, để tụi sinh viên có thể vào làm bài.
     public function publish(Exam $exam)
     {
+        $this->authorize('manageLecturer', $exam);
+
         // Kiểm tra bài thi có câu hỏi hay không? Nếu ko có thì khỏi publish
         if ($exam->questions()->count() === 0) {
             return back()->with('error','Đề kiểm tra phải có ít nhất một câu hỏi');
@@ -61,6 +74,8 @@ class ExamController extends Controller
     // Có danh sách câu hỏi rồi thì sẽ lưu thông tin câu hỏi vào bảng trung gian exam_questions
     public function storeQuestions(Request $request, Exam $exam)
     {
+        $this->authorize('manageLecturer', $exam);
+
         $request->validate([
             'question_ids' => 'required|array',
             'question_ids.*' => 'exists:questions,id',
@@ -73,6 +88,13 @@ class ExamController extends Controller
         })->all();
 
         $exam->questions()->sync($questionsData);
+
+        // Đồng bộ total_points theo tổng điểm câu hỏi thực tế (Medium #16)
+        $totalPoints = $exam->questions()->sum('exam_questions.points');
+        $exam->update([
+            'total_points' => $totalPoints,
+            'pass_points' => min($exam->pass_points, $totalPoints),
+        ]);
         
         return redirect()->route('lecturer.classes.show', $exam->course_section_id)
             ->with('success', 'Câu hỏi đã được cập nhật cho đề thi.');
@@ -80,22 +102,19 @@ class ExamController extends Controller
     
     public function close(Exam $exam)
     {
+        $this->authorize('manageLecturer', $exam);
+
         $exam->update(['status' => 'closed']);
         return back()->with('success', 'Đề thi đã được đóng lại.');
     }
 
-    /*
-     hàm tùy chỉnh điểm (câu hỏi)
-     {
-     bốc câu hỏi đó lên và nhập điểm cho nó
-     trả về câu hỏi có điểm được tùy chỉnh
-     }
-    */
-
-     /*
-     hàm sắp xếp câu hỏi (danh sách câu hỏi sẽ hiển thị theo thứ tự trước đó)
-     {
-     bốc câu hỏi đó lên và nhập vị trí mới cho nó
-     trả về câu hỏi có vị trí được tùy chỉnh
+    /**
+     * Kiểm tra giảng viên có sở hữu lớp học phần không.
      */
+    private function authorizeCourseSection(CourseSection $courseSection): void
+    {
+        if ($courseSection->lecturer_id !== Auth::id()) {
+            abort(403, 'Bạn không có quyền quản lý lớp học phần này.');
+        }
+    }
 }

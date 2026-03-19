@@ -23,6 +23,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\StudentEnrollmentController;
 use App\Http\Controllers\StudentOnboardingController;
 use App\Http\Controllers\Lecturer\ExamController;
+use App\Models\Exam;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -83,8 +84,21 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
     Route::delete('/leave-class/{courseSection}', [StudentEnrollmentController::class, 'leaveClass'])
         ->name('student.leave-class');
 
-    // Dashboard của sinh viên
-    Route::view('/dashboard/student', 'student.dashboard')
+    // Dashboard của sinh viên – truyền data từ controller (High #9, #10)
+    Route::get('/dashboard/student', function () {
+        /** @var User $user */
+        $user = auth()->user();
+        $enrolledSections = $user->enrolledSections()->with('lecturer')->get();
+        $sectionIds = $enrolledSections->pluck('id');
+
+        $exams = Exam::whereIn('course_section_id', $sectionIds)
+            ->where('status', 'published')
+            ->with('courseSection')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('student.dashboard', compact('enrolledSections', 'exams'));
+    })
         ->middleware('student_role')
         ->name('student.dashboard');
 
@@ -105,15 +119,15 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         Route::post('/exams/{exam}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('exams.submit');
         // Routes cho Sinh viên (đã bỏ prefix và name trùng lặp)
         Route::get('/exams', function () {
-            return 'Trang Kỳ thi & Bài tập của SV';
+            return view('student.exams.index-placeholder');
         })->name('exams.index');
 
         Route::get('/results', function () {
-            return 'Trang Kết quả học tập';
+            return view('student.results.index-placeholder');
         })->name('results.index');
 
         Route::get('/attendance', function () {
-            return 'Trang Điểm danh của SV';
+            return view('student.attendance.index-placeholder');
         })->name('attendance.index');
     });
 
@@ -186,7 +200,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             })->name('schedules.index');
 
             Route::get('/attendance', function () {
-                return view('lecturer.attendance.index');
+                return view('lecturer.attendance.index-placeholder');
             })->name('attendance.index'); 
         });
 

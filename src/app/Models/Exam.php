@@ -76,6 +76,21 @@ class Exam extends Model
         return now()->lt($this->start_time);
     }
 
+    /**
+     * Tính deadline thực tế cho một attempt.
+     * Deadline = min(started_at + duration, exam.end_time)  (High #6)
+     */
+    public function getDeadlineFor(ExamAttempt $attempt): \Carbon\Carbon
+    {
+        $durationEnd = $attempt->started_at->copy()->addMinutes($this->duration_minutes);
+
+        if ($this->end_time) {
+            return $durationEnd->lt($this->end_time) ? $durationEnd : $this->end_time;
+        }
+
+        return $durationEnd;
+    }
+
     public function isCompletedBy($userId)
     {
         return $this->attempts()

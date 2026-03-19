@@ -1,0 +1,44 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\Exam;
+use App\Models\User;
+
+class ExamPolicy
+{
+    /**
+     * Sinh viên có được xem đề thi không?
+     * Điều kiện: sinh viên phải enrolled trong lớp học phần chứa đề thi.
+     */
+    public function viewAsStudent(User $user, Exam $exam): bool
+    {
+        return $exam->courseSection
+            ->students()
+            ->where('student_id', $user->id)
+            ->wherePivot('status', 'enrolled')
+            ->exists();
+    }
+
+    /**
+     * Sinh viên có được bắt đầu / làm bài thi không?
+     * Điều kiện: enrolled + exam published + trong khung giờ hợp lệ.
+     */
+    public function attemptExam(User $user, Exam $exam): bool
+    {
+        if (! $this->viewAsStudent($user, $exam)) {
+            return false;
+        }
+
+        return $exam->status === 'published';
+    }
+
+    /**
+     * Giảng viên có quyền quản lý đề thi không?
+     * Điều kiện: giảng viên phải là lecturer_id của course_section chứa đề thi.
+     */
+    public function manageLecturer(User $user, Exam $exam): bool
+    {
+        return $exam->courseSection->lecturer_id === $user->id;
+    }
+}

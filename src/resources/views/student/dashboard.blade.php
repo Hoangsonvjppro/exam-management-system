@@ -39,17 +39,7 @@
             </div>
         </x-card>
 
-        @php
-        // Lấy danh sách lớp học đã tham gia
-        $enrolledSections = auth()->user()->enrolledSections()->with('lecturer')->get();
-        $sectionIds = $enrolledSections->pluck('id');
-
-        // Lấy toàn bộ bài kiểm tra thuộc về các lớp sinh viên đã tham gia
-        $exams = \App\Models\Exam::whereIn('course_section_id', $sectionIds)
-        ->with('courseSection') // Load kèm thông tin lớp để hiển thị tên môn
-        ->orderBy('created_at', 'desc')
-        ->get();
-        @endphp
+        {{-- $enrolledSections và $exams được truyền từ controller --}}
 
         <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <x-card padding="true">
@@ -99,7 +89,7 @@
                             @else
                                 <x-badge type="danger">Đã hết giờ</x-badge>
                             @endif
-                            <span class="text-[11px] text-text-muted">{{ $exam->start_time->format('d/m/Y') }}</span>
+                            <span class="text-[11px] text-text-muted">{{ $exam->start_time?->format('d/m/Y') ?? 'Chưa xác định' }}</span>
                         </div>
                         <h4 class="font-semibold text-[15px] text-navy-900 leading-snug mb-1">{{ $exam->title }}</h4>
                         <p class="text-[12px] text-text-muted">{{ $exam->courseSection->name ?? $exam->courseSection->code }}</p>

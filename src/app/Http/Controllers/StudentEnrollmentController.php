@@ -47,7 +47,10 @@ class StudentEnrollmentController extends Controller
             ])->withInput();
         }
 
-        $isFull = $section->students()->count() >= (int) $section->max_students;
+        // Chỉ tính sinh viên enrolled khi kiểm tra sĩ số (Medium #15)
+        $isFull = $section->students()
+            ->wherePivot('status', 'enrolled')
+            ->count() >= (int) $section->max_students;
 
         if ($isFull) {
             return back()->withErrors([
@@ -55,22 +58,30 @@ class StudentEnrollmentController extends Controller
             ])->withInput();
         }
 
-        $alreadyJoined = $section->students()
+        // Kiểm tra đã từng tham gia chưa
+        $existingPivot = $section->students()
             ->where('student_id', $user->id)
-            ->exists();
+            ->first();
 
-        if (! $alreadyJoined) {
-            $section->students()->attach($user->id, [
-                'status' => 'enrolled',
-                'enrolled_at' => now(),
-            ]);
-
-            $this->userStateService->syncStudentRole($user);
-        }
-
-        if ($alreadyJoined) {
+        if ($existingPivot) {
+            if ($existingPivot->pivot->status === 'dropped') {
+                // Re-join từ trạng thái dropped (Medium #15)
+                $section->students()->updateExistingPivot($user->id, [
+                    'status' => 'enrolled',
+                    'enrolled_at' => now(),
+                ]);
+                $this->userStateService->syncStudentRole($user);
+                return back()->with('success', 'Bạn đã tham gia lại lớp học phần thành công.');
+            }
             return back()->with('success', 'Ban da tham gia lop hoc phan nay roi.');
         }
+
+        $section->students()->attach($user->id, [
+            'status' => 'enrolled',
+            'enrolled_at' => now(),
+        ]);
+
+        $this->userStateService->syncStudentRole($user);
 
         return back()->with('success', 'Tham gia lop hoc phan thanh cong.');
     }
@@ -80,9 +91,13 @@ class StudentEnrollmentController extends Controller
         /** @var User $user */
         $user = request()->user();
 
-        $courseSection->students()->detach($user->id);
+        // Chuyển sang dropped thay vì detach để giữ lịch sử (Medium #15)
+        $courseSection->students()->updateExistingPivot($user->id, [
+            'status' => 'dropped',
+        ]);
         $this->userStateService->syncStudentRole($user);
 
         return back()->with('success', 'Bạn đã rời khỏi lớp học phần.');
     }
 }
+
