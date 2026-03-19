@@ -10,28 +10,32 @@
 
                     <div class="mb-4">
                         <x-input-label for="title" value="Tên bài kiểm tra (VD: Thi giữa kỳ)" />
-                        <x-text-input id="title" class="block mt-1 w-full" type="text" name="title" required autofocus />
+                        <x-text-input id="title" class="block mt-1 w-full" type="text" name="title" value="{{ old('title') }}" required autofocus />
                         <x-input-error :messages="$errors->get('title')" class="mt-2" />
                     </div>
 
                     <div class="mb-4">
                         <x-input-label for="description" value="Mô tả / Hướng dẫn làm bài" />
-                        <textarea id="description" name="description" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full" rows="3"></textarea>
+                        <textarea id="description" name="description" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full" rows="3">{{ old('description') }}</textarea>
+                        <x-input-error :messages="$errors->get('description')" class="mt-2" />
                     </div>
 
                     <div class="mb-4">
                         <x-input-label for="duration_minutes" value="Thời gian làm bài (Phút)" />
-                        <x-text-input id="duration_minutes" class="block mt-1 w-full" type="number" name="duration_minutes" value="45" required />
+                        <x-text-input id="duration_minutes" class="block mt-1 w-full" type="number" name="duration_minutes" value="{{ old('duration_minutes', 45) }}" required />
+                        <x-input-error :messages="$errors->get('duration_minutes')" class="mt-2" />
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <x-input-label for="start_time" value="Thời gian Mở đề (Tuỳ chọn)" />
-                            <x-text-input id="start_time" class="block mt-1 w-full" type="datetime-local" name="start_time" />
+                            <x-text-input id="start_time" class="block mt-1 w-full" type="datetime-local" name="start_time" value="{{ old('start_time') }}" />
+                            <x-input-error :messages="$errors->get('start_time')" class="mt-2" />
                         </div>
                         <div>
                             <x-input-label for="end_time" value="Thời gian Đóng đề (Tuỳ chọn)" />
-                            <x-text-input id="end_time" class="block mt-1 w-full" type="datetime-local" name="end_time" />
+                            <x-text-input id="end_time" class="block mt-1 w-full" type="datetime-local" name="end_time" value="{{ old('end_time') }}" />
+                            <x-input-error :messages="$errors->get('end_time')" class="mt-2" />
                         </div>
                     </div>
 
