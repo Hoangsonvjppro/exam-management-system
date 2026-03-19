@@ -55,10 +55,12 @@ class ExamController extends Controller
 
         // Chỗ này để mặc định mỗi câu hỏi 1 điểm, 
         // Ae thấy nếu có thể tùy chỉnh điểm cho mỗi câu thì viết logic tùy chỉnh điểm sau nhé
-        $exam->questions()->syncWithPivotValues($request->question_ids ?? [], [
-            'points' => 1.00,
-            'order_index' => 0, // Logic sắp xếp câu hỏi sẽ viết
-        ]);
+        $questionsData = collect($request->question_ids)->mapWithKeys(function ($id, $index) {
+            return [$id => ['points' => 1.00, 'order_index' => $index + 1]];
+        })->all();
+
+        $exam->questions()->sync($questionsData);
+        
         return redirect()->route('lecturer.classes.show', $exam->course_section_id)
             ->with('success', 'Câu hỏi đã được cập nhật cho đề thi.');
     }
