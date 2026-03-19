@@ -74,9 +74,15 @@ class ExamController extends Controller
         $questions = $exam->questions()->with('options')->get();
 
         // Cần lưu những đáp án đã chọn, vì chẳng may thằng sinh viên nhấn f5 thì còn cứu được
-        $saveAnswers = $attempt->answers()->pluck('question_option_id', 'question_id')->toArray();
+        $savedAnswers = $attempt->answers()->pluck('question_option_id', 'question_id')->toArray();
 
-        return view('student.exams.room', compact('exam', 'attempt', 'questions', 'timeLeftSeconds', 'saveAnswers'));
+        return view('student.exams.room', compact(
+            'exam',
+            'attempt',
+            'questions',
+            'timeLeftSeconds',
+            'savedAnswers'
+        ));
     }
 
     // API lưu ngầm, không reload trang, mỗi lần sinh viên chọn đáp án nào đó thì sẽ gọi API này để lưu lại
