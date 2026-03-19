@@ -103,6 +103,18 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         Route::get('/exams/{exam}/room', [\App\Http\Controllers\Student\ExamController::class, 'room'])->name('exams.room');
         Route::post('/exams/{exam}/save-answer', [\App\Http\Controllers\Student\ExamController::class, 'saveAnswer'])->name('exams.save-answer');
         Route::post('/exams/{exam}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('exams.submit');
+        // Routes cho Sinh viên (đã bỏ prefix và name trùng lặp)
+        Route::get('/exams', function () {
+            return 'Trang Kỳ thi & Bài tập của SV';
+        })->name('exams.index');
+
+        Route::get('/results', function () {
+            return 'Trang Kết quả học tập';
+        })->name('results.index');
+
+        Route::get('/attendance', function () {
+            return 'Trang Điểm danh của SV';
+        })->name('attendance.index');
     });
 
 
@@ -160,6 +172,22 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::patch('/exams/{exam}/publish', [ExamController::class, 'publish'])
                 ->name('exams.publish');
             Route::patch('/exams/{exam}/close',   [ExamController::class, 'close'])->name('exams.close'); // 
+            // Routes for Lecturer (đã bỏ prefix và name trùng lặp)
+            Route::get('/questions', function () {
+                return 'Trang quản lý câu hỏi';
+            })->name('questions.index');
+
+            Route::get('/exams', function () {
+                return 'Trang quản lý đề thi';
+            })->name('exams.index');
+
+            Route::get('/schedules', function () {
+                return 'Trang lịch thi';
+            })->name('schedules.index');
+
+            Route::get('/attendance', function () {
+                return 'Trang điểm danh';
+            })->name('attendance.index');
         });
 
     // Dashboard cũ của giảng viên – giữ lại để tương thích với
