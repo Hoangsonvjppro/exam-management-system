@@ -4,43 +4,40 @@
 
     <div class="space-y-6">
         @if(session('success'))
-        <div class="p-4 bg-green-100 brutal-border font-semibold text-green-800 text-sm">{{ session('success') }}</div>
+        <div class="p-4 bg-teal-50 border-[0.5px] border-teal-200 rounded-[6px] font-medium text-teal-800 text-[13px]">{{ session('success') }}</div>
         @endif
 
         @if(session('error'))
-        <div class="p-4 bg-red-100 brutal-border font-semibold text-red-800 text-sm">{{ session('error') }}</div>
+        <div class="p-4 bg-red-50 border-[0.5px] border-red-200 rounded-[6px] font-medium text-red-800 text-[13px]">{{ session('error') }}</div>
         @endif
 
-        <section class="bg-background-light brutal-border shadow-brutal-lg p-6 md:p-8">
+        <x-card padding="true" variant="featured">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
-                    <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-600">Student Hub</p>
-                    <h2 class="mt-2 text-3xl md:text-4xl font-black uppercase tracking-tight">Xin chào, {{ auth()->user()->name }}</h2>
-                    <p class="mt-3 text-sm md:text-base font-semibold text-slate-700">
+                    <h2 class="text-[22px] md:text-[28px] font-bold text-navy-900 leading-tight">Xin chào, {{ auth()->user()->name }}!</h2>
+                    <p class="mt-2 text-[13px] text-text-muted">
                         @if (auth()->user()->student_code)
-                        MSSV: <span class="font-black">{{ auth()->user()->student_code }}</span>
+                        Mã sinh viên: <span class="font-semibold text-navy-900">{{ auth()->user()->student_code }}</span>
                         @if(auth()->user()->class_name)
-                        - Lớp: <span class="font-black">{{ auth()->user()->class_name }}</span>
+                        — Lớp: <span class="font-semibold text-navy-900">{{ auth()->user()->class_name }}</span>
                         @endif
                         @else
                         Bạn chưa cập nhật thông tin sinh viên.
-                        <a href="{{ route('onboarding.show') }}" class="underline text-ems-primary font-black">Hoàn tất hồ sơ ngay</a>
+                        <a href="{{ route('onboarding.show') }}" class="text-blue-400 font-medium hover:underline">Hoàn tất hồ sơ ngay</a>
                         @endif
                     </p>
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button onclick="document.getElementById('join-class-modal').classList.remove('hidden')"
-                        class="h-12 px-5 flex items-center justify-center bg-white brutal-border brutal-shadow font-black uppercase tracking-wide brutal-btn">
+                    <x-button variant="outline" onclick="document.getElementById('join-class-modal').classList.remove('hidden')">
                         + Tham gia lớp
-                    </button>
-                    <a href="{{ route('profile.edit') }}"
-                        class="h-12 px-5 flex items-center justify-center bg-white brutal-border brutal-shadow font-black uppercase tracking-wide brutal-btn">
+                    </x-button>
+                    <x-button variant="secondary" href="{{ route('profile.edit') }}">
                         Hồ sơ
-                    </a>
+                    </x-button>
                 </div>
             </div>
-        </section>
+        </x-card>
 
         @php
         // Lấy danh sách lớp học đã tham gia
@@ -54,72 +51,72 @@
         ->get();
         @endphp
 
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <article class="bg-white brutal-border brutal-shadow p-5">
-                <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Học phần đang theo</p>
-                <p class="mt-3 text-4xl font-black leading-none">{{ $enrolledSections->count() }}</p>
-                <p class="mt-2 text-sm font-semibold text-slate-600">Lớp học phần đã tham gia</p>
-            </article>
-            <article class="bg-white brutal-border brutal-shadow p-5">
-                <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Bài thi</p>
-                <p class="mt-3 text-4xl font-black leading-none">{{ $exams->count() }}</p>
-                <p class="mt-2 text-sm font-semibold text-slate-600">Tổng số bài kiểm tra</p>
-            </article>
-            <article class="bg-white brutal-border brutal-shadow p-5">
-                <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Chuyên cần</p>
-                <p class="mt-3 text-4xl font-black leading-none">-%</p>
-                <p class="mt-2 text-sm font-semibold text-slate-600">Tỷ lệ tham gia buổi học</p>
-            </article>
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <x-card padding="true">
+                <p class="text-[12px] font-medium text-text-muted mb-1">Học phần đang theo</p>
+                <div class="flex items-baseline gap-2">
+                    <p class="text-[28px] font-bold text-navy-900 leading-none">{{ $enrolledSections->count() }}</p>
+                    <span class="text-[12px] text-text-muted">lớp</span>
+                </div>
+            </x-card>
+            <x-card padding="true" variant="accent">
+                <p class="text-[12px] font-medium text-text-muted mb-1">Bài thi</p>
+                <div class="flex items-baseline gap-2">
+                    <p class="text-[28px] font-bold text-navy-900 leading-none">{{ $exams->count() }}</p>
+                    <span class="text-[12px] text-text-muted">bài</span>
+                </div>
+            </x-card>
+            <x-card padding="true">
+                <p class="text-[12px] font-medium text-text-muted mb-1">Chuyên cần</p>
+                <div class="flex items-baseline gap-2">
+                    <p class="text-[28px] font-bold text-navy-900 leading-none">-%</p>
+                    <span class="text-[12px] text-text-muted">đã tham gia</span>
+                </div>
+            </x-card>
         </section>
 
-        <section class="bg-white brutal-border brutal-shadow p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-black uppercase">Bài Kiểm Tra & Kỳ Thi</h3>
-            </div>
+        <x-card padding="true">
+            <x-slot name="header">
+                <h3 class="text-[17px] font-semibold text-navy-900">Bài Kiểm Tra & Kỳ Thi</h3>
+            </x-slot>
 
             @if($exams->isEmpty())
-            <div class="text-center py-10 bg-gray-50 brutal-border border-dashed">
-                <p class="text-slate-500 font-semibold">Chưa có bài kiểm tra nào được giao cho bạn.</p>
+            <div class="text-center py-10 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                <p class="text-text-muted text-[13px] font-medium">Bạn chưa có bài thi nào.</p>
             </div>
             @else
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach($exams as $exam)
-                <div class="brutal-border p-5 bg-yellow-50 flex flex-col justify-between relative group hover:-translate-y-1 hover:shadow-brutal-lg transition-all">
-                    <div class="absolute -top-3 -right-3 bg-ems-primary text-white text-xs font-black px-3 py-1 brutal-border shadow-brutal rotate-3">
-                        {{ $exam->duration_minutes }} PHÚT
+                <div class="border-[0.5px] border-border-clean p-4 rounded-[8px] bg-white hover:border-blue-200 transition-colors flex flex-col justify-between">
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <x-badge type="warning">Còn {{ $exam->duration_minutes }} phút</x-badge>
+                            <span class="text-[11px] text-text-muted">{{ $exam->created_at->format('d/m/Y') }}</span>
+                        </div>
+                        <h4 class="font-semibold text-[15px] text-navy-900 leading-snug mb-1">{{ $exam->title }}</h4>
+                        <p class="text-[12px] text-text-muted">{{ $exam->courseSection->name ?? $exam->courseSection->code }}</p>
                     </div>
 
-                    <div class="mb-6 mt-2">
-                        <h4 class="font-black text-xl uppercase leading-tight mb-2">{{ $exam->title }}</h4>
-                        <p class="text-sm font-bold text-slate-600 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                            </svg>
-                            {{ $exam->courseSection->name ?? $exam->courseSection->code }}
-                        </p>
-                    </div>
-
-                    <a href="{{ route('student.exams.show', $exam->id) }}" class="w-full h-10 flex items-center justify-center bg-black text-white brutal-border font-black text-sm uppercase brutal-btn brutal-shadow group-hover:bg-ems-primary">
+                    <x-button variant="primary" size="sm" class="w-full" href="{{ route('student.exams.show', $exam->id) }}">
                         Vào Phòng Thi
-                    </a>
+                    </x-button>
                 </div>
                 @endforeach
             </div>
             @endif
-        </section>
+        </x-card>
 
-        <section class="bg-white brutal-border brutal-shadow p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-xl font-black uppercase">Lớp học phần của tôi</h3>
-            </div>
+        <x-card padding="true">
+            <x-slot name="header">
+                <h3 class="text-[17px] font-semibold text-navy-900">Lớp học phần của tôi</h3>
+            </x-slot>
 
             @if($enrolledSections->isEmpty())
             <div class="text-center py-10">
-                <p class="text-slate-400 font-semibold">Bạn chưa tham gia lớp nào</p>
-                <button onclick="document.getElementById('join-class-modal').classList.remove('hidden')"
-                    class="mt-4 h-10 px-6 inline-flex items-center bg-ems-primary text-white brutal-border font-black text-sm uppercase brutal-btn brutal-shadow">
+                <p class="text-text-muted text-[13px] mb-4">Bạn chưa tham gia lớp nào.</p>
+                <x-button variant="primary" onclick="document.getElementById('join-class-modal').classList.remove('hidden')">
                     Tham gia lớp ngay
-                </button>
+                </x-button>
             </div>
             @else
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -127,19 +124,19 @@
                 @php
                 $searchableText = strtolower(($section->name ?? '') . ' ' . $section->code);
                 @endphp
-                <div class="brutal-border p-4 bg-background-light flex items-center justify-between gap-4"
+                <div class="border-[0.5px] border-border-clean bg-surface-0 rounded-[8px] p-4 flex items-center justify-between gap-4"
                     x-show="searchQuery === '' || '{{ $searchableText }}'.includes(searchQuery.toLowerCase())">
                     <div>
-                        <p class="font-black text-sm uppercase tracking-wide">{{ $section->name ?? $section->code }}</p>
-                        <p class="text-xs font-semibold text-slate-500 mt-0.5">{{ $section->code }}</p>
+                        <p class="font-semibold text-[14px] text-navy-900 leading-tight">{{ $section->name ?? $section->code }}</p>
+                        <p class="text-[12px] text-text-muted mt-1 font-mono">{{ $section->code }}</p>
                         @if($section->lecturer)
-                        <p class="text-xs font-semibold text-slate-400 mt-0.5">GV: {{ $section->lecturer->name }}</p>
+                        <p class="text-[12px] text-text-muted mt-0.5">Giảng viên: {{ $section->lecturer->name }}</p>
                         @endif
                     </div>
-                    <form method="POST" action="{{ route('student.leave-class', $section) }}" onsubmit="return confirm('Roi khoi lop nay?')">
+                    <form method="POST" action="{{ route('student.leave-class', $section) }}" onsubmit="return confirm('Bạn có chắc muốn rời lớp này?')">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="text-xs font-black text-red-500 hover:underline uppercase">
+                        <button type="submit" class="text-[12px] font-medium text-red-600 hover:text-red-700 hover:underline">
                             Rời lớp
                         </button>
                     </form>
@@ -147,37 +144,42 @@
                 @endforeach
             </div>
             @endif
-        </section>
+        </x-card>
     </div>
 
-    <div id="join-class-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-        <div class="bg-white brutal-border brutal-shadow-lg w-full max-w-md p-8">
+    <div id="join-class-modal" class="hidden fixed inset-0 bg-navy-950/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <x-card padding="true" class="w-full max-w-md">
             <div class="flex items-center justify-between mb-6">
-                <h3 class="text-2xl font-black uppercase">Tham gia lớp học</h3>
-                <button onclick="document.getElementById('join-class-modal').classList.add('hidden')" class="font-black text-2xl leading-none hover:text-ems-primary">&times;</button>
+                <h3 class="text-[17px] font-semibold text-navy-900">Tham gia lớp học</h3>
+                <button onclick="document.getElementById('join-class-modal').classList.add('hidden')" class="text-text-muted hover:text-navy-900">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
 
             @if(!auth()->user()->student_code)
-            <p class="mb-4 font-semibold text-slate-600">Trước tiên hãy hoàn tất hồ sơ sinh viên (nhập MSSV).</p>
-            <a href="{{ route('onboarding.show') }}" class="w-full block text-center h-12 bg-ems-primary text-white brutal-border font-black uppercase tracking-wider leading-[3rem]">
-                Nhập thông tin sinh viên
-            </a>
+            <div class="bg-amber-50 border-[0.5px] border-amber-600 rounded-[8px] p-4 text-center">
+                <p class="text-[12px] text-amber-600 font-medium mb-3">Trước tiên hãy hoàn tất hồ sơ sinh viên (nhập MSSV).</p>
+                <x-button variant="primary" class="w-full" href="{{ route('onboarding.show') }}">
+                    Nhập thông tin sinh viên
+                </x-button>
+            </div>
             @else
             <form method="POST" action="{{ route('student.join-class') }}" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-sm font-black uppercase mb-2">Mã lớp học</label>
-                    <input name="invite_code" type="text" required placeholder="Nhập mã lớp (VD: ABC123)" class="w-full h-12 px-4 bg-white brutal-border font-bold text-lg focus:ring-0 uppercase tracking-widest">
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1">Mã lớp học</label>
+                    <x-text-input name="invite_code" type="text" required placeholder="VD: ABC123" class="font-mono" />
                     @error('invite_code')
-                    <p class="mt-1 text-xs font-semibold text-red-700">{{ $message }}</p>
+                    <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
-                <button type="submit" class="w-full h-12 bg-ems-primary text-white brutal-border font-black uppercase tracking-widest hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shadow-brutal">
-                    Tham gia
-                </button>
+                <div class="flex justify-end gap-2 pt-2">
+                    <x-button variant="ghost" onclick="document.getElementById('join-class-modal').classList.add('hidden')">Hủy bỏ</x-button>
+                    <x-button type="submit" variant="primary">Tham gia</x-button>
+                </div>
             </form>
             @endif
-        </div>
+        </x-card>
     </div>
 
     @if($errors->has('invite_code') || session('error'))
