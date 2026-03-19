@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
 @tailwind base;
@@ -47,22 +48,19 @@
 
     /* Sidebar nav item base style */
     .sidebar-link {
-        @apply flex items-center gap-3 px-4 py-2.5 text-sm font-black uppercase tracking-wide text-slate-800 bg-white border-[2px] border-black transition-all duration-200 ease-in-out;
+        @apply flex items-center gap-3 px-3 py-2 text-[13px] font-medium text-text-muted rounded-[5px] transition-colors duration-200 ease-in-out cursor-pointer;
     }
 
     .sidebar-link.active {
-        @apply bg-ems-primary text-white;
-        box-shadow: 4px 4px 0px 0px #000000;
+        @apply bg-navy-50 text-navy-900 font-semibold;
     }
 
-    .sidebar-link:hover {
-        /* @apply bg-background-light; */
-        box-shadow: 4px 4px 0px 0px #000000;
-        transform: translate(-5px, -1px);
+    .sidebar-link:hover:not(.active) {
+        @apply bg-surface-1 text-navy-900;
     }
 
     /* Sidebar section title */
     .sidebar-section-title {
-        @apply px-1 pt-5 pb-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500;
+        @apply px-3 pt-5 pb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted;
     }
 }

@@ -19,7 +19,7 @@ class AdminsTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Ho ten')
+                    ->label('Họ tên')
                     ->searchable()
                     ->sortable(),
 
@@ -28,7 +28,7 @@ class AdminsTable
                     ->searchable(),
 
                 TextColumn::make('roles.name')
-                    ->label('Vai tro')
+                    ->label('Vai trò')
                     ->badge()
                     ->separator(','),
 
@@ -37,15 +37,15 @@ class AdminsTable
                     ->boolean(),
 
                 IconColumn::make('is_active')
-                    ->label('Hoat dong')
+                    ->label('Hoạt động')
                     ->boolean(),
 
                 IconColumn::make('must_change_password')
-                    ->label('Doi mat khau')
+                    ->label('Đổi mật khẩu')
                     ->boolean(),
 
                 TextColumn::make('last_login_at')
-                    ->label('Dang nhap cuoi')
+                    ->label('Đăng nhập cuối')
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('-')
                     ->sortable(),
@@ -57,14 +57,14 @@ class AdminsTable
                 EditAction::make(),
 
                 Action::make('toggle_active')
-                    ->label(fn (Admin $record): string => $record->is_active ? 'Khoa tai khoan' : 'Mo khoa')
+                    ->label(fn (Admin $record): string => $record->is_active ? 'Khóa tài khoản' : 'Mở khóa')
                     ->color(fn (Admin $record): string => $record->is_active ? 'danger' : 'success')
                     ->requiresConfirmation()
                     ->action(function (Admin $record): void {
                         $record->update(['is_active' => ! $record->is_active]);
 
                         Notification::make()
-                            ->title($record->is_active ? 'Da mo khoa tai khoan admin' : 'Da khoa tai khoan admin')
+                            ->title($record->is_active ? 'Đã mở khóa tài khoản admin' : 'Đã khóa tài khoản admin')
                             ->success()
                             ->send();
                     }),

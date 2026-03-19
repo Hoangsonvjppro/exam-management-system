@@ -13,92 +13,96 @@
         <div class="space-y-6">
 
             @if(session('success'))
-                <div class="p-4 bg-green-100 brutal-border font-semibold text-green-800 text-sm">{{ session('success') }}</div>
+                <div class="p-4 bg-teal-50 border-[0.5px] border-teal-200 rounded-[6px] font-medium text-teal-800 text-[13px]">{{ session('success') }}</div>
             @endif
 
-            <section class="bg-background-light brutal-border shadow-brutal-lg p-6 md:p-8">
+            <x-card padding="true" variant="featured">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                     <div>
-                        <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-600">Lecturer Cockpit</p>
-                        <h2 class="mt-2 text-3xl md:text-4xl font-black uppercase tracking-tight">Xin chào, {{ $lecturer->name }}</h2>
-                        <p class="mt-3 text-sm md:text-base font-semibold text-slate-700">
+                        <h2 class="text-[22px] md:text-[28px] font-bold text-navy-900 leading-tight">Xin chào, {{ auth()->user()->name }}!</h2>
+                        <p class="mt-2 text-[13px] text-text-muted">
                             @if($lecturer->lecturer_code)
-                                Mã GV: <span class="font-black">{{ $lecturer->lecturer_code }}</span>
+                                Mã GV: <span class="font-semibold text-navy-900">{{ $lecturer->lecturer_code }}</span>
                             @endif
                             @if($lecturer->department)
-                                — {{ $lecturer->department }}
+                                — Lĩnh vực: <span class="font-semibold text-navy-900">{{ $lecturer->department }}</span>
                             @endif
                         </p>
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <a href="{{ route('lecturer.classes.create') }}"
-                           class="h-12 px-5 flex items-center justify-center bg-ems-primary text-white brutal-border brutal-shadow font-black uppercase tracking-wide brutal-btn">
+                        <x-button variant="outline" href="{{ route('lecturer.classes.create') }}">
                             + Tạo lớp mới
-                        </a>
-                        <a href="{{ route('lecturer.classes.index') }}"
-                           class="h-12 px-5 flex items-center justify-center bg-white brutal-border brutal-shadow font-black uppercase tracking-wide brutal-btn">
+                        </x-button>
+                        <x-button variant="secondary" href="{{ route('lecturer.classes.index') }}">
                             Quản lý lớp
-                        </a>
+                        </x-button>
                     </div>
                 </div>
-            </section>
+            </x-card>
 
-            <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <article class="bg-white brutal-border brutal-shadow p-5">
-                    <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Lớp học phần</p>
-                    <p class="mt-3 text-4xl font-black leading-none">{{ $activeCount }}</p>
-                    <p class="mt-2 text-sm font-semibold text-slate-600">Số lớp đang mở</p>
-                </article>
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <x-card padding="true">
+                    <p class="text-[12px] font-medium text-text-muted mb-1">Số lớp đang mở</p>
+                    <div class="flex items-baseline gap-2">
+                        <p class="text-[28px] font-bold text-navy-900 leading-none">{{ $activeCount }}</p>
+                        <span class="text-[12px] text-text-muted">lớp</span>
+                    </div>
+                </x-card>
 
-                <article class="bg-white brutal-border brutal-shadow p-5">
-                    <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Sinh viên</p>
-                    <p class="mt-3 text-4xl font-black leading-none">{{ $studentTotal }}</p>
-                    <p class="mt-2 text-sm font-semibold text-slate-600">Tổng sinh viên đang theo học</p>
-                </article>
+                <x-card padding="true" variant="accent">
+                    <p class="text-[12px] font-medium text-text-muted mb-1">Sinh viên theo học</p>
+                    <div class="flex items-baseline gap-2">
+                        <p class="text-[28px] font-bold text-navy-900 leading-none">{{ $studentTotal }}</p>
+                        <span class="text-[12px] text-text-muted">sinh viên</span>
+                    </div>
+                </x-card>
 
-                <article class="bg-white brutal-border brutal-shadow p-5">
-                    <p class="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Câu hỏi</p>
-                    <p class="mt-3 text-4xl font-black leading-none">{{ $questionCount }}</p>
-                    <p class="mt-2 text-sm font-semibold text-slate-600">Ngân hàng câu hỏi cá nhân</p>
-                </article>
+                <x-card padding="true">
+                    <p class="text-[12px] font-medium text-text-muted mb-1">Ngân hàng câu hỏi</p>
+                    <div class="flex items-baseline gap-2">
+                        <p class="text-[28px] font-bold text-navy-900 leading-none">{{ $questionCount }}</p>
+                        <span class="text-[12px] text-text-muted">câu</span>
+                    </div>
+                </x-card>
             </section>
 
             {{-- My class list preview --}}
-            <section class="bg-white brutal-border brutal-shadow p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-black uppercase">Lớp học phần của tôi</h3>
-                    <a href="{{ route('lecturer.classes.index') }}" class="text-sm font-black text-ems-primary hover:underline">Xem tất cả →</a>
-                </div>
+            <x-card padding="true">
+                <x-slot name="header">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-[17px] font-semibold text-navy-900">Lớp học phần của tôi</h3>
+                        <a href="{{ route('lecturer.classes.index') }}" class="text-[13px] font-medium text-blue-400 hover:text-navy-900 hover:underline">Xem kết quả  →</a>
+                    </div>
+                </x-slot>
 
                 @if($mySections->isEmpty())
-                    <div class="text-center py-8">
-                        <p class="text-slate-400 font-semibold">Chưa có lớp học phần nào.</p>
-                        <a href="{{ route('lecturer.classes.create') }}"
-                           class="mt-3 inline-flex items-center h-10 px-5 bg-ems-primary text-white brutal-border font-black text-sm uppercase brutal-btn brutal-shadow">
+                    <div class="text-center py-10 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                        <p class="text-[13px] text-text-muted font-medium mb-4">Chưa có lớp học phần nào.</p>
+                        <x-button variant="primary" href="{{ route('lecturer.classes.create') }}">
                             Tạo lớp ngay
-                        </a>
+                        </x-button>
                     </div>
                 @else
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @foreach($mySections->take(6) as $section)
                             @php
                                 $searchableText = strtolower(($section->name ?? '') . ' ' . $section->code);
                             @endphp
                             <a href="{{ route('lecturer.classes.show', $section) }}"
-                               class="brutal-border p-4 bg-background-light hover:bg-ems-primary/10 transition-colors flex items-start justify-between gap-3"
+                               class="border-[0.5px] border-border-clean bg-surface-0 rounded-[8px] p-4 flex items-start justify-between gap-3 hover:border-blue-200 transition-colors"
                                x-show="searchQuery === '' || '{{ $searchableText }}'.includes(searchQuery.toLowerCase())">
                                 <div>
-                                    <p class="font-black text-sm uppercase">{{ $section->name ?? $section->code }}</p>
-                                    <p class="text-xs text-slate-500 font-semibold mt-0.5">{{ $section->students_count }} sinh viên</p>
+                                    <p class="font-semibold text-[14px] text-navy-900">{{ $section->name ?? $section->code }}</p>
+                                    <p class="text-[12px] text-text-muted font-medium mt-0.5">{{ $section->students_count }} sinh viên</p>
                                 </div>
-                                <span class="font-mono text-xs font-black bg-white brutal-border px-2 py-1 tracking-widest uppercase">
+                                <span class="font-mono text-[11px] font-medium text-navy-600 bg-white border-[0.5px] border-border-clean px-2 py-0.5 rounded-[4px] uppercase">
                                     {{ $section->invite_code ?? '—' }}
                                 </span>
                             </a>
                         @endforeach
                     </div>
                 @endif
-            </section>
+            </x-card>
         </div>
 </x-app-layout>

@@ -22,6 +22,7 @@ class CourseSection extends Model
 {
     protected $fillable = [
         'code',
+        'name',
         'invite_code',
         'subject_id',
         'semester_id',
@@ -81,5 +82,11 @@ class CourseSection extends Model
     public function getEnrolledCountAttribute(): int
     {
         return $this->students()->wherePivot('status', 'enrolled')->count();
+    }
+
+    // 1 học phần thì sẽ có nhiều bài kiểm tra!
+    public function exams()
+    {
+        return $this->hasMany(Exam::class);
     }
 }

@@ -15,7 +15,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Inter', ...defaultTheme.fontFamily.sans],
+                sans: ['"Be Vietnam Pro"', 'Inter', ...defaultTheme.fontFamily.sans],
                 display: ['Inter', 'sans-serif'],
             },
             colors: {
@@ -78,6 +78,45 @@ export default {
                     500: '#EF4444',
                     600: '#DC2626',
                 },
+                navy: {
+                    50: '#E6F1FB', // Blue 50
+                    200: '#B5D4F4', // Blue 200
+                    400: '#378ADD', // Blue 400
+                    600: '#185FA5', // Navy 600
+                    700: '#2A5298', // Navy 700
+                    900: '#1A3A6B', // Navy 900
+                    950: '#0B2347', // Navy 950
+                },
+                teal: {
+                    50: '#E1F5EE',
+                    200: '#9FE1CB',
+                    300: '#5DCAA5',
+                    500: '#1D9E75',
+                    700: '#0F6E56',
+                    800: '#065F46',
+                },
+                surface: {
+                    DEFAULT: '#FFFFFF',
+                    muted: '#F8FAFC',
+                    hover: '#F1F5F9',
+                    0: '#F8FAFD',
+                    1: '#F4F7FC',
+                    2: '#EBF2FA',
+                },
+                amber: {
+                    50: '#FEF3C7',
+                    400: '#FBBF24',
+                    600: '#D97706',
+                },
+                text: {
+                    muted: '#6B7C99',
+                    primary: '#1A3A6B',
+                },
+                border: {
+                    DEFAULT: '#E2E8F0',
+                    dark: '#CBD5E1',
+                    clean: '#D6E2F0',
+                },
             },
             boxShadow: {
                 'card': '0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
@@ -88,6 +127,10 @@ export default {
             },
             borderRadius: {
                 'card': '0.75rem',
+            },
+            borderWidth: {
+                '0.5': '0.5px',
+                '1.5': '1.5px',
             },
         },
     },
