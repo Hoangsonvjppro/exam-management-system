@@ -174,20 +174,20 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::patch('/exams/{exam}/close',   [ExamController::class, 'close'])->name('exams.close'); // 
             // Routes for Lecturer (đã bỏ prefix và name trùng lặp)
             Route::get('/questions', function () {
-                return 'Trang quản lý câu hỏi';
+                return view('lecturer.questions.index');
             })->name('questions.index');
 
             Route::get('/exams', function () {
-                return 'Trang quản lý đề thi';
+                return view('lecturer.exams.index');
             })->name('exams.index');
 
             Route::get('/schedules', function () {
-                return 'Trang lịch thi';
+                return view('lecturer.schedules.index');
             })->name('schedules.index');
 
             Route::get('/attendance', function () {
-                return 'Trang điểm danh';
-            })->name('attendance.index');
+                return view('lecturer.attendance.index');
+            })->name('attendance.index'); 
         });
 
     // Dashboard cũ của giảng viên – giữ lại để tương thích với
