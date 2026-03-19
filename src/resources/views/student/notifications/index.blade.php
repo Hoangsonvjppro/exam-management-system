@@ -38,11 +38,17 @@
                                     <p class="text-text-muted text-[13px] line-clamp-2 md:max-w-3xl pr-4">{{ $notification->message }}</p>
                                 </div>
                                 <div class="shrink-0 mt-2 md:mt-0 self-start">
+                                    @php
+                                        $safeTitle = addslashes($notification->title);
+                                        $safeMessage = addslashes(str_replace(["\r", "\n"], ["", "\\n"], $notification->message));
+                                        $safeDate = $notification->created_at->format('d/m/Y H:i');
+                                        $safeClass = addslashes($className);
+                                    @endphp
                                     <x-button variant="outline" class="!px-3 !py-1.5" x-on:click="
-                                            currentTitle = '{{ addslashes($notification->title) }}';
-                                            currentMessage = '{{ addslashes(str_replace(["\r\", \"\n\"], [\"\", \"\\n\"], $notification->message)) }}';
-                                            currentDate = '{{ $notification->created_at->format('d/m/Y H:i') }}';
-                                            currentClass = '{{ addslashes($className) }}';E
+                                            currentTitle = '{{ $safeTitle }}';
+                                            currentMessage = '{{ $safeMessage }}';
+                                            currentDate = '{{ $safeDate }}';
+                                            currentClass = '{{ $safeClass }}';
                                             modalOpen = true;
                                         ">
                                         Xem chi tiết
