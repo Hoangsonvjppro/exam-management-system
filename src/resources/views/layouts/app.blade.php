@@ -62,42 +62,26 @@
 
                 <x-sidebar-section label="Lớp học">
                     <x-sidebar-link route="lecturer.dashboard" icon="check-circle" :active="false">Điểm danh</x-sidebar-link>
-                    <x-sidebar-link route="lecturer.dashboard" icon="paper-clip" :active="false">Tài liệu</x-sidebar-link>
                 </x-sidebar-section>
                 @endrole
 
                 @role('student')
                 <x-sidebar-section label="Menu chính">
                     <x-sidebar-link route="student.dashboard" icon="grid">Tổng quan</x-sidebar-link>
-                    <x-sidebar-link route="student.dashboard" icon="book-open" :active="false">Học phần của tôi</x-sidebar-link>
+                    <x-sidebar-link route="student.classes.index" icon="book-open">Học phần của tôi</x-sidebar-link>
                     <x-sidebar-link route="student.dashboard" icon="clipboard-list" :active="false">Kỳ thi & Bài tập</x-sidebar-link>
                     <x-sidebar-link route="student.dashboard" icon="chart-bar" :active="false">Kết quả học tập</x-sidebar-link>
-                    <x-sidebar-link route="student.dashboard" icon="calendar" :active="false">Lịch biểu</x-sidebar-link>
+                    <x-sidebar-link route="student.dashboard" icon="check-circle" :active="false">Điểm danh</x-sidebar-link>
                 </x-sidebar-section>
 
                 <x-sidebar-section label="Cài đặt">
                     <x-sidebar-link route="profile.edit" icon="user">Hồ sơ cá nhân</x-sidebar-link>
-                    <x-sidebar-link route="student.dashboard" icon="cog" :active="false">Cài đặt hệ thống</x-sidebar-link>
                 </x-sidebar-section>
                 @endrole
 
             </nav>
 
-            <!-- Help/Support Card -->
-            <div class="flex-shrink-0 px-4 pb-4">
-                <div class="bg-surface-1 border-[0.5px] border-border-clean rounded-[10px] p-4 text-center">
-                    <div class="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-2 text-navy-600">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <p class="text-navy-900 text-[12px] font-semibold mb-1">Cần hỗ trợ?</p>
-                    <p class="text-text-muted text-[11px] mb-3 leading-relaxed">Liên hệ hệ thống nếu bạn gặp sự cố.</p>
-                    <button class="w-full bg-navy-50 text-navy-900 text-[11px] font-medium py-1.5 px-3 rounded-[5px] transition-opacity hover:opacity-80">
-                        Gửi yêu cầu
-                    </button>
-                </div>
-            </div>
+
         </aside>
 
         {{-- ─── MAIN CONTENT ─────────────────────────────────────── --}}

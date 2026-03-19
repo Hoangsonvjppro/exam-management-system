@@ -95,6 +95,9 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
 
     // Student Exam routes
     Route::middleware('student_role')->prefix('student')->name('student.')->group(function () {
+        // Danh sách lớp học phần của sinh viên
+        Route::view('/classes', 'student.classes.index')->name('classes.index');
+
         Route::get('/exams/{exam}', [\App\Http\Controllers\Student\ExamController::class, 'show'])->name('exams.show');
         Route::post('/exams/{exam}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('exams.start');
         Route::get('/exams/{exam}/room', [\App\Http\Controllers\Student\ExamController::class, 'room'])->name('exams.room');
