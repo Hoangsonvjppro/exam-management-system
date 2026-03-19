@@ -25,6 +25,20 @@ class ExamController extends Controller
     // Hiển thị bài thi khi thằng sinh viên nhấn vào nút bắt đầu
     public function start(Exam $exam)
     {
+        //Fix: Có lẽ nên thêm phần kiểm tra xem status bài thi đã được mở hay chưa rồi mới cho phép bắt đầu, tránh trường hợp sinh viên vào sảnh chờ rồi nhưng thầy chưa mở bài thi
+        if ($exam->status != 'published') {
+            abort(403,'Bài thi nãy đã được mở đâu!?');
+        }
+
+        $now = now();
+        if ($exam->start_time  && $now->lt($exam->start_time)) {
+            return back()->with('error', 'Lo ôn bài tiếp đi, vì bài thi  chưa bắt đầu.');
+        }
+        if ($exam->end_time && $now->gt($exam->end_time)) {
+            return back()->with('error', 'Bài thi đã kết thúc.');
+        }
+
+
         $attempt = ExamAttempt::firstOrCreate(
             ['exam_id' => $exam->id, 'user_id' => Auth::id()],
             ['started_at' => now(), 'status' => 'in_progress']
