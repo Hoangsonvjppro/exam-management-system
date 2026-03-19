@@ -40,7 +40,7 @@
                                 <div class="shrink-0 mt-2 md:mt-0 self-start">
                                     <x-button variant="outline" class="!px-3 !py-1.5" x-on:click="
                                             currentTitle = '{{ addslashes($notification->title) }}';
-                                            currentMessage = '{{ addslashes(str_replace([\"\r\", \"\n\"], [\"\", \"\\n\"], $notification->message)) }}';
+                                            currentMessage = '{{ addslashes(str_replace(["\r\", \"\n\"], [\"\", \"\\n\"], $notification->message)) }}';
                                             currentDate = '{{ $notification->created_at->format('d/m/Y H:i') }}';
                                             currentClass = '{{ addslashes($className) }}';
                                             modalOpen = true;

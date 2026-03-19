@@ -48,7 +48,7 @@
 
     /* Sidebar nav item base style */
     .sidebar-link {
-        @apply flex items-center gap-3 px-3 py-2 text-[13px] font-medium text-text-muted rounded-[5px] transition-colors duration-200 ease-in-out cursor-pointer;
+        @apply flex items-center gap-3 px-4 py-2.5 text-[17px] font-medium text-text-muted rounded-[6px] transition-colors duration-200 ease-in-out cursor-pointer;
     }
 
     .sidebar-link.active {
@@ -61,6 +61,6 @@
 
     /* Sidebar section title */
     .sidebar-section-title {
-        @apply px-3 pt-5 pb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-text-muted;
+        @apply px-4 pt-6 pb-2 text-[13px] font-bold uppercase tracking-[0.05em] text-text-muted;
     }
 }
