@@ -17,7 +17,11 @@ class ExamController extends Controller
     {
         $this->authorizeCourseSection($courseSection);
 
-        return view("lecturer.exams.create", compact('courseSection'));
+        $questions = Question::where('status', 'approved')
+            ->where('subject_id', $courseSection->subject_id)
+            ->get();
+
+        return view("lecturer.exams.create", compact('courseSection', 'questions'));
     }
 
     // Tạo 1 đề thi mới xong rồi thì phải lưu thông tin chung của đề thi vào DB
@@ -34,17 +38,27 @@ class ExamController extends Controller
             'exam_type' => 'required|in:official,practice',
             'show_score_after_submit' => 'boolean',
             'show_answers_after_submit' => 'boolean',
+            'question_ids' => 'required|array',
+            'question_ids.*' => 'exists:questions,id',
         ]);
 
         $exam = $courseSection->exams()->create($validated);
 
-        return redirect()->route('lecturer.exams.questions.manage', $exam->id)
-            ->with(
-                'success',
-                'Đề thi đã được tạo thành công 
-                || Bước tiếp theo là thêm câu hỏi vào đề thi.
-            '
-            );
+        $questionsData = collect($request->question_ids)->mapWithKeys(function ($id, $index) {
+            return [$id => ['points' => 1.00, 'order_index' => $index + 1]];
+        })->all();
+
+        $exam->questions()->sync($questionsData);
+
+        // Đồng bộ total_points theo tổng điểm câu hỏi thực tế
+        $totalPoints = $exam->questions()->sum('exam_questions.points');
+        $exam->update([
+            'total_points' => $totalPoints,
+            'pass_points' => min($exam->pass_points ?? 0, $totalPoints),
+        ]);
+
+        return redirect()->route('lecturer.exams.show', $exam->id)
+            ->with('success', 'Đề thi đã được tạo thành công cùng với các câu hỏi.');
     }
 
     // Xem chi tiết đề thi
@@ -65,8 +79,12 @@ class ExamController extends Controller
         Gate::authorize('manageLecturer', $exam);
 
         $courseSection = $exam->courseSection;
+        $questions = Question::where('status', 'approved')
+            ->where('subject_id', $courseSection->subject_id)
+            ->get();
+        $selectedQuestionIds = $exam->questions()->pluck('question_id')->toArray();
 
-        return view('lecturer.exams.edit', compact('exam', 'courseSection'));
+        return view('lecturer.exams.edit', compact('exam', 'courseSection', 'questions', 'selectedQuestionIds'));
     }
 
     // Cập nhật đề thi
@@ -83,6 +101,8 @@ class ExamController extends Controller
             'exam_type' => 'required|in:official,practice',
             'show_score_after_submit' => 'boolean',
             'show_answers_after_submit' => 'boolean',
+            'question_ids' => 'nullable|array',
+            'question_ids.*' => 'exists:questions,id',
         ]);
 
         // Nếu đã có SV thi, chỉ cho sửa metadata (tên, mô tả, cấu hình hiển thị)
@@ -91,6 +111,17 @@ class ExamController extends Controller
                 'title', 'description', 
                 'show_score_after_submit', 'show_answers_after_submit',
             ])->toArray();
+        } else {
+            // Update questions only if structure is editable
+            $questionIds = $request->input('question_ids', []);
+            $questionsData = collect($questionIds)->mapWithKeys(function ($id, $index) {
+                return [$id => ['points' => 1.00, 'order_index' => $index + 1]];
+            })->all();
+            $exam->questions()->sync($questionsData);
+            
+            $totalPoints = $exam->questions()->sum('exam_questions.points');
+            $validated['total_points'] = $totalPoints;
+            $validated['pass_points'] = min($exam->pass_points ?? 0, $totalPoints);
         }
 
         $exam->update($validated);
@@ -120,18 +151,7 @@ class ExamController extends Controller
             ->with('success', 'Đề thi đã được xoá vĩnh viễn.');
     }
 
-    // Hiển thị form quản lý câu hỏi của đề thi
-    public function manageQuestions(Exam $exam)
-    {
-        Gate::authorize('manageLecturer', $exam);
 
-        $questions = Question::where('status', 'approved')
-            ->where('subject_id', $exam->courseSection->subject_id)
-            ->get();
-
-        $selectedQuestionIds = $exam->questions()->pluck('question_id')->toArray();
-        return view('lecturer.exams.questions', compact('exam', 'questions', 'selectedQuestionIds'));
-    }
 
     // Publish đề thi (draft → published)
     public function publish(Exam $exam)
@@ -183,33 +203,6 @@ class ExamController extends Controller
         ]);
 
         return back()->with('success', 'Đề thi đã được mở lại.');
-    }
-
-    // Lưu câu hỏi vào bảng trung gian exam_questions
-    public function storeQuestions(Request $request, Exam $exam)
-    {
-        Gate::authorize('manageLecturer', $exam);
-
-        $request->validate([
-            'question_ids' => 'required|array',
-            'question_ids.*' => 'exists:questions,id',
-        ]);
-
-        $questionsData = collect($request->question_ids)->mapWithKeys(function ($id, $index) {
-            return [$id => ['points' => 1.00, 'order_index' => $index + 1]];
-        })->all();
-
-        $exam->questions()->sync($questionsData);
-
-        // Đồng bộ total_points theo tổng điểm câu hỏi thực tế
-        $totalPoints = $exam->questions()->sum('exam_questions.points');
-        $exam->update([
-            'total_points' => $totalPoints,
-            'pass_points' => min($exam->pass_points, $totalPoints),
-        ]);
-
-        return redirect()->route('lecturer.exams.show', $exam->id)
-            ->with('success', 'Câu hỏi đã được cập nhật cho đề thi.');
     }
 
     /**

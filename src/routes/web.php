@@ -186,9 +186,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::patch('/exams/{exam}/close', [ExamController::class, 'close'])->name('exams.close');
             Route::patch('/exams/{exam}/reopen', [ExamController::class, 'reopen'])->name('exams.reopen');
 
-            // Màn hình quản lý câu hỏi trong đề thi
-            Route::get('/exams/{exam}/questions', [ExamController::class, 'manageQuestions'])->name('exams.questions.manage');
-            Route::post('/exams/{exam}/questions', [ExamController::class, 'storeQuestions'])->name('exams.questions.store'); 
+ 
             // Routes for Lecturer (đã bỏ prefix và name trùng lặp)
             Route::get('/questions', function () {
                 return view('lecturer.questions.index');

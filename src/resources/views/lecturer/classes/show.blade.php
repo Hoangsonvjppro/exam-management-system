@@ -177,9 +177,9 @@
                             <td class="py-4 px-4">
                                 <div class="flex items-center gap-3">
                                     {{-- Quản lý câu hỏi --}}
-                                    <a href="{{ route('lecturer.exams.questions.manage', $exam) }}"
+                                    <a href="{{ route('lecturer.exams.edit', $exam) }}"
                                         class="text-[12px] font-semibold text-blue-500 hover:text-blue-700 transition-colors">
-                                        Câu hỏi
+                                        Sửa đề
                                     </a>
 
                                     {{-- Publish / Unpublish --}}

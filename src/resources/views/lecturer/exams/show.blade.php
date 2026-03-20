@@ -39,9 +39,7 @@
                     <a href="{{ route('lecturer.exams.edit', $exam->id) }}" class="inline-flex items-center px-3 py-1.5 bg-white border border-border-clean rounded-[6px] text-[12px] font-medium text-text-muted hover:bg-surface-1 transition">
                         ✏️ Sửa
                     </a>
-                    <a href="{{ route('lecturer.exams.questions.manage', $exam->id) }}" class="inline-flex items-center px-3 py-1.5 bg-white border border-border-clean rounded-[6px] text-[12px] font-medium text-text-muted hover:bg-surface-1 transition">
-                        📝 Quản lý câu hỏi
-                    </a>
+
 
                     @if($exam->status === 'draft')
                     <form method="POST" action="{{ route('lecturer.exams.publish', $exam->id) }}" class="inline">

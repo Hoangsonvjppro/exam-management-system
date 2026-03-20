@@ -1,103 +1,237 @@
 <x-app-layout>
-    @section('title', 'Sửa đề thi - ' . $exam->title)
-    @section('page-title', 'Sửa đề thi')
+    <style>
+        /* THAM KHAO STYLES */
+        .ds-section { margin-bottom: 36px; }
+        .ds-label { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: #6B7C99; margin: 0 0 14px; }
+        .ca-card { background: #fff; border: 0.5px solid #D6E2F0; border-radius: 10px; padding: 16px; }
+        .ca-card-accent { border-top: 3px solid #1A3A6B; }
+        .ca-input, .ca-select { border: 1.5px solid #D6E2F0; border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #1A3A6B; background: #fff; font-family: inherit; outline: none; width: 100%; transition: all 0.2s ease; }
+        .ca-input:focus, .ca-select:focus { border-color: #185FA5; box-shadow: 0 0 0 3px #E6F1FB; }
+        .ca-input.error { border-color: #DC2626; background: #FEF2F2; }
+        .btn { display: inline-flex; justify-content: center; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 8px 18px; border-radius: 6px; cursor: pointer; border: none; font-family: inherit; transition: opacity .15s; }
+        .btn-primary { background: #1A3A6B; color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .btn-ghost { background: transparent; color: #1A3A6B; border: 1.5px solid #D6E2F0; }
+        .btn-ghost:hover { background: #F4F7FC; }
+        .ca-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        .ca-table thead th { background: #F4F7FC; color: #1A3A6B; font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 1.5px solid #D6E2F0; border-top: 1.5px solid #D6E2F0; font-size: 12px; }
+        .ca-table tbody td { padding: 12px; color: #374151; border-bottom: 1px solid #EBF2FA; background: #fff; }
+        .ca-table tbody tr:hover td { background: #F8FAFD; }
+        .ca-table thead th:first-child { border-top-left-radius: 8px; border-left: 1.5px solid #D6E2F0; }
+        .ca-table thead th:last-child { border-top-right-radius: 8px; border-right: 1.5px solid #D6E2F0; }
+        .ca-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; border-left: 1.5px solid #D6E2F0; border-bottom: 1.5px solid #D6E2F0; }
+        .ca-table tbody tr:last-child td:last-child { border-bottom-right-radius: 8px; border-right: 1.5px solid #D6E2F0; border-bottom: 1.5px solid #D6E2F0; }
+        .ca-table tbody td:first-child { border-left: 1.5px solid #D6E2F0; }
+        .ca-table tbody td:last-child { border-right: 1.5px solid #D6E2F0; }
+        .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+        .s-upcoming { background: #EBF2FA; color: #1A3A6B; }
+        .text-error { color: #DC2626; font-size: 11px; margin-top: 4px; display: block; }
+    </style>
 
-    <div class="py-12">
+    <div class="py-8 bg-[#F8FAFD] min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <x-card>
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-2xl font-bold">Sửa Đề Thi</h2>
-                    @if(! $exam->canEditStructure())
-                    <span class="px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border-[0.5px] border-amber-300">
-                        ⚠️ Đã có SV thi — chỉ sửa được tên, mô tả, cấu hình
-                    </span>
-                    @endif
+            <div class="mb-6 flex items-center justify-between">
+                <div>
+                    <h2 class="text-[22px] font-bold text-[#1A3A6B] mb-1">Sửa Đề Thi</h2>
+                    <div class="flex items-center gap-2 text-[13px] text-[#6B7C99]">
+                        <a href="{{ route('lecturer.exams.show', $exam->id) }}" class="text-[#185FA5] hover:underline">{{ $exam->title }}</a>
+                        <span class="text-[#B0BECE]">•</span>
+                        <span>Cập nhật thông tin</span>
+                    </div>
                 </div>
-                <p class="text-text-muted mb-6">Lớp học: {{ $courseSection->name ?? 'Lớp đang chọn' }}</p>
+                @if(! $exam->canEditStructure())
+                <div class="badge s-upcoming py-1.5 border border-amber-300 bg-amber-50 text-amber-700">
+                    ⚠️ Đã có sinh viên thi — chỉ sửa được tên & mô tả
+                </div>
+                @endif
+            </div>
 
-                <form method="POST" action="{{ route('lecturer.exams.update', $exam->id) }}">
-                    @csrf
-                    @method('PUT')
-
-                    <div class="mb-4">
-                        <x-input-label for="title" value="Tên bài kiểm tra" />
-                        <x-text-input id="title" class="block mt-1 w-full" type="text" name="title" value="{{ old('title', $exam->title) }}" required autofocus />
-                        <x-input-error :messages="$errors->get('title')" class="mt-2" />
-                    </div>
-
-                    <div class="mb-4">
-                        <x-input-label for="description" value="Mô tả / Hướng dẫn làm bài" />
-                        <textarea id="description" name="description" class="border-border-clean focus:border-navy-600 focus:ring-blue-200 rounded-[6px] shadow-sm block mt-1 w-full" rows="3">{{ old('description', $exam->description) }}</textarea>
-                        <x-input-error :messages="$errors->get('description')" class="mt-2" />
-                    </div>
-
-                    <div class="mb-4 {{ $exam->canEditStructure() ? '' : 'opacity-50 pointer-events-none' }}">
-                        <x-input-label for="duration_minutes" value="Thời gian làm bài (Phút)" />
-                        <x-text-input id="duration_minutes" class="block mt-1 w-full" type="number" name="duration_minutes"
-                            value="{{ old('duration_minutes', $exam->duration_minutes) }}" required />
-                        <x-input-error :messages="$errors->get('duration_minutes')" class="mt-2" />
-                    </div>
-
-                    <div class="mb-4 {{ $exam->canEditStructure() ? '' : 'opacity-50 pointer-events-none' }}">
-                        <x-input-label for="exam_type" value="Loại đề thi" />
-                        <select id="exam_type" name="exam_type" class="border-border-clean focus:border-navy-600 focus:ring-blue-200 rounded-[6px] shadow-sm block mt-1 w-full" required>
-                            <option value="official" {{ old('exam_type', $exam->exam_type) === 'official' ? 'selected' : '' }}>Chính thức (Chỉ thi 1 lần)</option>
-                            <option value="practice" {{ old('exam_type', $exam->exam_type) === 'practice' ? 'selected' : '' }}>Luyện tập (Cho phép thi lại nhiều lần)</option>
-                        </select>
-                        <x-input-error :messages="$errors->get('exam_type')" class="mt-2" />
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 mb-4 {{ $exam->canEditStructure() ? '' : 'opacity-50 pointer-events-none' }}">
-                        <div>
-                            <x-input-label for="start_time" value="Thời gian Mở đề (Tuỳ chọn)" />
-                            <x-text-input id="start_time" class="block mt-1 w-full" type="datetime-local" name="start_time"
-                                value="{{ old('start_time', $exam->start_time?->format('Y-m-d\TH:i')) }}" />
-                            <x-input-error :messages="$errors->get('start_time')" class="mt-2" />
-                        </div>
-                        <div>
-                            <x-input-label for="end_time" value="Thời gian Đóng đề (Tuỳ chọn)" />
-                            <x-text-input id="end_time" class="block mt-1 w-full" type="datetime-local" name="end_time"
-                                value="{{ old('end_time', $exam->end_time?->format('Y-m-d\TH:i')) }}" />
-                            <x-input-error :messages="$errors->get('end_time')" class="mt-2" />
-                        </div>
-                    </div>
-
-                    <div class="mb-6 p-4 bg-surface-1 rounded-[10px] border border-border-clean">
-                        <p class="text-sm font-semibold text-text-muted mb-3">Cấu hình hiển thị kết quả cho sinh viên</p>
-
-                        <div class="space-y-3">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="hidden" name="show_score_after_submit" value="0">
-                                <input type="checkbox" name="show_score_after_submit" value="1"
-                                    class="rounded border-border-clean text-navy-600 shadow-sm focus:ring-blue-200 h-4 w-4"
-                                    {{ old('show_score_after_submit', $exam->show_score_after_submit) ? 'checked' : '' }}>
+            <form method="POST" action="{{ route('lecturer.exams.update', $exam->id) }}">
+                @csrf
+                @method('PUT')
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- Cột Trái: Cấu hình chung -->
+                    <div class="lg:col-span-4 space-y-6">
+                        <div class="ca-card ca-card-accent">
+                            <h3 class="text-[14px] font-bold text-[#1A3A6B] mb-4 uppercase tracking-wider">Thông tin kỳ thi</h3>
+                            
+                            <div class="space-y-4">
                                 <div>
-                                    <span class="text-sm font-medium text-text-muted">Cho phép xem điểm tổng</span>
-                                    <p class="text-xs text-text-muted">Sinh viên sẽ thấy điểm số và trạng thái đạt/không đạt sau khi nộp bài</p>
+                                    <label for="title" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Tên bài kiểm tra <span class="text-[#DC2626]">*</span></label>
+                                    <input id="title" type="text" name="title" value="{{ old('title', $exam->title) }}" required autofocus class="ca-input @error('title') error @enderror" />
+                                    @error('title') <span class="text-error">{{ $message }}</span> @enderror
                                 </div>
-                            </label>
 
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="hidden" name="show_answers_after_submit" value="0">
-                                <input type="checkbox" name="show_answers_after_submit" value="1"
-                                    class="rounded border-border-clean text-navy-600 shadow-sm focus:ring-blue-200 h-4 w-4"
-                                    {{ old('show_answers_after_submit', $exam->show_answers_after_submit) ? 'checked' : '' }}>
                                 <div>
-                                    <span class="text-sm font-medium text-text-muted">Cho phép xem chi tiết đáp án</span>
-                                    <p class="text-xs text-text-muted">Sinh viên sẽ thấy đáp án đúng/sai của từng câu hỏi</p>
+                                    <label for="description" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Hướng dẫn làm bài</label>
+                                    <textarea id="description" name="description" class="ca-input" rows="3">{{ old('description', $exam->description) }}</textarea>
+                                    @error('description') <span class="text-error">{{ $message }}</span> @enderror
                                 </div>
-                            </label>
+
+                                <div class="grid grid-cols-2 gap-4 {{ $exam->canEditStructure() ? '' : 'opacity-50 pointer-events-none' }}">
+                                    <div>
+                                        <label for="duration_minutes" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Thời gian (Phút) <span class="text-[#DC2626]">*</span></label>
+                                        <input id="duration_minutes" type="number" name="duration_minutes" value="{{ old('duration_minutes', $exam->duration_minutes) }}" required class="ca-input @error('duration_minutes') error @enderror" />
+                                        @error('duration_minutes') <span class="text-error">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label for="exam_type" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Loại đề thi <span class="text-[#DC2626]">*</span></label>
+                                        <select id="exam_type" name="exam_type" class="ca-select @error('exam_type') error @enderror" required>
+                                            <option value="official" {{ old('exam_type', $exam->exam_type) === 'official' ? 'selected' : '' }}>Chính thức</option>
+                                            <option value="practice" {{ old('exam_type', $exam->exam_type) === 'practice' ? 'selected' : '' }}>Luyện tập</option>
+                                        </select>
+                                        @error('exam_type') <span class="text-error">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 {{ $exam->canEditStructure() ? '' : 'opacity-50 pointer-events-none' }}">
+                                    <div>
+                                        <label for="start_time" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Mở đề (Tuỳ chọn)</label>
+                                        <input id="start_time" type="datetime-local" name="start_time" value="{{ old('start_time', $exam->start_time?->format('Y-m-d\TH:i')) }}" class="ca-input @error('start_time') error @enderror" />
+                                        @error('start_time') <span class="text-error">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label for="end_time" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Đóng đề (Tuỳ chọn)</label>
+                                        <input id="end_time" type="datetime-local" name="end_time" value="{{ old('end_time', $exam->end_time?->format('Y-m-d\TH:i')) }}" class="ca-input @error('end_time') error @enderror" />
+                                        @error('end_time') <span class="text-error">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ca-card">
+                            <h3 class="text-[14px] font-bold text-[#1A3A6B] mb-4 uppercase tracking-wider">Hiển thị kết quả</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-start gap-3 cursor-pointer group">
+                                    <input type="hidden" name="show_score_after_submit" value="0">
+                                    <input type="checkbox" name="show_score_after_submit" value="1"
+                                        class="mt-0.5 rounded border-[#D6E2F0] text-[#185FA5] shadow-sm focus:ring-[#E6F1FB] w-4 h-4 transition-colors group-hover:border-[#185FA5]"
+                                        {{ old('show_score_after_submit', $exam->show_score_after_submit) ? 'checked' : '' }}>
+                                    <div>
+                                        <span class="block text-[13px] font-semibold text-[#1A3A6B]">Cho xem điểm tổng</span>
+                                    </div>
+                                </label>
+
+                                <label class="flex items-start gap-3 cursor-pointer group">
+                                    <input type="hidden" name="show_answers_after_submit" value="0">
+                                    <input type="checkbox" name="show_answers_after_submit" value="1"
+                                        class="mt-0.5 rounded border-[#D6E2F0] text-[#185FA5] shadow-sm focus:ring-[#E6F1FB] w-4 h-4 transition-colors group-hover:border-[#185FA5]"
+                                        {{ old('show_answers_after_submit', $exam->show_answers_after_submit) ? 'checked' : '' }}>
+                                    <div>
+                                        <span class="block text-[13px] font-semibold text-[#1A3A6B]">Xem chi tiết đáp án</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pt-2">
+                            <a href="{{ route('lecturer.exams.show', $exam->id) }}" class="btn btn-ghost flex-1">Hủy</a>
+                            <button type="submit" class="btn btn-primary flex-1">Cập nhật</button>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between mt-4">
-                        <a href="{{ route('lecturer.exams.show', $exam->id) }}" class="text-sm text-text-muted hover:underline">← Quay lại</a>
-                        <x-primary-button class="ml-4">
-                            Lưu thay đổi
-                        </x-primary-button>
+                    <!-- Cột Phải: Chọn câu hỏi -->
+                    <div class="lg:col-span-8 flex flex-col {{ $exam->canEditStructure() ? '' : 'opacity-70 grayscale-[0.5]' }}">
+                        <div class="bg-white rounded-[10px] border-[0.5px] border-[#D6E2F0] flex flex-col h-full shadow-sm overflow-hidden">
+                            <div class="p-5 border-b border-[#EBF2FA] flex justify-between items-center bg-[#F8FAFD]">
+                                <div>
+                                    <h3 class="text-[16px] font-bold text-[#1A3A6B]">Danh sách câu hỏi</h3>
+                                    <p class="text-[12.5px] text-[#6B7C99] mt-1">Sửa đổi tập hợp câu hỏi của đề thi.</p>
+                                </div>
+                                <div class="badge s-ongoing">Đã chọn: <span id="selectedCount">0</span>/{{ count($questions) }}</div>
+                            </div>
+
+                            @if(! $exam->canEditStructure())
+                            <div class="px-5 py-3 bg-amber-50 text-amber-800 text-[12px] font-medium border-b border-amber-200">
+                                Vì đề thi đã có lượt làm bài, bạn không thể thay đổi danh sách câu hỏi.
+                            </div>
+                            @endif
+                            
+                            <div class="flex-1 overflow-y-auto px-5 py-4 max-h-[750px] min-h-[400px]">
+                                <table class="ca-table text-left">
+                                    <thead class="sticky top-0 shadow-sm z-10 bg-[#F4F7FC]">
+                                        <tr>
+                                            <th class="w-12 text-center rounded-tl-[8px]">
+                                                <input type="checkbox" id="selectAll" class="rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#E6F1FB] w-4 h-4 cursor-pointer" {{ $exam->canEditStructure() ? '' : 'disabled' }}>
+                                            </th>
+                                            <th class="rounded-tr-[8px]">Nội dung câu hỏi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($questions as $question)
+                                            <tr class="group cursor-pointer hover:bg-[#F8FAFD] transition-colors" onclick="{{ $exam->canEditStructure() ? 'toggleCheckbox(this, event)' : '' }}">
+                                                <td class="text-center w-12">
+                                                    <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" 
+                                                           class="question-checkbox rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#E6F1FB] w-4 h-4 cursor-pointer"
+                                                           onclick="event.stopPropagation()"
+                                                           {{ in_array($question->id, $selectedQuestionIds) ? 'checked' : '' }}
+                                                           {{ $exam->canEditStructure() ? '' : 'disabled' }}>
+                                                </td>
+                                                <td>
+                                                    <div class="text-[13.5px] text-[#374151] line-clamp-2">
+                                                        {!! strip_tags($question->content) !!}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                </form>
-            </x-card>
+
+                </div>
+            </form>
+
+            <script>
+                function toggleCheckbox(row, event) {
+                    if (event.target.tagName.toLowerCase() === 'input') return;
+                    const checkbox = row.querySelector('.question-checkbox');
+                    if (checkbox && !checkbox.disabled) {
+                        checkbox.checked = !checkbox.checked;
+                        updateCounter();
+                        checkSelectAllState();
+                    }
+                }
+
+                function updateCounter() {
+                    const count = document.querySelectorAll('.question-checkbox:checked').length;
+                    const counterEl = document.getElementById('selectedCount');
+                    if (counterEl) counterEl.textContent = count;
+                }
+
+                function checkSelectAllState() {
+                    const selectAll = document.getElementById('selectAll');
+                    const checkboxes = document.querySelectorAll('.question-checkbox:not(:disabled)');
+                    if(selectAll && checkboxes.length > 0) {
+                        selectAll.checked = document.querySelectorAll('.question-checkbox:checked').length === document.querySelectorAll('.question-checkbox').length;
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    const selectAll = document.getElementById('selectAll');
+                    const checkboxes = document.querySelectorAll('.question-checkbox');
+                    
+                    if(selectAll) {
+                        selectAll.addEventListener('change', function() {
+                            checkboxes.forEach(cb => {
+                                if(!cb.disabled) cb.checked = selectAll.checked;
+                            });
+                            updateCounter();
+                        });
+                    }
+
+                    checkboxes.forEach(cb => {
+                        cb.addEventListener('change', function() {
+                            checkSelectAllState();
+                            updateCounter();
+                        });
+                    });
+
+                    updateCounter();
+                    checkSelectAllState();
+                });
+            </script>
         </div>
     </div>
 </x-app-layout>
