@@ -87,7 +87,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
     // Dashboard của sinh viên – truyền data từ controller (High #9, #10)
     Route::get('/dashboard/student', function () {
         /** @var User $user */
-        $user = auth()->user();
+        $user = Auth::user();
         $enrolledSections = $user->enrolledSections()->with('lecturer')->get();
         $sectionIds = $enrolledSections->pluck('id');
 
