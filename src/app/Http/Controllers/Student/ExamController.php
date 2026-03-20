@@ -22,11 +22,26 @@ class ExamController extends Controller
     {
         $this->authorize('viewAsStudent', $exam);
 
-        $attempt = ExamAttempt::where('exam_id', $exam->id)
+        $inProgressAttempt = ExamAttempt::where('exam_id', $exam->id)
             ->where('user_id', Auth::id())
+            ->where('status', 'in_progress')
             ->first();
 
-        return view("student.exams.show", compact("exam", "attempt"));
+        $pastAttempts = ExamAttempt::where('exam_id', $exam->id)
+            ->where('user_id', Auth::id())
+            ->where('status', 'completed')
+            ->orderByDesc('attempt_number')
+            ->get();
+
+        $canStartNew = true;
+        if ($exam->isOfficial() && $pastAttempts->isNotEmpty()) {
+            $canStartNew = false; // Official exam, already completed
+        }
+        if ($inProgressAttempt) {
+            $canStartNew = false; // Currently taking the exam
+        }
+
+        return view("student.exams.show", compact("exam", "inProgressAttempt", "pastAttempts", "canStartNew"));
     }
 
     // Hiển thị bài thi khi thằng sinh viên nhấn vào nút bắt đầu
@@ -35,18 +50,46 @@ class ExamController extends Controller
         $this->authorize('attemptExam', $exam);
 
         $now = now();
-        if ($exam->start_time  && $now->lt($exam->start_time)) {
-            return back()->with('error', 'Lo ôn bài tiếp đi, vì bài thi  chưa bắt đầu.');
+        if ($exam->start_time && $now->lt($exam->start_time)) {
+            return back()->with('error', 'Bài thi chưa bắt đầu.');
         }
         if ($exam->end_time && $now->gt($exam->end_time)) {
             return back()->with('error', 'Bài thi đã kết thúc.');
         }
 
+        // 1. Phục hồi session đang thi nếu có
+        $attempt = ExamAttempt::where('exam_id', $exam->id)
+            ->where('user_id', Auth::id())
+            ->where('status', 'in_progress')
+            ->first();
 
-        $attempt = ExamAttempt::firstOrCreate(
-            ['exam_id' => $exam->id, 'user_id' => Auth::id()],
-            ['started_at' => now(), 'status' => 'in_progress']
-        );
+        // 2. Nếu không có session đang thi, tạo mới
+        if (!$attempt) {
+            $hasCompleted = ExamAttempt::where('exam_id', $exam->id)
+                ->where('user_id', Auth::id())
+                ->where('status', 'completed')
+                ->exists();
+
+            // Chặn thi lại nếu là bài thi chính thức
+            if ($hasCompleted && $exam->isOfficial()) {
+                return back()->with('error', 'Bạn đã hoàn thành bài thi chính thức này. Không thể thi lại.');
+            }
+
+            $latestAttempt = ExamAttempt::where('exam_id', $exam->id)
+                ->where('user_id', Auth::id())
+                ->orderByDesc('attempt_number')
+                ->first();
+
+            $nextNumber = $latestAttempt ? $latestAttempt->attempt_number + 1 : 1;
+
+            $attempt = ExamAttempt::create([
+                'exam_id' => $exam->id,
+                'user_id' => Auth::id(),
+                'attempt_number' => $nextNumber,
+                'started_at' => now(),
+                'status' => 'in_progress'
+            ]);
+        }
 
         return redirect()->route('student.exams.room', $exam->id);
     }
@@ -58,11 +101,12 @@ class ExamController extends Controller
 
         $attempt = ExamAttempt::where('exam_id', $exam->id)
             ->where('user_id', Auth::id())
-            ->firstOrFail();
+            ->where('status', 'in_progress')
+            ->first();
 
-        if ($attempt->status == 'completed') {
+        if (!$attempt) {
             return redirect()->route('student.exams.show', $exam->id)
-                ->with('error', 'Bạn đã hoàn thành bài thi này.');
+                ->with('error', 'Bạn không có bài thi nào đang diễn ra. Xin hãy dứt khoát ấn Bắt đầu.');
         }
 
         // Deadline = min(started_at + duration, exam.end_time)
@@ -104,6 +148,7 @@ class ExamController extends Controller
 
         $attempt = ExamAttempt::where('exam_id', $exam->id)
             ->where('user_id', Auth::id())
+            ->where('status', 'in_progress')
             ->first();
 
         if (!$attempt || $attempt->status !== 'in_progress') {
@@ -170,7 +215,40 @@ class ExamController extends Controller
         $lastAnswers = $request->input('answers', []);
         $this->examAttemptService->finalizeAttempt($attempt, $lastAnswers);
 
-        return redirect()->route('student.exams.show', $exam->id)
-            ->with('success', 'Bài thi đã được nộp thành công. Điểm của ní là: ' . $attempt->fresh()->total_score);
+        return redirect()->route('student.exams.result', $exam->id)
+            ->with('success', 'Bài thi đã được nộp thành công!');
+    }
+
+    // Xem kết quả bài thi sau khi nộp
+    public function result(Exam $exam)
+    {
+        $this->authorize('viewAsStudent', $exam);
+
+        $attempt = ExamAttempt::where('exam_id', $exam->id)
+            ->where('user_id', Auth::id())
+            ->where('status', 'completed')
+            ->orderByDesc('attempt_number')
+            ->firstOrFail();
+
+        // Load answers kèm option và question (để hiển thị chi tiết)
+        $answers = $attempt->answers()
+            ->with(['option', 'question.options'])
+            ->get();
+
+        // Tính số câu đúng
+        $correctCount = $answers->where('is_correct', true)->count();
+        $totalQuestions = $exam->questions()->count();
+
+        // Kiểm tra đạt/không đạt
+        $passed = $attempt->total_score >= $exam->pass_points;
+
+        return view('student.exams.result', compact(
+            'exam',
+            'attempt',
+            'answers',
+            'correctCount',
+            'totalQuestions',
+            'passed'
+        ));
     }
 }

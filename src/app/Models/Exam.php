@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Exam extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'course_section_id',
@@ -17,13 +18,19 @@ class Exam extends Model
         'start_time',
         'end_time',
         'status',
+        'exam_type',
+        'reopen_reason',
         'total_points',
         'pass_points',
+        'show_score_after_submit',
+        'show_answers_after_submit',
     ];
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
+        'show_score_after_submit' => 'boolean',
+        'show_answers_after_submit' => 'boolean',
     ];
 
     public function courseSection()
@@ -97,5 +104,39 @@ class Exam extends Model
             ->where('user_id', $userId)
             ->where('status', 'completed')
             ->exists();
+    }
+
+    public function isPractice(): bool
+    {
+        return $this->exam_type === 'practice';
+    }
+
+    public function isOfficial(): bool
+    {
+        return $this->exam_type === 'official';
+    }
+
+    /**
+     * Kiểm tra transition trạng thái hợp lệ.
+     * draft → published → closed → published (reopen)
+     */
+    public function canTransitionTo(string $newStatus): bool
+    {
+        $allowed = [
+            'draft'     => ['published'],
+            'published' => ['closed'],
+            'closed'    => ['published'], // reopen
+        ];
+
+        return in_array($newStatus, $allowed[$this->status] ?? []);
+    }
+
+    /**
+     * Kiểm tra đề có thể sửa cấu trúc (câu hỏi, thời gian) không.
+     * Chỉ sửa được khi chưa có ai thi.
+     */
+    public function canEditStructure(): bool
+    {
+        return $this->attempts()->doesntExist();
     }
 }

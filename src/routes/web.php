@@ -117,6 +117,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         Route::get('/exams/{exam}/room', [\App\Http\Controllers\Student\ExamController::class, 'room'])->name('exams.room');
         Route::post('/exams/{exam}/save-answer', [\App\Http\Controllers\Student\ExamController::class, 'saveAnswer'])->name('exams.save-answer');
         Route::post('/exams/{exam}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('exams.submit');
+        Route::get('/exams/{exam}/result', [\App\Http\Controllers\Student\ExamController::class, 'result'])->name('exams.result');
         // Routes cho Sinh viên (đã bỏ prefix và name trùng lặp)
         Route::get('/exams', function () {
             return view('student.exams.index-placeholder');
@@ -176,16 +177,18 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::post('/course-sections/{courseSection}/exams', [ExamController::class, 'store'])
                 ->name('course-sections.exams.store');
 
-            // Màn hình quản lý câu hỏi trong đề thi
-            Route::get('/exams/{exam}/questions', [ExamController::class, 'manageQuestions'])
-                ->name('exams.questions.manage');
+            // CRUD & Lifecycle cho Exams
+            Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
+            Route::get('/exams/{exam}/edit', [ExamController::class, 'edit'])->name('exams.edit');
+            Route::put('/exams/{exam}', [ExamController::class, 'update'])->name('exams.update');
+            Route::delete('/exams/{exam}', [ExamController::class, 'destroy'])->name('exams.destroy');
+            Route::patch('/exams/{exam}/publish', [ExamController::class, 'publish'])->name('exams.publish');
+            Route::patch('/exams/{exam}/close', [ExamController::class, 'close'])->name('exams.close');
+            Route::patch('/exams/{exam}/reopen', [ExamController::class, 'reopen'])->name('exams.reopen');
 
-            // Thêm / cập nhật danh sách câu hỏi của đề thi
-            Route::post('/exams/{exam}/questions', [ExamController::class, 'storeQuestions'])
-                ->name('exams.questions.store');
-            Route::patch('/exams/{exam}/publish', [ExamController::class, 'publish'])
-                ->name('exams.publish');
-            Route::patch('/exams/{exam}/close',   [ExamController::class, 'close'])->name('exams.close'); // 
+            // Màn hình quản lý câu hỏi trong đề thi
+            Route::get('/exams/{exam}/questions', [ExamController::class, 'manageQuestions'])->name('exams.questions.manage');
+            Route::post('/exams/{exam}/questions', [ExamController::class, 'storeQuestions'])->name('exams.questions.store'); 
             // Routes for Lecturer (đã bỏ prefix và name trùng lặp)
             Route::get('/questions', function () {
                 return view('lecturer.questions.index');
