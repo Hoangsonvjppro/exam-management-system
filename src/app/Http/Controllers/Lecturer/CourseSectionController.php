@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Lecturer;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CourseSection\StoreCourseSectionRequest;
+use App\Http\Requests\CourseSection\UpdateCourseSectionRequest;
 use App\Models\CourseSection;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -31,23 +33,17 @@ class CourseSectionController extends Controller
         return view('lecturer.classes.create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreCourseSectionRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name'         => ['required', 'string', 'max:255'],
-            'code'         => ['required', 'string', 'max:50', 'unique:course_sections,code'],
-            'max_students' => ['nullable', 'integer', 'min:1', 'max:500'],
-        ]);
-
         /** @var User $user */
         $user = Auth::user();
 
         $section = CourseSection::create([
-            'name'         => $validated['name'],
-            'code'         => strtoupper($validated['code']),
+            'name'         => $request->validated()['name'],
+            'code'         => strtoupper($request->validated()['code']),
             'invite_code'  => strtoupper(Str::random(6)),
             'lecturer_id'  => $user->id,
-            'max_students' => $validated['max_students'] ?? 100,
+            'max_students' => $request->validated()['max_students'] ?? 100,
             'status'       => 'active',
         ]);
 
@@ -58,7 +54,7 @@ class CourseSectionController extends Controller
 
     public function show(CourseSection $section): View
     {
-        $this->authorizeSection($section); // ← nên authorize trước khi load data
+        Gate::authorize('manage', $section);
 
         $section->load([
             'students' => fn($q) => $q->orderBy('name'),
@@ -70,21 +66,16 @@ class CourseSectionController extends Controller
 
     public function edit(CourseSection $section): View
     {
-        $this->authorizeSection($section);
+        Gate::authorize('manage', $section);
 
         return view('lecturer.classes.edit', compact('section'));
     }
 
-    public function update(Request $request, CourseSection $section): RedirectResponse
+    public function update(UpdateCourseSectionRequest $request, CourseSection $section): RedirectResponse
     {
-        $this->authorizeSection($section);
+        Gate::authorize('manage', $section);
 
-        $validated = $request->validate([
-            'name'         => ['required', 'string', 'max:255'],
-            'code'         => ['required', 'string', 'max:50', 'unique:course_sections,code,' . $section->id],
-            'max_students' => ['nullable', 'integer', 'min:1', 'max:500'],
-            'status'       => ['required', 'in:active,archived,cancelled'],
-        ]);
+        $validated = $request->validated();
 
         $section->update([
             'name'         => $validated['name'],
@@ -100,7 +91,7 @@ class CourseSectionController extends Controller
 
     public function destroy(CourseSection $section): RedirectResponse
     {
-        $this->authorizeSection($section);
+        Gate::authorize('manage', $section);
 
         // Only allow deletion if no students are enrolled
         if ($section->students()->exists()) {
@@ -116,17 +107,10 @@ class CourseSectionController extends Controller
 
     public function regenerateCode(CourseSection $section): RedirectResponse
     {
-        $this->authorizeSection($section);
+        Gate::authorize('manage', $section);
 
         $section->update(['invite_code' => strtoupper(Str::random(6))]);
 
         return back()->with('success', 'Đã tạo mã mời mới: ' . $section->invite_code);
-    }
-
-    private function authorizeSection(CourseSection $section): void
-    {
-        if ($section->lecturer_id !== Auth::id()) {
-            abort(403, 'Bạn không có quyền truy cập lớp học này.');
-        }
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Exam\SaveAnswerRequest;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\QuestionOption;
@@ -22,16 +23,9 @@ class ExamController extends Controller
     {
         $this->authorize('viewAsStudent', $exam);
 
-        $inProgressAttempt = ExamAttempt::where('exam_id', $exam->id)
-            ->where('user_id', Auth::id())
-            ->where('status', 'in_progress')
-            ->first();
-
-        $pastAttempts = ExamAttempt::where('exam_id', $exam->id)
-            ->where('user_id', Auth::id())
-            ->where('status', 'completed')
-            ->orderByDesc('attempt_number')
-            ->get();
+        $userId = Auth::id();
+        $inProgressAttempt = ExamAttempt::forExam($exam->id)->forUser($userId)->inProgress()->first();
+        $pastAttempts = ExamAttempt::forExam($exam->id)->forUser($userId)->completed()->latestAttempt()->get();
 
         $canStartNew = true;
         if ($exam->isOfficial() && $pastAttempts->isNotEmpty()) {
@@ -57,34 +51,26 @@ class ExamController extends Controller
             return back()->with('error', 'Bài thi đã kết thúc.');
         }
 
+        $userId = Auth::id();
+
         // 1. Phục hồi session đang thi nếu có
-        $attempt = ExamAttempt::where('exam_id', $exam->id)
-            ->where('user_id', Auth::id())
-            ->where('status', 'in_progress')
-            ->first();
+        $attempt = ExamAttempt::forExam($exam->id)->forUser($userId)->inProgress()->first();
 
         // 2. Nếu không có session đang thi, tạo mới
         if (!$attempt) {
-            $hasCompleted = ExamAttempt::where('exam_id', $exam->id)
-                ->where('user_id', Auth::id())
-                ->where('status', 'completed')
-                ->exists();
+            $hasCompleted = ExamAttempt::forExam($exam->id)->forUser($userId)->completed()->exists();
 
             // Chặn thi lại nếu là bài thi chính thức
             if ($hasCompleted && $exam->isOfficial()) {
                 return back()->with('error', 'Bạn đã hoàn thành bài thi chính thức này. Không thể thi lại.');
             }
 
-            $latestAttempt = ExamAttempt::where('exam_id', $exam->id)
-                ->where('user_id', Auth::id())
-                ->orderByDesc('attempt_number')
-                ->first();
-
+            $latestAttempt = ExamAttempt::forExam($exam->id)->forUser($userId)->latestAttempt()->first();
             $nextNumber = $latestAttempt ? $latestAttempt->attempt_number + 1 : 1;
 
             $attempt = ExamAttempt::create([
                 'exam_id' => $exam->id,
-                'user_id' => Auth::id(),
+                'user_id' => $userId,
                 'attempt_number' => $nextNumber,
                 'started_at' => now(),
                 'status' => 'in_progress'
@@ -99,10 +85,7 @@ class ExamController extends Controller
     {
         $this->authorize('attemptExam', $exam);
 
-        $attempt = ExamAttempt::where('exam_id', $exam->id)
-            ->where('user_id', Auth::id())
-            ->where('status', 'in_progress')
-            ->first();
+        $attempt = ExamAttempt::forExam($exam->id)->forUser(Auth::id())->inProgress()->first();
 
         if (!$attempt) {
             return redirect()->route('student.exams.show', $exam->id)
@@ -136,20 +119,13 @@ class ExamController extends Controller
     }
 
     // API lưu ngầm, không reload trang, mỗi lần sinh viên chọn đáp án nào đó thì sẽ gọi API này để lưu lại
-    public function saveAnswer(Request $request, Exam $exam)
+    public function saveAnswer(SaveAnswerRequest $request, Exam $exam)
     {
         $this->authorize('attemptExam', $exam);
 
-        $validated = $request->validate([
-            'question_id' => 'required|integer|exists:questions,id',
-            'question_option_id' => 'required|integer|exists:question_options,id',
-        ]);
+        $validated = $request->validated();
 
-
-        $attempt = ExamAttempt::where('exam_id', $exam->id)
-            ->where('user_id', Auth::id())
-            ->where('status', 'in_progress')
-            ->first();
+        $attempt = ExamAttempt::forExam($exam->id)->forUser(Auth::id())->inProgress()->first();
 
         if (!$attempt || $attempt->status !== 'in_progress') {
             return response()->json(['error' => 'Không thể lưu đáp án.'], 403);
@@ -197,10 +173,7 @@ class ExamController extends Controller
     {
         $this->authorize('attemptExam', $exam);
 
-        $attempt = ExamAttempt::where('exam_id', $exam->id)
-            ->where('user_id', Auth::id())
-            ->where('status', 'in_progress')
-            ->firstOrFail();
+        $attempt = ExamAttempt::forExam($exam->id)->forUser(Auth::id())->inProgress()->firstOrFail();
 
         // Chặn submit sau deadline
         $deadline = $exam->getDeadlineFor($attempt);
@@ -224,11 +197,8 @@ class ExamController extends Controller
     {
         $this->authorize('viewAsStudent', $exam);
 
-        $attempt = ExamAttempt::where('exam_id', $exam->id)
-            ->where('user_id', Auth::id())
-            ->where('status', 'completed')
-            ->orderByDesc('attempt_number')
-            ->firstOrFail();
+        $attempt = ExamAttempt::forExam($exam->id)->forUser(Auth::id())
+            ->completed()->latestAttempt()->firstOrFail();
 
         // Load answers kèm option và question (để hiển thị chi tiết)
         $answers = $attempt->answers()

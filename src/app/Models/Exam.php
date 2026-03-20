@@ -55,6 +55,20 @@ class Exam extends Model
         return $this->hasMany(ExamAttempt::class);
     }
 
+    // ── Scopes ─────────────────────────────────────────────────
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published');
+    }
+
+    public function scopeForCourseSection($query, int $courseSectionId)
+    {
+        return $query->where('course_section_id', $courseSectionId);
+    }
+
+    // ── Accessors ─────────────────────────────────────────────
+
     public function getTimeLeftMinutesAttribute()
     {
         if (!$this->end_time) return (int) $this->duration_minutes;

@@ -3,59 +3,37 @@
 namespace App\Http\Controllers\Lecturer;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Exam\ReopenExamRequest;
+use App\Http\Requests\Exam\StoreExamRequest;
+use App\Http\Requests\Exam\UpdateExamRequest;
 use App\Models\CourseSection;
-use App\Models\Question;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use App\Models\Exam;
+use App\Models\Question;
+use App\Services\ExamService;
+use Illuminate\Support\Facades\Gate;
 
 class ExamController extends Controller
 {
+    public function __construct(private readonly ExamService $examService)
+    {
+    }
+
     // Hiển thị form tạo đề thi mới trong 1 lớp học phần
     public function create(CourseSection $courseSection)
     {
-        $this->authorizeCourseSection($courseSection);
+        Gate::authorize('manage', $courseSection);
 
-        $questions = Question::where('status', 'approved')
-            ->where('subject_id', $courseSection->subject_id)
-            ->get();
+        $questions = Question::approvedForSubject($courseSection->subject_id)->get();
 
         return view("lecturer.exams.create", compact('courseSection', 'questions'));
     }
 
     // Tạo 1 đề thi mới xong rồi thì phải lưu thông tin chung của đề thi vào DB
-    public function store(Request $request, CourseSection $courseSection)
+    public function store(StoreExamRequest $request, CourseSection $courseSection)
     {
-        $this->authorizeCourseSection($courseSection);
+        Gate::authorize('manage', $courseSection);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'duration_minutes' => 'required|integer|min:1',
-            'start_time' => 'nullable|date',
-            'end_time' => 'nullable|date|after_or_equal:start_time',
-            'exam_type' => 'required|in:official,practice',
-            'show_score_after_submit' => 'boolean',
-            'show_answers_after_submit' => 'boolean',
-            'question_ids' => 'required|array',
-            'question_ids.*' => 'exists:questions,id',
-        ]);
-
-        $exam = $courseSection->exams()->create($validated);
-
-        $questionsData = collect($request->question_ids)->mapWithKeys(function ($id, $index) {
-            return [$id => ['points' => 1.00, 'order_index' => $index + 1]];
-        })->all();
-
-        $exam->questions()->sync($questionsData);
-
-        // Đồng bộ total_points theo tổng điểm câu hỏi thực tế
-        $totalPoints = $exam->questions()->sum('exam_questions.points');
-        $exam->update([
-            'total_points' => $totalPoints,
-            'pass_points' => min($exam->pass_points ?? 0, $totalPoints),
-        ]);
+        $exam = $this->examService->createExam($courseSection, $request->validated());
 
         return redirect()->route('lecturer.exams.show', $exam->id)
             ->with('success', 'Đề thi đã được tạo thành công cùng với các câu hỏi.');
@@ -68,7 +46,7 @@ class ExamController extends Controller
 
         $exam->load(['courseSection', 'questions', 'attempts.user']);
         $attemptCount = $exam->attempts()->count();
-        $completedCount = $exam->attempts()->where('status', 'completed')->count();
+        $completedCount = $exam->attempts()->completed()->count();
 
         return view('lecturer.exams.show', compact('exam', 'attemptCount', 'completedCount'));
     }
@@ -79,52 +57,18 @@ class ExamController extends Controller
         Gate::authorize('manageLecturer', $exam);
 
         $courseSection = $exam->courseSection;
-        $questions = Question::where('status', 'approved')
-            ->where('subject_id', $courseSection->subject_id)
-            ->get();
+        $questions = Question::approvedForSubject($courseSection->subject_id)->get();
         $selectedQuestionIds = $exam->questions()->pluck('question_id')->toArray();
 
         return view('lecturer.exams.edit', compact('exam', 'courseSection', 'questions', 'selectedQuestionIds'));
     }
 
     // Cập nhật đề thi
-    public function update(Request $request, Exam $exam)
+    public function update(UpdateExamRequest $request, Exam $exam)
     {
         Gate::authorize('manageLecturer', $exam);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'duration_minutes' => 'required|integer|min:1',
-            'start_time' => 'nullable|date',
-            'end_time' => 'nullable|date|after_or_equal:start_time',
-            'exam_type' => 'required|in:official,practice',
-            'show_score_after_submit' => 'boolean',
-            'show_answers_after_submit' => 'boolean',
-            'question_ids' => 'nullable|array',
-            'question_ids.*' => 'exists:questions,id',
-        ]);
-
-        // Nếu đã có SV thi, chỉ cho sửa metadata (tên, mô tả, cấu hình hiển thị)
-        if (! $exam->canEditStructure()) {
-            $validated = collect($validated)->only([
-                'title', 'description', 
-                'show_score_after_submit', 'show_answers_after_submit',
-            ])->toArray();
-        } else {
-            // Update questions only if structure is editable
-            $questionIds = $request->input('question_ids', []);
-            $questionsData = collect($questionIds)->mapWithKeys(function ($id, $index) {
-                return [$id => ['points' => 1.00, 'order_index' => $index + 1]];
-            })->all();
-            $exam->questions()->sync($questionsData);
-            
-            $totalPoints = $exam->questions()->sum('exam_questions.points');
-            $validated['total_points'] = $totalPoints;
-            $validated['pass_points'] = min($exam->pass_points ?? 0, $totalPoints);
-        }
-
-        $exam->update($validated);
+        $this->examService->updateExam($exam, $request->validated());
 
         return redirect()->route('lecturer.exams.show', $exam->id)
             ->with('success', 'Đề thi đã được cập nhật.');
@@ -136,37 +80,22 @@ class ExamController extends Controller
         Gate::authorize('manageLecturer', $exam);
 
         $courseSectionId = $exam->course_section_id;
-
-        if ($exam->attempts()->exists()) {
-            $exam->delete(); // soft-delete
-            return redirect()->route('lecturer.classes.show', $courseSectionId)
-                ->with('success', 'Đề thi đã được lưu trữ (xoá mềm) vì đã có sinh viên thi.');
-        }
-
-        // Hard-delete
-        $exam->questions()->detach();
-        $exam->forceDelete();
+        $message = $this->examService->deleteExam($exam);
 
         return redirect()->route('lecturer.classes.show', $courseSectionId)
-            ->with('success', 'Đề thi đã được xoá vĩnh viễn.');
+            ->with('success', $message);
     }
-
-
 
     // Publish đề thi (draft → published)
     public function publish(Exam $exam)
     {
         Gate::authorize('manageLecturer', $exam);
 
-        if (! $exam->canTransitionTo('published')) {
-            return back()->with('error', 'Không thể mở đề thi từ trạng thái "' . $exam->status . '".');
+        try {
+            $this->examService->publishExam($exam);
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        if ($exam->questions()->count() === 0) {
-            return back()->with('error', 'Đề kiểm tra phải có ít nhất một câu hỏi.');
-        }
-
-        $exam->update(['status' => 'published']);
 
         return back()->with('success', 'Đề thi đã được mở.');
     }
@@ -176,42 +105,26 @@ class ExamController extends Controller
     {
         Gate::authorize('manageLecturer', $exam);
 
-        if (! $exam->canTransitionTo('closed')) {
-            return back()->with('error', 'Không thể đóng đề thi từ trạng thái "' . $exam->status . '".');
+        try {
+            $this->examService->closeExam($exam);
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
-        $exam->update(['status' => 'closed']);
         return back()->with('success', 'Đề thi đã được đóng lại.');
     }
 
     // Mở lại đề thi (closed → published) — yêu cầu lý do
-    public function reopen(Request $request, Exam $exam)
+    public function reopen(ReopenExamRequest $request, Exam $exam)
     {
         Gate::authorize('manageLecturer', $exam);
 
-        if ($exam->status !== 'closed') {
-            return back()->with('error', 'Chỉ có thể mở lại đề thi đã đóng.');
+        try {
+            $this->examService->reopenExam($exam, $request->validated()['reopen_reason']);
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $request->validate([
-            'reopen_reason' => 'required|string|max:1000',
-        ]);
-
-        $exam->update([
-            'status' => 'published',
-            'reopen_reason' => $request->reopen_reason,
-        ]);
 
         return back()->with('success', 'Đề thi đã được mở lại.');
-    }
-
-    /**
-     * Kiểm tra giảng viên có sở hữu lớp học phần không.
-     */
-    private function authorizeCourseSection(CourseSection $courseSection): void
-    {
-        if ($courseSection->lecturer_id !== Auth::id()) {
-            abort(403, 'Bạn không có quyền quản lý lớp học phần này.');
-        }
     }
 }

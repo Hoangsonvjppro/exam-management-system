@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Enrollment\JoinClassRequest;
 use App\Models\CourseSection;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use App\Services\UserStateService;
 use Illuminate\Support\Str;
@@ -15,7 +15,7 @@ class StudentEnrollmentController extends Controller
     {
     }
 
-    public function joinClass(Request $request): RedirectResponse
+    public function joinClass(JoinClassRequest $request): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -30,15 +30,11 @@ class StudentEnrollmentController extends Controller
                 ->with('info', 'Vui lòng nhập MSSV và lớp trước khi tham gia lớp học phần.');
         }
 
-        $validated = $request->validate([
-            'invite_code' => ['required', 'string'],
-        ]);
-
-        $inviteCode = Str::upper(trim($validated['invite_code']));
+        $inviteCode = Str::upper(trim($request->validated()['invite_code']));
 
         $section = CourseSection::query()
-            ->where('invite_code', $inviteCode)
-            ->where('status', 'active')
+            ->withInviteCode($inviteCode)
+            ->active()
             ->first();
 
         if (! $section) {
@@ -100,4 +96,3 @@ class StudentEnrollmentController extends Controller
         return back()->with('success', 'Bạn đã rời khỏi lớp học phần.');
     }
 }
-

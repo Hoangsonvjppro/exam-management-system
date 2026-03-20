@@ -51,6 +51,15 @@ class Question extends Model
         ];
     }
 
+    // ── Scopes ─────────────────────────────────────────────────
+
+    public function scopeApprovedForSubject($query, int $subjectId)
+    {
+        return $query->where('status', 'approved')->where('subject_id', $subjectId);
+    }
+
+    // ── Relationships ─────────────────────────────────────────
+
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);

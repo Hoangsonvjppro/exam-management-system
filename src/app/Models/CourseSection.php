@@ -76,6 +76,16 @@ class CourseSection extends Model
         return $query->where('status', 'active');
     }
 
+    public function scopeOwnedBy($query, int $lecturerId)
+    {
+        return $query->where('lecturer_id', $lecturerId);
+    }
+
+    public function scopeWithInviteCode($query, string $code)
+    {
+        return $query->where('invite_code', $code);
+    }
+
     // ── Helpers ────────────────────────────────────────────────
 
     // Số sinh viên đang enrolled (không phải dropped)

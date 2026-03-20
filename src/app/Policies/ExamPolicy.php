@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\CourseSection;
 use App\Models\Exam;
 use App\Models\User;
 
@@ -40,5 +41,14 @@ class ExamPolicy
     public function manageLecturer(User $user, Exam $exam): bool
     {
         return $exam->courseSection->lecturer_id === $user->id;
+    }
+
+    /**
+     * Giảng viên có quyền tạo đề thi cho lớp học phần không?
+     * Dùng cho nested routes: course-sections/{courseSection}/exams/create
+     */
+    public function createForSection(User $user, CourseSection $courseSection): bool
+    {
+        return $courseSection->lecturer_id === $user->id;
     }
 }
