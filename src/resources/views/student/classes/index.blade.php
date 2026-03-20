@@ -53,7 +53,7 @@
                                 </div>
                                 <span class="uppercase text-[10px] font-bold px-2 py-1 rounded-[4px] shrink-0
                                     @if($section->status === 'active') bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
-                                    @elseif($section->status === 'archived') bg-slate-100 text-slate-600 border-[0.5px] border-slate-200
+                                    @elseif($section->status === 'archived') bg-surface-1 text-text-muted border-[0.5px] border-border-clean
                                     @else bg-red-50 text-red-700 border-[0.5px] border-red-200 @endif">
                                     {{ match($section->status) {
                                         'active'   => 'Đang mở',

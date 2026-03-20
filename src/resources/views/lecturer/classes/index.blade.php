@@ -52,7 +52,7 @@
                         {{-- Card Top --}}
                         <div class="px-5 py-4 border-b-[0.5px] border-border-clean
                             @if($section->status === 'active') bg-surface-1
-                            @elseif($section->status === 'archived') bg-slate-50
+                            @elseif($section->status === 'archived') bg-surface-1
                             @else bg-red-50 @endif">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
@@ -61,7 +61,7 @@
                                 </div>
                                 <span class="uppercase text-[10px] font-bold px-2 py-1 rounded-[4px] shrink-0
                                     @if($section->status === 'active') bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
-                                    @elseif($section->status === 'archived') bg-slate-100 text-slate-600 border-[0.5px] border-slate-200
+                                    @elseif($section->status === 'archived') bg-surface-1 text-text-muted border-[0.5px] border-border-clean
                                     @else bg-red-50 text-red-700 border-[0.5px] border-red-200 @endif">
                                     {{ match($section->status) {
                                         'active'   => 'Đang mở',

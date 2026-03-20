@@ -13,7 +13,7 @@
                     </span>
                     @endif
                 </div>
-                <p class="text-gray-600 mb-6">Lớp học: {{ $courseSection->name ?? 'Lớp đang chọn' }}</p>
+                <p class="text-text-muted mb-6">Lớp học: {{ $courseSection->name ?? 'Lớp đang chọn' }}</p>
 
                 <form method="POST" action="{{ route('lecturer.exams.update', $exam->id) }}">
                     @csrf
@@ -27,7 +27,7 @@
 
                     <div class="mb-4">
                         <x-input-label for="description" value="Mô tả / Hướng dẫn làm bài" />
-                        <textarea id="description" name="description" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full" rows="3">{{ old('description', $exam->description) }}</textarea>
+                        <textarea id="description" name="description" class="border-border-clean focus:border-navy-600 focus:ring-blue-200 rounded-[6px] shadow-sm block mt-1 w-full" rows="3">{{ old('description', $exam->description) }}</textarea>
                         <x-input-error :messages="$errors->get('description')" class="mt-2" />
                     </div>
 
@@ -40,7 +40,7 @@
 
                     <div class="mb-4 {{ $exam->canEditStructure() ? '' : 'opacity-50 pointer-events-none' }}">
                         <x-input-label for="exam_type" value="Loại đề thi" />
-                        <select id="exam_type" name="exam_type" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full" required>
+                        <select id="exam_type" name="exam_type" class="border-border-clean focus:border-navy-600 focus:ring-blue-200 rounded-[6px] shadow-sm block mt-1 w-full" required>
                             <option value="official" {{ old('exam_type', $exam->exam_type) === 'official' ? 'selected' : '' }}>Chính thức (Chỉ thi 1 lần)</option>
                             <option value="practice" {{ old('exam_type', $exam->exam_type) === 'practice' ? 'selected' : '' }}>Luyện tập (Cho phép thi lại nhiều lần)</option>
                         </select>
@@ -62,36 +62,36 @@
                         </div>
                     </div>
 
-                    <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <p class="text-sm font-semibold text-gray-700 mb-3">Cấu hình hiển thị kết quả cho sinh viên</p>
+                    <div class="mb-6 p-4 bg-surface-1 rounded-[10px] border border-border-clean">
+                        <p class="text-sm font-semibold text-text-muted mb-3">Cấu hình hiển thị kết quả cho sinh viên</p>
 
                         <div class="space-y-3">
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="hidden" name="show_score_after_submit" value="0">
                                 <input type="checkbox" name="show_score_after_submit" value="1"
-                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 h-4 w-4"
+                                    class="rounded border-border-clean text-navy-600 shadow-sm focus:ring-blue-200 h-4 w-4"
                                     {{ old('show_score_after_submit', $exam->show_score_after_submit) ? 'checked' : '' }}>
                                 <div>
-                                    <span class="text-sm font-medium text-gray-700">Cho phép xem điểm tổng</span>
-                                    <p class="text-xs text-gray-500">Sinh viên sẽ thấy điểm số và trạng thái đạt/không đạt sau khi nộp bài</p>
+                                    <span class="text-sm font-medium text-text-muted">Cho phép xem điểm tổng</span>
+                                    <p class="text-xs text-text-muted">Sinh viên sẽ thấy điểm số và trạng thái đạt/không đạt sau khi nộp bài</p>
                                 </div>
                             </label>
 
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="hidden" name="show_answers_after_submit" value="0">
                                 <input type="checkbox" name="show_answers_after_submit" value="1"
-                                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500 h-4 w-4"
+                                    class="rounded border-border-clean text-navy-600 shadow-sm focus:ring-blue-200 h-4 w-4"
                                     {{ old('show_answers_after_submit', $exam->show_answers_after_submit) ? 'checked' : '' }}>
                                 <div>
-                                    <span class="text-sm font-medium text-gray-700">Cho phép xem chi tiết đáp án</span>
-                                    <p class="text-xs text-gray-500">Sinh viên sẽ thấy đáp án đúng/sai của từng câu hỏi</p>
+                                    <span class="text-sm font-medium text-text-muted">Cho phép xem chi tiết đáp án</span>
+                                    <p class="text-xs text-text-muted">Sinh viên sẽ thấy đáp án đúng/sai của từng câu hỏi</p>
                                 </div>
                             </label>
                         </div>
                     </div>
 
                     <div class="flex items-center justify-between mt-4">
-                        <a href="{{ route('lecturer.exams.show', $exam->id) }}" class="text-sm text-gray-600 hover:underline">← Quay lại</a>
+                        <a href="{{ route('lecturer.exams.show', $exam->id) }}" class="text-sm text-text-muted hover:underline">← Quay lại</a>
                         <x-primary-button class="ml-4">
                             Lưu thay đổi
                         </x-primary-button>

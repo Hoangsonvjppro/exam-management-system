@@ -35,7 +35,7 @@
                     <h2 class="text-[26px] font-bold text-navy-900 leading-tight mb-3">{{ $section->name ?? $section->code }}</h2>
                     <span class="inline-block uppercase text-[11px] font-bold px-2.5 py-1 rounded-[4px]
                                     @if($section->status === 'active') bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
-                                    @elseif($section->status === 'archived') bg-slate-100 text-slate-600 border-[0.5px] border-slate-200
+                                    @elseif($section->status === 'archived') bg-surface-1 text-text-muted border-[0.5px] border-border-clean
                                     @else bg-red-50 text-red-700 border-[0.5px] border-red-200 @endif">
                         {{ match($section->status) {
                             'active'   => 'Đang mở',
@@ -166,7 +166,7 @@
                                 <span class="inline-block uppercase text-[10px] font-bold px-2 py-1 rounded-[4px]
                                         @if($exam->status === 'published') bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
                                         @elseif($exam->status === 'draft')   bg-amber-50 text-amber-700 border-[0.5px] border-amber-200
-                                        @else                                bg-slate-100 text-slate-600 border-[0.5px] border-slate-200 @endif">
+                                        @else                                bg-surface-1 text-text-muted border-[0.5px] border-border-clean @endif">
                                     {{ match($exam->status) {
                                             'published' => 'Đang mở',
                                             'draft'     => 'Bản nháp',
@@ -253,7 +253,7 @@
                 </div>
                 <div>
                     <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Nội dung chi tiết</label>
-                    <textarea name="message" required rows="5" placeholder="Viết nội dung thông báo gửi đến sinh viên..." class="w-full p-4 bg-white border-[1.5px] border-border-clean rounded-[6px] text-[14px] text-navy-900 placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none resize-y"></textarea>
+                    <textarea name="message" required rows="5" placeholder="Viết nội dung thông báo gửi đến sinh viên..." class="w-full p-4 bg-white border-[1.5px] border-border-clean rounded-[6px] text-[14px] text-navy-900 placeholder:text-text-muted focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none resize-y"></textarea>
                 </div>
                 <div class="pt-2 flex justify-end">
                     <x-button type="submit" variant="primary">

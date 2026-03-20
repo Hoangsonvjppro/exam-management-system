@@ -23,7 +23,7 @@
         <x-card padding="true" variant="featured" class="text-center">
             <h2 class="text-[22px] md:text-[28px] font-bold text-navy-900 leading-tight mb-2">{{ $exam->title }}</h2>
             @if($exam->isPractice())
-                <span class="inline-block px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full text-[12px] font-semibold mb-4">
+                <span class="inline-block px-3 py-1 bg-navy-50 text-navy-600 border border-blue-200 rounded-full text-[12px] font-semibold mb-4">
                     🎯 Đề Luyện Tập (Được thi nhiều lần)
                 </span>
             @else
@@ -59,7 +59,7 @@
                 @elseif($canStartNew)
                     <form action="{{ route('student.exams.start', $exam->id) }}" method="POST">
                         @csrf
-                        <button type="submit" class="inline-flex items-center px-8 py-3 bg-indigo-600 border border-transparent rounded-[8px] font-semibold text-[14px] text-white tracking-wide hover:bg-indigo-700 transition shadow-sm">
+                        <button type="submit" class="inline-flex items-center px-8 py-3 bg-navy-900 border border-transparent rounded-[8px] font-semibold text-[14px] text-white tracking-wide hover:bg-navy-950 transition shadow-sm">
                             {{ $pastAttempts->isNotEmpty() ? '🔄 Thi lại lần ' . ($pastAttempts->first()->attempt_number + 1) : '▶️ Bắt đầu làm bài' }}
                         </button>
                     </form>
@@ -110,7 +110,7 @@
                                          * Note: Do cấu trúc DB StudentAnswer đang overwrite nếu user thi lại * --}}
                                     <a href="{{ route('student.exams.result', $exam->id) }}" class="text-blue-600 hover:underline text-[12px] font-medium">Chi tiết</a>
                                 @else
-                                    <span class="text-gray-400 text-[11px] italic">Lưu trữ</span>
+                                    <span class="text-blue-200 text-[11px] italic">Lưu trữ</span>
                                 @endif
                             </td>
                         </tr>

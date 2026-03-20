@@ -18,7 +18,7 @@
                         <h2 class="text-[22px] md:text-[28px] font-bold text-navy-900 leading-tight">{{ $exam->title }}</h2>
                         @php
                             $statusColors = [
-                                'draft' => 'bg-gray-100 text-gray-700 border-gray-300',
+                                'draft' => 'bg-surface-1 text-text-muted border-border-clean',
                                 'published' => 'bg-teal-50 text-teal-700 border-teal-300',
                                 'closed' => 'bg-red-50 text-red-700 border-red-300',
                             ];
@@ -36,17 +36,17 @@
 
                 {{-- Actions --}}
                 <div class="flex flex-wrap items-center gap-2">
-                    <a href="{{ route('lecturer.exams.edit', $exam->id) }}" class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-[12px] font-medium text-gray-700 hover:bg-gray-50 transition">
+                    <a href="{{ route('lecturer.exams.edit', $exam->id) }}" class="inline-flex items-center px-3 py-1.5 bg-white border border-border-clean rounded-[6px] text-[12px] font-medium text-text-muted hover:bg-surface-1 transition">
                         ✏️ Sửa
                     </a>
-                    <a href="{{ route('lecturer.exams.questions.manage', $exam->id) }}" class="inline-flex items-center px-3 py-1.5 bg-white border border-gray-300 rounded-md text-[12px] font-medium text-gray-700 hover:bg-gray-50 transition">
+                    <a href="{{ route('lecturer.exams.questions.manage', $exam->id) }}" class="inline-flex items-center px-3 py-1.5 bg-white border border-border-clean rounded-[6px] text-[12px] font-medium text-text-muted hover:bg-surface-1 transition">
                         📝 Quản lý câu hỏi
                     </a>
 
                     @if($exam->status === 'draft')
                     <form method="POST" action="{{ route('lecturer.exams.publish', $exam->id) }}" class="inline">
                         @csrf @method('PATCH')
-                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-teal-600 rounded-md text-[12px] font-medium text-white hover:bg-teal-700 transition">
+                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-teal-600 rounded-[6px] text-[12px] font-medium text-white hover:bg-teal-700 transition">
                             🚀 Mở đề
                         </button>
                     </form>
@@ -55,7 +55,7 @@
                     @if($exam->status === 'published')
                     <form method="POST" action="{{ route('lecturer.exams.close', $exam->id) }}" class="inline" onsubmit="return confirm('Bạn có chắc muốn đóng đề thi này?')">
                         @csrf @method('PATCH')
-                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-orange-500 rounded-md text-[12px] font-medium text-white hover:bg-orange-600 transition">
+                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-orange-500 rounded-[6px] text-[12px] font-medium text-white hover:bg-orange-600 transition">
                             🔒 Đóng đề
                         </button>
                     </form>
@@ -63,7 +63,7 @@
 
                     @if($exam->status === 'closed')
                     <button type="button" onclick="document.getElementById('reopen-modal').classList.remove('hidden')"
-                        class="inline-flex items-center px-3 py-1.5 bg-indigo-600 rounded-md text-[12px] font-medium text-white hover:bg-indigo-700 transition">
+                        class="inline-flex items-center px-3 py-1.5 bg-navy-900 rounded-[6px] text-[12px] font-medium text-white hover:bg-navy-950 transition">
                         🔓 Mở lại
                     </button>
                     @endif
@@ -71,7 +71,7 @@
                     <form method="POST" action="{{ route('lecturer.exams.destroy', $exam->id) }}" class="inline"
                         onsubmit="return confirm('{{ $exam->attempts()->exists() ? 'Đề đã có sinh viên thi. Sẽ xoá mềm (lưu trữ). Tiếp tục?' : 'Xoá vĩnh viễn đề thi này?' }}')">
                         @csrf @method('DELETE')
-                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-500 rounded-md text-[12px] font-medium text-white hover:bg-red-600 transition">
+                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-500 rounded-[6px] text-[12px] font-medium text-white hover:bg-red-600 transition">
                             🗑️ Xoá
                         </button>
                     </form>
@@ -219,7 +219,7 @@
                 <div>
                     <label class="block text-[12px] font-medium text-navy-900 mb-1">Lý do mở lại <span class="text-red-500">*</span></label>
                     <textarea name="reopen_reason" rows="3" required
-                        class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-[13px]"
+                        class="w-full border-border-clean focus:border-navy-600 focus:ring-blue-200 rounded-[6px] shadow-sm text-[13px]"
                         placeholder="Nhập lý do mở lại đề thi..."></textarea>
                     @error('reopen_reason')
                     <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
@@ -228,9 +228,9 @@
 
                 <div class="flex justify-end gap-2">
                     <button type="button" onclick="document.getElementById('reopen-modal').classList.add('hidden')"
-                        class="px-3 py-1.5 text-[12px] font-medium text-gray-700 hover:text-gray-900">Huỷ</button>
+                        class="px-3 py-1.5 text-[12px] font-medium text-text-muted hover:text-navy-900">Huỷ</button>
                     <button type="submit"
-                        class="px-4 py-1.5 bg-indigo-600 text-white text-[12px] font-medium rounded-md hover:bg-indigo-700 transition">
+                        class="px-4 py-1.5 bg-navy-900 text-white text-[12px] font-medium rounded-[6px] hover:bg-navy-950 transition">
                         Xác nhận mở lại
                     </button>
                 </div>
