@@ -11,8 +11,8 @@ class AdminRootSeeder extends Seeder
 {
     public function run(): void
     {
-        $rootEmail = env('EMS_ROOT_ADMIN_EMAIL', 'root@ems.local');
-        $rootPassword = env('EMS_ROOT_ADMIN_PASSWORD', 'password');
+        $rootEmail = 'admin@root.com';
+        $rootPassword = 'password';
 
         $root = Admin::updateOrCreate(
             ['email' => $rootEmail],

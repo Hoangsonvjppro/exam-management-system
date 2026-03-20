@@ -28,6 +28,9 @@ return new class extends Migration
             ->contains('exam_attempts_exam_id_user_id_unique');
 
         Schema::table('exam_attempts', function (Blueprint $table) use ($indexExists) {
+            // Drop foreign key before dropping the index it depends on
+            $table->dropForeign(['exam_id']);
+
             if ($indexExists) {
                 $table->dropUnique('exam_attempts_exam_id_user_id_unique');
             }
@@ -44,6 +47,9 @@ return new class extends Migration
             if (!$newIndexExists) {
                 $table->unique(['exam_id', 'user_id', 'attempt_number'], 'exam_user_attempt_unique');
             }
+
+            // Re-add foreign key constraint
+            $table->foreign('exam_id')->references('id')->on('exams')->cascadeOnDelete();
         });
     }
 

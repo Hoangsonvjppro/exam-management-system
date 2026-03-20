@@ -57,8 +57,6 @@ class DatabaseSeeder extends Seeder
         $this->command->info('════════════════════════════════════════════');
         $this->command->info('  ✅ Seed hoàn tất!');
         $this->command->info('  📧 Root Admin: '.env('EMS_ROOT_ADMIN_EMAIL', 'root@ems.local').' / '.env('EMS_ROOT_ADMIN_PASSWORD', 'password'));
-        $this->command->info('  📧 GV:    lecturer@ems.local / password');
-        $this->command->info('  📧 SV:    student@ems.local / password');
         $this->command->info('════════════════════════════════════════════');
         $this->command->info('');
     }
