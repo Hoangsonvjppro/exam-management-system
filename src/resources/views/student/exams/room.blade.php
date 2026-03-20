@@ -390,7 +390,8 @@ $totalQuestions = count($questions);
         }
 
         .question-container.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
             animation: fadeIn 0.3s ease-out;
         }
 
@@ -565,7 +566,7 @@ $totalQuestions = count($questions);
                     @csrf
 
                     @foreach($questions as $index => $question)
-                    <div class="question-container {{ $index === 0 ? 'active' : '' }}" id="question-{{ $index }}" style="flex: 1; display: flex; flex-direction: column;">
+                    <div class="question-container {{ $index === 0 ? 'active' : '' }}" id="question-{{ $index }}" style="flex: 1;">
 
                         <!-- Header -->
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #D6E2F0; padding-bottom: 20px; margin-bottom: 24px;">
