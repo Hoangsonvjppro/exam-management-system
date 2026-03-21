@@ -3,14 +3,12 @@
 namespace App\Filament\Resources\CourseSections\Pages;
 
 use App\Filament\Resources\CourseSections\CourseSectionResource;
-use App\Filament\Resources\CourseSections\Students\StudentForms;
 use App\Filament\Resources\CourseSections\Students\StudentTable;
 use App\Models\User;
 use Filament\Actions\CreateAction;
+use Filament\Forms\Components\Select;
 use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class ManageCourseSectionStudents extends ManageRelatedRecords
 {
@@ -18,7 +16,13 @@ class ManageCourseSectionStudents extends ManageRelatedRecords
 
     protected static string $relationship = 'students';
 
-    protected static ?string $title = 'Sinh viên';
+    protected static ?string $title = 'Sinh viên trong lớp';
+
+    public function getTitle(): string
+    {
+        $courseSection = $this->getRecord();
+        return "Sinh viên trong lớp " . ($courseSection->code ?? '');
+    }
 
     protected static ?string $navigationLabel = 'Sinh viên';
 
@@ -32,26 +36,38 @@ class ManageCourseSectionStudents extends ManageRelatedRecords
         return [
             CreateAction::make()
                 ->label('Thêm sinh viên')
-                ->schema(StudentForms::create())
+                ->icon('heroicon-m-plus')
+                ->modalHeading('Chọn sinh viên')
+                ->modalSubmitActionLabel('Thêm')
+                ->createAnotherAction(
+                    fn($action) => $action->label('Thêm và tiếp tục')
+                )
+                ->modalCancelActionLabel('Đóng')
+                ->schema([
+                    Select::make('student_id')
+                        ->label('Sinh viên')
+                        ->searchable()
+                        ->preload()
+                        ->required()
+                        ->options(function () {
+                            return User::query()
+                                ->role('student')
+                                ->get()
+                                ->mapWithKeys(function ($user) {
+                                    return [
+                                        $user->id => "{$user->name} ({$user->student_code})",
+                                    ];
+                                });
+                        }),
+                ])
                 ->using(function (array $data): User {
-                    $plainPassword = Str::password(length: 12);
+                    $student = User::findOrFail($data['student_id']);
 
-                    $student = User::query()->create([
-                        'name' => $data['name'],
-                        'email' => $data['email'],
-                        'phone' => $data['phone'] ?? null,
-                        'student_code' => $data['studentId'],
-                        'password' => Hash::make($plainPassword),
-                        'must_change_password' => true,
-                        'password_changed_at' => null,
-                        'is_active' => true,
-                    ]);
-
-                    $student->syncRoles(['student']);
-
-                    $this->getRecord()->students()->attach($student->id, [
-                        'status' => 'enrolled',
-                        'enrolled_at' => now(),
+                    $this->getRecord()->students()->syncWithoutDetaching([
+                        $student->id => [
+                            'status' => 'enrolled',
+                            'enrolled_at' => now(),
+                        ],
                     ]);
 
                     return $student;

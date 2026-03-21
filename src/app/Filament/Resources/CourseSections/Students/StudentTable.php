@@ -3,8 +3,7 @@
 namespace App\Filament\Resources\CourseSections\Students;
 
 use App\Models\User;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -15,7 +14,7 @@ class StudentTable
     public static function configure(Table $table, object $page): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->role('student'))
+            ->modifyQueryUsing(fn(Builder $query): Builder => $query->role('student'))
             ->columns([
                 TextColumn::make('name')
                     ->label('Họ và tên')
@@ -53,38 +52,21 @@ class StudentTable
                         'dropped' => 'Đã rút',
                         'completed' => 'Hoàn thành',
                     ])
-                    ->query(fn (Builder $query, array $data): Builder => $query->when(
+                    ->query(fn(Builder $query, array $data): Builder => $query->when(
                         filled($data['value'] ?? null),
-                        fn (Builder $q): Builder => $q->where('course_section_students.status', $data['value'])
+                        fn(Builder $q): Builder => $q->where('course_section_students.status', $data['value'])
                     )),
             ])
-            ->recordAction('edit')
             ->recordActions([
-                EditAction::make()
-                    ->label('Sửa')
-                    ->fillForm(function (User $record): array {
-                        return [
-                            'name' => $record->name,
-                            'student_code' => $record->student_code,
-                            'email' => $record->email,
-                            'phone' => $record->phone,
-                            'enrollment_status' => $record->pivot?->status ?? 'enrolled',
-                        ];
-                    })
-                    ->schema(StudentForms::edit())
-                    ->using(function (User $record, array $data) use ($page): User {
-                        $status = $data['enrollment_status'];
-                        unset($data['enrollment_status']);
-
-                        $record->update($data);
-
-                        $page->getRecord()->students()->updateExistingPivot($record->id, [
-                            'status' => $status,
-                        ]);
-
-                        return $record;
+                Action::make('removeStudent')
+                    ->label('Xóa')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function (User $student) use ($page) {
+                        $courseSection = $page->getRecord();
+                        $courseSection->students()->detach($student->id);
                     }),
-                DeleteAction::make()->label('Xóa'),
             ]);
     }
 }
