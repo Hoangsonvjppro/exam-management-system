@@ -76,13 +76,7 @@ class CourseSectionController extends Controller
     {
         Gate::authorize('manage', $section);
 
-        $validated = $request->validated();
-
-        $section->update([
-            'name'         => $validated['name'],
-            'max_students' => $validated['max_students'] ?? $section->max_students,
-            'status'       => $validated['status'],
-        ]);
+        $this->courseSectionService->updateCourseSection($section, $request->validated());
 
         return redirect()
             ->route('lecturer.classes.show', $section)
@@ -93,16 +87,14 @@ class CourseSectionController extends Controller
     {
         Gate::authorize('manage', $section);
 
-        // Only allow deletion if no students are enrolled
-        if ($section->students()->exists()) {
-            return back()->with('error', 'Không thể xoá lớp có sinh viên đang theo học. Hãy đổi trạng thái sang "Huỷ".');
+        $result = $this->courseSectionService->deleteCourseSection($section);
+        if (! $result['deleted']) {
+            return back()->with('error', $result['message']);
         }
-
-        $section->delete();
 
         return redirect()
             ->route('lecturer.classes.index')
-            ->with('success', 'Đã xoá lớp học phần.');
+            ->with('success', $result['message']);
     }
 
     public function regenerateCode(CourseSection $section): RedirectResponse

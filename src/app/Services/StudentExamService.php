@@ -6,6 +6,7 @@ use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Models\QuestionOption;
 use App\Models\StudentAnswer;
+use App\Enums\ExamAttemptStatus;
 use DomainException;
 
 class StudentExamService
@@ -51,7 +52,7 @@ class StudentExamService
             'user_id' => $userId,
             'attempt_number' => $nextNumber,
             'started_at' => now(),
-            'status' => 'in_progress',
+            'status' => ExamAttemptStatus::InProgress,
             'ip_address' => $ipAddress,
             'user_agent' => substr($userAgent ?? '', 0, 500),
         ]);
@@ -67,7 +68,7 @@ class StudentExamService
             ->inProgress()
             ->first();
 
-        if (! $attempt || $attempt->status !== 'in_progress') {
+        if (! $attempt || $attempt->status !== ExamAttemptStatus::InProgress) {
             return ['http_code' => 403, 'message' => 'Không thể lưu đáp án.'];
         }
 

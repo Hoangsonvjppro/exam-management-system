@@ -8,19 +8,19 @@ use App\Http\Requests\ExamSchedule\UpdateExamScheduleRequest;
 use App\Models\Exam;
 use App\Models\ExamSchedule;
 use App\Services\ExamScheduleService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
 class ExamScheduleController extends Controller
 {
-    public function __construct(private readonly ExamScheduleService $scheduleService)
-    {
-    }
+    public function __construct(private readonly ExamScheduleService $scheduleService) {}
 
     /**
      * Danh sách lịch thi của giảng viên.
      */
-    public function index()
+    public function index(): View
     {
         $schedules = $this->scheduleService->getSchedulesForLecturer(Auth::id());
 
@@ -30,7 +30,7 @@ class ExamScheduleController extends Controller
     /**
      * Form tạo lịch thi cho 1 đề thi.
      */
-    public function create(Exam $exam)
+    public function create(Exam $exam): View
     {
         Gate::authorize('manageLecturer', $exam);
 
@@ -40,7 +40,7 @@ class ExamScheduleController extends Controller
     /**
      * Lưu lịch thi mới.
      */
-    public function store(StoreExamScheduleRequest $request, Exam $exam)
+    public function store(StoreExamScheduleRequest $request, Exam $exam): RedirectResponse
     {
         Gate::authorize('manageLecturer', $exam);
 
@@ -53,7 +53,7 @@ class ExamScheduleController extends Controller
     /**
      * Form sửa lịch thi.
      */
-    public function edit(ExamSchedule $schedule)
+    public function edit(ExamSchedule $schedule): View
     {
         Gate::authorize('manageLecturer', $schedule->exam);
 
@@ -63,7 +63,7 @@ class ExamScheduleController extends Controller
     /**
      * Cập nhật lịch thi.
      */
-    public function update(UpdateExamScheduleRequest $request, ExamSchedule $schedule)
+    public function update(UpdateExamScheduleRequest $request, ExamSchedule $schedule): RedirectResponse
     {
         Gate::authorize('manageLecturer', $schedule->exam);
 
@@ -76,11 +76,11 @@ class ExamScheduleController extends Controller
     /**
      * Xóa lịch thi.
      */
-    public function destroy(ExamSchedule $schedule)
+    public function destroy(ExamSchedule $schedule): RedirectResponse
     {
         Gate::authorize('manageLecturer', $schedule->exam);
 
-        $schedule->delete();
+        $this->scheduleService->deleteSchedule($schedule);
 
         return redirect()->route('lecturer.schedules.index')
             ->with('success', 'Lịch thi đã được xoá.');
@@ -89,7 +89,7 @@ class ExamScheduleController extends Controller
     /**
      * Tự động phân sinh viên vào ca thi.
      */
-    public function assignStudents(ExamSchedule $schedule)
+    public function assignStudents(ExamSchedule $schedule): RedirectResponse
     {
         Gate::authorize('manageLecturer', $schedule->exam);
 

@@ -27,19 +27,19 @@ class UserStateService
         }
     }
 
-    public function determineHomeRoute(User $user): string
+    public function determineHomeRouteName(User $user): string
     {
         $this->syncStudentRole($user);
 
         if ($user->hasRole('lecturer')) {
-            return route('lecturer.dashboard');
+            return 'lecturer.dashboard';
         }
 
         if ($user->hasRole('student')) {
-            return route('student.dashboard');
+            return 'student.dashboard';
         }
 
         // Authenticated user without specific role stays on landing page.
-        return route('landing');
+        return 'landing';
     }
 }

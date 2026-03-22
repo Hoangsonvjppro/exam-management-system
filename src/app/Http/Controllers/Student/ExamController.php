@@ -9,6 +9,7 @@ use App\Models\Exam;
 use App\Models\ExamAttempt;
 use App\Services\ExamAttemptService;
 use App\Services\StudentExamService;
+use App\Services\StudentExamQueryService;
 use Illuminate\Support\Facades\Auth;
 use DomainException;
 
@@ -17,31 +18,15 @@ class ExamController extends Controller
     public function __construct(
         private readonly ExamAttemptService $examAttemptService,
         private readonly StudentExamService $studentExamService,
+        private readonly StudentExamQueryService $studentExamQueryService,
     ) {}
 
     // Danh sách bài thi của sinh viên
     public function index(): \Illuminate\View\View
     {
-        $userId = Auth::id();
+        $indexData = $this->studentExamQueryService->getIndexData((int) Auth::id());
 
-        // Lấy danh sách lớp học phần mà SV đã enrolled
-        $enrolledSectionIds = \App\Models\CourseSection::whereHas('students', function ($q) use ($userId) {
-            $q->where('users.id', $userId)->where('course_section_students.status', 'enrolled');
-        })->pluck('id');
-
-        // Lấy exams thuộc các course sections đã enrolled
-        $exams = Exam::whereIn('course_section_id', $enrolledSectionIds)
-            ->published()
-            ->with('courseSection')
-            ->orderBy('start_time', 'asc')
-            ->get();
-
-        // Gom nhóm theo trạng thái
-        $upcoming = $exams->filter(fn($e) => !$e->start_time || $e->start_time->isFuture());
-        $available = $exams->filter(fn($e) => $e->start_time && $e->start_time->isPast() && (!$e->end_time || $e->end_time->isFuture()));
-        $ended = $exams->filter(fn($e) => $e->end_time && $e->end_time->isPast());
-
-        return view('student.exams.index', compact('upcoming', 'available', 'ended'));
+        return view('student.exams.index', $indexData);
     }
 
     // Tạo sảnh chờ, hiện thông tin đề thi và nút bắt đầu
@@ -49,17 +34,10 @@ class ExamController extends Controller
     {
         $this->authorize('viewAsStudent', $exam);
 
-        $userId = Auth::id();
-        $inProgressAttempt = ExamAttempt::forExam($exam->id)->forUser($userId)->inProgress()->first();
-        $pastAttempts = ExamAttempt::forExam($exam->id)->forUser($userId)->completed()->latestAttempt()->get();
-
-        $canStartNew = true;
-        if ($exam->isOfficial() && $pastAttempts->isNotEmpty()) {
-            $canStartNew = false; // Official exam, already completed
-        }
-        if ($inProgressAttempt) {
-            $canStartNew = false; // Currently taking the exam
-        }
+        $showData = $this->studentExamQueryService->getShowData($exam, (int) Auth::id());
+        $inProgressAttempt = $showData['inProgressAttempt'];
+        $pastAttempts = $showData['pastAttempts'];
+        $canStartNew = $showData['canStartNew'];
 
         return view("student.exams.show", compact("exam", "inProgressAttempt", "pastAttempts", "canStartNew"));
     }
@@ -88,7 +66,7 @@ class ExamController extends Controller
     {
         $this->authorize('attemptExam', $exam);
 
-        $attempt = ExamAttempt::forExam($exam->id)->forUser(Auth::id())->inProgress()->first();
+        $attempt = $this->studentExamQueryService->getInProgressAttempt($exam, (int) Auth::id());
 
         if (!$attempt) {
             return redirect()->route('student.exams.show', $exam->id)
@@ -106,11 +84,9 @@ class ExamController extends Controller
                 ->with('info', 'Thời gian làm bài đã hết. Bài thi của bạn đã được nộp và chấm điểm tự động.');
         }
 
-        // Lấy câu hỏi kèm đáp án
-        $questions = $exam->questions()->with('options')->get();
-
-        // Cần lưu những đáp án đã chọn, vì chẳng may thằng sinh viên nhấn f5 thì còn cứu được
-        $savedAnswers = $attempt->answers()->pluck('question_option_id', 'question_id')->toArray();
+        $roomData = $this->studentExamQueryService->getRoomData($exam, $attempt);
+        $questions = $roomData['questions'];
+        $savedAnswers = $roomData['savedAnswers'];
 
         return view('student.exams.room', compact(
             'exam',
@@ -169,20 +145,12 @@ class ExamController extends Controller
     {
         $this->authorize('viewAsStudent', $exam);
 
-        $attempt = ExamAttempt::forExam($exam->id)->forUser(Auth::id())
-            ->completed()->latestAttempt()->firstOrFail();
-
-        // Load answers kèm option và question (để hiển thị chi tiết)
-        $answers = $attempt->answers()
-            ->with(['option', 'question.options'])
-            ->get();
-
-        // Tính số câu đúng
-        $correctCount = $answers->where('is_correct', true)->count();
-        $totalQuestions = $exam->questions()->count();
-
-        // Kiểm tra đạt/không đạt
-        $passed = $attempt->total_score >= $exam->pass_points;
+        $attempt = $this->studentExamQueryService->getCompletedAttempt($exam, (int) Auth::id());
+        $resultData = $this->studentExamQueryService->getResultData($exam, $attempt);
+        $answers = $resultData['answers'];
+        $correctCount = $resultData['correctCount'];
+        $totalQuestions = $resultData['totalQuestions'];
+        $passed = $resultData['passed'];
 
         return view('student.exams.result', compact(
             'exam',

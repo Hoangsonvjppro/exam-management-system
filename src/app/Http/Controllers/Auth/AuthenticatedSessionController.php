@@ -13,9 +13,7 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function __construct(private readonly UserStateService $userStateService)
-    {
-    }
+    public function __construct(private readonly UserStateService $userStateService) {}
 
     /**
      * Display the login view.
@@ -53,7 +51,7 @@ class AuthenticatedSessionController extends Controller
                 ->with('warning', 'Bạn cần đổi mật khẩu tạm trước khi tiếp tục.');
         }
 
-        return redirect()->intended($this->userStateService->determineHomeRoute($user));
+        return redirect()->intended(route($this->userStateService->determineHomeRouteName($user)));
     }
 
     /**
@@ -69,5 +67,4 @@ class AuthenticatedSessionController extends Controller
 
         return redirect()->route('login');
     }
-
 }

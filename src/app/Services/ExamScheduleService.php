@@ -26,6 +26,11 @@ class ExamScheduleService
         return $schedule;
     }
 
+    public function deleteSchedule(ExamSchedule $schedule): void
+    {
+        $schedule->delete();
+    }
+
     /**
      * Tự động phân sinh viên enrolled vào ca thi.
      * Lấy SV enrolled trong course_section, assign theo capacity.

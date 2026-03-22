@@ -22,6 +22,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Lecturer\CourseSectionController as LecturerSectionController;
 use App\Http\Controllers\Lecturer\LecturerPageController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Student\StudentPageController;
 use App\Http\Controllers\StudentEnrollmentController;
 use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\StudentOnboardingController;
@@ -98,7 +99,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
     // Student Exam routes
     Route::middleware('student_role')->prefix('student')->name('student.')->group(function () {
         // Danh sách lớp học phần của sinh viên
-        Route::view('/classes', 'student.classes.index')->name('classes.index');
+        Route::get('/classes', [StudentPageController::class, 'classes'])->name('classes.index');
 
         Route::get('/exams/{exam}', [\App\Http\Controllers\Student\ExamController::class, 'show'])->name('exams.show');
         Route::post('/exams/{exam}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('exams.start');
@@ -109,9 +110,9 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         // Routes cho Sinh viên (đã bỏ prefix và name trùng lặp)
         Route::get('/exams', [\App\Http\Controllers\Student\ExamController::class, 'index'])->name('exams.index');
 
-        Route::view('/results', 'student.results.index-placeholder')->name('results.index');
+        Route::get('/results', [StudentPageController::class, 'results'])->name('results.index');
 
-        Route::view('/attendance', 'student.attendance.index-placeholder')->name('attendance.index');
+        Route::get('/attendance', [StudentPageController::class, 'attendance'])->name('attendance.index');
     });
 
 
@@ -188,7 +189,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
 
     // Dashboard cũ của giảng viên – giữ lại để tương thích với
     // các đường dẫn cũ trong sidebar (không xoá)
-    Route::view('/dashboard/lecturer', 'lecturer.dashboard')
+    Route::get('/dashboard/lecturer', [LecturerPageController::class, 'dashboard'])
         ->middleware('lecturer_role')
         ->name('lecturer.dashboard');
 

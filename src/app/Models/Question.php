@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -53,7 +54,7 @@ class Question extends Model
 
     // ── Scopes ─────────────────────────────────────────────────
 
-    public function scopeApprovedForSubject($query, int $subjectId)
+    public function scopeApprovedForSubject(Builder $query, int $subjectId): Builder
     {
         return $query->where('status', 'approved')->where('subject_id', $subjectId);
     }

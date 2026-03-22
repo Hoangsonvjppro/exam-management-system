@@ -73,6 +73,6 @@ class GoogleLoginController extends Controller
 
         Auth::login($user);
 
-        return redirect($this->userStateService->determineHomeRoute($user));
+        return redirect()->route($this->userStateService->determineHomeRouteName($user));
     }
 }

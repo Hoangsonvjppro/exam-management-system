@@ -42,4 +42,35 @@ class CourseSectionService
         $section->update(['invite_code' => strtoupper(Str::random(6))]);
         return $section;
     }
+
+    public function updateCourseSection(CourseSection $section, array $data): CourseSection
+    {
+        $section->update([
+            'name' => $data['name'],
+            'max_students' => $data['max_students'] ?? $section->max_students,
+            'status' => $data['status'],
+        ]);
+
+        return $section;
+    }
+
+    /**
+     * @return array{deleted: bool, message: string}
+     */
+    public function deleteCourseSection(CourseSection $section): array
+    {
+        if ($section->students()->exists()) {
+            return [
+                'deleted' => false,
+                'message' => 'Không thể xoá lớp có sinh viên đang theo học. Hãy đổi trạng thái sang "Huỷ".',
+            ];
+        }
+
+        $section->delete();
+
+        return [
+            'deleted' => true,
+            'message' => 'Đã xoá lớp học phần.',
+        ];
+    }
 }

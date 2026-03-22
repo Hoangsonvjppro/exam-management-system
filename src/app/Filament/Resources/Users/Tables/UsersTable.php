@@ -83,8 +83,8 @@ class UsersTable
                 EditAction::make(),
 
                 Action::make('toggle_active')
-                    ->label(fn (User $record): string => $record->is_active ? 'Khoa tài khoản' : 'Mở khóa')
-                    ->color(fn (User $record): string => $record->is_active ? 'danger' : 'success')
+                    ->label(fn(User $record): string => $record->is_active ? 'Khoa tài khoản' : 'Mở khóa')
+                    ->color(fn(User $record): string => $record->is_active ? 'danger' : 'success')
                     ->requiresConfirmation()
                     ->visible(function (): bool {
                         $admin = auth('admin')->user();
@@ -92,7 +92,8 @@ class UsersTable
                         return $admin ? Gate::forUser($admin)->allows('admin.users.block') : false;
                     })
                     ->action(function (User $record): void {
-                        $isActive = app(AdminUserLifecycleService::class)->toggleActive($record);
+                        $actorAdminId = auth('admin')->id();
+                        $isActive = app(AdminUserLifecycleService::class)->toggleActive($record, $actorAdminId);
 
                         Notification::make()
                             ->title($isActive ? 'Đã mở khóa tài khoản' : 'Đã khóa tài khoản')
@@ -104,14 +105,16 @@ class UsersTable
                     ->label('Reset mật khẩu tạm')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->visible(fn (User $record): bool =>
+                    ->visible(
+                        fn(User $record): bool =>
                         $record->hasRole('lecturer')
-                        && (($admin = auth('admin')->user())
-                            ? Gate::forUser($admin)->allows('admin.users.reset-password')
-                            : false)
+                            && (($admin = auth('admin')->user())
+                                ? Gate::forUser($admin)->allows('admin.users.reset-password')
+                                : false)
                     )
                     ->action(function (User $record): void {
-                        $tempPassword = app(AdminUserLifecycleService::class)->resetLecturerPassword($record);
+                        $actorAdminId = auth('admin')->id();
+                        $tempPassword = app(AdminUserLifecycleService::class)->resetLecturerPassword($record, $actorAdminId);
 
                         Notification::make()
                             ->title('Đã reset mật khẩu tạm thời')

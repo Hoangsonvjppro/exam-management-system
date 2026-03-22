@@ -44,7 +44,8 @@ class FileController extends Controller
                     'is_public' => filter_var($validated['is_public'] ?? false, FILTER_VALIDATE_BOOLEAN),
                     'used_by_type' => $validated['used_by_type'] ?? null,
                     'used_by_id' => $validated['used_by_id'] ?? null,
-                ]
+                ],
+                $request->user()?->id,
             );
 
             return new \App\Http\Resources\FileResource($file);
