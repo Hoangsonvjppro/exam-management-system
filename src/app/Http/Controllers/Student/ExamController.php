@@ -20,7 +20,7 @@ class ExamController extends Controller
     ) {}
 
     // Danh sách bài thi của sinh viên
-    public function index()
+    public function index(): \Illuminate\View\View
     {
         $userId = Auth::id();
 
@@ -45,7 +45,7 @@ class ExamController extends Controller
     }
 
     // Tạo sảnh chờ, hiện thông tin đề thi và nút bắt đầu
-    public function show(Exam $exam)
+    public function show(Exam $exam): \Illuminate\View\View
     {
         $this->authorize('viewAsStudent', $exam);
 
@@ -65,7 +65,7 @@ class ExamController extends Controller
     }
 
     // Hiển thị bài thi khi thằng sinh viên nhấn vào nút bắt đầu
-    public function start(Exam $exam)
+    public function start(Exam $exam): \Illuminate\Http\RedirectResponse
     {
         $this->authorize('attemptExam', $exam);
 
@@ -84,7 +84,7 @@ class ExamController extends Controller
     }
 
     //Vào được phòng thi rồi thì sẽ hiển thị câu hỏi và form nộp bài
-    public function room(Exam $exam)
+    public function room(Exam $exam): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
         $this->authorize('attemptExam', $exam);
 
@@ -122,7 +122,7 @@ class ExamController extends Controller
     }
 
     // API lưu ngầm, không reload trang, mỗi lần sinh viên chọn đáp án nào đó thì sẽ gọi API này để lưu lại
-    public function saveAnswer(SaveAnswerRequest $request, Exam $exam)
+    public function saveAnswer(SaveAnswerRequest $request, Exam $exam): \Illuminate\Http\JsonResponse
     {
         $this->authorize('attemptExam', $exam);
 
@@ -141,7 +141,7 @@ class ExamController extends Controller
     }
 
     // Nộp bài thi, tính điểm và lưu kết quả
-    public function submit(SubmitExamRequest $request, Exam $exam)
+    public function submit(SubmitExamRequest $request, Exam $exam): \Illuminate\Http\RedirectResponse
     {
         $this->authorize('attemptExam', $exam);
 
@@ -165,7 +165,7 @@ class ExamController extends Controller
     }
 
     // Xem kết quả bài thi sau khi nộp
-    public function result(Exam $exam)
+    public function result(Exam $exam): \Illuminate\View\View
     {
         $this->authorize('viewAsStudent', $exam);
 

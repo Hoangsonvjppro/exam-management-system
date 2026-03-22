@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -156,17 +157,19 @@ class User extends Authenticatable
     /**
      * Get the user's avatar URL or a default placeholder.
      */
-    public function getAvatarUrlAttribute(): string
+    protected function avatarUrl(): Attribute
     {
-        if ($this->google_avatar) {
-            return $this->google_avatar;
-        }
+        return Attribute::get(function () {
+            if ($this->google_avatar) {
+                return $this->google_avatar;
+            }
 
-        if ($this->avatar_file_id && $this->avatar) {
-            return asset('storage/' . $this->avatar->path);
-        }
+            if ($this->avatar_file_id && $this->avatar) {
+                return asset('storage/' . $this->avatar->path);
+            }
 
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=4f46e5&color=fff';
+            return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=4f46e5&color=fff';
+        });
     }
 
     /**
@@ -180,17 +183,19 @@ class User extends Authenticatable
     /**
      * Get primary role display name.
      */
-    public function getPrimaryRoleAttribute(): string
+    protected function primaryRole(): Attribute
     {
-        if ($this->hasRole('lecturer')) {
-            return 'Giảng viên';
-        }
+        return Attribute::get(function () {
+            if ($this->hasRole('lecturer')) {
+                return 'Giảng viên';
+            }
 
-        if ($this->hasRole('student')) {
-            return 'Sinh viên';
-        }
+            if ($this->hasRole('student')) {
+                return 'Sinh viên';
+            }
 
-        return 'Người dùng đã đăng nhập';
+            return 'Người dùng đã đăng nhập';
+        });
     }
 
     /**

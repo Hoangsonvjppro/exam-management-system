@@ -33,7 +33,7 @@ class ExamPolicy
             return false;
         }
 
-        return $exam->status === Exam::STATUS_PUBLISHED;
+        return $exam->status === \App\Enums\ExamStatus::Published;
     }
 
     /**

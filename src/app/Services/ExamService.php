@@ -130,15 +130,15 @@ class ExamService
      */
     public function publishExam(Exam $exam): void
     {
-        if (! $exam->canTransitionTo(Exam::STATUS_PUBLISHED)) {
-            throw new \DomainException('Không thể mở đề thi từ trạng thái "' . $exam->status . '".');
+        if (! $exam->canTransitionTo(\App\Enums\ExamStatus::Published)) {
+            throw new \DomainException('Không thể mở đề thi từ trạng thái "' . $exam->status->value . '".');
         }
 
         if ($exam->questions()->count() === 0) {
             throw new \DomainException('Đề kiểm tra phải có ít nhất một câu hỏi.');
         }
 
-        $exam->update(['status' => Exam::STATUS_PUBLISHED]);
+        $exam->update(['status' => \App\Enums\ExamStatus::Published]);
     }
 
     /**
@@ -148,11 +148,11 @@ class ExamService
      */
     public function closeExam(Exam $exam): void
     {
-        if (! $exam->canTransitionTo(Exam::STATUS_CLOSED)) {
-            throw new \DomainException('Không thể đóng đề thi từ trạng thái "' . $exam->status . '".');
+        if (! $exam->canTransitionTo(\App\Enums\ExamStatus::Closed)) {
+            throw new \DomainException('Không thể đóng đề thi từ trạng thái "' . $exam->status->value . '".');
         }
 
-        $exam->update(['status' => Exam::STATUS_CLOSED]);
+        $exam->update(['status' => \App\Enums\ExamStatus::Closed]);
     }
 
     /**
@@ -162,12 +162,12 @@ class ExamService
      */
     public function reopenExam(Exam $exam, string $reason): void
     {
-        if ($exam->status !== Exam::STATUS_CLOSED) {
+        if ($exam->status !== \App\Enums\ExamStatus::Closed) {
             throw new \DomainException('Chỉ có thể mở lại đề thi đã đóng.');
         }
 
         $exam->update([
-            'status'        => Exam::STATUS_PUBLISHED,
+            'status'        => \App\Enums\ExamStatus::Published,
             'reopen_reason' => $reason,
         ]);
     }

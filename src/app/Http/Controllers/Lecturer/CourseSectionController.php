@@ -15,6 +15,10 @@ use Illuminate\View\View;
 
 class CourseSectionController extends Controller
 {
+    public function __construct(
+        private readonly \App\Services\CourseSectionService $courseSectionService
+    ) {}
+
     public function index(): View
     {
         /** @var User $user */
@@ -42,18 +46,7 @@ class CourseSectionController extends Controller
         $user = Auth::user();
         $validated = $request->validated();
 
-        $code = CourseSection::generateCode($validated['subject_id'], $validated['semester_id']);
-
-        $section = CourseSection::create([
-            'name'         => $validated['name'],
-            'code'         => $code,
-            'subject_id'   => $validated['subject_id'],
-            'semester_id'  => $validated['semester_id'],
-            'invite_code'  => strtoupper(Str::random(6)),
-            'lecturer_id'  => $user->id,
-            'max_students' => $validated['max_students'] ?? 100,
-            'status'       => 'active',
-        ]);
+        $section = $this->courseSectionService->createCourseSection($user, $validated);
 
         return redirect()
             ->route('lecturer.classes.show', $section)
@@ -116,7 +109,7 @@ class CourseSectionController extends Controller
     {
         Gate::authorize('manage', $section);
 
-        $section->update(['invite_code' => strtoupper(Str::random(6))]);
+        $section = $this->courseSectionService->regenerateInviteCode($section);
 
         return back()->with('success', 'Đã tạo mã mời mới: ' . $section->invite_code);
     }

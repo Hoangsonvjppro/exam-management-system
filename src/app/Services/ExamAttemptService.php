@@ -76,7 +76,7 @@ class ExamAttemptService
 
             // 3. Cập nhật trạng thái attempt + submitted_answers_count
             $attempt->update([
-                'status'                  => ExamAttempt::STATUS_COMPLETED,
+                'status'                  => \App\Enums\ExamAttemptStatus::Completed,
                 'completed_at'            => now(),
                 'total_score'             => $totalScore,
                 'submitted_answers_count' => $answers->count(),

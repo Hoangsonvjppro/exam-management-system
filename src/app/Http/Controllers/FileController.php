@@ -32,32 +32,22 @@ class FileController extends Controller
      * POST /files
      * Body: multipart/form-data { file, ?directory, ?is_public, ?used_by_type, ?used_by_id }
      */
-    public function store(FileUploadRequest $request): JsonResponse
+    public function store(FileUploadRequest $request): \App\Http\Resources\FileResource|\Illuminate\Http\JsonResponse
     {
+        $validated = $request->validated();
+
         try {
             $file = $this->uploadService->upload(
                 $request->file('file'),
                 [
-                    'directory' => $request->input('directory', 'uploads'),
-                    'is_public' => $request->boolean('is_public', false),
-                    'used_by_type' => $request->input('used_by_type'),
-                    'used_by_id' => $request->input('used_by_id'),
+                    'directory' => $validated['directory'] ?? 'uploads',
+                    'is_public' => filter_var($validated['is_public'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    'used_by_type' => $validated['used_by_type'] ?? null,
+                    'used_by_id' => $validated['used_by_id'] ?? null,
                 ]
             );
 
-            return response()->json([
-                'success' => true,
-                'message' => 'File đã được tải lên thành công.',
-                'data' => [
-                    'id' => $file->id,
-                    'original_name' => $file->original_name,
-                    'mime_type' => $file->mime_type,
-                    'size' => $file->size,
-                    'human_size' => $file->human_size,
-                    'extension' => $file->extension,
-                    'url' => $this->uploadService->getUrl($file),
-                ],
-            ], 201);
+            return new \App\Http\Resources\FileResource($file);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,

@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Enums\ExamAttemptStatus;
 
 class ExamAttempt extends Model
 {
-    public const STATUS_IN_PROGRESS = 'in_progress';
-    public const STATUS_COMPLETED = 'completed';
+    // Đã chuyển STATUS_IN_PROGRESS, STATUS_COMPLETED sang Enum
 
     protected $fillable = [
         'exam_id',
@@ -32,18 +32,19 @@ class ExamAttempt extends Model
         'completed_at' => 'datetime',
         'total_score' => 'decimal:2',
         'focus_lost_at' => 'array',
+        'status' => ExamAttemptStatus::class,
     ];
 
     // ── Scopes ─────────────────────────────────────────────────
 
     public function scopeInProgress(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_IN_PROGRESS);
+        return $query->where('status', ExamAttemptStatus::InProgress);
     }
 
     public function scopeCompleted(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_COMPLETED);
+        return $query->where('status', ExamAttemptStatus::Completed);
     }
 
     public function scopeForUser(Builder $query, int $userId): Builder

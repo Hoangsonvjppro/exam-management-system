@@ -10,17 +10,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Enums\ExamStatus;
+use App\Enums\ExamType;
 
 class Exam extends Model
 {
     use HasFactory, SoftDeletes;
 
-    public const STATUS_DRAFT = 'draft';
-    public const STATUS_PUBLISHED = 'published';
-    public const STATUS_CLOSED = 'closed';
-
-    public const TYPE_PRACTICE = 'practice';
-    public const TYPE_OFFICIAL = 'official';
+    // Các constant status/type đã được chuyển qua Enum
 
     protected $fillable = [
         'course_section_id',
@@ -45,6 +43,8 @@ class Exam extends Model
         'pass_points' => 'decimal:2',
         'show_score_after_submit' => 'boolean',
         'show_answers_after_submit' => 'boolean',
+        'status' => ExamStatus::class,
+        'exam_type' => ExamType::class,
     ];
 
     public function courseSection(): BelongsTo
@@ -83,7 +83,7 @@ class Exam extends Model
 
     public function scopePublished(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_PUBLISHED);
+        return $query->where('status', ExamStatus::Published);
     }
 
     public function scopeForCourseSection(Builder $query, int $courseSectionId): Builder
@@ -94,32 +94,38 @@ class Exam extends Model
 
     // ── Accessors ─────────────────────────────────────────────
 
-    public function getTimeLeftMinutesAttribute(): int
+    protected function timeLeftMinutes(): Attribute
     {
-        if (!$this->end_time) return (int) $this->duration_minutes;
-        $now = now();
-        if ($now->gt($this->end_time)) return 0;
-        return (int) $now->diffInMinutes($this->end_time, false);
+        return Attribute::get(function () {
+            if (!$this->end_time) return (int) $this->duration_minutes;
+            $now = now();
+            if ($now->gt($this->end_time)) return 0;
+            return (int) $now->diffInMinutes($this->end_time, false);
+        });
     }
 
-    public function getTimeLeftTextAttribute(): string
+    protected function timeLeftText(): Attribute
     {
-        $minutes = $this->time_left_minutes;
-        if ($minutes <= 0) return 'Đã hết giờ';
+        return Attribute::get(function () {
+            $minutes = $this->time_left_minutes;
+            if ($minutes <= 0) return 'Đã hết giờ';
 
-        if ($minutes >= 60) {
-            $hours = floor($minutes / 60);
-            $rem = $minutes % 60;
-            return $rem > 0 ? "Còn {$hours} giờ {$rem} phút" : "Còn {$hours} giờ";
-        }
+            if ($minutes >= 60) {
+                $hours = floor($minutes / 60);
+                $rem = $minutes % 60;
+                return $rem > 0 ? "Còn {$hours} giờ {$rem} phút" : "Còn {$hours} giờ";
+            }
 
-        return "Còn {$minutes} phút";
+            return "Còn {$minutes} phút";
+        });
     }
 
-    public function getIsNotStartedAttribute(): bool
+    protected function isNotStarted(): Attribute
     {
-        if (!$this->start_time) return false;
-        return now()->lt($this->start_time);
+        return Attribute::get(function () {
+            if (!$this->start_time) return false;
+            return now()->lt($this->start_time);
+        });
     }
 
     /**
@@ -141,33 +147,33 @@ class Exam extends Model
     {
         return $this->attempts()
             ->where('user_id', $userId)
-            ->where('status', ExamAttempt::STATUS_COMPLETED)
+            ->where('status', ExamAttemptStatus::Completed)
             ->exists();
     }
 
     public function isPractice(): bool
     {
-        return $this->exam_type === self::TYPE_PRACTICE;
+        return $this->exam_type === ExamType::Practice;
     }
 
     public function isOfficial(): bool
     {
-        return $this->exam_type === self::TYPE_OFFICIAL;
+        return $this->exam_type === ExamType::Official;
     }
 
     /**
      * Kiểm tra transition trạng thái hợp lệ.
      * draft → published → closed → published (reopen)
      */
-    public function canTransitionTo(string $newStatus): bool
+    public function canTransitionTo(ExamStatus $newStatus): bool
     {
         $allowed = [
-            self::STATUS_DRAFT     => [self::STATUS_PUBLISHED],
-            self::STATUS_PUBLISHED => [self::STATUS_CLOSED],
-            self::STATUS_CLOSED    => [self::STATUS_PUBLISHED], // reopen
+            ExamStatus::Draft->value     => [ExamStatus::Published],
+            ExamStatus::Published->value => [ExamStatus::Closed],
+            ExamStatus::Closed->value    => [ExamStatus::Published], // reopen
         ];
 
-        return in_array($newStatus, $allowed[$this->status] ?? []);
+        return in_array($newStatus, $allowed[$this->status->value] ?? []);
     }
 
     /**
