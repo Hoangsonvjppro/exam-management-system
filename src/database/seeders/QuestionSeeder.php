@@ -35,7 +35,7 @@ class QuestionSeeder extends Seeder
             $chapters = $subject->chapters;
             if ($chapters->isEmpty()) continue;
 
-            // Mỗi môn học tạo đúng 20 câu hỏi
+            // Mỗi môn học tạo đúng 500 câu hỏi
             for ($i = 1; $i <= 500; $i++) {
                 // Chọn random 1 chương trong môn học này để gán câu hỏi
                 $randomChapter = $chapters->random();
