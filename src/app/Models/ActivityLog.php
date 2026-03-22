@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Auth;
 
 class ActivityLog extends Model
 {
@@ -50,7 +51,7 @@ class ActivityLog extends Model
         array $newValues = []
     ): static {
         return static::create([
-            'user_id'     => auth()->id(),
+            'user_id'     => Auth::id(),
             'action'      => $action,
             'model_type'  => $model ? get_class($model) : null,
             'model_id'    => $model?->getKey(),
