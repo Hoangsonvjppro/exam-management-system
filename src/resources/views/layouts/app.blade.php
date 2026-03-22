@@ -55,7 +55,7 @@
                 </x-sidebar-section>
 
                 <x-sidebar-section label="Ngân hàng đề">
-                    <x-sidebar-link route="lecturer.dashboard" icon="question-mark-circle" :active="false">Câu hỏi</x-sidebar-link>
+                    <x-sidebar-link route="lecturer.questions.index" icon="question-mark-circle" :active="false">Câu hỏi</x-sidebar-link>
                     <x-sidebar-link route="lecturer.dashboard" icon="document-text" :active="false">Đề thi</x-sidebar-link>
                     <x-sidebar-link route="lecturer.dashboard" icon="clock" :active="false">Lịch thi</x-sidebar-link>
                 </x-sidebar-section>

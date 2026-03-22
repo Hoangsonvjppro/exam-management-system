@@ -26,6 +26,7 @@ use App\Http\Controllers\Lecturer\ExamController;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\QuestionController;
 
 // ============================================================
 // 1. PUBLIC ROUTES
@@ -137,6 +138,10 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
 
 
             // ── Quản lý Đề thi (Exams) ─────────────────────────────
+
+            // Ngân hàng câu hỏi
+            Route::get('/questions', [QuestionController::class, 'getSubjects'])
+                ->name('questions.index');
 
             // Hiển thị form tạo đề thi mới cho một lớp học
             Route::get('/course-sections/{courseSection}/exams/create', [ExamController::class, 'create'])
