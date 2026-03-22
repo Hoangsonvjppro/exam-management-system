@@ -12,7 +12,10 @@ class CreateCourseSection extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['code'] = strtoupper($data['code']);
+        $data['code'] = CourseSectionResource::generateCourseSectionCode(
+            $data['subject_id'] ?? null,
+            $data['semester_id'] ?? null,
+        ) ?? strtoupper((string) ($data['code'] ?? ''));
         $data['invite_code'] = filled($data['invite_code'] ?? null)
             ? strtoupper((string) $data['invite_code'])
             : strtoupper(Str::random(8));
