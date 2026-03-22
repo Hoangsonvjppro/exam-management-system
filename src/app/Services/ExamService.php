@@ -4,10 +4,14 @@ namespace App\Services;
 
 use App\Models\CourseSection;
 use App\Models\Exam;
+use App\Models\ExamMatrix;
 use Illuminate\Support\Facades\DB;
 
 class ExamService
 {
+    public function __construct(
+        private readonly ExamGenerationService $examGenerationService
+    ) {}
     /**
      * Tạo đề thi mới kèm đồng bộ câu hỏi.
      *
@@ -23,6 +27,39 @@ class ExamService
             $exam = $courseSection->exams()->create($data);
 
             $this->syncQuestions($exam, $data['question_ids']);
+
+            return $exam;
+        });
+    }
+
+    /**
+     * Tạo đề thi từ ma trận cấu trúc (auto-generate).
+     *
+     * @param CourseSection $courseSection
+     * @param array $data Validated exam data
+     * @param array $matrixData Mảng [{chapter_id, difficulty, question_type_id, question_count, points_each}]
+     * @return Exam
+     */
+    public function createExamFromMatrix(CourseSection $courseSection, array $data, array $matrixData): Exam
+    {
+        return DB::transaction(function () use ($courseSection, $data, $matrixData) {
+            $exam = $courseSection->exams()->create($data);
+
+            // Lưu matrix rows
+            foreach ($matrixData as $row) {
+                ExamMatrix::create([
+                    'exam_id' => $exam->id,
+                    'chapter_id' => $row['chapter_id'] ?? null,
+                    'difficulty' => $row['difficulty'],
+                    'question_type_id' => $row['question_type_id'] ?? null,
+                    'question_count' => $row['question_count'],
+                    'points_each' => $row['points_each'] ?? 1.00,
+                ]);
+            }
+
+            // Sinh câu hỏi tự động từ ma trận
+            $matrixRows = $exam->matrices()->with('chapter')->get();
+            $this->examGenerationService->generateFromMatrix($exam, $matrixRows);
 
             return $exam;
         });
@@ -53,7 +90,7 @@ class ExamService
                     $this->syncQuestions($exam, $questionIds);
                 }
 
-                $totalPoints = $exam->questions()->sum('exam_questions.points');
+                $totalPoints = $exam->examQuestions()->sum('points');
                 $data['total_points'] = $totalPoints;
                 $data['pass_points'] = min($exam->pass_points ?? 0, $totalPoints);
             }
@@ -134,18 +171,49 @@ class ExamService
     }
 
     /**
-     * Đồng bộ câu hỏi vào đề thi và tính lại total_points.
+     * Đồng bộ câu hỏi vào đề thi, tạo snapshot và tính lại total_points.
      */
     private function syncQuestions(Exam $exam, array $questionIds): void
     {
-        $questionsData = collect($questionIds)->mapWithKeys(function ($id, $index) {
-            return [$id => ['points' => 1.00, 'order_index' => $index + 1]];
-        })->all();
+        // Xoá câu hỏi cũ
+        $exam->examQuestions()->delete();
 
-        $exam->questions()->sync($questionsData);
+        // Lấy tất cả câu hỏi cần sync kèm options
+        $questions = \App\Models\Question::with('options')
+            ->whereIn('id', $questionIds)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($questionIds as $index => $questionId) {
+            $question = $questions->get($questionId);
+            if (!$question) continue;
+
+            // Tạo snapshot JSON chứa nội dung câu hỏi + options
+            $snapshot = [
+                'id' => $question->id,
+                'content' => $question->content,
+                'difficulty' => $question->difficulty,
+                'explanation' => $question->explanation,
+                'options' => $question->options->map(fn($opt) => [
+                    'id' => $opt->id,
+                    'label' => $opt->label,
+                    'content' => $opt->content,
+                    'is_correct' => $opt->is_correct,
+                    'order' => $opt->order,
+                ])->toArray(),
+            ];
+
+            \App\Models\ExamQuestion::create([
+                'exam_id' => $exam->id,
+                'question_id' => $questionId,
+                'points' => 1.00,
+                'order_index' => $index + 1,
+                'question_snapshot' => $snapshot,
+            ]);
+        }
 
         // Đồng bộ total_points theo tổng điểm câu hỏi thực tế
-        $totalPoints = $exam->questions()->sum('exam_questions.points');
+        $totalPoints = $exam->examQuestions()->sum('points');
         $exam->update([
             'total_points' => $totalPoints,
             'pass_points'  => min($exam->pass_points ?? 0, $totalPoints),

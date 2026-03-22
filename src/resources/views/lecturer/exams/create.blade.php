@@ -42,6 +42,7 @@
 
             <form method="POST" action="{{ route('lecturer.course-sections.exams.store', $courseSection->id) }}">
                 @csrf
+                <input type="hidden" name="creation_mode" id="creation_mode" value="{{ old('creation_mode', 'manual') }}">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     
                     <!-- Cột Trái: Cấu hình chung (Lớn hơn chút) -->
@@ -121,9 +122,24 @@
                         </div>
                     </div>
 
-                    <!-- Cột Phải: Chọn câu hỏi (Rộng hơn) -->
+                    <!-- Cột Phải: Chọn câu hỏi / Ma trận -->
                     <div class="lg:col-span-8 flex flex-col">
-                        <div class="ca-card flex-1 flex flex-col h-full pl-0 pr-0 pt-0 pb-0 overflow-hidden bg-transparent border-none">
+                        <!-- Tab toggle -->
+                        <div class="flex mb-4 border-b border-[#D6E2F0]">
+                            <button type="button" id="tab-manual" onclick="switchCreationMode('manual')" class="px-5 py-2.5 text-[13px] font-semibold border-b-2 transition-colors border-[#1A3A6B] text-[#1A3A6B]">
+                                Chọn thủ công
+                            </button>
+                            <button type="button" id="tab-matrix" onclick="switchCreationMode('matrix')" class="px-5 py-2.5 text-[13px] font-semibold border-b-2 transition-colors border-transparent text-[#6B7C99] hover:text-[#1A3A6B]">
+                                Sinh từ ma trận
+                            </button>
+                        </div>
+
+                        @error('creation_mode')
+                        <div class="mb-3 px-4 py-2 bg-[#FEF2F2] border border-[#FCA5A5] text-[#991B1B] text-[13px] rounded-lg">{{ $message }}</div>
+                        @enderror
+
+                        <!-- TAB 1: Chọn thủ công -->
+                        <div id="panel-manual" class="flex-1 flex flex-col">
                             <div class="bg-white rounded-[10px] border-[0.5px] border-[#D6E2F0] flex flex-col h-full shadow-sm">
                                 <div class="p-5 border-b border-[#EBF2FA] flex justify-between items-center bg-[#F8FAFD] rounded-t-[10px]">
                                     <div>
@@ -151,10 +167,10 @@
                                     @if($questions->isEmpty())
                                         <div class="h-full flex flex-col items-center justify-center text-center py-12">
                                             <div class="w-16 h-16 bg-[#F4F7FC] rounded-full flex items-center justify-center mb-4 border border-[#D6E2F0]">
-                                                <svg class="w-8 h-8 text-[#6B7C99]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                                <svg class="w-8 h-8 text-[#6B7C99]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                             </div>
                                             <h4 class="text-[15px] font-bold text-[#1A3A6B] mb-2">Ngân hàng trống</h4>
-                                            <p class="text-[13px] text-[#6B7C99] max-w-sm">Môn học này hiện chưa có câu hỏi nào được phê duyệt. Vui lòng quay lại thêm câu hỏi trước khi tạo đề thi.</p>
+                                            <p class="text-[13px] text-[#6B7C99] max-w-sm">Môn học này hiện chưa có câu hỏi nào được phê duyệt.</p>
                                         </div>
                                     @else
                                         <table class="ca-table text-left">
@@ -188,16 +204,134 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- TAB 2: Sinh từ ma trận -->
+                        <div id="panel-matrix" class="flex-1 flex-col" style="display: none;">
+                            <div class="bg-white rounded-[10px] border-[0.5px] border-[#D6E2F0] flex flex-col shadow-sm">
+                                <div class="p-5 border-b border-[#EBF2FA] flex justify-between items-center bg-[#F8FAFD] rounded-t-[10px]">
+                                    <div>
+                                        <h3 class="text-[16px] font-bold text-[#1A3A6B]">Cấu trúc ma trận đề thi</h3>
+                                        <p class="text-[12.5px] text-[#6B7C99] mt-1">Định nghĩa số câu theo chương và độ khó, hệ thống sẽ tự động chọn ngẫu nhiên.</p>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div class="badge s-upcoming">Tổng: <span id="matrixTotalQuestions">0</span> câu • <span id="matrixTotalPoints">0</span> điểm</div>
+                                        <button type="submit" class="btn btn-primary ml-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Tạo Đề Từ Ma Trận
+                                        </button>
+                                    </div>
+                                </div>
+
+                                @error('matrix')
+                                <div class="px-5 py-3 bg-[#FEF2F2] border-b border-[#FCA5A5] text-[#991B1B] text-[13px] font-medium">{{ $message }}</div>
+                                @enderror
+
+                                <div class="p-5">
+                                    <table class="ca-table text-left" id="matrix-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Chương</th>
+                                                <th>Độ khó</th>
+                                                <th>Số câu</th>
+                                                <th>Điểm/câu</th>
+                                                <th class="w-12"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="matrix-body">
+                                            {{-- JS sẽ thêm rows --}}
+                                        </tbody>
+                                    </table>
+
+                                    <button type="button" onclick="addMatrixRow()" class="btn btn-ghost mt-4 w-full">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        Thêm hàng ma trận
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
             </form>
 
             <script>
-                // Handle Checkbox JS Logic
+                const chapters = @json($chapters);
+                let matrixRowIndex = 0;
+
+                // === Tab switching ===
+                function switchCreationMode(mode) {
+                    document.getElementById('creation_mode').value = mode;
+                    document.getElementById('panel-manual').style.display = mode === 'manual' ? 'flex' : 'none';
+                    document.getElementById('panel-matrix').style.display = mode === 'matrix' ? 'flex' : 'none';
+                    
+                    const tabManual = document.getElementById('tab-manual');
+                    const tabMatrix = document.getElementById('tab-matrix');
+                    if (mode === 'manual') {
+                        tabManual.classList.add('border-[#1A3A6B]', 'text-[#1A3A6B]');
+                        tabManual.classList.remove('border-transparent', 'text-[#6B7C99]');
+                        tabMatrix.classList.remove('border-[#1A3A6B]', 'text-[#1A3A6B]');
+                        tabMatrix.classList.add('border-transparent', 'text-[#6B7C99]');
+                    } else {
+                        tabMatrix.classList.add('border-[#1A3A6B]', 'text-[#1A3A6B]');
+                        tabMatrix.classList.remove('border-transparent', 'text-[#6B7C99]');
+                        tabManual.classList.remove('border-[#1A3A6B]', 'text-[#1A3A6B]');
+                        tabManual.classList.add('border-transparent', 'text-[#6B7C99]');
+                    }
+                }
+
+                // === Matrix row management ===
+                function addMatrixRow() {
+                    const i = matrixRowIndex++;
+                    const chapterOptions = chapters.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <select name="matrix[${i}][chapter_id]" class="ca-select" style="min-width:140px">
+                                <option value="">Tất cả</option>
+                                ${chapterOptions}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="matrix[${i}][difficulty]" class="ca-select" required style="min-width:120px">
+                                <option value="remember">Nhớ</option>
+                                <option value="understand">Hiểu</option>
+                                <option value="apply">Áp dụng</option>
+                                <option value="analyze">Phân tích</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" name="matrix[${i}][question_count]" class="ca-input" value="5" min="1" required style="width:70px" oninput="updateMatrixSummary()">
+                        </td>
+                        <td>
+                            <input type="number" name="matrix[${i}][points_each]" class="ca-input" value="1.00" min="0.01" step="0.01" style="width:80px" oninput="updateMatrixSummary()">
+                        </td>
+                        <td class="text-center">
+                            <button type="button" onclick="this.closest('tr').remove(); updateMatrixSummary();" class="text-[#DC2626] hover:text-[#991B1B] text-[14px] font-bold">&times;</button>
+                        </td>
+                    `;
+                    document.getElementById('matrix-body').appendChild(row);
+                    updateMatrixSummary();
+                }
+
+                function updateMatrixSummary() {
+                    let totalQ = 0, totalP = 0;
+                    document.querySelectorAll('#matrix-body tr').forEach(row => {
+                        const count = parseInt(row.querySelector('input[name*="question_count"]')?.value || 0);
+                        const points = parseFloat(row.querySelector('input[name*="points_each"]')?.value || 1);
+                        totalQ += count;
+                        totalP += count * points;
+                    });
+                    document.getElementById('matrixTotalQuestions').textContent = totalQ;
+                    document.getElementById('matrixTotalPoints').textContent = totalP.toFixed(2);
+                }
+
+                // === Manual mode: checkbox logic ===
                 function toggleCheckbox(row, event) {
                     if (event.target.tagName.toLowerCase() === 'input') return;
-                    
                     const checkbox = row.querySelector('.question-checkbox');
                     if (checkbox) {
                         checkbox.checked = !checkbox.checked;
@@ -221,14 +355,16 @@
                 }
 
                 document.addEventListener('DOMContentLoaded', function() {
+                    // Restore tab from old input
+                    const savedMode = document.getElementById('creation_mode').value;
+                    if (savedMode === 'matrix') switchCreationMode('matrix');
+
                     const selectAll = document.getElementById('selectAll');
                     const checkboxes = document.querySelectorAll('.question-checkbox');
                     
                     if(selectAll) {
                         selectAll.addEventListener('change', function() {
-                            checkboxes.forEach(cb => {
-                                cb.checked = selectAll.checked;
-                            });
+                            checkboxes.forEach(cb => cb.checked = selectAll.checked);
                             updateCounter();
                         });
                     }
@@ -242,6 +378,11 @@
 
                     updateCounter();
                     checkSelectAllState();
+
+                    // Add initial matrix row
+                    if (document.getElementById('matrix-body').children.length === 0) {
+                        addMatrixRow();
+                    }
                 });
             </script>
         </div>

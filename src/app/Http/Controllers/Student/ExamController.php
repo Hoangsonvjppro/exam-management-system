@@ -18,6 +18,31 @@ class ExamController extends Controller
     {
     }
 
+    // Danh sách bài thi của sinh viên
+    public function index()
+    {
+        $userId = Auth::id();
+
+        // Lấy danh sách lớp học phần mà SV đã enrolled
+        $enrolledSectionIds = \App\Models\CourseSection::whereHas('students', function ($q) use ($userId) {
+            $q->where('users.id', $userId)->where('course_section_students.status', 'enrolled');
+        })->pluck('id');
+
+        // Lấy exams thuộc các course sections đã enrolled
+        $exams = Exam::whereIn('course_section_id', $enrolledSectionIds)
+            ->published()
+            ->with('courseSection')
+            ->orderBy('start_time', 'asc')
+            ->get();
+
+        // Gom nhóm theo trạng thái
+        $upcoming = $exams->filter(fn($e) => !$e->start_time || $e->start_time->isFuture());
+        $available = $exams->filter(fn($e) => $e->start_time && $e->start_time->isPast() && (!$e->end_time || $e->end_time->isFuture()));
+        $ended = $exams->filter(fn($e) => $e->end_time && $e->end_time->isPast());
+
+        return view('student.exams.index', compact('upcoming', 'available', 'ended'));
+    }
+
     // Tạo sảnh chờ, hiện thông tin đề thi và nút bắt đầu
     public function show(Exam $exam)
     {
@@ -73,7 +98,9 @@ class ExamController extends Controller
                 'user_id' => $userId,
                 'attempt_number' => $nextNumber,
                 'started_at' => now(),
-                'status' => 'in_progress'
+                'status' => 'in_progress',
+                'ip_address' => request()->ip(),
+                'user_agent' => substr(request()->userAgent() ?? '', 0, 500),
             ]);
         }
 
@@ -164,6 +191,13 @@ class ExamController extends Controller
                 'question_option_id' => $validated['question_option_id'],
             ]
         );
+
+        // Cập nhật tab_switch_count nếu frontend gửi kèm
+        if ($request->has('tab_switch_count')) {
+            $attempt->update([
+                'tab_switch_count' => (int) $request->input('tab_switch_count'),
+            ]);
+        }
 
         return response()->json(['success' => true]);
     }

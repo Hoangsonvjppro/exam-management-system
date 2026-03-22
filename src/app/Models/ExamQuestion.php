@@ -12,6 +12,11 @@ class ExamQuestion extends Model
         'question_id',
         'points',
         'order_index',
+        'question_snapshot',
+    ];
+
+    protected $casts = [
+        'question_snapshot' => 'array',
     ];
 
     public function exam()
@@ -22,5 +27,14 @@ class ExamQuestion extends Model
     public function question()
     {
         return $this->belongsTo(Question::class);
+    }
+
+    /**
+     * Trả về snapshot nếu có, nếu không thì trả về question gốc.
+     * Dùng để đọc nội dung câu hỏi tại thời điểm tạo đề.
+     */
+    public function getSnapshotAttribute(): ?array
+    {
+        return $this->question_snapshot;
     }
 }

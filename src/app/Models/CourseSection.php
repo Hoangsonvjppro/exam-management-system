@@ -94,9 +94,75 @@ class CourseSection extends Model
         return $this->students()->wherePivot('status', 'enrolled')->count();
     }
 
-    // 1 học phần thì sẽ có nhiều bài kiểm tra!
     public function exams()
     {
         return $this->hasMany(Exam::class);
+    }
+
+    // ── Code Generation ────────────────────────────────────────
+
+    public static function generateCode($subjectId, $semesterId): ?string
+    {
+        if (blank($subjectId) || blank($semesterId)) {
+            return null;
+        }
+
+        $subject = Subject::find($subjectId);
+        $semester = Semester::find($semesterId);
+
+        if (!$subject || !$semester) {
+            return null;
+        }
+
+        $groupNumber = static::resolveNextMissingGroupNumber((int) $subject->id, (int) $semester->id);
+
+        $termCode = match ((int) $semester->term) {
+            1 => 'HK1',
+            2 => 'HK2',
+            3 => 'HK3',
+            default => 'HK' . (int) $semester->term,
+        };
+
+        $startYear = (int) $semester->year;
+        $yearCode = sprintf('%02d%02d', $startYear % 100, ($startYear + 1) % 100);
+
+        return strtoupper(sprintf(
+            '%s-%02d-%s-%s',
+            $subject->code,
+            $groupNumber,
+            $termCode,
+            $yearCode,
+        ));
+    }
+
+    protected static function resolveNextMissingGroupNumber(int $subjectId, int $semesterId): int
+    {
+        $used = static::query()
+            ->where('subject_id', $subjectId)
+            ->where('semester_id', $semesterId)
+            ->pluck('code')
+            ->map(function ($code) {
+                $parts = explode('-', $code);
+                return isset($parts[1]) && is_numeric($parts[1]) ? (int) $parts[1] : null;
+            })
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        $expected = 1;
+
+        foreach ($used as $n) {
+            if ($n === $expected) {
+                $expected++;
+                continue;
+            }
+            if ($n > $expected) {
+                break;
+            }
+        }
+
+        return $expected;
     }
 }

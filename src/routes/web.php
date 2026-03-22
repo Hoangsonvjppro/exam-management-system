@@ -23,6 +23,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\StudentEnrollmentController;
 use App\Http\Controllers\StudentOnboardingController;
 use App\Http\Controllers\Lecturer\ExamController;
+use App\Http\Controllers\Lecturer\ExamScheduleController;
 use App\Models\Exam;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -119,9 +120,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         Route::post('/exams/{exam}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('exams.submit');
         Route::get('/exams/{exam}/result', [\App\Http\Controllers\Student\ExamController::class, 'result'])->name('exams.result');
         // Routes cho Sinh viên (đã bỏ prefix và name trùng lặp)
-        Route::get('/exams', function () {
-            return view('student.exams.index-placeholder');
-        })->name('exams.index');
+        Route::get('/exams', [\App\Http\Controllers\Student\ExamController::class, 'index'])->name('exams.index');
 
         Route::get('/results', function () {
             return view('student.results.index-placeholder');
@@ -192,13 +191,16 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
                 return view('lecturer.questions.index');
             })->name('questions.index');
 
-            Route::get('/exams', function () {
-                return view('lecturer.exams.index');
-            })->name('exams.index');
+            Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
 
-            Route::get('/schedules', function () {
-                return view('lecturer.schedules.index');
-            })->name('schedules.index');
+            // ── Lịch thi (Exam Schedules) ─────────────────────────
+            Route::get('/schedules', [ExamScheduleController::class, 'index'])->name('schedules.index');
+            Route::get('/exams/{exam}/schedules/create', [ExamScheduleController::class, 'create'])->name('exams.schedules.create');
+            Route::post('/exams/{exam}/schedules', [ExamScheduleController::class, 'store'])->name('exams.schedules.store');
+            Route::get('/schedules/{schedule}/edit', [ExamScheduleController::class, 'edit'])->name('schedules.edit');
+            Route::put('/schedules/{schedule}', [ExamScheduleController::class, 'update'])->name('schedules.update');
+            Route::delete('/schedules/{schedule}', [ExamScheduleController::class, 'destroy'])->name('schedules.destroy');
+            Route::post('/schedules/{schedule}/assign-students', [ExamScheduleController::class, 'assignStudents'])->name('schedules.assign-students');
 
             Route::get('/attendance', function () {
                 return view('lecturer.attendance.index-placeholder');

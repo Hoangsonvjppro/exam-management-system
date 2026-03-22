@@ -30,26 +30,34 @@ class CourseSectionController extends Controller
 
     public function create(): View
     {
-        return view('lecturer.classes.create');
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $semesters = \App\Models\Semester::orderByDesc('start_date')->get();
+
+        return view('lecturer.classes.create', compact('subjects', 'semesters'));
     }
 
     public function store(StoreCourseSectionRequest $request): RedirectResponse
     {
         /** @var User $user */
         $user = Auth::user();
+        $validated = $request->validated();
+
+        $code = CourseSection::generateCode($validated['subject_id'], $validated['semester_id']);
 
         $section = CourseSection::create([
-            'name'         => $request->validated()['name'],
-            'code'         => strtoupper($request->validated()['code']),
+            'name'         => $validated['name'],
+            'code'         => $code,
+            'subject_id'   => $validated['subject_id'],
+            'semester_id'  => $validated['semester_id'],
             'invite_code'  => strtoupper(Str::random(6)),
             'lecturer_id'  => $user->id,
-            'max_students' => $request->validated()['max_students'] ?? 100,
+            'max_students' => $validated['max_students'] ?? 100,
             'status'       => 'active',
         ]);
 
         return redirect()
             ->route('lecturer.classes.show', $section)
-            ->with('success', 'Tạo lớp học phần thành công. Mã tham gia: ' . $section->invite_code);
+            ->with('success', 'Tạo lớp học phần thành công. Mã lớp nội bộ: ' . $section->code . '. Mã tham gia: ' . $section->invite_code);
     }
 
     public function show(CourseSection $section): View
@@ -79,7 +87,6 @@ class CourseSectionController extends Controller
 
         $section->update([
             'name'         => $validated['name'],
-            'code'         => strtoupper($validated['code']),
             'max_students' => $validated['max_students'] ?? $section->max_students,
             'status'       => $validated['status'],
         ]);

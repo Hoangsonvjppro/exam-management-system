@@ -72,6 +72,7 @@ class CourseSectionResource extends Resource
                     ->searchable()
                     ->preload()
                     ->live()
+                    ->required()
                     ->afterStateUpdated(function (Get $get, Set $set): void {
                         $set('code', static::generateCourseSectionCode(
                             $get('subject_id'),
@@ -85,6 +86,7 @@ class CourseSectionResource extends Resource
                     ->searchable()
                     ->preload()
                     ->live()
+                    ->required()
                     ->afterStateUpdated(function (Get $get, Set $set): void {
                         $set('code', static::generateCourseSectionCode(
                             $get('subject_id'),

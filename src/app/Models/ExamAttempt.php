@@ -14,11 +14,17 @@ class ExamAttempt extends Model
         'completed_at',
         'status',
         'total_score',
+        'ip_address',
+        'user_agent',
+        'submitted_answers_count',
+        'tab_switch_count',
+        'focus_lost_at',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'focus_lost_at' => 'array',
     ];
 
     // ── Scopes ─────────────────────────────────────────────────

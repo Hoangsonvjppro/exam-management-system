@@ -15,7 +15,8 @@ class StoreCourseSectionRequest extends FormRequest
     {
         return [
             'name'         => ['required', 'string', 'max:255'],
-            'code'         => ['required', 'string', 'max:50', 'unique:course_sections,code'],
+            'subject_id'   => ['required', 'exists:subjects,id'],
+            'semester_id'  => ['required', 'exists:semesters,id'],
             'max_students' => ['nullable', 'integer', 'min:1', 'max:500'],
         ];
     }
@@ -23,9 +24,9 @@ class StoreCourseSectionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required'     => 'Tên lớp học phần là bắt buộc.',
-            'code.required'     => 'Mã lớp học phần là bắt buộc.',
-            'code.unique'       => 'Mã lớp học phần đã tồn tại.',
+            'name.required'        => 'Tên lớp học phần là bắt buộc.',
+            'subject_id.required'  => 'Vui lòng chọn môn học.',
+            'semester_id.required' => 'Vui lòng chọn học kỳ.',
             'max_students.min'  => 'Số sinh viên tối đa phải ít nhất 1.',
             'max_students.max'  => 'Số sinh viên tối đa không được vượt quá 500.',
         ];

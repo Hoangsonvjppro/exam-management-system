@@ -29,4 +29,12 @@ class StudentAnswer extends Model
     {
         return $this->belongsTo(QuestionOption::class, 'question_option_id');
     }
+
+    /**
+     * Các đáp án đã chọn (cho câu hỏi chọn nhiều).
+     */
+    public function selectedOptions()
+    {
+        return $this->hasMany(StudentAnswerOption::class);
+    }
 }

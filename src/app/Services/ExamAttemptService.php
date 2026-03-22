@@ -59,9 +59,11 @@ class ExamAttemptService
             foreach ($answers as $answer) {
                 $isCorrect = $answer->option?->is_correct ?? false;
 
-                $point = $exam->questions()
-                    ->where('questions.id', $answer->question_id)
-                    ->first()?->pivot->points ?? 1.00;
+                // Lấy điểm từ exam_questions (pivot) thay vì dùng questions()
+                $examQuestion = $exam->examQuestions()
+                    ->where('question_id', $answer->question_id)
+                    ->first();
+                $point = $examQuestion?->points ?? 1.00;
 
                 $awardedPoint = $isCorrect ? $point : 0;
                 $totalScore += $awardedPoint;
@@ -72,11 +74,12 @@ class ExamAttemptService
                 ]);
             }
 
-            // 3. Cập nhật trạng thái attempt
+            // 3. Cập nhật trạng thái attempt + submitted_answers_count
             $attempt->update([
-                'status'       => 'completed',
-                'completed_at' => now(),
-                'total_score'  => $totalScore,
+                'status'                  => 'completed',
+                'completed_at'            => now(),
+                'total_score'             => $totalScore,
+                'submitted_answers_count' => $answers->count(),
             ]);
         });
     }

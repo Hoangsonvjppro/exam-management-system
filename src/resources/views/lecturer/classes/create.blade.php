@@ -35,14 +35,41 @@
                 </div>
 
                 <div>
-                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5" for="code">
-                        Mã lớp (nội bộ) <span class="text-red-500">*</span>
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5" for="subject_id">
+                        Môn học <span class="text-red-500">*</span>
                     </label>
-                    <x-text-input id="code" name="code" type="text" value="{{ old('code') }}" required placeholder="VD: CS101-01-HK1-2526" class="uppercase {{ $errors->has('code') ? 'border-red-400 focus:border-red-500 focus:ring-red-100/50' : '' }}" />
-                    <p class="mt-1.5 text-[11px] font-medium text-text-muted">Mã duy nhất, dùng để phân biệt lớp trong hệ thống.</p>
-                    @error('code')
-                        <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                    <select id="subject_id" name="subject_id" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {{ $errors->has('subject_id') ? 'border-red-400 focus:border-red-500 focus:ring-red-100/50' : '' }}">
+                        <option value="">-- Chọn môn học --</option>
+                        @foreach($subjects as $subject)
+                            <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>
+                                {{ $subject->code }} - {{ $subject->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('subject_id')
+                        <p class="mt-1.5 text-[11px] font-medium text-red-600">{{ $message }}</p>
                     @enderror
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5" for="semester_id">
+                        Học kỳ <span class="text-red-500">*</span>
+                    </label>
+                    <select id="semester_id" name="semester_id" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {{ $errors->has('semester_id') ? 'border-red-400 focus:border-red-500 focus:ring-red-100/50' : '' }}">
+                        <option value="">-- Chọn học kỳ --</option>
+                        @foreach($semesters as $semester)
+                            <option value="{{ $semester->id }}" {{ old('semester_id') == $semester->id ? 'selected' : '' }}>
+                                {{ $semester->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('semester_id')
+                        <p class="mt-1.5 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+                
+                <div>
+                    <p class="mt-1.5 text-[12px] font-medium text-text-muted">Mã lớp (nội bộ) sẽ được tự sinh theo môn học, nhóm, học kỳ và năm học.</p>
                 </div>
 
                 <div>

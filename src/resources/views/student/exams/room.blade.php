@@ -759,7 +759,8 @@ $totalQuestions = count($questions);
                     },
                     body: JSON.stringify({
                         question_id: questionId,
-                        question_option_id: optionId
+                        question_option_id: optionId,
+                        tab_switch_count: tabSwitchCount
                     })
                 })
                 .then(res => res.json())
@@ -774,6 +775,15 @@ $totalQuestions = count($questions);
                     showToast('Lỗi kết nối!', 'error');
                 });
         }
+
+        // ── Anti-cheat: Tab switch tracking ──────────────────
+        let tabSwitchCount = 0;
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                tabSwitchCount++;
+                console.warn(`[Anti-cheat] Tab switch #${tabSwitchCount}`);
+            }
+        });
 
         function goToQuestion(index) {
             if (index < 0 || index >= totalQuestions) return;

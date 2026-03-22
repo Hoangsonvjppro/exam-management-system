@@ -44,8 +44,8 @@ return new class extends Migration {
             $table->string('code', 50)->unique();
             $table->string('name', 255)->nullable();
             $table->string('invite_code', 20)->nullable()->unique();
-            $table->foreignId('subject_id')->nullable()->constrained('subjects')->restrictOnDelete();
-            $table->foreignId('semester_id')->nullable()->constrained('semesters')->restrictOnDelete();
+            $table->foreignId('subject_id')->constrained('subjects')->restrictOnDelete();
+            $table->foreignId('semester_id')->constrained('semesters')->restrictOnDelete();
             $table->foreignId('lecturer_id')->constrained('users')->restrictOnDelete();
             $table->unsignedInteger('max_students')->default(100);
             $table->enum('status', ['active', 'archived', 'cancelled'])->default('active')->index();

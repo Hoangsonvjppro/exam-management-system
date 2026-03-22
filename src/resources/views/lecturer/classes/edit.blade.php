@@ -34,12 +34,10 @@
 
                 <div>
                     <label class="block text-[12px] font-medium text-navy-900 mb-1.5" for="code">
-                        Mã lớp (nội bộ) <span class="text-red-500">*</span>
+                        Mã lớp (nội bộ)
                     </label>
-                    <x-text-input id="code" name="code" type="text" value="{{ old('code', $section->code) }}" required class="uppercase {{ $errors->has('code') ? 'border-red-400 focus:border-red-500 focus:ring-red-100/50' : '' }}" />
-                    @error('code')
-                        <p class="mt-1.5 text-[11px] font-medium text-red-600">{{ $message }}</p>
-                    @enderror
+                    <x-text-input id="code" name="code" type="text" value="{{ $section->code }}" readonly class="bg-gray-50 cursor-not-allowed uppercase text-gray-500" />
+                    <p class="mt-1.5 text-[11px] font-medium text-text-muted">Mã duy nhất tự sinh, không thể thay đổi.</p>
                 </div>
 
                 <div>

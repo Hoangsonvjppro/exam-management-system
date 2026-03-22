@@ -55,6 +55,16 @@ class Exam extends Model
         return $this->hasMany(ExamAttempt::class);
     }
 
+    public function schedules()
+    {
+        return $this->hasMany(ExamSchedule::class);
+    }
+
+    public function matrices()
+    {
+        return $this->hasMany(ExamMatrix::class);
+    }
+
     // ── Scopes ─────────────────────────────────────────────────
 
     public function scopePublished($query)
@@ -66,6 +76,7 @@ class Exam extends Model
     {
         return $query->where('course_section_id', $courseSectionId);
     }
+
 
     // ── Accessors ─────────────────────────────────────────────
 

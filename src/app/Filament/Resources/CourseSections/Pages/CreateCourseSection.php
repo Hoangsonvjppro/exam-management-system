@@ -20,6 +20,9 @@ class CreateCourseSection extends CreateRecord
             ? strtoupper((string) $data['invite_code'])
             : strtoupper(Str::random(8));
 
+        // Auto-assign current lecturer
+        $data['lecturer_id'] = auth()->id();
+
         return $data;
     }
 }
