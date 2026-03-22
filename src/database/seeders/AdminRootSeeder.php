@@ -11,29 +11,20 @@ class AdminRootSeeder extends Seeder
 {
     public function run(): void
     {
-        $rootEmail = 'admin@root.com';
-        $rootPassword = 'password';
-
-        $root = Admin::updateOrCreate(
-            ['email' => $rootEmail],
+        $rootAdmin = Admin::updateOrCreate(
+            ['email' => 'admin@root.com'],
             [
-                'name' => 'Root Administrator',
-                'password' => Hash::make($rootPassword),
-                'must_change_password' => true,
-                'password_changed_at' => null,
+                'name' => 'System Root Admin',
+                'password' => Hash::make('password'),
+                'must_change_password' => false,
                 'is_super_admin' => true,
                 'is_active' => true,
             ]
         );
 
-        $rootRole = Role::firstOrCreate([
-            'name' => 'root_admin',
-            'guard_name' => 'admin',
-        ]);
+        $rootRole = Role::firstOrCreate(['name' => 'root_admin', 'guard_name' => 'admin']);
+        $rootAdmin->syncRoles([$rootRole]);
 
-        $root->syncRoles([$rootRole]);
-
-        $this->command->info('✅ Root admin seeded.');
-        $this->command->line("   Email: {$rootEmail}");
+        $this->command->info('✅ Tạo thành công Root Admin: admin@root.com / password');
     }
 }
