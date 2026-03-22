@@ -4,19 +4,20 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Exam\SaveAnswerRequest;
+use App\Http\Requests\Exam\SubmitExamRequest;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
-use App\Models\QuestionOption;
-use App\Models\StudentAnswer;
 use App\Services\ExamAttemptService;
-use Illuminate\Http\Request;
+use App\Services\StudentExamService;
 use Illuminate\Support\Facades\Auth;
+use DomainException;
 
 class ExamController extends Controller
 {
-    public function __construct(private readonly ExamAttemptService $examAttemptService)
-    {
-    }
+    public function __construct(
+        private readonly ExamAttemptService $examAttemptService,
+        private readonly StudentExamService $studentExamService,
+    ) {}
 
     // Danh sách bài thi của sinh viên
     public function index()
@@ -68,40 +69,15 @@ class ExamController extends Controller
     {
         $this->authorize('attemptExam', $exam);
 
-        $now = now();
-        if ($exam->start_time && $now->lt($exam->start_time)) {
-            return back()->with('error', 'Bài thi chưa bắt đầu.');
-        }
-        if ($exam->end_time && $now->gt($exam->end_time)) {
-            return back()->with('error', 'Bài thi đã kết thúc.');
-        }
-
-        $userId = Auth::id();
-
-        // 1. Phục hồi session đang thi nếu có
-        $attempt = ExamAttempt::forExam($exam->id)->forUser($userId)->inProgress()->first();
-
-        // 2. Nếu không có session đang thi, tạo mới
-        if (!$attempt) {
-            $hasCompleted = ExamAttempt::forExam($exam->id)->forUser($userId)->completed()->exists();
-
-            // Chặn thi lại nếu là bài thi chính thức
-            if ($hasCompleted && $exam->isOfficial()) {
-                return back()->with('error', 'Bạn đã hoàn thành bài thi chính thức này. Không thể thi lại.');
-            }
-
-            $latestAttempt = ExamAttempt::forExam($exam->id)->forUser($userId)->latestAttempt()->first();
-            $nextNumber = $latestAttempt ? $latestAttempt->attempt_number + 1 : 1;
-
-            $attempt = ExamAttempt::create([
-                'exam_id' => $exam->id,
-                'user_id' => $userId,
-                'attempt_number' => $nextNumber,
-                'started_at' => now(),
-                'status' => 'in_progress',
-                'ip_address' => request()->ip(),
-                'user_agent' => substr(request()->userAgent() ?? '', 0, 500),
-            ]);
+        try {
+            $this->studentExamService->startAttempt(
+                $exam,
+                (int) Auth::id(),
+                request()->ip(),
+                request()->userAgent(),
+            );
+        } catch (DomainException $e) {
+            return back()->with('error', $e->getMessage());
         }
 
         return redirect()->route('student.exams.room', $exam->id);
@@ -150,60 +126,22 @@ class ExamController extends Controller
     {
         $this->authorize('attemptExam', $exam);
 
-        $validated = $request->validated();
-
-        $attempt = ExamAttempt::forExam($exam->id)->forUser(Auth::id())->inProgress()->first();
-
-        if (!$attempt || $attempt->status !== 'in_progress') {
-            return response()->json(['error' => 'Không thể lưu đáp án.'], 403);
-        }
-
-        // Chặn lưu đáp án sau deadline
-        $deadline = $exam->getDeadlineFor($attempt);
-        if (now()->gt($deadline)) {
-            return response()->json(['error' => 'Đã hết thời gian làm bài.'], 403);
-        }
-
-        // Kiểm tra câu hỏi có thuộc đề thi này không
-        $questionBelongstoExam = $exam->questions()
-            ->where('questions.id', $validated['question_id'])
-            ->exists();
-
-        if (!$questionBelongstoExam) {
-            return response()->json(['error' => 'Câu hỏi không thuộc đề thi này.'], 422);
-        }
-
-        // Kiểm tra option có thuộc question không (Critical #3)
-        $optionBelongsToQuestion = QuestionOption::where('id', $validated['question_option_id'])
-            ->where('question_id', $validated['question_id'])
-            ->exists();
-
-        if (!$optionBelongsToQuestion) {
-            return response()->json(['error' => 'Đáp án không thuộc câu hỏi này.'], 422);
-        }
-
-        StudentAnswer::updateOrCreate(
-            [
-                'exam_attempt_id' => $attempt->id,
-                'question_id' => $validated['question_id'],
-            ],
-            [
-                'question_option_id' => $validated['question_option_id'],
-            ]
+        $result = $this->studentExamService->saveAnswer(
+            $exam,
+            (int) Auth::id(),
+            $request->validated(),
+            $request->has('tab_switch_count') ? (int) $request->input('tab_switch_count') : null,
         );
 
-        // Cập nhật tab_switch_count nếu frontend gửi kèm
-        if ($request->has('tab_switch_count')) {
-            $attempt->update([
-                'tab_switch_count' => (int) $request->input('tab_switch_count'),
-            ]);
+        if ($result['http_code'] !== 200) {
+            return response()->json(['error' => $result['message']], $result['http_code']);
         }
 
         return response()->json(['success' => true]);
     }
 
     // Nộp bài thi, tính điểm và lưu kết quả
-    public function submit(Request $request, Exam $exam)
+    public function submit(SubmitExamRequest $request, Exam $exam)
     {
         $this->authorize('attemptExam', $exam);
 
@@ -219,7 +157,7 @@ class ExamController extends Controller
         }
 
         // Upsert answers cuối cùng từ form trước khi chấm (Medium #19)
-        $lastAnswers = $request->input('answers', []);
+        $lastAnswers = $request->validated('answers', []);
         $this->examAttemptService->finalizeAttempt($attempt, $lastAnswers);
 
         return redirect()->route('student.exams.result', $exam->id)

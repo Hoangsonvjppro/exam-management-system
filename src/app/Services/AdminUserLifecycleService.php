@@ -4,13 +4,12 @@ namespace App\Services;
 
 use App\Models\User;
 use DomainException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class AdminUserLifecycleService
 {
-    public function __construct(private readonly AuditLogService $auditLogService)
-    {
-    }
+    public function __construct(private readonly AuditLogService $auditLogService) {}
 
     public function toggleActive(User $user): bool
     {
@@ -20,7 +19,7 @@ class AdminUserLifecycleService
             'is_active' => $newState,
         ]);
 
-        $this->auditLogService->logAdminAction('users.toggle_active', $user, [
+        $this->auditLogService->logAdminAction(Auth::guard('admin')->id(), 'users.toggle_active', $user, [
             'is_active' => $newState,
         ]);
 
@@ -41,7 +40,7 @@ class AdminUserLifecycleService
             'password_changed_at' => null,
         ]);
 
-        $this->auditLogService->logAdminAction('users.reset_password', $user, [
+        $this->auditLogService->logAdminAction(Auth::guard('admin')->id(), 'users.reset_password', $user, [
             'must_change_password' => true,
         ]);
 

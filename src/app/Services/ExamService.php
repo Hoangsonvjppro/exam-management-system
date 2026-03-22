@@ -80,8 +80,10 @@ class ExamService
             // Nếu đã có SV thi, chỉ cho sửa metadata (tên, mô tả, cấu hình hiển thị)
             if (! $exam->canEditStructure()) {
                 $data = collect($data)->only([
-                    'title', 'description',
-                    'show_score_after_submit', 'show_answers_after_submit',
+                    'title',
+                    'description',
+                    'show_score_after_submit',
+                    'show_answers_after_submit',
                 ])->toArray();
             } else {
                 // Update questions only if structure is editable
@@ -128,7 +130,7 @@ class ExamService
      */
     public function publishExam(Exam $exam): void
     {
-        if (! $exam->canTransitionTo('published')) {
+        if (! $exam->canTransitionTo(Exam::STATUS_PUBLISHED)) {
             throw new \DomainException('Không thể mở đề thi từ trạng thái "' . $exam->status . '".');
         }
 
@@ -136,7 +138,7 @@ class ExamService
             throw new \DomainException('Đề kiểm tra phải có ít nhất một câu hỏi.');
         }
 
-        $exam->update(['status' => 'published']);
+        $exam->update(['status' => Exam::STATUS_PUBLISHED]);
     }
 
     /**
@@ -146,11 +148,11 @@ class ExamService
      */
     public function closeExam(Exam $exam): void
     {
-        if (! $exam->canTransitionTo('closed')) {
+        if (! $exam->canTransitionTo(Exam::STATUS_CLOSED)) {
             throw new \DomainException('Không thể đóng đề thi từ trạng thái "' . $exam->status . '".');
         }
 
-        $exam->update(['status' => 'closed']);
+        $exam->update(['status' => Exam::STATUS_CLOSED]);
     }
 
     /**
@@ -160,12 +162,12 @@ class ExamService
      */
     public function reopenExam(Exam $exam, string $reason): void
     {
-        if ($exam->status !== 'closed') {
+        if ($exam->status !== Exam::STATUS_CLOSED) {
             throw new \DomainException('Chỉ có thể mở lại đề thi đã đóng.');
         }
 
         $exam->update([
-            'status'        => 'published',
+            'status'        => Exam::STATUS_PUBLISHED,
             'reopen_reason' => $reason,
         ]);
     }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -71,17 +72,17 @@ class CourseSection extends Model
 
     // ── Scopes ─────────────────────────────────────────────────
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
     }
 
-    public function scopeOwnedBy($query, int $lecturerId)
+    public function scopeOwnedBy(Builder $query, int $lecturerId): Builder
     {
         return $query->where('lecturer_id', $lecturerId);
     }
 
-    public function scopeWithInviteCode($query, string $code)
+    public function scopeWithInviteCode(Builder $query, string $code): Builder
     {
         return $query->where('invite_code', $code);
     }
@@ -94,14 +95,14 @@ class CourseSection extends Model
         return $this->students()->wherePivot('status', 'enrolled')->count();
     }
 
-    public function exams()
+    public function exams(): HasMany
     {
         return $this->hasMany(Exam::class);
     }
 
     // ── Code Generation ────────────────────────────────────────
 
-    public static function generateCode($subjectId, $semesterId): ?string
+    public static function generateCode(int|string|null $subjectId, int|string|null $semesterId): ?string
     {
         if (blank($subjectId) || blank($semesterId)) {
             return null;

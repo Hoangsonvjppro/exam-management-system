@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StudentAnswer extends Model
 {
@@ -15,17 +17,22 @@ class StudentAnswer extends Model
         'points_awarded',
     ];
 
-    public function attempt()
+    protected $casts = [
+        'is_correct' => 'boolean',
+        'points_awarded' => 'decimal:2',
+    ];
+
+    public function attempt(): BelongsTo
     {
         return $this->belongsTo(ExamAttempt::class, 'exam_attempt_id');
     }
 
-    public function question()
+    public function question(): BelongsTo
     {
         return $this->belongsTo(Question::class);
     }
 
-    public function option()
+    public function option(): BelongsTo
     {
         return $this->belongsTo(QuestionOption::class, 'question_option_id');
     }
@@ -33,7 +40,7 @@ class StudentAnswer extends Model
     /**
      * Các đáp án đã chọn (cho câu hỏi chọn nhiều).
      */
-    public function selectedOptions()
+    public function selectedOptions(): HasMany
     {
         return $this->hasMany(StudentAnswerOption::class);
     }

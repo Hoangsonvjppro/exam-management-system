@@ -8,6 +8,8 @@ use App\Models\User;
 
 class ExamPolicy
 {
+    private const ENROLLMENT_STATUS_ENROLLED = 'enrolled';
+
     /**
      * Sinh viên có được xem đề thi không?
      * Điều kiện: sinh viên phải enrolled trong lớp học phần chứa đề thi.
@@ -17,7 +19,7 @@ class ExamPolicy
         return $exam->courseSection
             ->students()
             ->where('student_id', $user->id)
-            ->wherePivot('status', 'enrolled')
+            ->wherePivot('status', self::ENROLLMENT_STATUS_ENROLLED)
             ->exists();
     }
 
@@ -31,7 +33,7 @@ class ExamPolicy
             return false;
         }
 
-        return $exam->status === 'published';
+        return $exam->status === Exam::STATUS_PUBLISHED;
     }
 
     /**

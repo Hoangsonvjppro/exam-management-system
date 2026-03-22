@@ -24,8 +24,7 @@ class FileController extends Controller
 {
     public function __construct(
         private readonly FileUploadService $uploadService
-    ) {
-    }
+    ) {}
 
     /**
      * Upload file mới.
@@ -59,13 +58,11 @@ class FileController extends Controller
                     'url' => $this->uploadService->getUrl($file),
                 ],
             ], 201);
-
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 422);
-
         } catch (\RuntimeException $e) {
             return response()->json([
                 'success' => false,
@@ -90,6 +87,7 @@ class FileController extends Controller
             ], 404);
         }
 
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $storage */
         $storage = Storage::disk($file->disk);
 
         // Download bắt buộc
@@ -113,14 +111,7 @@ class FileController extends Controller
      */
     public function destroy(File $file): JsonResponse
     {
-        // Kiểm tra quyền: chỉ người upload hoặc admin mới được xoá
-        $user = auth()->user();
-        if ($file->uploaded_by !== $user->id && !$user->isAdmin()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bạn không có quyền xoá file này.',
-            ], 403);
-        }
+        $this->authorize('delete', $file);
 
         $this->uploadService->delete($file);
 

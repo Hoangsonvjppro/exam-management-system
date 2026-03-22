@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -72,7 +73,7 @@ class User extends Authenticatable
     /**
      * Scope a query to only include active users.
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
@@ -80,7 +81,7 @@ class User extends Authenticatable
     /**
      * Scope a query to only include students.
      */
-    public function scopeStudents($query)
+    public function scopeStudents(Builder $query): Builder
     {
         return $query->role('student');
     }
@@ -88,7 +89,7 @@ class User extends Authenticatable
     /**
      * Scope a query to only include lecturers.
      */
-    public function scopeLecturers($query)
+    public function scopeLecturers(Builder $query): Builder
     {
         return $query->role('lecturer');
     }

@@ -17,16 +17,16 @@
  */
 
 use App\Http\Controllers\Auth\GoogleLoginController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Lecturer\CourseSectionController as LecturerSectionController;
+use App\Http\Controllers\Lecturer\LecturerPageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\StudentEnrollmentController;
+use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\StudentOnboardingController;
 use App\Http\Controllers\Lecturer\ExamController;
 use App\Http\Controllers\Lecturer\ExamScheduleController;
-use App\Models\Exam;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // ============================================================
@@ -86,20 +86,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         ->name('student.leave-class');
 
     // Dashboard của sinh viên – truyền data từ controller (High #9, #10)
-    Route::get('/dashboard/student', function () {
-        /** @var User $user */
-        $user = Auth::user();
-        $enrolledSections = $user->enrolledSections()->with('lecturer')->get();
-        $sectionIds = $enrolledSections->pluck('id');
-
-        $exams = Exam::whereIn('course_section_id', $sectionIds)
-            ->where('status', 'published')
-            ->with('courseSection')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return view('student.dashboard', compact('enrolledSections', 'exams'));
-    })
+    Route::get('/dashboard/student', StudentDashboardController::class)
         ->middleware('student_role')
         ->name('student.dashboard');
 
@@ -122,13 +109,9 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         // Routes cho Sinh viên (đã bỏ prefix và name trùng lặp)
         Route::get('/exams', [\App\Http\Controllers\Student\ExamController::class, 'index'])->name('exams.index');
 
-        Route::get('/results', function () {
-            return view('student.results.index-placeholder');
-        })->name('results.index');
+        Route::view('/results', 'student.results.index-placeholder')->name('results.index');
 
-        Route::get('/attendance', function () {
-            return view('student.attendance.index-placeholder');
-        })->name('attendance.index');
+        Route::view('/attendance', 'student.attendance.index-placeholder')->name('attendance.index');
     });
 
 
@@ -147,7 +130,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         ->group(function () {
 
             // Dashboard giảng viên (route mới, dùng closure)
-            Route::get('/dashboard', fn() => view('lecturer.dashboard'))
+            Route::get('/dashboard', [LecturerPageController::class, 'dashboard'])
                 ->name('dashboard_redirect');
 
             // ── Quản lý lớp học (Course Sections) ──────────────────
@@ -185,11 +168,9 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::patch('/exams/{exam}/close', [ExamController::class, 'close'])->name('exams.close');
             Route::patch('/exams/{exam}/reopen', [ExamController::class, 'reopen'])->name('exams.reopen');
 
- 
+
             // Routes for Lecturer (đã bỏ prefix và name trùng lặp)
-            Route::get('/questions', function () {
-                return view('lecturer.questions.index');
-            })->name('questions.index');
+            Route::get('/questions', [LecturerPageController::class, 'questions'])->name('questions.index');
 
             Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
 
@@ -202,9 +183,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::delete('/schedules/{schedule}', [ExamScheduleController::class, 'destroy'])->name('schedules.destroy');
             Route::post('/schedules/{schedule}/assign-students', [ExamScheduleController::class, 'assignStudents'])->name('schedules.assign-students');
 
-            Route::get('/attendance', function () {
-                return view('lecturer.attendance.index-placeholder');
-            })->name('attendance.index'); 
+            Route::get('/attendance', [LecturerPageController::class, 'attendance'])->name('attendance.index');
         });
 
     // Dashboard cũ của giảng viên – giữ lại để tương thích với
@@ -219,21 +198,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
     //     /dashboard → tự động chuyển đến đúng dashboard
     // ----------------------------------------------------------
 
-    Route::get('/dashboard', function () {
-        /** @var User|null $user */
-        $user = Auth::user();
-
-        if ($user?->hasRole('lecturer')) {
-            return redirect()->route('lecturer.dashboard');
-        }
-
-        if ($user?->hasRole('student')) {
-            return redirect()->route('student.dashboard');
-        }
-
-        // Fallback: chưa có vai trò → về trang chủ
-        return redirect()->route('landing');
-    })->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 }); // end: protected routes
 
 

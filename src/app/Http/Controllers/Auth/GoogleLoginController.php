@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Services\GoogleAuthService;
 use App\Services\UserStateService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -11,13 +11,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
-use Illuminate\Support\Carbon;
 
 class GoogleLoginController extends Controller
 {
-    public function __construct(private readonly UserStateService $userStateService)
-    {
-    }
+    public function __construct(
+        private readonly UserStateService $userStateService,
+        private readonly GoogleAuthService $googleAuthService,
+    ) {}
 
     public function redirect(): RedirectResponse
     {
@@ -62,29 +62,7 @@ class GoogleLoginController extends Controller
             ]);
         }
 
-        $googleId = $googleUser->getId();
-
-        $user = User::query()
-            ->where('google_id', $googleId)
-            ->orWhere('email', $email)
-            ->first();
-
-        if (! $user) {
-            $user = new User();
-            $user->name = $googleUser->getName() ?: 'Google User';
-            $user->email = $email;
-            $user->google_id = $googleId;
-            $user->google_avatar = $googleUser->getAvatar();
-            $user->password = null;
-            $user->email_verified_at = Carbon::now();
-            $user->is_active = true;
-            $user->save();
-        } else {
-            $user->google_id = $user->google_id ?: $googleId;
-            $user->name = $googleUser->getName() ?: $user->name;
-            $user->google_avatar = $googleUser->getAvatar();
-            $user->save();
-        }
+        $user = $this->googleAuthService->findOrCreateFromGoogleUser($googleUser);
 
         // Lecturers must not log in via Google.
         if ($user->hasRole('lecturer')) {

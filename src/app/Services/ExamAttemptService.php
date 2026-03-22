@@ -19,7 +19,7 @@ class ExamAttemptService
     public function finalizeAttempt(ExamAttempt $attempt, ?array $lastAnswers = null): void
     {
         // Idempotent: đã hoàn thành thì không chấm lại
-        if ($attempt->status === 'completed') {
+        if ($attempt->status === ExamAttempt::STATUS_COMPLETED) {
             return;
         }
 
@@ -76,7 +76,7 @@ class ExamAttemptService
 
             // 3. Cập nhật trạng thái attempt + submitted_answers_count
             $attempt->update([
-                'status'                  => 'completed',
+                'status'                  => ExamAttempt::STATUS_COMPLETED,
                 'completed_at'            => now(),
                 'total_score'             => $totalScore,
                 'submitted_answers_count' => $answers->count(),
