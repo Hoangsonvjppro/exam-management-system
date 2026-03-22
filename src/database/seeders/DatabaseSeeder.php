@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleAndPermissionSeeder::class, // 1. Vai trò + Permissions (Spatie)
             AdminRootSeeder::class,         // 2. Root admin (bảng admins, guard admin)
-            AdminUserSeeder::class,         // 2. Người dùng (admin, GV, SV)
+            UserSeeder::class,         // 2. Người dùng (admin, GV, SV)
             SemesterSeeder::class,          // 3. Học kỳ
             SubjectSeeder::class,           // 4. Môn học + Chương
             QuestionTypeSeeder::class,      // 5. Loại câu hỏi
