@@ -28,7 +28,11 @@ use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\StudentOnboardingController;
 use App\Http\Controllers\Lecturer\ExamController;
 use App\Http\Controllers\Lecturer\ExamScheduleController;
+use App\Http\Controllers\DifficultyController;
+use App\Http\Controllers\QuestionTypeController;
+use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\QuestionController;
 
 // ============================================================
 // 1. PUBLIC ROUTES
@@ -152,9 +156,22 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
 
             // ── Quản lý Đề thi (Exams) ─────────────────────────────
 
+            // Ngân hàng câu hỏi
+            Route::get('/questions', [QuestionController::class, 'index'])
+                ->name('questions.index');
+            Route::prefix('/questions/meta')->name('questions.meta.')->group(function () {
+                Route::get('/difficulties', [DifficultyController::class, 'index'])->name('difficulties.index');
+                Route::get('/types', [QuestionTypeController::class, 'index'])->name('types.index');
+                Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
+            });
+
             // Hiển thị form tạo đề thi mới
             Route::get('/exams/create', [ExamController::class, 'create'])
                 ->name('exams.create');
+
+            // Hiển thị form tạo đề thi mới cho một lớp học
+            Route::get('/course-sections/{courseSection}/exams/create', [ExamController::class, 'create'])
+                ->name('course-sections.exams.create');
 
             // Lưu thông tin chung của đề thi vừa tạo
             Route::post('/exams', [ExamController::class, 'store'])
@@ -168,10 +185,6 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::patch('/exams/{exam}/publish', [ExamController::class, 'publish'])->name('exams.publish');
             Route::patch('/exams/{exam}/close', [ExamController::class, 'close'])->name('exams.close');
             Route::patch('/exams/{exam}/reopen', [ExamController::class, 'reopen'])->name('exams.reopen');
-
-
-            // Routes for Lecturer (đã bỏ prefix và name trùng lặp)
-            Route::get('/questions', [LecturerPageController::class, 'questions'])->name('questions.index');
 
             Route::get('/exams', [ExamController::class, 'index'])->name('exams.index');
 

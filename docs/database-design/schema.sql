@@ -280,125 +280,103 @@ CREATE TABLE `course_section_students` (
   COMMENT='Bảng trung gian N-N giữa sinh viên và lớp học phần. Có status để quản lý rút môn/hoàn thành.';
 
 -- ============================================================
--- 7. QUESTION_TYPES - Loại câu hỏi (thay thế ENUM cứng)
---    [FIX #3] Bảng tham chiếu cho phép mở rộng loại câu hỏi
---    mà không cần ALTER TABLE.
+-- 1. DIFFICULTIES - Mức độ tư duy (Bloom Taxonomy)
+-- ============================================================
+CREATE TABLE `difficulties` (
+    `id`            BIGINT UNSIGNED     NOT NULL AUTO_INCREMENT,
+    `code`          VARCHAR(50)         NOT NULL UNIQUE, -- remember, understand, apply...
+    `name`          VARCHAR(100)        NOT NULL,        -- Nhận biết, Thông hiểu...
+    `score_weight`  DECIMAL(3,2)        NOT NULL DEFAULT 1.0, -- Hệ số điểm
+    `display_order` TINYINT UNSIGNED    NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- 2. QUESTION_TYPES - Loại câu hỏi
 -- ============================================================
 CREATE TABLE `question_types` (
     `id`            BIGINT UNSIGNED     NOT NULL AUTO_INCREMENT,
-    `code`          VARCHAR(50)         NOT NULL COMMENT 'Mã loại: multiple_choice, true_false, fill_blank, matching, essay...',
-    `name`          VARCHAR(100)        NOT NULL COMMENT 'Tên hiển thị: Trắc nghiệm nhiều lựa chọn',
-    `description`   TEXT                NULL COMMENT 'Mô tả chi tiết cách hoạt động',
-    `answer_schema` JSON                NULL COMMENT 'JSON Schema mô tả cấu trúc đáp án kỳ vọng cho loại câu hỏi này',
-    `is_auto_grade` TINYINT(1)          NOT NULL DEFAULT 1 COMMENT '1=Chấm tự động, 0=Cần chấm tay (VD: tự luận)',
-    `is_active`     TINYINT(1)          NOT NULL DEFAULT 1 COMMENT 'Có đang được sử dụng không',
-    `display_order` INT UNSIGNED        NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị trong UI',
+    `code`          VARCHAR(50)         NOT NULL UNIQUE,
+    `name`          VARCHAR(100)        NOT NULL,
+    `answer_schema` JSON                NULL COMMENT 'Mô tả cấu trúc đáp án (Ví dụ: số lượng option tối thiểu)',
+    `is_auto_grade` TINYINT(1)          NOT NULL DEFAULT 1,
     `created_at`    TIMESTAMP           NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at`    TIMESTAMP           NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_qt_code` (`code`),
-    INDEX `idx_qt_active` (`is_active`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='Bảng tham chiếu loại câu hỏi - thay thế ENUM cứng, dễ mở rộng';
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 8. QUESTIONS - Ngân hàng câu hỏi
---    [FIX #3] type ENUM → question_type_id FK + answer_data JSON
+-- 3. QUESTIONS - Ngân hàng câu hỏi
 -- ============================================================
 CREATE TABLE `questions` (
     `id`                BIGINT UNSIGNED     NOT NULL AUTO_INCREMENT,
-    `subject_id`        BIGINT UNSIGNED     NOT NULL COMMENT 'Thuộc môn học nào',
-    `chapter_id`        BIGINT UNSIGNED     NULL COMMENT 'Thuộc chương nào (tuỳ chọn)',
-    `question_type_id`  BIGINT UNSIGNED     NOT NULL COMMENT 'Loại câu hỏi (FK → question_types)',
-    `created_by`        BIGINT UNSIGNED     NOT NULL COMMENT 'Giảng viên tạo câu hỏi',
-    `content`           TEXT                NOT NULL COMMENT 'Nội dung câu hỏi (hỗ trợ HTML/Markdown)',
-    `difficulty`        ENUM('remember','understand','apply','analyze')
-                                            NOT NULL DEFAULT 'remember'
-                                            COMMENT 'Mức độ theo Bloom: Nhận biết, Thông hiểu, Vận dụng, Phân tích',
-    `image_file_id`     BIGINT UNSIGNED     NULL COMMENT '[FIX #9] FK → files. Hình ảnh minh hoạ',
-    `explanation`       TEXT                NULL COMMENT 'Giải thích đáp án đúng',
-    `answer_data`       JSON                NULL COMMENT '[FIX #3] Dữ liệu đáp án linh hoạt cho các loại câu hỏi phi truyền thống (fill_blank, matching, essay rubric...)',
+    `subject_id`        BIGINT UNSIGNED     NOT NULL,
+    `chapter_id`        BIGINT UNSIGNED     NULL,
+    `question_type_id`  BIGINT UNSIGNED     NOT NULL,
+    `difficulty_id`     BIGINT UNSIGNED     NOT NULL, -- [FIX] Dùng FK thay vì ENUM
+    `created_by`        BIGINT UNSIGNED     NOT NULL,
+    `content`           TEXT                NOT NULL,
+    `image_file_id`     BIGINT UNSIGNED     NULL,
+    `explanation`       TEXT                NULL,
+    `correct_option_id` BIGINT UNSIGNED     NULL COMMENT '[FIX] ID của đáp án đúng duy nhất - Chấm bài cực nhanh',
+    `answer_data`       JSON                NULL COMMENT 'Dùng cho loại câu phức tạp (matching, fill_blank)',
     `status`            ENUM('draft','approved','hidden') NOT NULL DEFAULT 'draft',
-    `version`           INT UNSIGNED        NOT NULL DEFAULT 1 COMMENT '[FIX #1] Số phiên bản, tăng mỗi khi nội dung bị sửa',
-    `usage_count`       INT UNSIGNED        NOT NULL DEFAULT 0 COMMENT 'Số lần được đưa vào đề thi',
-    `correct_rate`      DECIMAL(5,2)        NULL COMMENT 'Tỷ lệ % trả lời đúng',
+    `version`           INT UNSIGNED        NOT NULL DEFAULT 1,
+    
+    -- Các cột phục vụ tính tỉ lệ đúng
+    `total_attempts`    INT UNSIGNED        NOT NULL DEFAULT 0,
+    `total_correct`     INT UNSIGNED        NOT NULL DEFAULT 0,
+    `correct_rate`      DECIMAL(5,2)        AS ((total_correct / NULLIF(total_attempts, 0)) * 100) VIRTUAL, 
+
     `created_at`        TIMESTAMP           NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`        TIMESTAMP           NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_at`        TIMESTAMP           NULL,
 
     PRIMARY KEY (`id`),
-    INDEX `idx_questions_subject` (`subject_id`),
-    INDEX `idx_questions_chapter` (`chapter_id`),
-    INDEX `idx_questions_type` (`question_type_id`),
-    INDEX `idx_questions_created_by` (`created_by`),
-    INDEX `idx_questions_difficulty` (`difficulty`),
-    INDEX `idx_questions_status` (`status`),
-    -- Index composite phục vụ tạo đề tự động theo ma trận
-    INDEX `idx_questions_matrix` (`subject_id`, `chapter_id`, `difficulty`, `status`),
-
-    CONSTRAINT `fk_questions_subject`
-        FOREIGN KEY (`subject_id`) REFERENCES `subjects`(`id`)
-        ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT `fk_questions_chapter`
-        FOREIGN KEY (`chapter_id`) REFERENCES `chapters`(`id`)
-        ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT `fk_questions_type`
-        FOREIGN KEY (`question_type_id`) REFERENCES `question_types`(`id`)
-        ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT `fk_questions_created_by`
-        FOREIGN KEY (`created_by`) REFERENCES `users`(`id`)
-        ON DELETE RESTRICT ON UPDATE CASCADE
-    -- FK fk_questions_image → files thêm ở cuối file (sau khi bảng files được tạo)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='Ngân hàng câu hỏi (bản sống - nội dung có thể cập nhật, version sẽ tăng)';
+    INDEX `idx_q_subject_chapter` (`subject_id`, `chapter_id`),
+    INDEX `idx_q_type_diff` (`question_type_id`, `difficulty_id`),
+    INDEX `idx_q_status` (`status`),
+    
+    CONSTRAINT `fk_q_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`),
+    CONSTRAINT `fk_q_difficulty` FOREIGN KEY (`difficulty_id`) REFERENCES `difficulties` (`id`),
+    CONSTRAINT `fk_q_type` FOREIGN KEY (`question_type_id`) REFERENCES `question_types` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
--- 9. QUESTION_OPTIONS - Các lựa chọn đáp án
---    Vẫn giữ cho MCQ/TF. Các loại câu hỏi khác dùng
---    questions.answer_data JSON.
+-- 4. QUESTION_OPTIONS - Các lựa chọn đáp án
 -- ============================================================
 CREATE TABLE `question_options` (
     `id`            BIGINT UNSIGNED     NOT NULL AUTO_INCREMENT,
     `question_id`   BIGINT UNSIGNED     NOT NULL,
-    `label`         CHAR(1)             NOT NULL COMMENT 'Nhãn: A, B, C, D',
-    `content`       TEXT                NOT NULL COMMENT 'Nội dung đáp án',
-    `image_file_id` BIGINT UNSIGNED     NULL COMMENT '[FIX #9] FK → files. Hình ảnh đáp án (nếu có)',
-    `is_correct`    TINYINT(1)          NOT NULL DEFAULT 0 COMMENT '1=Đáp án đúng',
-    `order`         TINYINT UNSIGNED    NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị gốc',
-    `created_at`    TIMESTAMP           NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at`    TIMESTAMP           NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `label`         CHAR(1)             NULL COMMENT 'A, B, C, D',
+    `content`       TEXT                NOT NULL,
+    `image_file_id` BIGINT UNSIGNED     NULL,
+    `is_correct`    TINYINT(1)          NOT NULL DEFAULT 0 COMMENT 'Vẫn giữ để dự phòng/hiển thị UI Admin',
+    `display_order` TINYINT UNSIGNED    NOT NULL DEFAULT 0,
 
     PRIMARY KEY (`id`),
-    INDEX `idx_qo_question` (`question_id`),
-    INDEX `idx_qo_correct` (`question_id`, `is_correct`),
+    CONSTRAINT `fk_qo_question` FOREIGN KEY (`question_id`) REFERENCES `questions` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-    CONSTRAINT `fk_qo_question`
-        FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`)
-        ON DELETE CASCADE ON UPDATE CASCADE
-    -- FK fk_qo_image → files thêm ở cuối file
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='Các lựa chọn (A/B/C/D) cho câu hỏi trắc nghiệm. Loại câu hỏi khác dùng questions.answer_data';
+-- [QUAN TRỌNG] Thêm FK cho đáp án đúng sau khi đã có bảng options
+ALTER TABLE `questions` 
+ADD CONSTRAINT `fk_q_correct_option` 
+FOREIGN KEY (`correct_option_id`) REFERENCES `question_options` (`id`) ON DELETE SET NULL;
 
 -- ============================================================
--- 10. QUESTION_TAGS - Nhãn/Tag cho câu hỏi
+-- 5. TAGS & MAPPING - Quản lý nhãn (Chuẩn hóa)
 -- ============================================================
-CREATE TABLE `question_tags` (
-    `id`            BIGINT UNSIGNED     NOT NULL AUTO_INCREMENT,
-    `question_id`   BIGINT UNSIGNED     NOT NULL,
-    `tag`           VARCHAR(100)        NOT NULL,
-    `created_at`    TIMESTAMP           NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE `tags` (
+    `id`   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(100)    NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_qtags_question_tag` (`question_id`, `tag`),
-    INDEX `idx_qtags_tag` (`tag`),
-
-    CONSTRAINT `fk_qtags_question`
-        FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='Gắn nhãn/tag cho câu hỏi để tìm kiếm và phân loại linh hoạt';
-
+CREATE TABLE `question_tag_map` (
+    `question_id` BIGINT UNSIGNED NOT NULL,
+    `tag_id`      BIGINT UNSIGNED NOT NULL,
+    PRIMARY KEY (`question_id`, `tag_id`),
+    CONSTRAINT `fk_map_q` FOREIGN KEY (`question_id`) REFERENCES `questions`(`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_map_t` FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 -- ============================================================
 -- 11. EXAM_PAPERS - Đề thi gốc (tách khỏi lớp học phần)
 --     [FIX #2] Đề thi là thực thể độc lập, gắn với MÔN HỌC
