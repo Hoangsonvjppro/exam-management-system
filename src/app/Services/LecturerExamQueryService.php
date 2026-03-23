@@ -2,18 +2,15 @@
 
 namespace App\Services;
 
-use App\Models\Chapter;
-use App\Models\CourseSection;
 use App\Models\Exam;
-use App\Models\Question;
 
 class LecturerExamQueryService
 {
     public function getExamIndexForLecturer(int $lecturerId): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        return Exam::createdBy($lecturerId)
+        // Đề thi bây giờ thuộc sở hữu trực tiếp của người tạo, và lấy môn học ra để hiển thị
+        return Exam::where('created_by', $lecturerId)
             ->with('subject')
-            ->withCount('questions')
             ->latest()
             ->paginate(20);
     }
@@ -27,7 +24,9 @@ class LecturerExamQueryService
     {
         $exam->loadCount([
             'attempts',
-            'attempts as completed_attempts_count' => fn($query) => $query->completed(),
+            'attempts as completed_attempts_count' => function ($query) {
+                $query->where('exam_attempts.status', 'completed');
+            }
         ]);
 
         return [

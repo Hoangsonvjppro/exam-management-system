@@ -10,7 +10,7 @@
                     {{ $exam->title }}
                 </h2>
                 <p class="text-[13px] text-text-muted mb-4">
-                    {{ $exam->courseSection->name ?? $exam->courseSection->code }}
+                    {{ $exam->subject->name ?? '—' }}
                 </p>
 
                 @if(session('success'))
@@ -28,13 +28,13 @@
                 <div class="text-center">
                     <p class="text-[12px] font-medium text-text-muted mb-1">Điểm số</p>
                     @if($exam->show_score_after_submit)
-                        <p class="text-[36px] font-bold leading-none {{ $passed ? 'text-teal-600' : 'text-red-500' }}">
-                            {{ number_format($attempt->total_score, 2) }}
-                        </p>
-                        <p class="text-[12px] text-text-muted mt-1">/ {{ number_format($exam->total_points, 2) }} điểm</p>
+                    <p class="text-[36px] font-bold leading-none {{ $passed ? 'text-teal-600' : 'text-red-500' }}">
+                        {{ number_format($attempt->total_score, 2) }}
+                    </p>
+                    <p class="text-[12px] text-text-muted mt-1">/ {{ number_format($exam->total_points, 2) }} điểm</p>
                     @else
-                        <p class="text-[28px] font-bold text-navy-900 leading-none">—</p>
-                        <p class="text-[12px] text-text-muted mt-1">Giảng viên chưa cho phép xem điểm</p>
+                    <p class="text-[28px] font-bold text-navy-900 leading-none">—</p>
+                    <p class="text-[12px] text-text-muted mt-1">Giảng viên chưa cho phép xem điểm</p>
                     @endif
                 </div>
             </x-card>
@@ -44,22 +44,22 @@
                 <div class="text-center">
                     <p class="text-[12px] font-medium text-text-muted mb-1">Kết quả</p>
                     @if($exam->show_score_after_submit)
-                        @if($passed)
-                            <div class="inline-flex items-center gap-2">
-                                <span class="text-[28px]">✅</span>
-                                <span class="text-[20px] font-bold text-teal-600">ĐẠT</span>
-                            </div>
-                            <p class="text-[12px] text-text-muted mt-1">Điểm đạt: {{ number_format($exam->pass_points, 2) }}</p>
-                        @else
-                            <div class="inline-flex items-center gap-2">
-                                <span class="text-[28px]">❌</span>
-                                <span class="text-[20px] font-bold text-red-500">CHƯA ĐẠT</span>
-                            </div>
-                            <p class="text-[12px] text-text-muted mt-1">Cần tối thiểu: {{ number_format($exam->pass_points, 2) }}</p>
-                        @endif
+                    @if($passed)
+                    <div class="inline-flex items-center gap-2">
+                        <span class="text-[28px]">✅</span>
+                        <span class="text-[20px] font-bold text-teal-600">ĐẠT</span>
+                    </div>
+                    <p class="text-[12px] text-text-muted mt-1">Điểm đạt: {{ number_format($exam->pass_points, 2) }}</p>
                     @else
-                        <p class="text-[28px] font-bold text-navy-900 leading-none">—</p>
-                        <p class="text-[12px] text-text-muted mt-1">Chưa công bố</p>
+                    <div class="inline-flex items-center gap-2">
+                        <span class="text-[28px]">❌</span>
+                        <span class="text-[20px] font-bold text-red-500">CHƯA ĐẠT</span>
+                    </div>
+                    <p class="text-[12px] text-text-muted mt-1">Cần tối thiểu: {{ number_format($exam->pass_points, 2) }}</p>
+                    @endif
+                    @else
+                    <p class="text-[28px] font-bold text-navy-900 leading-none">—</p>
+                    <p class="text-[12px] text-text-muted mt-1">Chưa công bố</p>
                     @endif
                 </div>
             </x-card>
@@ -69,15 +69,15 @@
                 <div class="text-center">
                     <p class="text-[12px] font-medium text-text-muted mb-1">Số câu đúng</p>
                     @if($exam->show_answers_after_submit)
-                        <p class="text-[36px] font-bold text-navy-900 leading-none">
-                            {{ $correctCount }}<span class="text-[18px] text-text-muted">/{{ $totalQuestions }}</span>
-                        </p>
-                        <p class="text-[12px] text-text-muted mt-1">
-                            {{ $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100) : 0 }}% chính xác
-                        </p>
+                    <p class="text-[36px] font-bold text-navy-900 leading-none">
+                        {{ $correctCount }}<span class="text-[18px] text-text-muted">/{{ $totalQuestions }}</span>
+                    </p>
+                    <p class="text-[12px] text-text-muted mt-1">
+                        {{ $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 100) : 0 }}% chính xác
+                    </p>
                     @else
-                        <p class="text-[28px] font-bold text-navy-900 leading-none">—</p>
-                        <p class="text-[12px] text-text-muted mt-1">Chưa công bố</p>
+                    <p class="text-[28px] font-bold text-navy-900 leading-none">—</p>
+                    <p class="text-[12px] text-text-muted mt-1">Chưa công bố</p>
                     @endif
                 </div>
             </x-card>
@@ -134,28 +134,28 @@
                     <div class="space-y-1.5 ml-10">
                         @foreach($answer->question->options as $option)
                         @php
-                            $isStudentChoice = $answer->question_option_id == $option->id;
-                            $isCorrectOption = $option->is_correct;
+                        $isStudentChoice = $answer->question_option_id == $option->id;
+                        $isCorrectOption = $option->is_correct;
 
-                            if ($isCorrectOption && $isStudentChoice) {
-                                $optClass = 'bg-teal-100 border-teal-300 text-teal-800';
-                                $icon = '✓';
-                            } elseif ($isCorrectOption) {
-                                $optClass = 'bg-teal-50 border-teal-200 text-teal-700';
-                                $icon = '✓';
-                            } elseif ($isStudentChoice) {
-                                $optClass = 'bg-red-100 border-red-300 text-red-800';
-                                $icon = '✗';
-                            } else {
-                                $optClass = 'bg-white border-border-clean text-text-muted';
-                                $icon = '';
-                            }
+                        if ($isCorrectOption && $isStudentChoice) {
+                        $optClass = 'bg-teal-100 border-teal-300 text-teal-800';
+                        $icon = '✓';
+                        } elseif ($isCorrectOption) {
+                        $optClass = 'bg-teal-50 border-teal-200 text-teal-700';
+                        $icon = '✓';
+                        } elseif ($isStudentChoice) {
+                        $optClass = 'bg-red-100 border-red-300 text-red-800';
+                        $icon = '✗';
+                        } else {
+                        $optClass = 'bg-white border-border-clean text-text-muted';
+                        $icon = '';
+                        }
                         @endphp
                         <div class="flex items-center gap-2 px-3 py-2 rounded-[6px] border-[0.5px] {{ $optClass }} text-[13px]">
                             <span class="w-5 text-center font-bold">{{ $icon }}</span>
                             <span class="flex-1">{!! $option->content !!}</span>
                             @if($isStudentChoice)
-                                <span class="text-[11px] font-medium opacity-75">Bạn chọn</span>
+                            <span class="text-[11px] font-medium opacity-75">Bạn chọn</span>
                             @endif
                         </div>
                         @endforeach

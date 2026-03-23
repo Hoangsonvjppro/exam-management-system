@@ -16,10 +16,11 @@ class ExamPolicy
      */
     public function viewAsStudent(User $user, Exam $exam): bool
     {
-        return $exam->courseSection
-            ->students()
-            ->where('student_id', $user->id)
-            ->wherePivot('status', self::ENROLLMENT_STATUS_ENROLLED)
+        return $exam->schedules()
+            ->whereHas('courseSection.students', function ($query) use ($user) {
+                $query->where('users.id', $user->id)
+                    ->where('course_section_students.status', self::ENROLLMENT_STATUS_ENROLLED);
+            })
             ->exists();
     }
 
@@ -42,7 +43,7 @@ class ExamPolicy
      */
     public function manageLecturer(User $user, Exam $exam): bool
     {
-        return $exam->courseSection->lecturer_id === $user->id;
+        return $user->id === $exam->created_by;
     }
 
     /**

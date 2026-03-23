@@ -22,7 +22,7 @@ class ExamGenerationService
     public function generateFromMatrix(Exam $exam, Collection $matrixRows): void
     {
         // Lấy subject_id từ course section
-        $subjectId = $exam->courseSection->subject_id;
+        $subjectId = $exam->subject_id;
 
         // Xoá câu hỏi cũ
         $exam->examQuestions()->delete();

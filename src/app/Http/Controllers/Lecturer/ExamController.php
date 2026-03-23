@@ -68,7 +68,7 @@ class ExamController extends Controller
     {
         Gate::authorize('manageLecturer', $exam);
 
-        $exam->load(['courseSection', 'questions', 'attempts.user']);
+        $exam->load(['subject', 'questions', 'attempts.user']);
         $attemptStats = $this->lecturerExamQueryService->getAttemptStats($exam);
         $attemptCount = $attemptStats['attemptCount'];
         $completedCount = $attemptStats['completedCount'];

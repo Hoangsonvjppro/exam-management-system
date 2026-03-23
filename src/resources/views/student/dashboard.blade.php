@@ -92,7 +92,7 @@
                             <span class="text-[11px] text-text-muted">{{ $exam->start_time?->format('d/m/Y') ?? 'Chưa xác định' }}</span>
                         </div>
                         <h4 class="font-semibold text-[15px] text-navy-900 leading-snug mb-1">{{ $exam->title }}</h4>
-                        <p class="text-[12px] text-text-muted">{{ $exam->courseSection->name ?? $exam->courseSection->code }}</p>
+                        <p class="text-[12px] text-text-muted">{{ $exam->subject->name ?? '—' }}</p>
                     </div>
 
                     <x-button variant="primary" size="sm" class="w-full" href="{{ route('student.exams.show', $exam->id) }}">

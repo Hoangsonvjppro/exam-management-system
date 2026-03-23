@@ -39,8 +39,11 @@ class ExamScheduleService
      */
     public function autoAssignStudents(ExamSchedule $schedule): int
     {
-        $exam = $schedule->exam;
-        $courseSection = $exam->courseSection;
+        $courseSection = $schedule->courseSection;
+
+        if (! $courseSection) {
+            return 0;
+        }
 
         // Lấy danh sách SV enrolled chưa được assign vào ca thi này
         $enrolledStudentIds = $courseSection->students()
@@ -76,12 +79,12 @@ class ExamScheduleService
      */
     public function getSchedulesForLecturer(int $lecturerId, ?int $semesterId = null): Collection
     {
-        $query = ExamSchedule::whereHas('exam.courseSection', function ($q) use ($lecturerId) {
+        $query = ExamSchedule::whereHas('courseSection', function ($q) use ($lecturerId) {
             $q->where('lecturer_id', $lecturerId);
-        })->with(['exam.courseSection']);
+        })->with(['exam.subject', 'courseSection']);
 
         if ($semesterId) {
-            $query->whereHas('exam.courseSection', fn($q) => $q->where('semester_id', $semesterId));
+            $query->whereHas('courseSection', fn($q) => $q->where('semester_id', $semesterId));
         }
 
         return $query->orderBy('exam_date')->orderBy('start_time')->get();

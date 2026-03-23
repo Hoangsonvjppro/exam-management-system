@@ -17,7 +17,8 @@ class CourseSectionController extends Controller
 {
     public function __construct(
         private readonly \App\Services\CourseSectionService $courseSectionService
-    ) {}
+    ) {
+    }
 
     public function index(): View
     {
@@ -59,7 +60,8 @@ class CourseSectionController extends Controller
 
         $section->load([
             'students' => fn($q) => $q->orderBy('name'),
-            'exams'    => fn($q) => $q->withCount('questions'),
+            // Sửa 'exams' thành 'examSchedules.exam' để lấy số lượng câu hỏi thông qua đề thi của ca thi
+            'examSchedules.exam' => fn($q) => $q->withCount('questions'),
         ]);
 
         return view('lecturer.classes.show', compact('section'));
@@ -88,7 +90,7 @@ class CourseSectionController extends Controller
         Gate::authorize('manage', $section);
 
         $result = $this->courseSectionService->deleteCourseSection($section);
-        if (! $result['deleted']) {
+        if (!$result['deleted']) {
             return back()->with('error', $result['message']);
         }
 

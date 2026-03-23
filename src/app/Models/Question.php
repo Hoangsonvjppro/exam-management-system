@@ -59,6 +59,11 @@ class Question extends Model
         return $query->where('status', 'approved')->where('subject_id', $subjectId);
     }
 
+    public function scopeApproved(Builder $query): Builder
+    {
+        return $query->where('status', 'approved');
+    }
+
     // ── Relationships ─────────────────────────────────────────
 
     public function subject(): BelongsTo
