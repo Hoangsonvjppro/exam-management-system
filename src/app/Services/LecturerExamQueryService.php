@@ -11,25 +11,14 @@ class LecturerExamQueryService
 {
     public function getExamIndexForLecturer(int $lecturerId): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        return Exam::whereHas('courseSection', function ($query) use ($lecturerId) {
-            $query->where('lecturer_id', $lecturerId);
-        })->with('courseSection')
+        return Exam::createdBy($lecturerId)
+            ->with('subject')
+            ->withCount('questions')
             ->latest()
             ->paginate(20);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    public function getCreateData(CourseSection $courseSection): array
-    {
-        return [
-            'questions' => Question::approvedForSubject($courseSection->subject_id)->get(),
-            'chapters' => Chapter::where('subject_id', $courseSection->subject_id)
-                ->orderBy('order')
-                ->get(),
-        ];
-    }
+    // removed getCreateData as it is no longer used
 
     /**
      * @return array<string, int>

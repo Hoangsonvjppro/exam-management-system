@@ -17,17 +17,17 @@
                     <span class="w-2 h-2 rounded-full bg-[#10B981]"></span> Đang mở
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($available as $exam)
-                    <a href="{{ route('student.exams.show', $exam->id) }}" class="bg-white rounded-[10px] border border-[#D6E2F0] p-5 hover:shadow-md transition-shadow group">
+                    @foreach($available as $schedule)
+                    <a href="{{ route('student.exams.show', $schedule->id) }}" class="bg-white rounded-[10px] border border-[#D6E2F0] p-5 hover:shadow-md transition-shadow group">
                         <div class="flex justify-between items-start mb-3">
-                            <h4 class="text-[14px] font-bold text-[#1A3A6B] group-hover:text-[#185FA5] transition-colors">{{ $exam->title }}</h4>
+                            <h4 class="text-[14px] font-bold text-[#1A3A6B] group-hover:text-[#185FA5] transition-colors">{{ $schedule->exam->title }}</h4>
                             <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46]">Đang mở</span>
                         </div>
-                        <p class="text-[12px] text-[#6B7C99] mb-2">{{ $exam->courseSection->name ?? '—' }}</p>
+                        <p class="text-[12px] text-[#6B7C99] mb-2">{{ $schedule->courseSection->name ?? '—' }}</p>
                         <div class="flex items-center gap-3 text-[11.5px] text-[#6B7C99]">
-                            <span>⏱ {{ $exam->duration_minutes }} phút</span>
-                            @if($exam->end_time)
-                            <span>📅 Hết hạn: {{ $exam->end_time->format('d/m H:i') }}</span>
+                            <span>⏱ {{ $schedule->exam->duration_minutes }} phút</span>
+                            @if($schedule->end_time)
+                            <span>📅 Hết hạn: {{ $schedule->end_time->format('d/m H:i') }}</span>
                             @endif
                         </div>
                     </a>
@@ -43,17 +43,17 @@
                     <span class="w-2 h-2 rounded-full bg-[#3B82F6]"></span> Sắp tới
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($upcoming as $exam)
+                    @foreach($upcoming as $schedule)
                     <div class="bg-white rounded-[10px] border border-[#D6E2F0] p-5 opacity-80">
                         <div class="flex justify-between items-start mb-3">
-                            <h4 class="text-[14px] font-bold text-[#1A3A6B]">{{ $exam->title }}</h4>
+                            <h4 class="text-[14px] font-bold text-[#1A3A6B]">{{ $schedule->exam->title }}</h4>
                             <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[#EBF2FA] text-[#1A3A6B]">Sắp tới</span>
                         </div>
-                        <p class="text-[12px] text-[#6B7C99] mb-2">{{ $exam->courseSection->name ?? '—' }}</p>
+                        <p class="text-[12px] text-[#6B7C99] mb-2">{{ $schedule->courseSection->name ?? '—' }}</p>
                         <div class="flex items-center gap-3 text-[11.5px] text-[#6B7C99]">
-                            <span>⏱ {{ $exam->duration_minutes }} phút</span>
-                            @if($exam->start_time)
-                            <span>📅 Mở: {{ $exam->start_time->format('d/m H:i') }}</span>
+                            <span>⏱ {{ $schedule->exam->duration_minutes }} phút</span>
+                            @if($schedule->start_time)
+                            <span>📅 Mở: {{ $schedule->start_time->format('d/m H:i') }}</span>
                             @endif
                         </div>
                     </div>
@@ -69,15 +69,15 @@
                     <span class="w-2 h-2 rounded-full bg-[#9CA3AF]"></span> Đã kết thúc
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($ended as $exam)
-                    <a href="{{ route('student.exams.result', $exam->id) }}" class="bg-white rounded-[10px] border border-[#D6E2F0] p-5 opacity-60 hover:opacity-80 transition-opacity">
+                    @foreach($ended as $schedule)
+                    <a href="{{ route('student.exams.result', $schedule->id) }}" class="bg-white rounded-[10px] border border-[#D6E2F0] p-5 opacity-60 hover:opacity-80 transition-opacity">
                         <div class="flex justify-between items-start mb-3">
-                            <h4 class="text-[14px] font-bold text-[#374151]">{{ $exam->title }}</h4>
+                            <h4 class="text-[14px] font-bold text-[#374151]">{{ $schedule->exam->title }}</h4>
                             <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#6B7C99]">Kết thúc</span>
                         </div>
-                        <p class="text-[12px] text-[#6B7C99] mb-2">{{ $exam->courseSection->name ?? '—' }}</p>
+                        <p class="text-[12px] text-[#6B7C99] mb-2">{{ $schedule->courseSection->name ?? '—' }}</p>
                         <div class="text-[11.5px] text-[#6B7C99]">
-                            Kết thúc: {{ $exam->end_time->format('d/m/Y H:i') }}
+                            Kết thúc: {{ $schedule->end_time->format('d/m/Y H:i') }}
                         </div>
                     </a>
                     @endforeach

@@ -30,34 +30,30 @@ class ExamController extends Controller
         return view('lecturer.exams.index', compact('exams'));
     }
 
-    // Hiển thị form tạo đề thi mới trong 1 lớp học phần
-    public function create(CourseSection $courseSection): View
+    // Hiển thị form tạo đề thi mới
+    public function create(): View
     {
-        Gate::authorize('manage', $courseSection);
+        $subjects = \App\Models\Subject::all();
+        $questions = Question::approved()->get();
+        $chapters = \App\Models\Chapter::orderBy('order')->get();
 
-        $createData = $this->lecturerExamQueryService->getCreateData($courseSection);
-        $questions = $createData['questions'];
-        $chapters = $createData['chapters'];
-
-        return view("lecturer.exams.create", compact('courseSection', 'questions', 'chapters'));
+        return view("lecturer.exams.create", compact('subjects', 'questions', 'chapters'));
     }
 
     // Tạo 1 đề thi mới: phân luồng manual vs matrix
-    public function store(StoreExamRequest $request, CourseSection $courseSection): RedirectResponse
+    public function store(StoreExamRequest $request): RedirectResponse
     {
-        Gate::authorize('manage', $courseSection);
-
         $validated = $request->validated();
+        $validated['created_by'] = \Illuminate\Support\Facades\Auth::id();
 
         try {
             if ($validated['creation_mode'] === 'matrix') {
                 $exam = $this->examService->createExamFromMatrix(
-                    $courseSection,
                     $validated,
                     $validated['matrix']
                 );
             } else {
-                $exam = $this->examService->createExam($courseSection, $validated);
+                $exam = $this->examService->createExam($validated);
             }
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
@@ -85,11 +81,11 @@ class ExamController extends Controller
     {
         Gate::authorize('manageLecturer', $exam);
 
-        $courseSection = $exam->courseSection;
-        $questions = Question::approvedForSubject($courseSection->subject_id)->get();
+        $subjects = \App\Models\Subject::all();
+        $questions = Question::approved()->get();
         $selectedQuestionIds = $exam->questions()->pluck('question_id')->toArray();
 
-        return view('lecturer.exams.edit', compact('exam', 'courseSection', 'questions', 'selectedQuestionIds'));
+        return view('lecturer.exams.edit', compact('exam', 'subjects', 'questions', 'selectedQuestionIds'));
     }
 
     // Cập nhật đề thi
@@ -108,10 +104,9 @@ class ExamController extends Controller
     {
         Gate::authorize('manageLecturer', $exam);
 
-        $courseSectionId = $exam->course_section_id;
         $message = $this->examService->deleteExam($exam);
 
-        return redirect()->route('lecturer.classes.show', $courseSectionId)
+        return redirect()->route('lecturer.exams.index')
             ->with('success', $message);
     }
 

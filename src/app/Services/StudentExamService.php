@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Exam;
+use App\Models\ExamSchedule;
 use App\Models\ExamAttempt;
 use App\Models\QuestionOption;
 use App\Models\StudentAnswer;
@@ -11,18 +12,22 @@ use DomainException;
 
 class StudentExamService
 {
-    public function startAttempt(Exam $exam, int $userId, string $ipAddress, ?string $userAgent = null): void
+    public function startAttempt(ExamSchedule $schedule, int $userId, string $ipAddress, ?string $userAgent = null): void
     {
+        $exam = $schedule->exam;
         $now = now();
-        if ($exam->start_time && $now->lt($exam->start_time)) {
-            throw new DomainException('Bài thi chưa bắt đầu.');
+        $scheduleStart = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->start_time);
+        $scheduleEnd = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->end_time);
+
+        if ($now->lt($scheduleStart)) {
+            throw new DomainException('Ca thi chưa bắt đầu.');
         }
 
-        if ($exam->end_time && $now->gt($exam->end_time)) {
-            throw new DomainException('Bài thi đã kết thúc.');
+        if ($now->gt($scheduleEnd)) {
+            throw new DomainException('Ca thi đã kết thúc.');
         }
 
-        $attempt = ExamAttempt::forExam($exam->id)
+        $attempt = ExamAttempt::forSchedule($schedule->id)
             ->forUser($userId)
             ->inProgress()
             ->first();
@@ -31,7 +36,7 @@ class StudentExamService
             return;
         }
 
-        $hasCompleted = ExamAttempt::forExam($exam->id)
+        $hasCompleted = ExamAttempt::forSchedule($schedule->id)
             ->forUser($userId)
             ->completed()
             ->exists();
@@ -40,7 +45,7 @@ class StudentExamService
             throw new DomainException('Bạn đã hoàn thành bài thi chính thức này. Không thể thi lại.');
         }
 
-        $latestAttempt = ExamAttempt::forExam($exam->id)
+        $latestAttempt = ExamAttempt::forSchedule($schedule->id)
             ->forUser($userId)
             ->latestAttempt()
             ->first();
@@ -48,7 +53,7 @@ class StudentExamService
         $nextNumber = $latestAttempt ? $latestAttempt->attempt_number + 1 : 1;
 
         ExamAttempt::create([
-            'exam_id' => $exam->id,
+            'exam_schedule_id' => $schedule->id,
             'user_id' => $userId,
             'attempt_number' => $nextNumber,
             'started_at' => now(),
@@ -61,9 +66,10 @@ class StudentExamService
     /**
      * @return array{http_code:int,message:string}
      */
-    public function saveAnswer(Exam $exam, int $userId, array $validated, ?int $tabSwitchCount = null): array
+    public function saveAnswer(ExamSchedule $schedule, int $userId, array $validated, ?int $tabSwitchCount = null): array
     {
-        $attempt = ExamAttempt::forExam($exam->id)
+        $exam = $schedule->exam;
+        $attempt = ExamAttempt::forSchedule($schedule->id)
             ->forUser($userId)
             ->inProgress()
             ->first();
@@ -72,7 +78,7 @@ class StudentExamService
             return ['http_code' => 403, 'message' => 'Không thể lưu đáp án.'];
         }
 
-        $deadline = $exam->getDeadlineFor($attempt);
+        $deadline = $schedule->getDeadlineFor($attempt);
         if (now()->gt($deadline)) {
             return ['http_code' => 403, 'message' => 'Đã hết thời gian làm bài.'];
         }

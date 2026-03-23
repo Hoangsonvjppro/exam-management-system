@@ -53,11 +53,11 @@
             <div class="flex flex-col items-center gap-3">
                 @if($inProgressAttempt)
                     <p class="text-[13px] font-medium text-amber-600 mb-2">⚠️ Bạn đang có bài thi chưa hoàn thành (Lần {{ $inProgressAttempt->attempt_number }})!</p>
-                    <a href="{{ route('student.exams.room', $exam->id) }}" class="inline-flex items-center px-8 py-3 bg-amber-500 border border-transparent rounded-[8px] font-semibold text-[14px] text-white tracking-wide hover:bg-amber-600 transition shadow-sm">
+                    <a href="{{ route('student.exams.room', $schedule->id) }}" class="inline-flex items-center px-8 py-3 bg-amber-500 border border-transparent rounded-[8px] font-semibold text-[14px] text-white tracking-wide hover:bg-amber-600 transition shadow-sm">
                         ▶️ Tiếp tục làm bài
                     </a>
                 @elseif($canStartNew)
-                    <form action="{{ route('student.exams.start', $exam->id) }}" method="POST">
+                    <form action="{{ route('student.exams.start', $schedule->id) }}" method="POST">
                         @csrf
                         <button type="submit" class="inline-flex items-center px-8 py-3 bg-navy-900 border border-transparent rounded-[8px] font-semibold text-[14px] text-white tracking-wide hover:bg-navy-950 transition shadow-sm">
                             {{ $pastAttempts->isNotEmpty() ? '🔄 Thi lại lần ' . ($pastAttempts->first()->attempt_number + 1) : '▶️ Bắt đầu làm bài' }}
@@ -108,7 +108,7 @@
                                 @if($past->attempt_number === $pastAttempts->first()->attempt_number)
                                     {{-- Chỉ cho xem kết quả chi tiết của lần thi MỚI NHẤT (tránh nhầm lẫn do updateOrCreate answers ko lưu version attempt lịch sử) 
                                          * Note: Do cấu trúc DB StudentAnswer đang overwrite nếu user thi lại * --}}
-                                    <a href="{{ route('student.exams.result', $exam->id) }}" class="text-blue-600 hover:underline text-[12px] font-medium">Chi tiết</a>
+                                    <a href="{{ route('student.exams.result', $schedule->id) }}" class="text-blue-600 hover:underline text-[12px] font-medium">Chi tiết</a>
                                 @else
                                     <span class="text-blue-200 text-[11px] italic">Lưu trữ</span>
                                 @endif

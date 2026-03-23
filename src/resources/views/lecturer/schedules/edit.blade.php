@@ -4,7 +4,7 @@
             <div class="mb-6 flex items-center justify-between">
                 <div>
                     <h2 class="text-[22px] font-bold text-[#1A3A6B] mb-1">Sửa Lịch Thi</h2>
-                    <p class="text-[13px] text-[#6B7C99]">Đề thi: {{ $schedule->exam->title }}</p>
+                    <p class="text-[13px] text-[#6B7C99]">Đề thi: {{ $schedule->exam->title }} | Lớp: {{ $schedule->courseSection->name }}</p>
                 </div>
                 <a href="{{ route('lecturer.schedules.index') }}" class="inline-flex items-center gap-2 text-[13px] text-[#185FA5] hover:underline">← Quay lại</a>
             </div>

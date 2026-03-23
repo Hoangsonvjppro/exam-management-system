@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CourseSection;
 use App\Models\Exam;
+use App\Models\ExamSchedule;
 use App\Models\ExamAttempt;
 
 class StudentExamQueryService
@@ -18,26 +19,42 @@ class StudentExamQueryService
                 ->where('course_section_students.status', EnrollmentService::PIVOT_ENROLLED);
         })->pluck('id');
 
-        $exams = Exam::whereIn('course_section_id', $enrolledSectionIds)
-            ->published()
-            ->with('courseSection')
+        $schedules = ExamSchedule::whereHas('courseSection', function($q) use ($enrolledSectionIds) {
+            $q->whereIn('id', $enrolledSectionIds);
+        })
+            ->whereHas('exam', function($q) {
+                $q->published();
+            })
+            ->with(['courseSection', 'exam'])
+            ->orderBy('exam_date')
             ->orderBy('start_time')
             ->get();
 
         return [
-            'upcoming' => $exams->filter(fn($exam) => ! $exam->start_time || $exam->start_time->isFuture()),
-            'available' => $exams->filter(fn($exam) => $exam->start_time && $exam->start_time->isPast() && (! $exam->end_time || $exam->end_time->isFuture())),
-            'ended' => $exams->filter(fn($exam) => $exam->end_time && $exam->end_time->isPast()),
+            'upcoming' => $schedules->filter(function($schedule) {
+                $start = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->start_time);
+                return $start->isFuture();
+            }),
+            'available' => $schedules->filter(function($schedule) {
+                $start = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->start_time);
+                $end = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->end_time);
+                return $start->isPast() && $end->isFuture();
+            }),
+            'ended' => $schedules->filter(function($schedule) {
+                $end = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->end_time);
+                return $end->isPast();
+            }),
         ];
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function getShowData(Exam $exam, int $userId): array
+    public function getShowData(ExamSchedule $schedule, int $userId): array
     {
-        $inProgressAttempt = ExamAttempt::forExam($exam->id)->forUser($userId)->inProgress()->first();
-        $pastAttempts = ExamAttempt::forExam($exam->id)->forUser($userId)->completed()->latestAttempt()->get();
+        $exam = $schedule->exam;
+        $inProgressAttempt = ExamAttempt::forSchedule($schedule->id)->forUser($userId)->inProgress()->first();
+        $pastAttempts = ExamAttempt::forSchedule($schedule->id)->forUser($userId)->completed()->latestAttempt()->get();
 
         $canStartNew = true;
 
@@ -59,22 +76,23 @@ class StudentExamQueryService
     /**
      * @return array<string, mixed>
      */
-    public function getRoomData(Exam $exam, ExamAttempt $attempt): array
+    public function getRoomData(ExamSchedule $schedule, ExamAttempt $attempt): array
     {
+        $exam = $schedule->exam;
         return [
             'questions' => $exam->questions()->with('options')->get(),
             'savedAnswers' => $attempt->answers()->pluck('question_option_id', 'question_id')->toArray(),
         ];
     }
 
-    public function getInProgressAttempt(Exam $exam, int $userId): ?ExamAttempt
+    public function getInProgressAttempt(ExamSchedule $schedule, int $userId): ?ExamAttempt
     {
-        return ExamAttempt::forExam($exam->id)->forUser($userId)->inProgress()->first();
+        return ExamAttempt::forSchedule($schedule->id)->forUser($userId)->inProgress()->first();
     }
 
-    public function getCompletedAttempt(Exam $exam, int $userId): ExamAttempt
+    public function getCompletedAttempt(ExamSchedule $schedule, int $userId): ExamAttempt
     {
-        return ExamAttempt::forExam($exam->id)
+        return ExamAttempt::forSchedule($schedule->id)
             ->forUser($userId)
             ->completed()
             ->latestAttempt()
@@ -84,8 +102,9 @@ class StudentExamQueryService
     /**
      * @return array<string, mixed>
      */
-    public function getResultData(Exam $exam, ExamAttempt $attempt): array
+    public function getResultData(ExamSchedule $schedule, ExamAttempt $attempt): array
     {
+        $exam = $schedule->exam;
         $answers = $attempt->answers()
             ->with(['option', 'question.options'])
             ->get();

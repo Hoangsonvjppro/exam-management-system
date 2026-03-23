@@ -15,10 +15,9 @@ class StoreExamRequest extends FormRequest
     {
         $rules = [
             'title'                    => 'required|string|max:255',
+            'subject_id'               => 'required|exists:subjects,id',
             'description'              => 'nullable|string',
             'duration_minutes'         => 'required|integer|min:1',
-            'start_time'               => 'nullable|date',
-            'end_time'                 => 'nullable|date|after_or_equal:start_time',
             'exam_type'                => 'required|in:official,practice',
             'show_score_after_submit'  => 'boolean',
             'show_answers_after_submit'=> 'boolean',
@@ -46,7 +45,8 @@ class StoreExamRequest extends FormRequest
             'title.required'                 => 'Tiêu đề đề thi là bắt buộc.',
             'duration_minutes.required'      => 'Thời gian làm bài là bắt buộc.',
             'duration_minutes.min'           => 'Thời gian làm bài phải ít nhất 1 phút.',
-            'end_time.after_or_equal'        => 'Thời gian kết thúc phải sau hoặc bằng thời gian bắt đầu.',
+            'subject_id.required'            => 'Môn học là bắt buộc.',
+            'subject_id.exists'              => 'Môn học không tồn tại.',
             'exam_type.required'             => 'Loại đề thi là bắt buộc.',
             'exam_type.in'                   => 'Loại đề thi không hợp lệ.',
             'creation_mode.required'         => 'Chế độ tạo đề là bắt buộc.',

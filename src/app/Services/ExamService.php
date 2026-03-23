@@ -21,10 +21,12 @@ class ExamService
      *
      * @throws \RuntimeException
      */
-    public function createExam(CourseSection $courseSection, array $data): Exam
+    public function createExam(array $data): Exam
     {
-        return DB::transaction(function () use ($courseSection, $data) {
-            $exam = $courseSection->exams()->create($data);
+        $data['created_by'] = \Illuminate\Support\Facades\Auth::id();
+
+        return DB::transaction(function () use ($data) {
+            $exam = Exam::create($data);
 
             $this->syncQuestions($exam, $data['question_ids']);
 
@@ -40,10 +42,12 @@ class ExamService
      * @param array $matrixData Mảng [{chapter_id, difficulty, question_type_id, question_count, points_each}]
      * @return Exam
      */
-    public function createExamFromMatrix(CourseSection $courseSection, array $data, array $matrixData): Exam
+    public function createExamFromMatrix(array $data, array $matrixData): Exam
     {
-        return DB::transaction(function () use ($courseSection, $data, $matrixData) {
-            $exam = $courseSection->exams()->create($data);
+        $data['created_by'] = \Illuminate\Support\Facades\Auth::id();
+
+        return DB::transaction(function () use ($data, $matrixData) {
+            $exam = Exam::create($data);
 
             // Lưu matrix rows
             foreach ($matrixData as $row) {

@@ -174,7 +174,7 @@
 
         {{-- Nút quay lại --}}
         <div class="flex items-center justify-center gap-3">
-            <x-button variant="outline" href="{{ route('student.exams.show', $exam->id) }}">
+            <x-button variant="outline" href="{{ route('student.exams.show', $schedule->id) }}">
                 ← Quay lại đề thi
             </x-button>
             <x-button variant="primary" href="{{ route('student.dashboard') }}">

@@ -167,14 +167,14 @@
                 <div>
                     <h2 class="text-[22px] font-bold text-[#1A3A6B] mb-1">Tạo Bài Kiểm Tra Mới</h2>
                     <div class="flex items-center gap-2 text-[13px] text-[#6B7C99]">
-                        <a href="{{ route('lecturer.classes.show', $courseSection->id) }}" class="text-[#185FA5] hover:underline">{{ $courseSection->name ?? 'Lớp đang chọn' }}</a>
+                        <a href="{{ route('lecturer.exams.index') }}" class="text-[#185FA5] hover:underline">Quản lý Đề thi</a>
                         <span class="text-[#B0BECE]">•</span>
                         <span>Đề thi mới</span>
                     </div>
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('lecturer.course-sections.exams.store', $courseSection->id) }}">
+            <form method="POST" action="{{ route('lecturer.exams.store') }}">
                 @csrf
                 <input type="hidden" name="creation_mode" id="creation_mode" value="{{ old('creation_mode', 'manual') }}">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -199,10 +199,23 @@
 
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
+                                        <label for="subject_id" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Môn học <span class="text-[#DC2626]">*</span></label>
+                                        <select id="subject_id" name="subject_id" class="ca-select @error('subject_id') error @enderror" required onchange="onSubjectChange()">
+                                            <option value="">-- Chọn môn học --</option>
+                                            @foreach($subjects as $subject)
+                                                <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('subject_id') <span class="text-error">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
                                         <label for="duration_minutes" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Thời gian (Phút) <span class="text-[#DC2626]">*</span></label>
                                         <input id="duration_minutes" type="number" name="duration_minutes" value="{{ old('duration_minutes', 45) }}" required class="ca-input @error('duration_minutes') error @enderror" />
                                         @error('duration_minutes') <span class="text-error">{{ $message }}</span> @enderror
                                     </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-4">
                                     <div>
                                         <label for="exam_type" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Loại đề thi <span class="text-[#DC2626]">*</span></label>
                                         <select id="exam_type" name="exam_type" class="ca-select @error('exam_type') error @enderror" required>
@@ -210,19 +223,6 @@
                                             <option value="practice" {{ old('exam_type') === 'practice' ? 'selected' : '' }}>Luyện tập</option>
                                         </select>
                                         @error('exam_type') <span class="text-error">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="start_time" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Mở đề (Tuỳ chọn)</label>
-                                        <input id="start_time" type="datetime-local" name="start_time" value="{{ old('start_time') }}" class="ca-input @error('start_time') error @enderror" />
-                                        @error('start_time') <span class="text-error">{{ $message }}</span> @enderror
-                                    </div>
-                                    <div>
-                                        <label for="end_time" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Đóng đề (Tuỳ chọn)</label>
-                                        <input id="end_time" type="datetime-local" name="end_time" value="{{ old('end_time') }}" class="ca-input @error('end_time') error @enderror" />
-                                        @error('end_time') <span class="text-error">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             </div>
@@ -320,7 +320,7 @@
                                         </thead>
                                         <tbody>
                                             @foreach($questions as $question)
-                                            <tr class="group cursor-pointer hover:bg-[#F8FAFD] transition-colors" onclick="toggleCheckbox(this, event)">
+                                            <tr class="question-row group cursor-pointer hover:bg-[#F8FAFD] transition-colors" data-subject="{{ $question->subject_id }}" onclick="toggleCheckbox(this, event)">
                                                 <td class="text-center w-12">
                                                     <input type="checkbox" name="question_ids[]" value="{{ $question->id }}"
                                                         class="question-checkbox rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#E6F1FB] w-4 h-4 cursor-pointer"
@@ -426,7 +426,9 @@
                 // === Matrix row management ===
                 function addMatrixRow() {
                     const i = matrixRowIndex++;
-                    const chapterOptions = chapters.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                    const subjectId = document.getElementById('subject_id')?.value;
+                    const filteredChapters = chapters.filter(c => c.subject_id == subjectId);
+                    const chapterOptions = filteredChapters.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>
@@ -524,7 +526,32 @@
                     if (document.getElementById('matrix-body').children.length === 0) {
                         addMatrixRow();
                     }
+
+                    // Trigger initial subject filter
+                    onSubjectChange();
                 });
+
+                function onSubjectChange() {
+                    const subjectId = document.getElementById('subject_id')?.value;
+                    // Filter questions
+                    let visibleQuestions = 0;
+                    document.querySelectorAll('.question-row').forEach(row => {
+                        if(row.dataset.subject == subjectId) {
+                            row.style.display = '';
+                            visibleQuestions++;
+                        } else {
+                            row.style.display = 'none';
+                            const cb = row.querySelector('.question-checkbox');
+                            if(cb) cb.checked = false;
+                        }
+                    });
+                    
+                    // Reset matrix
+                    document.getElementById('matrix-body').innerHTML = '';
+                    addMatrixRow();
+                    updateCounter();
+                    checkSelectAllState();
+                }
             </script>
         </div>
     </div>

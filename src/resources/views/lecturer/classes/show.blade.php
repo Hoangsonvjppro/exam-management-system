@@ -17,7 +17,7 @@
                 <x-button variant="outline" onclick="document.getElementById('create-notification-modal').classList.remove('hidden')">
                     Tạo thông báo
                 </x-button>
-                <x-button variant="secondary" href="{{ route('lecturer.course-sections.exams.create', $section) }}">
+                <x-button variant="secondary" href="{{ route('lecturer.exams.create') }}">
                     Tạo bài kiểm tra
                 </x-button>
                 <x-button variant="primary" href="{{ route('lecturer.classes.edit', $section) }}">
@@ -119,19 +119,19 @@
             @endif
         </x-card>
 
-        {{-- Exam List --}}
+        {{-- Exam Schedule List --}}
         <x-card padding="true">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-[18px] font-bold text-navy-900">
-                    Đề thi
-                    <span class="ml-2 text-[13px] font-semibold text-text-muted">({{ $section->exams->count() }})</span>
+                    Lịch thi
+                    <span class="ml-2 text-[13px] font-semibold text-text-muted">({{ $section->examSchedules->count() }})</span>
                 </h3>
-                <x-button variant="secondary" href="{{ route('lecturer.course-sections.exams.create', $section) }}">
-                    + Tạo đề thi
+                <x-button variant="secondary" href="{{ route('lecturer.schedules.create') }}">
+                    + Lên lịch thi
                 </x-button>
             </div>
 
-            @if($section->exams->isEmpty())
+            @if($section->examSchedules->isEmpty())
             <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
                 <p class="text-[13px] font-medium text-text-muted mb-1">Chưa có đề thi nào trong lớp này.</p>
                 <p class="text-[12px] text-text-muted">Nhấn "Tạo đề thi" để bắt đầu.</p>
@@ -143,72 +143,56 @@
                         <tr class="border-b-[1.5px] border-border-clean">
                             <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Tên đề thi</th>
                             <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Thời gian</th>
-                            <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Số câu</th>
-                            <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Trạng thái</th>
+                            <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Trạng thái ca thi</th>
                             <th class="py-3 px-4 text-[12px] font-semibold text-text-muted uppercase tracking-wider">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y-[0.5px] divide-border-clean">
-                        @foreach($section->exams->sortByDesc('created_at') as $exam)
+                        @foreach($section->examSchedules->sortByDesc('created_at') as $schedule)
                         <tr class="hover:bg-surface-0 transition-colors">
                             <td class="py-4 px-4">
-                                <p class="text-[14px] font-semibold text-navy-900">{{ $exam->title }}</p>
-                                @if($exam->start_time)
+                                <p class="text-[14px] font-semibold text-navy-900">{{ $schedule->exam->title }}</p>
+                                @if($schedule->start_time)
                                 <p class="text-[12px] text-text-muted mt-0.5">
-                                    Mở: {{ $exam->start_time->format('d/m/Y H:i') }}
-                                    @if($exam->end_time) — Đóng: {{ $exam->end_time->format('d/m/Y H:i') }} @endif
+                                    Mở: {{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} - Đóng: {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}
+                                    (Ngày thi: {{ $schedule->exam_date->format('d/m/Y') }})
                                 </p>
                                 @endif
                             </td>
                             <td class="py-4 px-4 text-[13px] font-medium text-navy-900">
-                                {{ $exam->duration_minutes }} phút
-                            </td>
-                            <td class="py-4 px-4 text-[13px] text-navy-900">
-                                {{ $exam->questions_count ?? $exam->questions_count }} câu
+                                {{ $schedule->exam->duration_minutes }} phút / {{ $schedule->exam->questions_count ?? 0 }} câu
                             </td>
                             <td class="py-4 px-4">
                                 <span class="inline-block uppercase text-[10px] font-bold px-2 py-1 rounded-[4px]
-                                        @if($exam->status === \App\Enums\ExamStatus::Published) bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
-                                        @elseif($exam->status === \App\Enums\ExamStatus::Draft)   bg-amber-50 text-amber-700 border-[0.5px] border-amber-200
-                                        @else                                bg-surface-1 text-text-muted border-[0.5px] border-border-clean @endif">
-                                    {{ match($exam->status?->value) {
-                                            'published' => 'Đang mở',
-                                            'draft'     => 'Bản nháp',
-                                            default     => 'Đã đóng',
+                                        @if($schedule->status === 'in_progress') bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
+                                        @elseif($schedule->status === 'scheduled') bg-blue-50 text-blue-700 border-[0.5px] border-blue-200
+                                        @elseif($schedule->status === 'completed') bg-gray-50 text-gray-700 border-[0.5px] border-gray-200
+                                        @else bg-surface-1 text-text-muted border-[0.5px] border-border-clean @endif">
+                                    {{ match($schedule->status) {
+                                            'in_progress' => 'Đang thi',
+                                            'scheduled'   => 'Đã lên lịch',
+                                            'completed'   => 'Đã hoàn thành',
+                                            default       => 'Đã huỷ',
                                         } }}
                                 </span>
                             </td>
                             <td class="py-4 px-4">
                                 <div class="flex items-center gap-3">
-                                    @can('manageLecturer', $exam)
-                                    {{-- Quản lý câu hỏi --}}
-                                    <a href="{{ route('lecturer.exams.edit', $exam) }}"
+                                    @can('manageLecturer', $schedule->exam)
+                                    <a href="{{ route('lecturer.schedules.edit', $schedule) }}"
                                         class="text-[12px] font-semibold text-blue-500 hover:text-blue-700 transition-colors">
-                                        Sửa đề
+                                        Sửa lịch thi
                                     </a>
 
-                                    {{-- Publish / Unpublish --}}
-                                    @if($exam->status === \App\Enums\ExamStatus::Draft)
-                                    <form method="POST" action="{{ route('lecturer.exams.publish', $exam) }}">
+                                    <form method="POST" action="{{ route('lecturer.schedules.destroy', $schedule) }}">
                                         @csrf
-                                        @method('PATCH')
-                                        <button type="submit"
-                                            class="text-[12px] font-semibold text-teal-600 hover:text-teal-800 transition-colors"
-                                            onclick="return confirm('Mở đề thi này cho sinh viên?')">
-                                            Mở đề
-                                        </button>
-                                    </form>
-                                    @elseif($exam->status === \App\Enums\ExamStatus::Published)
-                                    <form method="POST" action="{{ route('lecturer.exams.close', $exam) }}">
-                                        @csrf
-                                        @method('PATCH')
+                                        @method('DELETE')
                                         <button type="submit"
                                             class="text-[12px] font-semibold text-red-500 hover:text-red-700 transition-colors"
-                                            onclick="return confirm('Đóng đề thi này lại?')">
-                                            Đóng đề
+                                            onclick="return confirm('Xoá lịch thi này?')">
+                                            Xoá
                                         </button>
                                     </form>
-                                    @endif
                                     @endcan
                                 </div>
                             </td>

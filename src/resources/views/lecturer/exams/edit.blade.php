@@ -204,10 +204,23 @@
 
                                 <div class="grid grid-cols-2 gap-4 {{ $exam->canEditStructure() ? '' : 'opacity-50 pointer-events-none' }}">
                                     <div>
+                                        <label for="subject_id" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Môn học <span class="text-[#DC2626]">*</span></label>
+                                        <select id="subject_id" name="subject_id" class="ca-select @error('subject_id') error @enderror" required onchange="onSubjectChange()">
+                                            <option value="">-- Chọn môn học --</option>
+                                            @foreach($subjects as $subject)
+                                                <option value="{{ $subject->id }}" {{ old('subject_id', $exam->subject_id) == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('subject_id') <span class="text-error">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
                                         <label for="duration_minutes" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Thời gian (Phút) <span class="text-[#DC2626]">*</span></label>
                                         <input id="duration_minutes" type="number" name="duration_minutes" value="{{ old('duration_minutes', $exam->duration_minutes) }}" required class="ca-input @error('duration_minutes') error @enderror" />
                                         @error('duration_minutes') <span class="text-error">{{ $message }}</span> @enderror
                                     </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-4 {{ $exam->canEditStructure() ? '' : 'opacity-50 pointer-events-none' }}">
                                     <div>
                                         <label for="exam_type" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Loại đề thi <span class="text-[#DC2626]">*</span></label>
                                         @php $selectedExamType = old('exam_type', $exam->exam_type?->value); @endphp
@@ -216,19 +229,6 @@
                                             <option value="practice" {{ $selectedExamType === 'practice' ? 'selected' : '' }}>Luyện tập</option>
                                         </select>
                                         @error('exam_type') <span class="text-error">{{ $message }}</span> @enderror
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-4 {{ $exam->canEditStructure() ? '' : 'opacity-50 pointer-events-none' }}">
-                                    <div>
-                                        <label for="start_time" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Mở đề (Tuỳ chọn)</label>
-                                        <input id="start_time" type="datetime-local" name="start_time" value="{{ old('start_time', $exam->start_time?->format('Y-m-d\TH:i')) }}" class="ca-input @error('start_time') error @enderror" />
-                                        @error('start_time') <span class="text-error">{{ $message }}</span> @enderror
-                                    </div>
-                                    <div>
-                                        <label for="end_time" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Đóng đề (Tuỳ chọn)</label>
-                                        <input id="end_time" type="datetime-local" name="end_time" value="{{ old('end_time', $exam->end_time?->format('Y-m-d\TH:i')) }}" class="ca-input @error('end_time') error @enderror" />
-                                        @error('end_time') <span class="text-error">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             </div>
@@ -294,7 +294,7 @@
                                     </thead>
                                     <tbody>
                                         @foreach($questions as $question)
-                                        <tr class="group cursor-pointer hover:bg-[#F8FAFD] transition-colors" @if($exam->canEditStructure()) onclick="toggleCheckbox(this, event)" @endif>
+                                        <tr class="question-row group cursor-pointer hover:bg-[#F8FAFD] transition-colors" data-subject="{{ $question->subject_id }}" @if($exam->canEditStructure()) onclick="toggleCheckbox(this, event)" @endif>
                                             <td class="text-center w-12">
                                                 <input type="checkbox" name="question_ids[]" value="{{ $question->id }}"
                                                     class="question-checkbox rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#E6F1FB] w-4 h-4 cursor-pointer"
@@ -365,7 +365,32 @@
 
                     updateCounter();
                     checkSelectAllState();
+                    onSubjectChange(); // Filter questions on initial load
                 });
+
+                function onSubjectChange() {
+                    const subjectId = document.getElementById('subject_id')?.value;
+                    let visibleCount = 0;
+                    document.querySelectorAll('.question-row').forEach(row => {
+                        if(!subjectId || row.dataset.subject == subjectId) {
+                            row.style.display = '';
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none';
+                            const cb = row.querySelector('.question-checkbox');
+                            if(cb && !cb.disabled) cb.checked = false; // uncheck if hidden and not disabled
+                        }
+                    });
+                    
+                    updateCounter();
+                    checkSelectAllState();
+                    
+                    // Update the denominator
+                    const selectedCountEl = document.getElementById('selectedCount');
+                    if (selectedCountEl) {
+                        selectedCountEl.parentElement.innerHTML = `Đã chọn: <span id="selectedCount">${document.querySelectorAll('.question-checkbox:checked').length}</span>/${visibleCount}`;
+                    }
+                }
             </script>
         </div>
     </div>

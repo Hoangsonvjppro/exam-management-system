@@ -6,6 +6,9 @@
                     <h2 class="text-[22px] font-bold text-[#1A3A6B] mb-1">Quản lý Đề Thi</h2>
                     <p class="text-[13px] text-[#6B7C99]">Tất cả đề thi của bạn.</p>
                 </div>
+                <a href="{{ route('lecturer.exams.create') }}" class="inline-flex items-center px-4 py-2 bg-[#1A3A6B] border border-transparent rounded-[8px] font-medium text-white text-[13px] hover:bg-[#142d54] transition">
+                    + Thêm đề thi mới
+                </a>
             </div>
 
             @if(session('success'))
@@ -21,14 +24,14 @@
                         </svg>
                     </div>
                     <h4 class="text-[15px] font-bold text-[#1A3A6B] mb-2">Chưa có đề thi nào</h4>
-                    <p class="text-[13px] text-[#6B7C99]">Tạo đề thi từ trang lớp học phần.</p>
+                    <p class="text-[13px] text-[#6B7C99]">Nhấn "Tạo bài kiểm tra" để thêm mới.</p>
                 </div>
                 @else
                 <table class="w-full text-[13px]">
                     <thead>
                         <tr class="bg-[#F4F7FC] text-[#1A3A6B]">
                             <th class="px-5 py-3 text-left font-semibold">Tên đề thi</th>
-                            <th class="px-5 py-3 text-left font-semibold">Lớp học phần</th>
+                            <th class="px-5 py-3 text-left font-semibold">Môn học</th>
                             <th class="px-5 py-3 text-center font-semibold">Loại</th>
                             <th class="px-5 py-3 text-center font-semibold">Thời gian</th>
                             <th class="px-5 py-3 text-center font-semibold">Trạng thái</th>
@@ -42,7 +45,7 @@
                         @endphp
                         <tr class="border-t border-[#EBF2FA] hover:bg-[#F8FAFD] transition-colors">
                             <td class="px-5 py-3.5 font-medium text-[#1A3A6B]">{{ $exam->title }}</td>
-                            <td class="px-5 py-3.5 text-[#6B7C99]">{{ $exam->courseSection->name ?? '—' }}</td>
+                            <td class="px-5 py-3.5 text-[#6B7C99]">{{ $exam->subject->code ?? '—' }} - {{ $exam->subject->name ?? '' }}</td>
                             <td class="px-5 py-3.5 text-center">
                                 <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full {{ $exam->exam_type === \App\Enums\ExamType::Official ? 'bg-[#EBF2FA] text-[#1A3A6B]' : 'bg-[#FEF3C7] text-[#92400E]' }}">
                                     {{ $exam->exam_type === \App\Enums\ExamType::Official ? 'Chính thức' : 'Luyện tập' }}

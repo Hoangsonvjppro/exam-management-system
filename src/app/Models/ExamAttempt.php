@@ -13,7 +13,7 @@ class ExamAttempt extends Model
     // Đã chuyển STATUS_IN_PROGRESS, STATUS_COMPLETED sang Enum
 
     protected $fillable = [
-        'exam_id',
+        'exam_schedule_id',
         'user_id',
         'attempt_number',
         'started_at',
@@ -52,9 +52,9 @@ class ExamAttempt extends Model
         return $query->where('user_id', $userId);
     }
 
-    public function scopeForExam(Builder $query, int $examId): Builder
+    public function scopeForSchedule(Builder $query, int $scheduleId): Builder
     {
-        return $query->where('exam_id', $examId);
+        return $query->where('exam_schedule_id', $scheduleId);
     }
 
     public function scopeLatestAttempt(Builder $query): Builder
@@ -64,9 +64,9 @@ class ExamAttempt extends Model
 
     // ── Relationships ─────────────────────────────────────────
 
-    public function exam(): BelongsTo
+    public function schedule(): BelongsTo
     {
-        return $this->belongsTo(Exam::class);
+        return $this->belongsTo(ExamSchedule::class, 'exam_schedule_id');
     }
 
     public function user(): BelongsTo

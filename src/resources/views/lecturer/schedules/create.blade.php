@@ -3,16 +3,38 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h2 class="text-[22px] font-bold text-[#1A3A6B] mb-1">Tạo Lịch Thi</h2>
-                    <p class="text-[13px] text-[#6B7C99]">Đề thi: {{ $exam->title }}</p>
+                    <h2 class="text-[22px] font-bold text-[#1A3A6B] mb-1">Tạo Lịch Thi Mới</h2>
+                    <p class="text-[13px] text-[#6B7C99]">Thiết lập ca thi cho một đề thi đã tạo.</p>
                 </div>
                 <a href="{{ route('lecturer.schedules.index') }}" class="inline-flex items-center gap-2 text-[13px] text-[#185FA5] hover:underline">← Quay lại</a>
             </div>
 
             <div class="bg-white rounded-[10px] border border-[#D6E2F0] p-6 max-w-2xl">
-                <form method="POST" action="{{ route('lecturer.exams.schedules.store', $exam->id) }}">
+                <form method="POST" action="{{ route('lecturer.schedules.store') }}">
                     @csrf
                     <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Đề thi <span class="text-[#DC2626]">*</span></label>
+                                <select name="exam_id" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
+                                    <option value="">-- Chọn đề thi --</option>
+                                    @foreach($exams as $ex)
+                                        <option value="{{ $ex->id }}" {{ old('exam_id') == $ex->id ? 'selected' : '' }}>{{ $ex->title }}</option>
+                                    @endforeach
+                                </select>
+                                @error('exam_id') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Lớp học phần <span class="text-[#DC2626]">*</span></label>
+                                <select name="course_section_id" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
+                                    <option value="">-- Chọn lớp học --</option>
+                                    @foreach($courseSections as $cs)
+                                        <option value="{{ $cs->id }}" {{ old('course_section_id') == $cs->id ? 'selected' : '' }}>{{ $cs->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('course_section_id') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
                         <div class="grid grid-cols-1 gap-4">
                             <div>
                                 <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày thi <span class="text-[#DC2626]">*</span></label>

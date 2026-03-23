@@ -24,6 +24,7 @@ class ExamSchedule extends Model
 {
     protected $fillable = [
         'exam_id',
+        'course_section_id',
         'exam_date',
         'start_time',
         'end_time',
@@ -42,6 +43,16 @@ class ExamSchedule extends Model
     public function exam(): BelongsTo
     {
         return $this->belongsTo(Exam::class);
+    }
+
+    public function courseSection(): BelongsTo
+    {
+        return $this->belongsTo(CourseSection::class);
+    }
+
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(ExamAttempt::class);
     }
 
     public function scheduleStudents(): HasMany
@@ -74,5 +85,22 @@ class ExamSchedule extends Model
     public function getAssignedCountAttribute(): int
     {
         return $this->scheduleStudents()->count();
+    }
+
+    /**
+     * Tính deadline thực tế cho một attempt trong ca thi này.
+     * Deadline = min(started_at + exam->duration, schedule.end_time)
+     */
+    public function getDeadlineFor(ExamAttempt $attempt): \Carbon\Carbon
+    {
+        $durationMinutes = $this->exam->duration_minutes ?? 0;
+        $durationEnd = $attempt->started_at->copy()->addMinutes($durationMinutes);
+
+        if ($this->exam_date && $this->end_time) {
+            $scheduleEnd = \Carbon\Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->end_time);
+            return $durationEnd->lt($scheduleEnd) ? $durationEnd : $scheduleEnd;
+        }
+
+        return $durationEnd;
     }
 }

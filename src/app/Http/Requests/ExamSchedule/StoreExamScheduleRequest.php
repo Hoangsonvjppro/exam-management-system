@@ -3,6 +3,8 @@
 namespace App\Http\Requests\ExamSchedule;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\Exam;
+use Carbon\Carbon;
 
 class StoreExamScheduleRequest extends FormRequest
 {
@@ -14,9 +16,29 @@ class StoreExamScheduleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'exam_date'     => 'required|date|after_or_equal:today',
-            'start_time'    => 'required|date_format:H:i',
-            'end_time'      => 'required|date_format:H:i|after:start_time',
+            'exam_id'           => 'required|exists:exams,id',
+            'course_section_id' => 'required|exists:course_sections,id',
+            'exam_date'         => 'required|date|after_or_equal:today',
+            'start_time'        => 'required|date_format:H:i',
+            'end_time'          => [
+                'required',
+                'date_format:H:i',
+                'after:start_time',
+                function ($attribute, $value, $fail) {
+                    $examId = $this->input('exam_id');
+                    $startTime = $this->input('start_time');
+                    if ($examId && $startTime) {
+                        $exam = Exam::find($examId);
+                        if ($exam) {
+                            $start = Carbon::createFromFormat('H:i', $startTime);
+                            $end = Carbon::createFromFormat('H:i', $value);
+                            if ($end->diffInMinutes($start) < $exam->duration_minutes) {
+                                $fail("Thời gian ca thi phải lớn hơn hoặc bằng thời gian làm bài của đề thi ({$exam->duration_minutes} phút).");
+                            }
+                        }
+                    }
+                },
+            ],
             'max_students'  => 'nullable|integer|min:1',
             'notes'         => 'nullable|string|max:1000',
         ];
@@ -25,6 +47,10 @@ class StoreExamScheduleRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'exam_id.required'          => 'Đề thi là bắt buộc.',
+            'exam_id.exists'            => 'Đề thi không tồn tại.',
+            'course_section_id.required'=> 'Lớp học phần là bắt buộc.',
+            'course_section_id.exists'  => 'Lớp học phần không tồn tại.',
             'exam_date.required'        => 'Ngày thi là bắt buộc.',
             'exam_date.after_or_equal'  => 'Ngày thi phải từ hôm nay trở đi.',
             'start_time.required'       => 'Giờ bắt đầu là bắt buộc.',

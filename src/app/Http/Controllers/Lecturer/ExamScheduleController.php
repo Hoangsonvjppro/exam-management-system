@@ -15,7 +15,10 @@ use Illuminate\View\View;
 
 class ExamScheduleController extends Controller
 {
-    public function __construct(private readonly ExamScheduleService $scheduleService) {}
+    public function __construct(
+        private readonly ExamScheduleService $scheduleService,
+        private readonly \App\Services\NotificationService $notificationService
+    ) {}
 
     /**
      * Danh sách lịch thi của giảng viên.
@@ -28,23 +31,32 @@ class ExamScheduleController extends Controller
     }
 
     /**
-     * Form tạo lịch thi cho 1 đề thi.
+     * Form tạo lịch thi.
      */
-    public function create(Exam $exam): View
+    public function create(): View
     {
-        Gate::authorize('manageLecturer', $exam);
+        $exams = \App\Models\Exam::where('created_by', Auth::id())->get();
+        $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->get();
 
-        return view('lecturer.schedules.create', compact('exam'));
+        return view('lecturer.schedules.create', compact('exams', 'courseSections'));
     }
 
     /**
      * Lưu lịch thi mới.
      */
-    public function store(StoreExamScheduleRequest $request, Exam $exam): RedirectResponse
+    public function store(StoreExamScheduleRequest $request): RedirectResponse
     {
+        $exam = Exam::findOrFail($request->validated('exam_id'));
         Gate::authorize('manageLecturer', $exam);
 
-        $this->scheduleService->createSchedule($exam, $request->validated());
+        $schedule = $this->scheduleService->createSchedule($exam, $request->validated());
+
+        if ($schedule->courseSection) {
+            $this->notificationService->sendToSection($schedule->courseSection, [
+                'title' => 'Lịch thi mới',
+                'message' => 'Bạn có một lịch thi mới cho môn học ' . ($schedule->exam->subject->name ?? 'Không xác định'),
+            ]);
+        }
 
         return redirect()->route('lecturer.schedules.index')
             ->with('success', 'Lịch thi đã được tạo thành công.');
@@ -57,7 +69,10 @@ class ExamScheduleController extends Controller
     {
         Gate::authorize('manageLecturer', $schedule->exam);
 
-        return view('lecturer.schedules.edit', compact('schedule'));
+        $exams = \App\Models\Exam::where('created_by', Auth::id())->get();
+        $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->get();
+
+        return view('lecturer.schedules.edit', compact('schedule', 'exams', 'courseSections'));
     }
 
     /**

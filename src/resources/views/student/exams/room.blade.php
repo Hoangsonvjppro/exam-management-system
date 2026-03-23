@@ -562,7 +562,7 @@ $totalQuestions = count($questions);
         <div class="col-center">
             <div class="ca-card ca-card-accent" style="min-height: 60vh; display: flex; flex-direction: column; position: relative;">
 
-                <form id="exam-form" action="{{ route('student.exams.submit', $exam->id) }}" method="POST" style="flex: 1; display: flex; flex-direction: column;">
+                <form id="exam-form" action="{{ route('student.exams.submit', $schedule->id) }}" method="POST" style="flex: 1; display: flex; flex-direction: column;">
                     @csrf
 
                     @foreach($questions as $index => $question)
@@ -662,7 +662,7 @@ $totalQuestions = count($questions);
         let currentQuestionIndex = 0;
         let baseFontSize = 15;
 
-        const saveUrl = "{{ route('student.exams.save-answer', $exam->id) }}";
+        const saveUrl = "{{ route('student.exams.save-answer', $schedule->id) }}";
         const csrfToken = "{{ csrf_token() }}";
         const toastEl = document.getElementById('save-toast');
         const toastMsg = document.getElementById('toast-msg');

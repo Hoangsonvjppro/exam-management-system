@@ -101,12 +101,12 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         // Danh sách lớp học phần của sinh viên
         Route::get('/classes', [StudentPageController::class, 'classes'])->name('classes.index');
 
-        Route::get('/exams/{exam}', [\App\Http\Controllers\Student\ExamController::class, 'show'])->name('exams.show');
-        Route::post('/exams/{exam}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('exams.start');
-        Route::get('/exams/{exam}/room', [\App\Http\Controllers\Student\ExamController::class, 'room'])->name('exams.room');
-        Route::post('/exams/{exam}/save-answer', [\App\Http\Controllers\Student\ExamController::class, 'saveAnswer'])->name('exams.save-answer');
-        Route::post('/exams/{exam}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('exams.submit');
-        Route::get('/exams/{exam}/result', [\App\Http\Controllers\Student\ExamController::class, 'result'])->name('exams.result');
+        Route::get('/schedules/{schedule}', [\App\Http\Controllers\Student\ExamController::class, 'show'])->name('exams.show');
+        Route::post('/schedules/{schedule}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('exams.start');
+        Route::get('/schedules/{schedule}/room', [\App\Http\Controllers\Student\ExamController::class, 'room'])->name('exams.room');
+        Route::post('/schedules/{schedule}/save-answer', [\App\Http\Controllers\Student\ExamController::class, 'saveAnswer'])->name('exams.save-answer');
+        Route::post('/schedules/{schedule}/submit', [\App\Http\Controllers\Student\ExamController::class, 'submit'])->name('exams.submit');
+        Route::get('/schedules/{schedule}/result', [\App\Http\Controllers\Student\ExamController::class, 'result'])->name('exams.result');
         // Routes cho Sinh viên (đã bỏ prefix và name trùng lặp)
         Route::get('/exams', [\App\Http\Controllers\Student\ExamController::class, 'index'])->name('exams.index');
 
@@ -152,13 +152,13 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
 
             // ── Quản lý Đề thi (Exams) ─────────────────────────────
 
-            // Hiển thị form tạo đề thi mới cho một lớp học
-            Route::get('/course-sections/{courseSection}/exams/create', [ExamController::class, 'create'])
-                ->name('course-sections.exams.create');
+            // Hiển thị form tạo đề thi mới
+            Route::get('/exams/create', [ExamController::class, 'create'])
+                ->name('exams.create');
 
             // Lưu thông tin chung của đề thi vừa tạo
-            Route::post('/course-sections/{courseSection}/exams', [ExamController::class, 'store'])
-                ->name('course-sections.exams.store');
+            Route::post('/exams', [ExamController::class, 'store'])
+                ->name('exams.store');
 
             // CRUD & Lifecycle cho Exams
             Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
@@ -177,8 +177,8 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
 
             // ── Lịch thi (Exam Schedules) ─────────────────────────
             Route::get('/schedules', [ExamScheduleController::class, 'index'])->name('schedules.index');
-            Route::get('/exams/{exam}/schedules/create', [ExamScheduleController::class, 'create'])->name('exams.schedules.create');
-            Route::post('/exams/{exam}/schedules', [ExamScheduleController::class, 'store'])->name('exams.schedules.store');
+            Route::get('/schedules/create', [ExamScheduleController::class, 'create'])->name('schedules.create');
+            Route::post('/schedules', [ExamScheduleController::class, 'store'])->name('schedules.store');
             Route::get('/schedules/{schedule}/edit', [ExamScheduleController::class, 'edit'])->name('schedules.edit');
             Route::put('/schedules/{schedule}', [ExamScheduleController::class, 'update'])->name('schedules.update');
             Route::delete('/schedules/{schedule}', [ExamScheduleController::class, 'destroy'])->name('schedules.destroy');

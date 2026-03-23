@@ -95,9 +95,9 @@ class CourseSection extends Model
         return $this->students()->wherePivot('status', 'enrolled')->count();
     }
 
-    public function exams(): HasMany
+    public function examSchedules(): HasMany
     {
-        return $this->hasMany(Exam::class);
+        return $this->hasMany(ExamSchedule::class);
     }
 
     // ── Code Generation ────────────────────────────────────────
