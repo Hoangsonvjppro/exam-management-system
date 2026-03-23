@@ -37,7 +37,13 @@
             <div class="flex flex-wrap justify-center gap-4 md:gap-8 mb-8">
                 <div class="text-center">
                     <span class="block text-[11px] font-medium text-text-muted mb-1">Thời gian làm bài</span>
-                    <span class="text-[18px] font-bold text-navy-900">{{ $exam->duration_minutes }} Phút</span>
+                    <span class="text-[18px] font-bold text-navy-900">
+                        @if($exam->duration_minutes >= 60)
+                            {{ floor($exam->duration_minutes / 60) }} giờ {{ $exam->duration_minutes % 60 }} phút
+                        @else
+                            {{ $exam->duration_minutes }} phút
+                        @endif
+                    </span>
                 </div>
                 <div class="text-center">
                     <span class="block text-[11px] font-medium text-text-muted mb-1">Số câu hỏi</span>

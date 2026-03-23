@@ -25,7 +25,13 @@
                         </div>
                         <p class="text-[12px] text-[#6B7C99] mb-2">{{ $schedule->courseSection->name ?? '—' }}</p>
                         <div class="flex items-center gap-3 text-[11.5px] text-[#6B7C99]">
-                            <span>⏱ {{ $schedule->exam->duration_minutes }} phút</span>
+                            <span>⏱ 
+                                @if($schedule->exam->duration_minutes >= 60)
+                                    {{ floor($schedule->exam->duration_minutes / 60) }} giờ {{ $schedule->exam->duration_minutes % 60 }} phút
+                                @else
+                                    {{ $schedule->exam->duration_minutes }} phút
+                                @endif
+                            </span>
                             @if($schedule->end_time)
                             <span>📅 Hết hạn: {{ $schedule->end_time }}</span>
                             @endif
@@ -51,7 +57,13 @@
                         </div>
                         <p class="text-[12px] text-[#6B7C99] mb-2">{{ $schedule->courseSection->name ?? '—' }}</p>
                         <div class="flex items-center gap-3 text-[11.5px] text-[#6B7C99]">
-                            <span>⏱ {{ $schedule->exam->duration_minutes }} phút</span>
+                            <span>⏱ 
+                                @if($schedule->exam->duration_minutes >= 60)
+                                    {{ floor($schedule->exam->duration_minutes / 60) }} giờ {{ $schedule->exam->duration_minutes % 60 }} phút
+                                @else
+                                    {{ $schedule->exam->duration_minutes }} phút
+                                @endif
+                            </span>
                             @if($schedule->start_time)
                             <span>📅 Mở: {{ $schedule->start_time}}</span>
                             @endif

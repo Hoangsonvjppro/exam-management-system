@@ -97,12 +97,23 @@
                 <div>
                     <p class="text-[11px] font-medium text-text-muted mb-0.5">Thời gian làm bài</p>
                     <p class="text-[13px] font-semibold text-navy-900">
-                        {{ $attempt->started_at->diffInMinutes($attempt->completed_at) }} phút
+                        @php
+                            $duration = $attempt->started_at->diff($attempt->completed_at);
+                            $h = $duration->h + ($duration->days * 24);
+                            $m = $duration->i;
+                        @endphp
+                        {{ $h > 0 ? "{$h} giờ " : "" }}{{ $m }} phút
                     </p>
                 </div>
                 <div>
                     <p class="text-[11px] font-medium text-text-muted mb-0.5">Thời gian cho phép</p>
-                    <p class="text-[13px] font-semibold text-navy-900">{{ $exam->duration_minutes }} phút</p>
+                    <p class="text-[13px] font-semibold text-navy-900">
+                        @if($exam->duration_minutes >= 60)
+                            {{ floor($exam->duration_minutes / 60) }} giờ {{ $exam->duration_minutes % 60 }} phút
+                        @else
+                            {{ $exam->duration_minutes }} phút
+                        @endif
+                    </p>
                 </div>
             </div>
         </x-card>
