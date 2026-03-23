@@ -18,6 +18,7 @@ class IndexQuestionRequest extends FormRequest
             'sub-sel-ques' => ['nullable', 'string', 'exists:subjects,code'],
             'diff-sel-ques' => ['nullable', 'string', 'in:easy,medium,hard'],
             'chap-sel-ques' => ['nullable', 'integer', 'exists:chapters,id'],
+            'status-sel-ques' => ['nullable', 'string', 'in:approved,draft,hidden'],
         ];
     }
 }

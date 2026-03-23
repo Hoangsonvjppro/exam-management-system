@@ -20,20 +20,30 @@ class StoreExamScheduleRequest extends FormRequest
             'course_section_id' => 'required|exists:course_sections,id',
             'exam_date'         => 'required|date|after_or_equal:today',
             'start_time'        => 'required|date_format:H:i',
-            'end_time'          => [
+            'end_time' => [
                 'required',
                 'date_format:H:i',
                 'after:start_time',
                 function ($attribute, $value, $fail) {
                     $examId = $this->input('exam_id');
                     $startTime = $this->input('start_time');
+
                     if ($examId && $startTime) {
-                        $exam = Exam::find($examId);
+                        $exam = \App\Models\Exam::find($examId);
                         if ($exam) {
-                            $start = Carbon::createFromFormat('H:i', $startTime);
-                            $end = Carbon::createFromFormat('H:i', $value);
-                            if ($end->diffInMinutes($start) < $exam->duration_minutes) {
-                                $fail("Thời gian ca thi phải lớn hơn hoặc bằng thời gian làm bài của đề thi ({$exam->duration_minutes} phút).");
+                            try {
+                                $start = \Carbon\Carbon::createFromFormat('H:i', $startTime)->startOfMinute();
+                                $end = \Carbon\Carbon::createFromFormat('H:i', $value)->startOfMinute();
+
+                                // Tính khoảng cách phút
+                                $diff = $start->diffInMinutes($end);
+
+                                if ($diff < $exam->duration_minutes) {
+                                    // 🔍 IN THẲNG DATA THỰC TẾ RA LỖI ĐỂ BẮT BỆNH
+                                    $fail("🔍 Server nhận được: Bắt đầu [{$startTime}], Kết thúc [{$value}] => Cách nhau có {$diff} phút. Yêu cầu tối thiểu {$exam->duration_minutes} phút. Hãy check lại code HTML!");
+                                }
+                            } catch (\Exception $e) {
+                                // Bỏ qua nếu lỗi format, rule date_format ở trên sẽ tự chặn
                             }
                         }
                     }

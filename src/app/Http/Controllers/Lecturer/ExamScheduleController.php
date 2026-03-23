@@ -41,7 +41,7 @@ class ExamScheduleController extends Controller
         return view('lecturer.schedules.create', compact('exams', 'courseSections'));
     }
 
-    /**
+    /*
      * Lưu lịch thi mới.
      */
     public function store(StoreExamScheduleRequest $request): RedirectResponse

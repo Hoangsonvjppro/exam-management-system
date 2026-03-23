@@ -5,13 +5,13 @@
          <div>
             <nav class="flex text-[10px] font-bold tracking-widest text-secondary uppercase mb-2 gap-2">
 
-               <a href="#" class="text-primary">Dashboard</a>
+               <a href="{{ route('lecturer.dashboard') }}" class="text-primary">Dashboard</a>
                <span>/</span>
-               <a href="#" class="bg-blue-500">Questions</a>
+               <a href="{{ route('lecturer.questions.index') }}" class="bg-blue-500">Questions</a>
 
             </nav>
-            <h2 class="text-3xl font-extrabold text-primary font-headline tracking-tight"> Quan ly cau hoi</h3>
-               <p class="text-on-surface-variant mt-1"> Danh Sach cac cau hoi co trong he thong </p>
+            <h2 class="text-3xl font-extrabold text-primary font-headline tracking-tight">Quan ly cau hoi</h2>
+            <p class="text-on-surface-variant mt-1">Danh Sach cac cau hoi co trong he thong</p>
          </div>
          <div class="flex gap-3">
             <button
@@ -26,47 +26,45 @@
          </div>
       </div>
 
-
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-         <form action="" method="GET">
+      <form action="{{ route('lecturer.questions.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
          <div class="bg-white p-4 rounded-xl flex flex-col gap-1">
             <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Môn học</span>
-            <select onchange="this.form.submit()" name ="sub-sel-ques" id = "sub-sel-ques"  class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
-               <option value = "">Tất cả môn học</option>
+            <select onchange="this.form.submit()" name="sub-sel-ques" id="sub-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
+               <option value="">Tất cả môn học</option>
                @foreach ($subjects as $sj)
-               <option value = "{{ $sj ->code }}"{{ request()->input('sub-sel-ques') == $sj->code ? ' selected' : '' }}>{{ $sj->name }}</option>
-               
+               <option value="{{ $sj->code }}" {{ request()->input('sub-sel-ques') == $sj->code ? ' selected' : '' }}>{{ $sj->name }}</option>
                @endforeach
             </select>
          </div>
          <div class="bg-white p-4 rounded-xl flex flex-col gap-1">
             <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Mức độ</span>
-            <select name="diff-sel-ques" id="diff-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
-               <option value = "">Tất cả mức độ</option>
-               <option value="easy">Dễ</option>
-               <option value="medium">Trung bình</option>
-               <option value="hard">Khó</option>
+            <select onchange="this.form.submit()" name="diff-sel-ques" id="diff-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
+               <option value="">Tất cả mức độ</option>
+               <option value="easy" {{ request()->input('diff-sel-ques') === 'easy' ? ' selected' : '' }}>Dễ</option>
+               <option value="medium" {{ request()->input('diff-sel-ques') === 'medium' ? ' selected' : '' }}>Trung bình</option>
+               <option value="hard" {{ request()->input('diff-sel-ques') === 'hard' ? ' selected' : '' }}>Khó</option>
             </select>
          </div>
          <div class="bg-white p-4 rounded-xl flex flex-col gap-1">
             <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Chương</span>
-            <select name="chap-sel-ques" id ="chap-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
-               <option value = "">Tất cả chương</option>
+            <select onchange="this.form.submit()" name="chap-sel-ques" id="chap-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
+               <option value="">Tất cả chương</option>
                @foreach ($chapters as $chap)
-               <option value = "{{ $chap ->id }}" >{{ $chap->name }}</option>
+               <option value="{{ $chap->id }}" {{ (string) request()->input('chap-sel-ques') === (string) $chap->id ? ' selected' : '' }}>{{ $chap->name }}</option>
                @endforeach
             </select>
          </div>
          <div class="bg-white p-4 rounded-xl flex flex-col gap-1">
             <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Trạng thái</span>
-            <select class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
-               <option>Đã duyệt</option>
-               <option>Chờ duyệt</option>
-               <option>Bản nháp</option>
+            <select onchange="this.form.submit()" name="status-sel-ques" id="status-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
+               <option value="">Tất cả trạng thái</option>
+               <option value="approved" {{ request()->input('status-sel-ques') === 'approved' ? ' selected' : '' }}>Đã duyệt</option>
+               <option value="draft" {{ request()->input('status-sel-ques') === 'draft' ? ' selected' : '' }}>Chờ duyệt</option>
+               <option value="hidden" {{ request()->input('status-sel-ques') === 'hidden' ? ' selected' : '' }}>Bản nháp</option>
             </select>
          </div>
-            </form>
-      </div>
+      </form>
+
       <!-- Questions Table Card -->
       <div class="bg-white rounded-2xl overflow-hidden">
          <div class="overflow-x-auto">
@@ -87,128 +85,62 @@
                   </tr>
                </thead>
                <tbody class="divide-y divide-surface-container-low">
-                  <!-- Row 1 -->
+                  @forelse ($questions as $question)
+                  @php
+                  $difficultyLabelMap = [
+                  'easy' => 'Dễ',
+                  'remember' => 'Dễ',
+                  'medium' => 'Trung bình',
+                  'understand' => 'Trung bình',
+                  'hard' => 'Khó',
+                  'apply' => 'Khó',
+                  'analyze' => 'Khó',
+                  ];
+
+                  $difficultyClassMap = [
+                  'easy' => 'bg-green-100 text-green-700',
+                  'remember' => 'bg-green-100 text-green-700',
+                  'medium' => 'bg-blue-100 text-blue-700',
+                  'understand' => 'bg-blue-100 text-blue-700',
+                  'hard' => 'bg-red-100 text-red-700',
+                  'apply' => 'bg-red-100 text-red-700',
+                  'analyze' => 'bg-red-100 text-red-700',
+                  ];
+
+                  $difficultyLabel = $difficultyLabelMap[$question->difficulty] ?? ucfirst((string) $question->difficulty);
+                  $difficultyClass = $difficultyClassMap[$question->difficulty] ?? 'bg-slate-100 text-slate-700';
+                  @endphp
+
                   <tr class="hover:bg-surface-container-low/30 transition-colors">
                      <td class="px-6 py-4 max-w-md">
-                        <p class="text-sm font-medium text-on-surface line-clamp-1">Cho hàm số f(x) = ax^3 + bx^2 + cx +
-                           d có đồ thị như hình vẽ bên...</p>
-                        <p class="text-[10px] text-secondary mt-1">ID: Q-8821 • Cập nhật: 2 giờ trước</p>
+                        <p class="text-sm font-medium text-on-surface line-clamp-1">{{ \Illuminate\Support\Str::limit(trim(strip_tags($question->content)), 110) }}</p>
+                        <p class="text-[10px] text-secondary mt-1">ID: Q-{{ $question->id }} • Cập nhật: {{ $question->updated_at?->diffForHumans() ?? 'N/A' }}</p>
                      </td>
                      <td class="px-6 py-4">
-                        <span class="text-sm font-semibold text-primary">Toán học 12</span>
+                        <span class="text-sm font-semibold text-primary">{{ $question->subject?->name ?? 'N/A' }}</span>
                      </td>
                      <td class="px-6 py-4">
-                        <span class="text-sm text-secondary">Hàm số</span>
+                        <span class="text-sm text-secondary">{{ $question->chapter?->name ?? 'Chưa gán chương' }}</span>
                      </td>
                      <td class="px-6 py-4">
-                        <span
-                           class="px-3 bg-red-100 py-1 bg-error-container text-on-error-container text-[10px] font-bold rounded-full uppercase">Khó</span>
+                        <span class="px-3 py-1 text-[10px] font-bold rounded-full uppercase {{ $difficultyClass }}">{{ $difficultyLabel }}</span>
                      </td>
                      <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-2">
-                           <button
-                              class="p-2 text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-all">
+                           <button class="p-2 text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-all" type="button">
                               <span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
                            </button>
-                           <button
-                              class="p-2 text-secondary hover:text-error hover:bg-error-container/20 rounded-lg transition-all">
+                           <button class="p-2 text-secondary hover:text-error hover:bg-error-container/20 rounded-lg transition-all" type="button">
                               <span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
                            </button>
                         </div>
                      </td>
                   </tr>
-                  <!-- Row 2 -->
-                  <tr class="hover:bg-surface-container-low/30 transition-colors">
-                     <td class="px-6 py-4 max-w-md">
-                        <p class="text-sm font-medium text-on-surface line-clamp-1">Định luật bảo toàn cơ năng áp dụng
-                           trong trường hợp nào sau đây?</p>
-                        <p class="text-[10px] text-secondary mt-1">ID: Q-7712 • Cập nhật: 5 giờ trước</p>
-                     </td>
-                     <td class="px-6 py-4">
-                        <span class="text-sm font-semibold text-primary">Vật lý 10</span>
-                     </td>
-                     <td class="px-6 py-4">
-                        <span class="text-sm text-secondary">Cơ học</span>
-                     </td>
-                     <td class="px-6 py-4">
-                        <span
-                           class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full uppercase">Dễ</span>
-                     </td>
-                     <td class="px-6 py-4 text-right">
-                        <div class="flex justify-end gap-2">
-                           <button
-                              class="p-2 text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-all">
-                              <span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
-                           </button>
-                           <button
-                              class="p-2 text-secondary hover:text-error hover:bg-error-container/20 rounded-lg transition-all">
-                              <span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
-                           </button>
-                        </div>
-                     </td>
+                  @empty
+                  <tr>
+                     <td colspan="5" class="px-6 py-10 text-center text-secondary">Chưa có câu hỏi nào khớp bộ lọc hiện tại.</td>
                   </tr>
-                  <!-- Row 3 -->
-                  <tr class="hover:bg-surface-container-low/30 transition-colors">
-                     <td class="px-6 py-4 max-w-md">
-                        <p class="text-sm font-medium text-on-surface line-clamp-1">Tính pH của dung dịch chứa hỗn hợp
-                           HCl 0.1M và H2SO4 0.05M.</p>
-                        <p class="text-[10px] text-secondary mt-1">ID: Q-6543 • Cập nhật: 1 ngày trước</p>
-                     </td>
-                     <td class="px-6 py-4">
-                        <span class="text-sm font-semibold text-primary">Hóa học 11</span>
-                     </td>
-                     <td class="px-6 py-4">
-                        <span class="text-sm text-secondary">Sự điện li</span>
-                     </td>
-                     <td class="px-6 py-4">
-                        <span
-                           class="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full uppercase">Trung
-                           bình</span>
-                     </td>
-                     <td class="px-6 py-4 text-right">
-                        <div class="flex justify-end gap-2">
-                           <button
-                              class="p-2 text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-all">
-                              <span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
-                           </button>
-                           <button
-                              class="p-2 text-secondary hover:text-error hover:bg-error-container/20 rounded-lg transition-all">
-                              <span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
-                           </button>
-                        </div>
-                     </td>
-                  </tr>
-                  <!-- Row 4 -->
-                  <tr class="hover:bg-surface-container-low/30 transition-colors">
-                     <td class="px-6 py-4 max-w-md">
-                        <p class="text-sm font-medium text-on-surface line-clamp-1">Tìm giá trị nhỏ nhất của biểu thức P
-                           = x^2 + y^2 - 2x - 4y + 5.</p>
-                        <p class="text-[10px] text-secondary mt-1">ID: Q-5432 • Cập nhật: 2 ngày trước</p>
-                     </td>
-                     <td class="px-6 py-4">
-                        <span class="text-sm font-semibold text-primary">Toán học 10</span>
-                     </td>
-                     <td class="px-6 py-4">
-                        <span class="text-sm text-secondary">Đại số</span>
-                     </td>
-                     <td class="px-6 py-4">
-                        <span
-                           class="px-3 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full uppercase">Trung
-                           bình</span>
-                     </td>
-                     <td class="px-6 py-4 text-right">
-                        <div class="flex justify-end gap-2">
-                           <button
-                              class="p-2 text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-all">
-                              <span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
-                           </button>
-                           <button
-                              class="p-2 text-secondary hover:text-error hover:bg-error-container/20 rounded-lg transition-all">
-                              <span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
-                           </button>
-                        </div>
-                     </td>
-                  </tr>
+                  @endforelse
                </tbody>
             </table>
          </div>
@@ -216,27 +148,42 @@
          <div
             class="px-6 py-5 bg-surface-container-lowest flex items-center justify-between border-t border-surface-container-low">
             <p class="text-sm text-secondary">
-               Hiển thị <span class="font-bold text-on-surface">1 - 10</span> trong số <span
-                  class="font-bold text-on-surface">1,240</span> câu hỏi
+               Hiển thị <span class="font-bold text-on-surface">{{ $questions->firstItem() ?? 0 }} - {{ $questions->lastItem() ?? 0 }}</span> trong số <span
+                  class="font-bold text-on-surface">{{ number_format($questions->total()) }}</span> câu hỏi
             </p>
             <div class="flex items-center gap-2">
-               <button
-                  class="w-10 h-10 flex items-center justify-center rounded-xl border border-surface-container-high text-secondary hover:bg-surface-container-low transition-all">
+               @if ($questions->onFirstPage())
+               <span class="w-10 h-10 flex items-center justify-center rounded-xl border border-surface-container-high text-secondary/50 cursor-not-allowed">
                   <span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
-               </button>
-               <button
-                  class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white font-bold shadow-md shadow-primary/20">1</button>
-               <button
-                  class="w-10 h-10 flex items-center justify-center rounded-xl text-secondary hover:bg-surface-container-low transition-all">2</button>
-               <button
-                  class="w-10 h-10 flex items-center justify-center rounded-xl text-secondary hover:bg-surface-container-low transition-all">3</button>
-               <span class="text-secondary px-1">...</span>
-               <button
-                  class="w-10 h-10 flex items-center justify-center rounded-xl text-secondary hover:bg-surface-container-low transition-all">124</button>
-               <button
-                  class="w-10 h-10 flex items-center justify-center rounded-xl border border-surface-container-high text-secondary hover:bg-surface-container-low transition-all">
-                  <span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
-               </button>
+               </span>
+               @else
+               <a href="{{ $questions->previousPageUrl() }}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-surface-container-high text-secondary hover:bg-surface-container-low transition-all">
+                  <span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+               </a>
+               @endif
+
+               @php
+               $startPage = max(1, $questions->currentPage() - 1);
+               $endPage = min($questions->lastPage(), $questions->currentPage() + 1);
+               @endphp
+
+               @for ($page = $startPage; $page <= $endPage; $page++)
+                  @if ($page===$questions->currentPage())
+                  <span class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white font-bold shadow-md shadow-primary/20">{{ $page }}</span>
+                  @else
+                  <a href="{{ $questions->url($page) }}" class="w-10 h-10 flex items-center justify-center rounded-xl text-secondary hover:bg-surface-container-low transition-all">{{ $page }}</a>
+                  @endif
+                  @endfor
+
+                  @if ($questions->hasMorePages())
+                  <a href="{{ $questions->nextPageUrl() }}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-surface-container-high text-secondary hover:bg-surface-container-low transition-all">
+                     <span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+                  </a>
+                  @else
+                  <span class="w-10 h-10 flex items-center justify-center rounded-xl border border-surface-container-high text-secondary/50 cursor-not-allowed">
+                     <span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+                  </span>
+                  @endif
             </div>
          </div>
       </div>
