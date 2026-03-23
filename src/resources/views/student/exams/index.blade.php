@@ -27,7 +27,7 @@
                         <div class="flex items-center gap-3 text-[11.5px] text-[#6B7C99]">
                             <span>⏱ {{ $schedule->exam->duration_minutes }} phút</span>
                             @if($schedule->end_time)
-                            <span>📅 Hết hạn: {{ $schedule->end_time->format('d/m H:i') }}</span>
+                            <span>📅 Hết hạn: {{ $schedule->end_time }}</span>
                             @endif
                         </div>
                     </a>
@@ -53,7 +53,7 @@
                         <div class="flex items-center gap-3 text-[11.5px] text-[#6B7C99]">
                             <span>⏱ {{ $schedule->exam->duration_minutes }} phút</span>
                             @if($schedule->start_time)
-                            <span>📅 Mở: {{ $schedule->start_time->format('d/m H:i') }}</span>
+                            <span>📅 Mở: {{ $schedule->start_time}}</span>
                             @endif
                         </div>
                     </div>

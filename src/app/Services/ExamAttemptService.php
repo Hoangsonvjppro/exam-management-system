@@ -25,28 +25,49 @@ class ExamAttemptService
         }
 
         DB::transaction(function () use ($attempt, $lastAnswers) {
-            $exam = $attempt->exam;
+            $schedule = $attempt->schedule;
+            if (!$schedule || !$schedule->exam) {
+                return;
+            }
+
+            $exam = $schedule->exam;
+
+            // Pre-load all questions in this exam to avoid N+1 queries in loops
+            $examQuestions = $exam->examQuestions()
+                ->get()
+                ->keyBy('question_id');
+            
+            $validQuestionIds = $examQuestions->keys()->all();
 
             // 1. Upsert đáp án cuối cùng từ payload submit (Medium #19)
             if ($lastAnswers) {
+                // Pre-load options to validate in one query
+                $optionIds = array_values($lastAnswers);
+                $validOptions = QuestionOption::whereIn('id', $optionIds)
+                    ->get()
+                    ->groupBy('question_id');
+
                 foreach ($lastAnswers as $questionId => $optionId) {
-                    // Chỉ upsert nếu option thuộc question và question thuộc exam
-                    $questionInExam = $exam->questions()
-                        ->where('questions.id', $questionId)
-                        ->exists();
+                    // Check if question belongs to the exam
+                    $qId = (int) $questionId;
+                    $optId = (int) $optionId;
 
-                    $optionValid = QuestionOption::where('id', $optionId)
-                        ->where('question_id', $questionId)
-                        ->exists();
+                    if (!in_array($qId, $validQuestionIds)) {
+                        continue;
+                    }
 
-                    if ($questionInExam && $optionValid) {
+                    // Check if option belongs to the question
+                    $questionOptions = $validOptions->get($qId);
+                    $isOptionValid = $questionOptions && $questionOptions->contains('id', $optId);
+
+                    if ($isOptionValid) {
                         StudentAnswer::updateOrCreate(
                             [
                                 'exam_attempt_id' => $attempt->id,
-                                'question_id' => $questionId,
+                                'question_id'     => $qId,
                             ],
                             [
-                                'question_option_id' => $optionId,
+                                'question_option_id' => $optId,
                             ]
                         );
                     }
@@ -60,11 +81,8 @@ class ExamAttemptService
             foreach ($answers as $answer) {
                 $isCorrect = $answer->option?->is_correct ?? false;
 
-                // Lấy điểm từ exam_questions (pivot) thay vì dùng questions()
-                $examQuestion = $exam->examQuestions()
-                    ->where('question_id', $answer->question_id)
-                    ->first();
-                $point = $examQuestion?->points ?? 1.00;
+                // Lấy điểm từ pre-loaded data examQuestions (pivot)
+                $point = $examQuestions->get($answer->question_id)?->points ?? 1.00;
 
                 $awardedPoint = $isCorrect ? $point : 0;
                 $totalScore += $awardedPoint;
@@ -77,7 +95,7 @@ class ExamAttemptService
 
             // 3. Cập nhật trạng thái attempt + submitted_answers_count
             $attempt->update([
-                'status'                  => \App\Enums\ExamAttemptStatus::Completed,
+                'status'                  => ExamAttemptStatus::Completed,
                 'completed_at'            => now(),
                 'total_score'             => $totalScore,
                 'submitted_answers_count' => $answers->count(),

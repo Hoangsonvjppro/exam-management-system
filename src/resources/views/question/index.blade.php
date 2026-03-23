@@ -14,17 +14,23 @@
             <p class="text-on-surface-variant mt-1">Danh Sach cac cau hoi co trong he thong</p>
          </div>
          <div class="flex gap-3">
-            <button
+            <a href="{{ route('lecturer.questions.export', request()->query()) }}"
                class="bg-white text-primary border border-surface-container-high px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover:bg-surface-bright transition-all">
                <span class="material-symbols-outlined text-sm" data-icon="file_download">file_download</span>
                Xuất Excel
-            </button>
-            <a href="#"
+            </a>
+            <a href="{{ route('lecturer.questions.create') }}"
                class="bg-white text-primary border border-surface-container-high px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover:bg-surface-bright transition-all"><span
                   class="material-symbols-outlined text-sm" data-icon="add">add</span>
                Thêm câu hỏi mới</a>
          </div>
       </div>
+
+      @if (session('status'))
+      <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+         {{ session('status') }}
+      </div>
+      @endif
 
       <form action="{{ route('lecturer.questions.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
          <div class="bg-white p-4 rounded-xl flex flex-col gap-1">
@@ -127,12 +133,16 @@
                      </td>
                      <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-2">
-                           <button class="p-2 text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-all" type="button">
+                           <a href="{{ route('lecturer.questions.edit', $question) }}" class="p-2 text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-all" type="button">
                               <span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
-                           </button>
-                           <button class="p-2 text-secondary hover:text-error hover:bg-error-container/20 rounded-lg transition-all" type="button">
-                              <span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
-                           </button>
+                           </a>
+                           <form method="POST" action="{{ route('lecturer.questions.destroy', $question) }}" onsubmit="return confirm('Bạn có chắc muốn xoá câu hỏi này không?')">
+                              @csrf
+                              @method('DELETE')
+                              <button class="p-2 text-secondary hover:text-error hover:bg-error-container/20 rounded-lg transition-all" type="submit">
+                                 <span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+                              </button>
+                           </form>
                         </div>
                      </td>
                   </tr>

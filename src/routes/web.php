@@ -159,6 +159,18 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             // Ngân hàng câu hỏi
             Route::get('/questions', [QuestionController::class, 'index'])
                 ->name('questions.index');
+            Route::get('/questions/export', [QuestionController::class, 'export'])
+                ->name('questions.export');
+            Route::get('/questions/create', [QuestionController::class, 'create'])
+                ->name('questions.create');
+            Route::post('/questions', [QuestionController::class, 'store'])
+                ->name('questions.store');
+            Route::get('/questions/{question}/edit', [QuestionController::class, 'edit'])
+                ->name('questions.edit');
+            Route::put('/questions/{question}', [QuestionController::class, 'update'])
+                ->name('questions.update');
+            Route::delete('/questions/{question}', [QuestionController::class, 'destroy'])
+                ->name('questions.destroy');
             Route::prefix('/questions/meta')->name('questions.meta.')->group(function () {
                 Route::get('/difficulties', [DifficultyController::class, 'index'])->name('difficulties.index');
                 Route::get('/types', [QuestionTypeController::class, 'index'])->name('types.index');
