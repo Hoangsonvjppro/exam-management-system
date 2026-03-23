@@ -16,7 +16,9 @@
                 @if($exams->isEmpty())
                 <div class="text-center py-16">
                     <div class="w-16 h-16 bg-[#F4F7FC] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#D6E2F0]">
-                        <svg class="w-8 h-8 text-[#6B7C99]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <svg class="w-8 h-8 text-[#6B7C99]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
                     </div>
                     <h4 class="text-[15px] font-bold text-[#1A3A6B] mb-2">Chưa có đề thi nào</h4>
                     <p class="text-[13px] text-[#6B7C99]">Tạo đề thi từ trang lớp học phần.</p>
@@ -35,18 +37,21 @@
                     </thead>
                     <tbody>
                         @foreach($exams as $exam)
+                        @php
+                        $examStatusValue = $exam->status?->value;
+                        @endphp
                         <tr class="border-t border-[#EBF2FA] hover:bg-[#F8FAFD] transition-colors">
                             <td class="px-5 py-3.5 font-medium text-[#1A3A6B]">{{ $exam->title }}</td>
                             <td class="px-5 py-3.5 text-[#6B7C99]">{{ $exam->courseSection->name ?? '—' }}</td>
                             <td class="px-5 py-3.5 text-center">
-                                <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full {{ $exam->exam_type === 'official' ? 'bg-[#EBF2FA] text-[#1A3A6B]' : 'bg-[#FEF3C7] text-[#92400E]' }}">
-                                    {{ $exam->exam_type === 'official' ? 'Chính thức' : 'Luyện tập' }}
+                                <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full {{ $exam->exam_type === \App\Enums\ExamType::Official ? 'bg-[#EBF2FA] text-[#1A3A6B]' : 'bg-[#FEF3C7] text-[#92400E]' }}">
+                                    {{ $exam->exam_type === \App\Enums\ExamType::Official ? 'Chính thức' : 'Luyện tập' }}
                                 </span>
                             </td>
                             <td class="px-5 py-3.5 text-center text-[#6B7C99]">{{ $exam->duration_minutes }} phút</td>
                             <td class="px-5 py-3.5 text-center">
-                                <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full {{ $exam->status === 'published' ? 'bg-[#ECFDF5] text-[#065F46]' : 'bg-[#F3F4F6] text-[#6B7C99]' }}">
-                                    {{ $exam->status === 'published' ? 'Đã phát hành' : ucfirst($exam->status) }}
+                                <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full {{ $exam->status === \App\Enums\ExamStatus::Published ? 'bg-[#ECFDF5] text-[#065F46]' : 'bg-[#F3F4F6] text-[#6B7C99]' }}">
+                                    {{ $examStatusValue === 'published' ? 'Đã phát hành' : ucfirst((string) $examStatusValue) }}
                                 </span>
                             </td>
                             <td class="px-5 py-3.5 text-center">

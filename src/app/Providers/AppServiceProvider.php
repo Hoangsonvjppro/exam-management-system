@@ -6,14 +6,17 @@ use App\Models\Admin;
 use App\Models\CourseSection;
 use App\Models\Exam;
 use App\Models\File;
+use App\Models\Notification;
 use App\Models\User;
 use App\Policies\AdminPolicy;
 use App\Policies\CourseSectionPolicy;
 use App\Policies\ExamPolicy;
 use App\Policies\FilePolicy;
 use App\Policies\UserPolicy;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,5 +38,18 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(CourseSection::class, CourseSectionPolicy::class);
         Gate::policy(Exam::class, ExamPolicy::class);
         Gate::policy(File::class, FilePolicy::class);
+
+        View::composer('layouts.app', function ($view): void {
+            $user = Auth::user();
+            $unreadNotificationCount = 0;
+
+            if ($user) {
+                $unreadNotificationCount = Notification::where('user_id', $user->id)
+                    ->whereNull('read_at')
+                    ->count();
+            }
+
+            $view->with('unreadNotificationCount', $unreadNotificationCount);
+        });
     }
 }

@@ -13,6 +13,7 @@
                 Danh sách lớp
             </a>
             <div class="flex items-center gap-3">
+                @can('manage', $section)
                 <x-button variant="outline" onclick="document.getElementById('create-notification-modal').classList.remove('hidden')">
                     Tạo thông báo
                 </x-button>
@@ -22,6 +23,7 @@
                 <x-button variant="primary" href="{{ route('lecturer.classes.edit', $section) }}">
                     Chỉnh sửa
                 </x-button>
+                @endcan
             </div>
         </div>
 
@@ -53,6 +55,7 @@
                     </p>
                     <p class="text-[12px] text-text-muted font-medium">Chia sẻ mã này cho sinh viên</p>
 
+                    @can('manage', $section)
                     <form method="POST" action="{{ route('lecturer.classes.regenerate-code', $section) }}" class="mt-4">
                         @csrf
                         <button type="submit"
@@ -61,6 +64,7 @@
                             Tạo mã mới
                         </button>
                     </form>
+                    @endcan
                 </div>
             </div>
 
@@ -164,10 +168,10 @@
                             </td>
                             <td class="py-4 px-4">
                                 <span class="inline-block uppercase text-[10px] font-bold px-2 py-1 rounded-[4px]
-                                        @if($exam->status === 'published') bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
-                                        @elseif($exam->status === 'draft')   bg-amber-50 text-amber-700 border-[0.5px] border-amber-200
+                                        @if($exam->status === \App\Enums\ExamStatus::Published) bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
+                                        @elseif($exam->status === \App\Enums\ExamStatus::Draft)   bg-amber-50 text-amber-700 border-[0.5px] border-amber-200
                                         @else                                bg-surface-1 text-text-muted border-[0.5px] border-border-clean @endif">
-                                    {{ match($exam->status) {
+                                    {{ match($exam->status?->value) {
                                             'published' => 'Đang mở',
                                             'draft'     => 'Bản nháp',
                                             default     => 'Đã đóng',
@@ -176,6 +180,7 @@
                             </td>
                             <td class="py-4 px-4">
                                 <div class="flex items-center gap-3">
+                                    @can('manageLecturer', $exam)
                                     {{-- Quản lý câu hỏi --}}
                                     <a href="{{ route('lecturer.exams.edit', $exam) }}"
                                         class="text-[12px] font-semibold text-blue-500 hover:text-blue-700 transition-colors">
@@ -183,7 +188,7 @@
                                     </a>
 
                                     {{-- Publish / Unpublish --}}
-                                    @if($exam->status === 'draft')
+                                    @if($exam->status === \App\Enums\ExamStatus::Draft)
                                     <form method="POST" action="{{ route('lecturer.exams.publish', $exam) }}">
                                         @csrf
                                         @method('PATCH')
@@ -193,7 +198,7 @@
                                             Mở đề
                                         </button>
                                     </form>
-                                    @elseif($exam->status === 'published')
+                                    @elseif($exam->status === \App\Enums\ExamStatus::Published)
                                     <form method="POST" action="{{ route('lecturer.exams.close', $exam) }}">
                                         @csrf
                                         @method('PATCH')
@@ -204,6 +209,7 @@
                                         </button>
                                     </form>
                                     @endif
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -215,6 +221,7 @@
         </x-card>
 
         {{-- Danger zone --}}
+        @can('manage', $section)
         @if($section->students->isEmpty())
         <div class="bg-red-50 border-[0.5px] border-red-200 rounded-[10px] p-6">
             <h3 class="text-[16px] font-bold text-red-700 mb-1">Xoá lớp học phần</h3>
@@ -230,10 +237,12 @@
             </form>
         </div>
         @endif
+        @endcan
 
     </div>
 
     {{-- Notification Modal --}}
+    @can('manage', $section)
     <div id="create-notification-modal" class="hidden fixed inset-0 bg-navy-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white border-[0.5px] border-border-clean rounded-[10px] shadow-sm w-full max-w-lg p-6 md:p-8">
             <div class="flex items-center justify-between mb-6">
@@ -249,11 +258,17 @@
                 @csrf
                 <div>
                     <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Tiêu đề</label>
-                    <x-text-input name="title" type="text" required placeholder="Nhập tiêu đề thông báo mới" />
+                    <x-text-input name="title" type="text" :value="old('title')" required placeholder="Nhập tiêu đề thông báo mới" />
+                    @error('title')
+                    <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Nội dung chi tiết</label>
-                    <textarea name="message" required rows="5" placeholder="Viết nội dung thông báo gửi đến sinh viên..." class="w-full p-4 bg-white border-[1.5px] border-border-clean rounded-[6px] text-[14px] text-navy-900 placeholder:text-text-muted focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none resize-y"></textarea>
+                    <textarea name="message" required rows="5" placeholder="Viết nội dung thông báo gửi đến sinh viên..." class="w-full p-4 bg-white border-[1.5px] border-border-clean rounded-[6px] text-[14px] text-navy-900 placeholder:text-text-muted focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none resize-y">{{ old('message') }}</textarea>
+                    @error('message')
+                    <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div class="pt-2 flex justify-end">
                     <x-button type="submit" variant="primary">
@@ -263,4 +278,5 @@
             </form>
         </div>
     </div>
+    @endcan
 </x-app-layout>

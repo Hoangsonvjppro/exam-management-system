@@ -12,7 +12,7 @@ class StudentDashboardService
      */
     public function getDashboardData(User $user): array
     {
-        $enrolledSections = $user->enrolledSections()->with('lecturer')->get();
+        $enrolledSections = $user->enrolledSections()->withCount('students')->with('lecturer')->get();
         $sectionIds = $enrolledSections->pluck('id');
 
         $exams = Exam::whereIn('course_section_id', $sectionIds)
@@ -24,6 +24,19 @@ class StudentDashboardService
         return [
             'enrolledSections' => $enrolledSections,
             'exams' => $exams,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getClassesData(User $user): array
+    {
+        return [
+            'enrolledSections' => $user->enrolledSections()
+                ->withCount('students')
+                ->with('lecturer')
+                ->get(),
         ];
     }
 }

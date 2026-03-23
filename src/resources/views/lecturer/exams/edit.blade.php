@@ -1,30 +1,164 @@
 <x-app-layout>
     <style>
         /* THAM KHAO STYLES */
-        .ds-section { margin-bottom: 36px; }
-        .ds-label { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: #6B7C99; margin: 0 0 14px; }
-        .ca-card { background: #fff; border: 0.5px solid #D6E2F0; border-radius: 10px; padding: 16px; }
-        .ca-card-accent { border-top: 3px solid #1A3A6B; }
-        .ca-input, .ca-select { border: 1.5px solid #D6E2F0; border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #1A3A6B; background: #fff; font-family: inherit; outline: none; width: 100%; transition: all 0.2s ease; }
-        .ca-input:focus, .ca-select:focus { border-color: #185FA5; box-shadow: 0 0 0 3px #E6F1FB; }
-        .ca-input.error { border-color: #DC2626; background: #FEF2F2; }
-        .btn { display: inline-flex; justify-content: center; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 8px 18px; border-radius: 6px; cursor: pointer; border: none; font-family: inherit; transition: opacity .15s; }
-        .btn-primary { background: #1A3A6B; color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .btn-ghost { background: transparent; color: #1A3A6B; border: 1.5px solid #D6E2F0; }
-        .btn-ghost:hover { background: #F4F7FC; }
-        .ca-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
-        .ca-table thead th { background: #F4F7FC; color: #1A3A6B; font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 1.5px solid #D6E2F0; border-top: 1.5px solid #D6E2F0; font-size: 12px; }
-        .ca-table tbody td { padding: 12px; color: #374151; border-bottom: 1px solid #EBF2FA; background: #fff; }
-        .ca-table tbody tr:hover td { background: #F8FAFD; }
-        .ca-table thead th:first-child { border-top-left-radius: 8px; border-left: 1.5px solid #D6E2F0; }
-        .ca-table thead th:last-child { border-top-right-radius: 8px; border-right: 1.5px solid #D6E2F0; }
-        .ca-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; border-left: 1.5px solid #D6E2F0; border-bottom: 1.5px solid #D6E2F0; }
-        .ca-table tbody tr:last-child td:last-child { border-bottom-right-radius: 8px; border-right: 1.5px solid #D6E2F0; border-bottom: 1.5px solid #D6E2F0; }
-        .ca-table tbody td:first-child { border-left: 1.5px solid #D6E2F0; }
-        .ca-table tbody td:last-child { border-right: 1.5px solid #D6E2F0; }
-        .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
-        .s-upcoming { background: #EBF2FA; color: #1A3A6B; }
-        .text-error { color: #DC2626; font-size: 11px; margin-top: 4px; display: block; }
+        .ds-section {
+            margin-bottom: 36px;
+        }
+
+        .ds-label {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: #6B7C99;
+            margin: 0 0 14px;
+        }
+
+        .ca-card {
+            background: #fff;
+            border: 0.5px solid #D6E2F0;
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .ca-card-accent {
+            border-top: 3px solid #1A3A6B;
+        }
+
+        .ca-input,
+        .ca-select {
+            border: 1.5px solid #D6E2F0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            color: #1A3A6B;
+            background: #fff;
+            font-family: inherit;
+            outline: none;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        .ca-input:focus,
+        .ca-select:focus {
+            border-color: #185FA5;
+            box-shadow: 0 0 0 3px #E6F1FB;
+        }
+
+        .ca-input.error {
+            border-color: #DC2626;
+            background: #FEF2F2;
+        }
+
+        .btn {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+            transition: opacity .15s;
+        }
+
+        .btn-primary {
+            background: #1A3A6B;
+            color: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: #1A3A6B;
+            border: 1.5px solid #D6E2F0;
+        }
+
+        .btn-ghost:hover {
+            background: #F4F7FC;
+        }
+
+        .ca-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 13px;
+        }
+
+        .ca-table thead th {
+            background: #F4F7FC;
+            color: #1A3A6B;
+            font-weight: 600;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1.5px solid #D6E2F0;
+            border-top: 1.5px solid #D6E2F0;
+            font-size: 12px;
+        }
+
+        .ca-table tbody td {
+            padding: 12px;
+            color: #374151;
+            border-bottom: 1px solid #EBF2FA;
+            background: #fff;
+        }
+
+        .ca-table tbody tr:hover td {
+            background: #F8FAFD;
+        }
+
+        .ca-table thead th:first-child {
+            border-top-left-radius: 8px;
+            border-left: 1.5px solid #D6E2F0;
+        }
+
+        .ca-table thead th:last-child {
+            border-top-right-radius: 8px;
+            border-right: 1.5px solid #D6E2F0;
+        }
+
+        .ca-table tbody tr:last-child td:first-child {
+            border-bottom-left-radius: 8px;
+            border-left: 1.5px solid #D6E2F0;
+            border-bottom: 1.5px solid #D6E2F0;
+        }
+
+        .ca-table tbody tr:last-child td:last-child {
+            border-bottom-right-radius: 8px;
+            border-right: 1.5px solid #D6E2F0;
+            border-bottom: 1.5px solid #D6E2F0;
+        }
+
+        .ca-table tbody td:first-child {
+            border-left: 1.5px solid #D6E2F0;
+        }
+
+        .ca-table tbody td:last-child {
+            border-right: 1.5px solid #D6E2F0;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .s-upcoming {
+            background: #EBF2FA;
+            color: #1A3A6B;
+        }
+
+        .text-error {
+            color: #DC2626;
+            font-size: 11px;
+            margin-top: 4px;
+            display: block;
+        }
     </style>
 
     <div class="py-8 bg-[#F8FAFD] min-h-screen">
@@ -49,12 +183,12 @@
                 @csrf
                 @method('PUT')
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    
+
                     <!-- Cột Trái: Cấu hình chung -->
                     <div class="lg:col-span-4 space-y-6">
                         <div class="ca-card ca-card-accent">
                             <h3 class="text-[14px] font-bold text-[#1A3A6B] mb-4 uppercase tracking-wider">Thông tin kỳ thi</h3>
-                            
+
                             <div class="space-y-4">
                                 <div>
                                     <label for="title" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Tên bài kiểm tra <span class="text-[#DC2626]">*</span></label>
@@ -76,9 +210,10 @@
                                     </div>
                                     <div>
                                         <label for="exam_type" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Loại đề thi <span class="text-[#DC2626]">*</span></label>
+                                        @php $selectedExamType = old('exam_type', $exam->exam_type?->value); @endphp
                                         <select id="exam_type" name="exam_type" class="ca-select @error('exam_type') error @enderror" required>
-                                            <option value="official" {{ old('exam_type', $exam->exam_type) === 'official' ? 'selected' : '' }}>Chính thức</option>
-                                            <option value="practice" {{ old('exam_type', $exam->exam_type) === 'practice' ? 'selected' : '' }}>Luyện tập</option>
+                                            <option value="official" {{ $selectedExamType === 'official' ? 'selected' : '' }}>Chính thức</option>
+                                            <option value="practice" {{ $selectedExamType === 'practice' ? 'selected' : '' }}>Luyện tập</option>
                                         </select>
                                         @error('exam_type') <span class="text-error">{{ $message }}</span> @enderror
                                     </div>
@@ -146,7 +281,7 @@
                                 Vì đề thi đã có lượt làm bài, bạn không thể thay đổi danh sách câu hỏi.
                             </div>
                             @endif
-                            
+
                             <div class="flex-1 overflow-y-auto px-5 py-4 max-h-[750px] min-h-[400px]">
                                 <table class="ca-table text-left">
                                     <thead class="sticky top-0 shadow-sm z-10 bg-[#F4F7FC]">
@@ -159,20 +294,20 @@
                                     </thead>
                                     <tbody>
                                         @foreach($questions as $question)
-                                            <tr class="group cursor-pointer hover:bg-[#F8FAFD] transition-colors" onclick="{{ $exam->canEditStructure() ? 'toggleCheckbox(this, event)' : '' }}">
-                                                <td class="text-center w-12">
-                                                    <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" 
-                                                           class="question-checkbox rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#E6F1FB] w-4 h-4 cursor-pointer"
-                                                           onclick="event.stopPropagation()"
-                                                           {{ in_array($question->id, $selectedQuestionIds) ? 'checked' : '' }}
-                                                           {{ $exam->canEditStructure() ? '' : 'disabled' }}>
-                                                </td>
-                                                <td>
-                                                    <div class="text-[13.5px] text-[#374151] line-clamp-2">
-                                                        {!! strip_tags($question->content) !!}
-                                                    </div>
-                                                </td>
-                                            </tr>
+                                        <tr class="group cursor-pointer hover:bg-[#F8FAFD] transition-colors" @if($exam->canEditStructure()) onclick="toggleCheckbox(this, event)" @endif>
+                                            <td class="text-center w-12">
+                                                <input type="checkbox" name="question_ids[]" value="{{ $question->id }}"
+                                                    class="question-checkbox rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#E6F1FB] w-4 h-4 cursor-pointer"
+                                                    onclick="event.stopPropagation()"
+                                                    {{ in_array($question->id, $selectedQuestionIds) ? 'checked' : '' }}
+                                                    {{ $exam->canEditStructure() ? '' : 'disabled' }}>
+                                            </td>
+                                            <td>
+                                                <div class="text-[13.5px] text-[#374151] line-clamp-2">
+                                                    {!! strip_tags($question->content) !!}
+                                                </div>
+                                            </td>
+                                        </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
@@ -203,7 +338,7 @@
                 function checkSelectAllState() {
                     const selectAll = document.getElementById('selectAll');
                     const checkboxes = document.querySelectorAll('.question-checkbox:not(:disabled)');
-                    if(selectAll && checkboxes.length > 0) {
+                    if (selectAll && checkboxes.length > 0) {
                         selectAll.checked = document.querySelectorAll('.question-checkbox:checked').length === document.querySelectorAll('.question-checkbox').length;
                     }
                 }
@@ -211,11 +346,11 @@
                 document.addEventListener('DOMContentLoaded', function() {
                     const selectAll = document.getElementById('selectAll');
                     const checkboxes = document.querySelectorAll('.question-checkbox');
-                    
-                    if(selectAll) {
+
+                    if (selectAll) {
                         selectAll.addEventListener('change', function() {
                             checkboxes.forEach(cb => {
-                                if(!cb.disabled) cb.checked = selectAll.checked;
+                                if (!cb.disabled) cb.checked = selectAll.checked;
                             });
                             updateCounter();
                         });

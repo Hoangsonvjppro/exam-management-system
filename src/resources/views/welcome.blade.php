@@ -45,7 +45,7 @@
                     x-transition:leave-end="opacity-0 scale-95"
                     @click.away="open = false"
                     class="absolute right-0 mt-2 w-48 bg-white brutal-border brutal-shadow z-50">
-                    <a href="{{ url('/dashboard') }}"
+                    <a href="{{ route('dashboard') }}"
                         class="block px-4 py-3 font-bold text-sm hover:bg-background-light border-b-2 border-black">
                         Dashboard
                     </a>
@@ -80,7 +80,7 @@
                 <div class="flex flex-wrap gap-4">
                     @auth
                     @if(auth()->user()->hasRole('lecturer') || auth()->user()->hasRole('student'))
-                    <a href="{{ url('/dashboard') }}"
+                    <a href="{{ route('dashboard') }}"
                         class="bg-navy-900 text-white px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
                         Vào Dashboard
                     </a>
@@ -253,6 +253,7 @@
                     <div>
                         <label class="block text-sm font-black uppercase mb-2">Mã lớp học</label>
                         <input name="invite_code" type="text" required placeholder="Nhập mã lớp (VD: ABC123)"
+                            value="{{ old('invite_code') }}"
                             class="w-full h-12 px-4 bg-white brutal-border font-bold text-lg focus:ring-0 uppercase tracking-widest">
                         @error('invite_code')
                         <p class="mt-1 text-xs font-semibold text-red-700">{{ $message }}</p>

@@ -17,15 +17,16 @@
                     <div class="flex items-center gap-3 mb-2">
                         <h2 class="text-[22px] md:text-[28px] font-bold text-navy-900 leading-tight">{{ $exam->title }}</h2>
                         @php
-                            $statusColors = [
-                                'draft' => 'bg-surface-1 text-text-muted border-border-clean',
-                                'published' => 'bg-teal-50 text-teal-700 border-teal-300',
-                                'closed' => 'bg-red-50 text-red-700 border-red-300',
-                            ];
-                            $statusLabels = ['draft' => 'Nháp', 'published' => 'Đang mở', 'closed' => 'Đã đóng'];
+                        $statusValue = $exam->status?->value;
+                        $statusColors = [
+                        'draft' => 'bg-surface-1 text-text-muted border-border-clean',
+                        'published' => 'bg-teal-50 text-teal-700 border-teal-300',
+                        'closed' => 'bg-red-50 text-red-700 border-red-300',
+                        ];
+                        $statusLabels = ['draft' => 'Nháp', 'published' => 'Đang mở', 'closed' => 'Đã đóng'];
                         @endphp
-                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold border-[0.5px] {{ $statusColors[$exam->status] ?? '' }}">
-                            {{ $statusLabels[$exam->status] ?? $exam->status }}
+                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold border-[0.5px] {{ $statusColors[$statusValue] ?? '' }}">
+                            {{ $statusLabels[$statusValue] ?? $statusValue }}
                         </span>
                     </div>
                     <p class="text-[13px] text-text-muted">{{ $exam->courseSection->name ?? $exam->courseSection->code }}</p>
@@ -36,12 +37,18 @@
 
                 {{-- Actions --}}
                 <div class="flex flex-wrap items-center gap-2">
+                    @can('manageLecturer', $exam)
+                    @php
+                    $deleteConfirmMessage = $attemptCount > 0
+                    ? 'Đề đã có sinh viên thi. Sẽ xoá mềm (lưu trữ). Tiếp tục?'
+                    : 'Xoá vĩnh viễn đề thi này?';
+                    @endphp
                     <a href="{{ route('lecturer.exams.edit', $exam->id) }}" class="inline-flex items-center px-3 py-1.5 bg-white border border-border-clean rounded-[6px] text-[12px] font-medium text-text-muted hover:bg-surface-1 transition">
                         ✏️ Sửa
                     </a>
 
 
-                    @if($exam->status === 'draft')
+                    @if($exam->status === \App\Enums\ExamStatus::Draft)
                     <form method="POST" action="{{ route('lecturer.exams.publish', $exam->id) }}" class="inline">
                         @csrf @method('PATCH')
                         <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-teal-600 rounded-[6px] text-[12px] font-medium text-white hover:bg-teal-700 transition">
@@ -50,7 +57,7 @@
                     </form>
                     @endif
 
-                    @if($exam->status === 'published')
+                    @if($exam->status === \App\Enums\ExamStatus::Published)
                     <form method="POST" action="{{ route('lecturer.exams.close', $exam->id) }}" class="inline" onsubmit="return confirm('Bạn có chắc muốn đóng đề thi này?')">
                         @csrf @method('PATCH')
                         <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-orange-500 rounded-[6px] text-[12px] font-medium text-white hover:bg-orange-600 transition">
@@ -59,7 +66,7 @@
                     </form>
                     @endif
 
-                    @if($exam->status === 'closed')
+                    @if($exam->status === \App\Enums\ExamStatus::Closed)
                     <button type="button" onclick="document.getElementById('reopen-modal').classList.remove('hidden')"
                         class="inline-flex items-center px-3 py-1.5 bg-navy-900 rounded-[6px] text-[12px] font-medium text-white hover:bg-navy-950 transition">
                         🔓 Mở lại
@@ -67,12 +74,13 @@
                     @endif
 
                     <form method="POST" action="{{ route('lecturer.exams.destroy', $exam->id) }}" class="inline"
-                        onsubmit="return confirm('{{ $exam->attempts()->exists() ? 'Đề đã có sinh viên thi. Sẽ xoá mềm (lưu trữ). Tiếp tục?' : 'Xoá vĩnh viễn đề thi này?' }}')">
+                        onsubmit="return confirm('{{ $deleteConfirmMessage }}')">
                         @csrf @method('DELETE')
                         <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-red-500 rounded-[6px] text-[12px] font-medium text-white hover:bg-red-600 transition">
                             🗑️ Xoá
                         </button>
                     </form>
+                    @endcan
                 </div>
             </div>
         </x-card>
@@ -173,7 +181,7 @@
                         <tr class="border-b border-border-clean hover:bg-surface-0 transition-colors">
                             <td class="py-2.5 px-3 font-medium text-navy-900">{{ $attempt->user->name ?? 'N/A' }}</td>
                             <td class="py-2.5 px-3 text-center">
-                                @if($attempt->status === 'completed')
+                                @if($attempt->status === \App\Enums\ExamAttemptStatus::Completed)
                                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border-[0.5px] border-teal-200">Đã nộp</span>
                                 @else
                                 <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border-[0.5px] border-amber-200">Đang thi</span>
@@ -200,13 +208,16 @@
         </div>
     </div>
 
+    @can('manageLecturer', $exam)
     {{-- Reopen Modal --}}
     <div id="reopen-modal" class="hidden fixed inset-0 bg-navy-950/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <x-card padding="true" class="w-full max-w-md">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-[17px] font-semibold text-navy-900">Mở lại đề thi</h3>
                 <button onclick="document.getElementById('reopen-modal').classList.add('hidden')" class="text-text-muted hover:text-navy-900">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
             </div>
 
@@ -235,4 +246,5 @@
             </form>
         </x-card>
     </div>
+    @endcan
 </x-app-layout>

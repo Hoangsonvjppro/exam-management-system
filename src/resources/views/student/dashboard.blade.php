@@ -81,13 +81,13 @@
                     <div class="mb-4">
                         <div class="flex items-center justify-between mb-2">
                             @if($exam->isCompletedBy(auth()->id()))
-                                <x-badge type="success">Đã hoàn thành</x-badge>
+                            <x-badge type="success">Đã hoàn thành</x-badge>
                             @elseif($exam->is_not_started)
-                                <x-badge type="neutral">Chưa đến giờ</x-badge>
+                            <x-badge type="neutral">Chưa đến giờ</x-badge>
                             @elseif($exam->time_left_minutes > 0)
-                                <x-badge type="warning">{{ $exam->time_left_text }}</x-badge>
+                            <x-badge type="warning">{{ $exam->time_left_text }}</x-badge>
                             @else
-                                <x-badge type="danger">Đã hết giờ</x-badge>
+                            <x-badge type="danger">Đã hết giờ</x-badge>
                             @endif
                             <span class="text-[11px] text-text-muted">{{ $exam->start_time?->format('d/m/Y') ?? 'Chưa xác định' }}</span>
                         </div>
@@ -150,7 +150,9 @@
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-[17px] font-semibold text-navy-900">Tham gia lớp học</h3>
                 <button onclick="document.getElementById('join-class-modal').classList.add('hidden')" class="text-text-muted hover:text-navy-900">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
             </div>
 
@@ -166,7 +168,7 @@
                 @csrf
                 <div>
                     <label class="block text-[12px] font-medium text-navy-900 mb-1">Mã lớp học</label>
-                    <x-text-input name="invite_code" type="text" required placeholder="VD: ABC123" class="font-mono" />
+                    <x-text-input name="invite_code" type="text" :value="old('invite_code')" required placeholder="VD: ABC123" class="font-mono" />
                     @error('invite_code')
                     <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
                     @enderror

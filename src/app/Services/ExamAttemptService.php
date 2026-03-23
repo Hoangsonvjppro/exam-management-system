@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ExamAttempt;
 use App\Models\QuestionOption;
 use App\Models\StudentAnswer;
+use App\Enums\ExamAttemptStatus;
 use Illuminate\Support\Facades\DB;
 
 class ExamAttemptService
@@ -19,7 +20,7 @@ class ExamAttemptService
     public function finalizeAttempt(ExamAttempt $attempt, ?array $lastAnswers = null): void
     {
         // Idempotent: đã hoàn thành thì không chấm lại
-        if ($attempt->status === ExamAttempt::STATUS_COMPLETED) {
+        if ($attempt->status === ExamAttemptStatus::Completed) {
             return;
         }
 
