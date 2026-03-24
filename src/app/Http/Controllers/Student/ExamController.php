@@ -77,7 +77,7 @@ class ExamController extends Controller
                 ->with('error', 'Bạn không có bài thi nào đang diễn ra. Xin hãy dứt khoát ấn Bắt đầu.');
         }
 
-        // Deadline = min(started_at + duration, schedule.end_time)
+        // Deadline = min(started_at + duration, schedule.end_time) hoặc duration tuỳ cấu hình
         $deadline = $schedule->getDeadlineFor($attempt);
         $timeLeftSeconds = $deadline->getTimestamp() - now()->getTimestamp();
 
@@ -122,7 +122,7 @@ class ExamController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // Nộp bài thi, tính điểm và lưu kết quả
+    // Nộp bài thi, tính điểm và lưu kết quả dựa trên dữ liệu đã có trong DB
     public function submit(SubmitExamRequest $request, ExamSchedule $schedule): \Illuminate\Http\RedirectResponse
     {
         $exam = $schedule->exam;
@@ -130,18 +130,26 @@ class ExamController extends Controller
 
         $attempt = ExamAttempt::forSchedule($schedule->id)->forUser(Auth::id())->inProgress()->firstOrFail();
 
-        // Chặn submit sau deadline
+        // 1. Kiểm tra thời gian làm bài tối thiểu
+        $minDuration = $exam->min_duration_before_submit ?? 0;
+        if ($minDuration > 0) {
+            $minutesPassed = $attempt->started_at->diffInMinutes(now());
+            if ($minutesPassed < $minDuration) {
+                return back()->with('error', "Bạn phải làm bài ít nhất {$minDuration} phút trước khi nộp bài. Bạn đã làm được {$minutesPassed} phút.");
+            }
+        }
+
+        // 2. Chặn submit sau deadline
         $deadline = $schedule->getDeadlineFor($attempt);
         if (now()->gt($deadline)) {
-            // Nếu đã quá deadline, finalize với dữ liệu đã lưu
+            // Nếu đã quá deadline, finalize với dữ liệu đã lưu trong DB
             $this->examAttemptService->finalizeAttempt($attempt);
             return redirect()->route('student.exams.show', $schedule->id)
                 ->with('info', 'Đã hết thời gian. Bài thi được chấm với đáp án đã lưu.');
         }
 
-        // Upsert answers cuối cùng từ form trước khi chấm (Medium #19)
-        $lastAnswers = $request->validated('answers', []);
-        $this->examAttemptService->finalizeAttempt($attempt, $lastAnswers);
+        // 3. Chấm điểm dựa trên Single Source of Truth từ DB (các câu trả lời đã lưu qua AJAX)
+        $this->examAttemptService->finalizeAttempt($attempt);
 
         return redirect()->route('student.exams.result', $schedule->id)
             ->with('success', 'Bài thi đã được nộp thành công!');

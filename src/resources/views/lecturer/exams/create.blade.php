@@ -229,6 +229,48 @@
                         </div>
 
                         <div class="ca-card">
+                            <h3 class="text-[14px] font-bold text-[#1A3A6B] mb-4 uppercase tracking-wider">Cấu hình thời gian</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="flex items-start gap-3 cursor-pointer group">
+                                        <input type="hidden" name="allow_late_entrance" value="0">
+                                        <input type="checkbox" name="allow_late_entrance" id="allow_late_entrance" value="1"
+                                            class="mt-0.5 rounded border-[#D6E2F0] text-[#185FA5] shadow-sm focus:ring-[#E6F1FB] w-4 h-4 transition-colors group-hover:border-[#185FA5]"
+                                            {{ old('allow_late_entrance', true) ? 'checked' : '' }} onchange="toggleLateSettings()">
+                                        <div>
+                                            <span class="block text-[13px] font-semibold text-[#1A3A6B]">Cho phép vào thi muộn</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                
+                                <div id="late_settings" class="pl-7 space-y-4 {{ old('allow_late_entrance', true) ? '' : 'hidden' }}">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="late_entrance_limit_minutes" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Giới hạn muộn (Phút)</label>
+                                            <input id="late_entrance_limit_minutes" type="number" name="late_entrance_limit_minutes" value="{{ old('late_entrance_limit_minutes', 15) }}" class="ca-input @error('late_entrance_limit_minutes') error @enderror" />
+                                            @error('late_entrance_limit_minutes') <span class="text-error">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div>
+                                            <label for="late_entrance_behavior" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Chế độ <span class="text-[#DC2626]">*</span></label>
+                                            <select id="late_entrance_behavior" name="late_entrance_behavior" class="ca-select @error('late_entrance_behavior') error @enderror">
+                                                <option value="fixed_end" {{ old('late_entrance_behavior', 'fixed_end') === 'fixed_end' ? 'selected' : '' }}>Thu bài đúng giờ</option>
+                                                <option value="flexible_duration" {{ old('late_entrance_behavior') === 'flexible_duration' ? 'selected' : '' }}>Làm đủ thời gian</option>
+                                            </select>
+                                            @error('late_entrance_behavior') <span class="text-error">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="min_duration_before_submit" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Thời gian làm tối thiểu trước khi nộp (Phút)</label>
+                                    <input id="min_duration_before_submit" type="number" name="min_duration_before_submit" value="{{ old('min_duration_before_submit', 0) }}" class="ca-input @error('min_duration_before_submit') error @enderror" />
+                                    <p class="text-[11px] text-[#6B7C99] mt-1">Để 0 nếu không giới hạn.</p>
+                                    @error('min_duration_before_submit') <span class="text-error">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ca-card">
                             <h3 class="text-[14px] font-bold text-[#1A3A6B] mb-4 uppercase tracking-wider">Hiển thị kết quả</h3>
                             <div class="space-y-3">
                                 <label class="flex items-start gap-3 cursor-pointer group">
@@ -530,6 +572,14 @@
                     // Trigger initial subject filter
                     onSubjectChange();
                 });
+
+                function toggleLateSettings() {
+                    const cb = document.getElementById('allow_late_entrance');
+                    const settings = document.getElementById('late_settings');
+                    if (cb && settings) {
+                        settings.style.display = cb.checked ? 'block' : 'none';
+                    }
+                }
 
                 function onSubjectChange() {
                     const subjectId = document.getElementById('subject_id')?.value;

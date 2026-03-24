@@ -11,20 +11,19 @@ use Illuminate\Support\Facades\DB;
 class ExamAttemptService
 {
     /**
-     * Finalize một attempt: upsert đáp án cuối, chấm điểm, cập nhật trạng thái.
+     * Finalize một attempt: chấm điểm dựa trên snapshot và cập nhật trạng thái.
      * Idempotent: nếu đã completed thì return sớm.
      *
      * @param ExamAttempt $attempt
-     * @param array|null $lastAnswers  Mảng [question_id => question_option_id] từ form submit
      */
-    public function finalizeAttempt(ExamAttempt $attempt, ?array $lastAnswers = null): void
+    public function finalizeAttempt(ExamAttempt $attempt): void
     {
         // Idempotent: đã hoàn thành thì không chấm lại
         if ($attempt->status === ExamAttemptStatus::Completed) {
             return;
         }
 
-        DB::transaction(function () use ($attempt, $lastAnswers) {
+        DB::transaction(function () use ($attempt) {
             $schedule = $attempt->schedule;
             if (!$schedule || !$schedule->exam) {
                 return;
@@ -32,58 +31,29 @@ class ExamAttemptService
 
             $exam = $schedule->exam;
 
-            // Pre-load all questions in this exam to avoid N+1 queries in loops
+            // 1. Lấy toàn bộ snapshot câu hỏi của đề thi này
             $examQuestions = $exam->examQuestions()
                 ->get()
                 ->keyBy('question_id');
             
-            $validQuestionIds = $examQuestions->keys()->all();
-
-            // 1. Upsert đáp án cuối cùng từ payload submit (Medium #19)
-            if ($lastAnswers) {
-                // Pre-load options to validate in one query
-                $optionIds = array_values($lastAnswers);
-                $validOptions = QuestionOption::whereIn('id', $optionIds)
-                    ->get()
-                    ->groupBy('question_id');
-
-                foreach ($lastAnswers as $questionId => $optionId) {
-                    // Check if question belongs to the exam
-                    $qId = (int) $questionId;
-                    $optId = (int) $optionId;
-
-                    if (!in_array($qId, $validQuestionIds)) {
-                        continue;
-                    }
-
-                    // Check if option belongs to the question
-                    $questionOptions = $validOptions->get($qId);
-                    $isOptionValid = $questionOptions && $questionOptions->contains('id', $optId);
-
-                    if ($isOptionValid) {
-                        StudentAnswer::updateOrCreate(
-                            [
-                                'exam_attempt_id' => $attempt->id,
-                                'question_id'     => $qId,
-                            ],
-                            [
-                                'question_option_id' => $optId,
-                            ]
-                        );
-                    }
-                }
-            }
-
-            // 2. Chấm điểm toàn bộ answers
-            $answers = $attempt->answers()->with('option')->get();
+            // 2. Chấm điểm toàn bộ answers dựa trên snapshot
+            $answers = $attempt->answers()->get();
             $totalScore = 0;
 
             foreach ($answers as $answer) {
-                $isCorrect = $answer->option?->is_correct ?? false;
+                $examQuestion = $examQuestions->get($answer->question_id);
+                if (!$examQuestion || !$examQuestion->question_snapshot) {
+                    continue;
+                }
 
-                // Lấy điểm từ pre-loaded data examQuestions (pivot)
-                $point = $examQuestions->get($answer->question_id)?->points ?? 1.00;
+                $snapshot = $examQuestion->question_snapshot;
+                $options = collect($snapshot['options'] ?? []);
+                
+                // Kiểm tra đáp án sinh viên chọn có đúng theo snapshot không
+                $selectedOption = $options->firstWhere('id', $answer->question_option_id);
+                $isCorrect = $selectedOption['is_correct'] ?? false;
 
+                $point = $examQuestion->points ?? 1.00;
                 $awardedPoint = $isCorrect ? $point : 0;
                 $totalScore += $awardedPoint;
 

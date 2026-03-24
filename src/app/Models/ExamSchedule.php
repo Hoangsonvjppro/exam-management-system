@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * ExamSchedule — Ca thi (lịch thi cụ thể cho 1 đề).
@@ -89,15 +90,22 @@ class ExamSchedule extends Model
 
     /**
      * Tính deadline thực tế cho một attempt trong ca thi này.
-     * Deadline = min(started_at + exam->duration, schedule.end_time)
+     * Dựa theo cấu hình late_entrance_behavior của exam.
      */
-    public function getDeadlineFor(ExamAttempt $attempt): \Carbon\Carbon
+    public function getDeadlineFor(ExamAttempt $attempt): Carbon
     {
         $durationMinutes = $this->exam->duration_minutes ?? 0;
         $durationEnd = $attempt->started_at->copy()->addMinutes($durationMinutes);
 
+        // Nếu cấu hình là flexible_duration, được làm đủ thời gian (kể cả khi vào muộn và qua giờ end_time)
+        if ($this->exam->late_entrance_behavior === 'flexible_duration') {
+            return $durationEnd;
+        }
+
+        // Mặc định (fixed_end): Deadline = min(started_at + exam->duration, schedule.end_time)
         if ($this->exam_date && $this->end_time) {
-            $scheduleEnd = \Carbon\Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->end_time);
+            // $scheduleEnd = Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->end_time);
+            $scheduleEnd = Carbon::parse($this->exam_date)->copy()->setTimeFromTimeString($this->end_time);
             return $durationEnd->lt($scheduleEnd) ? $durationEnd : $scheduleEnd;
         }
 

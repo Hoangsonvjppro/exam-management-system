@@ -28,6 +28,10 @@ class Exam extends Model
         'title',
         'description',
         'duration_minutes',
+        'allow_late_entrance',
+        'late_entrance_limit_minutes',
+        'late_entrance_behavior',
+        'min_duration_before_submit',
         'status',
         'exam_type',
         'reopen_reason',
@@ -38,6 +42,9 @@ class Exam extends Model
     ];
 
     protected $casts = [
+        'allow_late_entrance' => 'boolean',
+        'late_entrance_limit_minutes' => 'integer',
+        'min_duration_before_submit' => 'integer',
         'total_points' => 'decimal:2',
         'pass_points' => 'decimal:2',
         'show_score_after_submit' => 'boolean',

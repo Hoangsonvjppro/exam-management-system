@@ -14,8 +14,7 @@ class SubmitExamRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'answers' => ['nullable', 'array'],
-            'answers.*' => ['nullable', 'integer', 'exists:question_options,id'],
+            // Không yêu cầu mảng answers nữa, hệ thống sử dụng Single Source of Truth từ DB
         ];
     }
 }

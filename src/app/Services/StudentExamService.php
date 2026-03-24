@@ -27,6 +27,19 @@ class StudentExamService
             throw new DomainException('Ca thi đã kết thúc.');
         }
 
+        // Logic check vào muộn
+        if ($now->gt($scheduleStart)) {
+            if (!$exam->allow_late_entrance) {
+                throw new DomainException('Kỳ thi này không cho phép vào thi muộn.');
+            }
+            if ($exam->late_entrance_limit_minutes !== null) {
+                $limitTime = $scheduleStart->copy()->addMinutes($exam->late_entrance_limit_minutes);
+                if ($now->gt($limitTime)) {
+                    throw new DomainException("Bạn đã vào muộn quá thời gian cho phép ({$exam->late_entrance_limit_minutes} phút).");
+                }
+            }
+        }
+
         $attempt = ExamAttempt::forSchedule($schedule->id)
             ->forUser($userId)
             ->inProgress()

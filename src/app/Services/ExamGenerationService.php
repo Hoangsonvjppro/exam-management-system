@@ -21,6 +21,20 @@ class ExamGenerationService
      */
     public function generateFromMatrix(Exam $exam, Collection $matrixRows): void
     {
+        // 1. GUARD CLAUSE: Chặn đứng mọi hành vi đụng chạm cấu trúc nếu không hợp lệ
+        $currentStatus = $exam->status instanceof \App\Enums\ExamStatus 
+            ? $exam->status 
+            : \App\Enums\ExamStatus::tryFrom($exam->status ?? 'draft');
+
+        if ($currentStatus !== \App\Enums\ExamStatus::Draft) {
+            throw new \LogicException('Chỉ có thể tạo hoặc thay đổi cấu trúc đề thi khi đang ở trạng thái Nháp (Draft).');
+        }
+
+        if (!$exam->canEditStructure()) {
+            throw new \LogicException('Không thể tạo lại đề thi vì đã có sinh viên bắt đầu làm bài.');
+        }
+
+        // 2. LOGIC TẠO ĐỀ BÌNH THƯỜNG
         // Lấy subject_id từ course section
         $subjectId = $exam->subject_id;
 

@@ -27,6 +27,7 @@ class ExamService
 
         return DB::transaction(function () use ($data) {
             $exam = Exam::create($data);
+            $exam->refresh(); // Đảm bảo nạp các giá trị mặc định từ DB (như status)
 
             $this->syncQuestions($exam, $data['question_ids']);
 
@@ -48,6 +49,7 @@ class ExamService
 
         return DB::transaction(function () use ($data, $matrixData) {
             $exam = Exam::create($data);
+            $exam->refresh(); // Đảm bảo nạp các giá trị mặc định từ DB (như status)
 
             // Lưu matrix rows
             foreach ($matrixData as $row) {
