@@ -10,8 +10,8 @@
                <a href="{{ route('lecturer.questions.index') }}" class="bg-blue-500">Questions</a>
 
             </nav>
-            <h2 class="text-3xl font-extrabold text-primary font-headline tracking-tight">Quan ly cau hoi</h2>
-            <p class="text-on-surface-variant mt-1">Danh Sach cac cau hoi co trong he thong</p>
+            <h2 class="text-3xl font-extrabold text-primary font-headline tracking-tight">Quản lý câu hỏi</h2>
+            <p class="text-on-surface-variant mt-1">Danh sách các câu hỏi có trong hệ thống</p>
          </div>
          <div class="flex gap-3">
             <a href="{{ route('lecturer.questions.export', request()->query()) }}"
@@ -46,9 +46,9 @@
             <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Mức độ</span>
             <select onchange="this.form.submit()" name="diff-sel-ques" id="diff-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
                <option value="">Tất cả mức độ</option>
-               <option value="easy" {{ request()->input('diff-sel-ques') === 'easy' ? ' selected' : '' }}>Dễ</option>
-               <option value="medium" {{ request()->input('diff-sel-ques') === 'medium' ? ' selected' : '' }}>Trung bình</option>
-               <option value="hard" {{ request()->input('diff-sel-ques') === 'hard' ? ' selected' : '' }}>Khó</option>
+               <option value="easy" {{ request()->input('diff-sel-ques') === 'easy' ? ' selected' : '' }}>Nhớ</option>
+               <option value="medium" {{ request()->input('diff-sel-ques') === 'medium' ? ' selected' : '' }}>Hiểu</option>
+               <option value="hard" {{ request()->input('diff-sel-ques') === 'hard' ? ' selected' : '' }}>Vận dụng</option>
             </select>
          </div>
          <div class="bg-white p-4 rounded-xl flex flex-col gap-1">
