@@ -10,6 +10,32 @@ use Illuminate\Support\Facades\DB;
 class ExamScheduleService
 {
     /**
+     * Tạo lịch thi mới cho 1 đề thi và áp dụng cho nhiều lớp.
+     */
+    public function createSchedules(Exam $exam, array $data): Collection
+    {
+        $courseSectionIds = $data['course_section_ids'] ?? [];
+        $schedules = new Collection();
+
+        DB::transaction(function () use ($exam, $data, $courseSectionIds, &$schedules) {
+            foreach ($courseSectionIds as $sectionId) {
+                $scheduleData = $data;
+                unset($scheduleData['course_section_ids']);
+                $scheduleData['course_section_id'] = $sectionId;
+
+                $schedule = $exam->schedules()->create($scheduleData);
+                
+                // Tự động phân sinh viên sau khi tạo
+                $this->autoAssignStudents($schedule);
+                
+                $schedules->push($schedule);
+            }
+        });
+
+        return $schedules;
+    }
+
+    /**
      * Tạo lịch thi mới cho 1 đề thi.
      */
     public function createSchedule(Exam $exam, array $data): ExamSchedule

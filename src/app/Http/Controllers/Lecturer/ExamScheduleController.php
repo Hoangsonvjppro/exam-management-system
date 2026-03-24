@@ -33,12 +33,17 @@ class ExamScheduleController extends Controller
     /**
      * Form tạo lịch thi.
      */
-    public function create(): View
+    public function create(\Illuminate\Http\Request $request): View
     {
-        $exams = \App\Models\Exam::where('created_by', Auth::id())->get();
+        $exams = \App\Models\Exam::where('created_by', Auth::id())->with('subject')->get();
         $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->get();
+        
+        $preSelectedSection = null;
+        if ($request->query('course_section_id')) {
+            $preSelectedSection = \App\Models\CourseSection::find($request->query('course_section_id'));
+        }
 
-        return view('lecturer.schedules.create', compact('exams', 'courseSections'));
+        return view('lecturer.schedules.create', compact('exams', 'courseSections', 'preSelectedSection'));
     }
 
     /*
@@ -49,17 +54,19 @@ class ExamScheduleController extends Controller
         $exam = Exam::findOrFail($request->validated('exam_id'));
         Gate::authorize('manageLecturer', $exam);
 
-        $schedule = $this->scheduleService->createSchedule($exam, $request->validated());
+        $schedules = $this->scheduleService->createSchedules($exam, $request->validated());
 
-        if ($schedule->courseSection) {
-            $this->notificationService->sendToSection($schedule->courseSection, [
-                'title' => 'Lịch thi mới',
-                'message' => 'Bạn có một lịch thi mới cho môn học ' . ($schedule->exam->subject->name ?? 'Không xác định'),
-            ]);
+        foreach ($schedules as $schedule) {
+            if ($schedule->courseSection) {
+                $this->notificationService->sendToSection($schedule->courseSection, [
+                    'title' => 'Lịch thi mới',
+                    'message' => 'Bạn có một lịch thi mới cho môn học ' . ($schedule->exam->subject->name ?? 'Không xác định') . '. Ngày thi: ' . $schedule->exam_date->format('d/m/Y'),
+                ]);
+            }
         }
 
         return redirect()->route('lecturer.schedules.index')
-            ->with('success', 'Lịch thi đã được tạo thành công.');
+            ->with('success', 'Lịch thi đã được tạo thành công cho ' . $schedules->count() . ' lớp.');
     }
 
     /**

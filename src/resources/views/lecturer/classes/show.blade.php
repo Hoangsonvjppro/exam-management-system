@@ -126,7 +126,7 @@
                     Lịch thi
                     <span class="ml-2 text-[13px] font-semibold text-text-muted">({{ $section->examSchedules->count() }})</span>
                 </h3>
-                <x-button variant="secondary" href="{{ route('lecturer.schedules.create') }}">
+                <x-button variant="secondary" href="{{ route('lecturer.schedules.create', ['course_section_id' => $section->id]) }}">
                     + Lên lịch thi
                 </x-button>
             </div>

@@ -6,6 +6,14 @@
                     <h2 class="text-[22px] font-bold text-[#1A3A6B] mb-1">Quản lý Lịch Thi</h2>
                     <p class="text-[13px] text-[#6B7C99]">Tất cả ca thi bạn đã lên lịch.</p>
                 </div>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('lecturer.schedules.create') }}" class="inline-flex items-center gap-2 bg-[#1A3A6B] text-white px-4 py-2 rounded-lg text-[13px] font-semibold hover:bg-[#0F2A53] transition-all shadow-sm shadow-[#1A3A6B]/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Thêm lịch thi mới
+                    </a>
+                </div>
             </div>
 
             @if(session('success'))
