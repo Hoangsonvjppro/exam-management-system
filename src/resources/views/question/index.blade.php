@@ -46,9 +46,9 @@
             <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Mức độ</span>
             <select onchange="this.form.submit()" name="diff-sel-ques" id="diff-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
                <option value="">Tất cả mức độ</option>
-               <option value="easy" {{ request()->input('diff-sel-ques') === 'easy' ? ' selected' : '' }}>Nhớ</option>
-               <option value="medium" {{ request()->input('diff-sel-ques') === 'medium' ? ' selected' : '' }}>Hiểu</option>
-               <option value="hard" {{ request()->input('diff-sel-ques') === 'hard' ? ' selected' : '' }}>Vận dụng</option>
+               @foreach ($difficulties as $diff)
+               <option value="{{ $diff->code }}" {{ request()->input('diff-sel-ques') === $diff->code ? ' selected' : '' }}>{{ $diff->name }}</option>
+               @endforeach
             </select>
          </div>
          <div class="bg-white p-4 rounded-xl flex flex-col gap-1">
@@ -56,8 +56,13 @@
             <select onchange="this.form.submit()" name="chap-sel-ques" id="chap-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
                <option value="">Tất cả chương</option>
                @foreach ($chapters as $chap)
-               <option value="{{ $chap->id }}" {{ (string) request()->input('chap-sel-ques') === (string) $chap->id ? ' selected' : '' }}>{{ $chap->name }}</option>
+               <option value="{{           <select onchange="this.form.submit()" name="diff-sel-ques" id="diff-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
+               <option value="">Tất cả mức độ</option>
+               @foreach ($difficulties as $diff)
+               <option value="{{ $diff->code }}" {{ request()->input('diff-sel-ques') === $diff->code ? ' selected' : '' }}>{{ $diff->name }}</option>
                @endforeach
+            </select> $chap->id }}" {{ (string) request()->input('chap-sel-ques') === (string) $chap->id ? ' selected' : '' }}>{{ $chap->name }}</option>
+            @endforeach
             </select>
          </div>
          <div class="bg-white p-4 rounded-xl flex flex-col gap-1">
@@ -93,27 +98,14 @@
                <tbody class="divide-y divide-surface-container-low">
                   @forelse ($questions as $question)
                   @php
-                  $difficultyLabelMap = [
-                  'easy' => 'Dễ',
-                  'remember' => 'Dễ',
-                  'medium' => 'Trung bình',
-                  'understand' => 'Trung bình',
-                  'hard' => 'Khó',
-                  'apply' => 'Khó',
-                  'analyze' => 'Khó',
-                  ];
-
                   $difficultyClassMap = [
-                  'easy' => 'bg-green-100 text-green-700',
                   'remember' => 'bg-green-100 text-green-700',
-                  'medium' => 'bg-blue-100 text-blue-700',
                   'understand' => 'bg-blue-100 text-blue-700',
-                  'hard' => 'bg-red-100 text-red-700',
-                  'apply' => 'bg-red-100 text-red-700',
+                  'apply' => 'bg-orange-100 text-orange-700',
                   'analyze' => 'bg-red-100 text-red-700',
                   ];
 
-                  $difficultyLabel = $difficultyLabelMap[$question->difficulty] ?? ucfirst((string) $question->difficulty);
+                  $difficultyLabel = $question->difficultyLevel?->name ?? ucfirst((string) $question->difficulty);
                   $difficultyClass = $difficultyClassMap[$question->difficulty] ?? 'bg-slate-100 text-slate-700';
                   @endphp
 

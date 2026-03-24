@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Chapter;
+use App\Models\Difficulty;
 use App\Models\Question;
 use App\Models\QuestionType;
 use App\Models\Subject;
@@ -12,12 +13,6 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class QuestionBankQueryService
 {
-    private const DIFFICULTY_MAP = [
-        'easy' => ['easy', 'remember'],
-        'medium' => ['medium', 'understand'],
-        'hard' => ['hard', 'apply', 'analyze'],
-    ];
-
     /**
      * @param array<string, mixed> $filters
      * @return array{
@@ -39,8 +34,12 @@ class QuestionBankQueryService
             ->forSubjectCode($subjectCode)
             ->get();
 
+        $difficulties = Difficulty::query()
+            ->orderedForQuestionBank()
+            ->get(['code', 'name']);
+
         $questions = $this->getFilteredQuestionsQuery($filters)
-            ->with(['subject:id,name', 'chapter:id,name'])
+            ->with(['subject:id,name', 'chapter:id,name', 'questionType:id,name', 'difficultyLevel:code,name'])
             ->latest('updated_at')
             ->latest('id')
             ->paginate(10)
@@ -49,6 +48,7 @@ class QuestionBankQueryService
         return [
             'subjects' => $subjects,
             'chapters' => $chapters,
+            'difficulties' => $difficulties,
             'questions' => $questions,
         ];
     }
@@ -58,7 +58,7 @@ class QuestionBankQueryService
      *   subjects: Collection<int, Subject>,
      *   chapters: Collection<int, Chapter>,
      *   questionTypes: Collection<int, QuestionType>,
-     *   difficulties: array<int, string>,
+     *   difficulties: Collection<int, Difficulty>,
      *   statuses: array<int, string>
      * }
      */
@@ -78,11 +78,15 @@ class QuestionBankQueryService
             ->orderedForQuestionBank()
             ->get(['id', 'name']);
 
+        $difficulties = Difficulty::query()
+            ->orderedForQuestionBank()
+            ->get(['code', 'name']);
+
         return [
             'subjects' => $subjects,
             'chapters' => $chapters,
             'questionTypes' => $questionTypes,
-            'difficulties' => ['remember', 'understand', 'apply', 'analyze'],
+            'difficulties' => $difficulties,
             'statuses' => ['draft', 'approved', 'hidden'],
         ];
     }
@@ -131,9 +135,6 @@ class QuestionBankQueryService
             })
             ->when($chapterId, fn(Builder $query) => $query->where('chapter_id', $chapterId))
             ->when($status, fn(Builder $query) => $query->where('status', $status))
-            ->when($difficultyFilter, function (Builder $query) use ($difficultyFilter) {
-                $mappedDifficulties = self::DIFFICULTY_MAP[$difficultyFilter] ?? [$difficultyFilter];
-                $query->whereIn('difficulty', $mappedDifficulties);
-            });
+            ->when($difficultyFilter, fn(Builder $query) => $query->where('difficulty', $difficultyFilter));
     }
 }

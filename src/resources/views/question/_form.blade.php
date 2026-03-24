@@ -66,7 +66,7 @@ $statusLabelMap = [
             <label for="difficulty" class="block text-xs font-bold text-secondary uppercase tracking-wider mb-2">Mức độ</label>
             <select id="difficulty" name="difficulty" class="w-full rounded-lg border-surface-container-high">
                 @foreach ($difficulties as $difficulty)
-                <option value="{{ $difficulty }}" {{ old('difficulty', $question->difficulty ?? 'remember') === $difficulty ? 'selected' : '' }}>{{ $difficultyLabelMap[$difficulty] ?? ucfirst($difficulty) }}</option>
+                <option value="{{ $difficulty->code }}" {{ old('difficulty', $question->difficulty ?? 'remember') === $difficulty->code ? 'selected' : '' }}>{{ $difficulty->name }}</option>
                 @endforeach
             </select>
         </div>

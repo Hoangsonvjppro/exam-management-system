@@ -16,7 +16,7 @@ class IndexQuestionRequest extends FormRequest
     {
         return [
             'sub-sel-ques' => ['nullable', 'string', 'exists:subjects,code'],
-            'diff-sel-ques' => ['nullable', 'string', 'in:easy,medium,hard'],
+            'diff-sel-ques' => ['nullable', 'string', 'exists:difficulties,code'],
             'chap-sel-ques' => ['nullable', 'integer', 'exists:chapters,id'],
             'status-sel-ques' => ['nullable', 'string', 'in:approved,draft,hidden'],
         ];

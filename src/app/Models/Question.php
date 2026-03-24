@@ -92,6 +92,11 @@ class Question extends Model
         return $this->belongsTo(File::class, 'image_file_id');
     }
 
+    public function difficultyLevel(): BelongsTo
+    {
+        return $this->belongsTo(Difficulty::class, 'difficulty', 'code');
+    }
+
     public function options(): HasMany
     {
         return $this->hasMany(QuestionOption::class)->orderBy('order');

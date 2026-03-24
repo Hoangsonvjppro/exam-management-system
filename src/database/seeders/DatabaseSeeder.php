@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             RoleAndPermissionSeeder::class, // Phân quyền (Bắt buộc chạy đầu tiên)
             AdminRootSeeder::class,         // Tạo Admin Root
             UserSeeder::class,              // Tạo GV Nguyễn Thanh Sang
+            DifficultySeeder::class,        // Tạo mức độ khó (Dễ, Trung bình...)
             SemesterSeeder::class,          // Tạo học kỳ
             QuestionTypeSeeder::class,      // Tạo loại câu hỏi (MCQ, T/F...)
             SubjectSeeder::class,           // Tạo 5 môn học IT + Chương
