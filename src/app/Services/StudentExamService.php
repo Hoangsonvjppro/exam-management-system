@@ -40,40 +40,44 @@ class StudentExamService
             }
         }
 
-        $attempt = ExamAttempt::forSchedule($schedule->id)
-            ->forUser($userId)
-            ->inProgress()
-            ->first();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($schedule, $userId, $ipAddress, $userAgent, $exam) {
+            $attempt = ExamAttempt::forSchedule($schedule->id)
+                ->forUser($userId)
+                ->inProgress()
+                ->lockForUpdate()
+                ->first();
 
-        if ($attempt) {
-            return;
-        }
+            if ($attempt) {
+                return;
+            }
 
-        $hasCompleted = ExamAttempt::forSchedule($schedule->id)
-            ->forUser($userId)
-            ->completed()
-            ->exists();
+            $hasCompleted = ExamAttempt::forSchedule($schedule->id)
+                ->forUser($userId)
+                ->completed()
+                ->exists();
 
-        if ($hasCompleted && $exam->isOfficial()) {
-            throw new DomainException('Bạn đã hoàn thành bài thi chính thức này. Không thể thi lại.');
-        }
+            if ($hasCompleted && $exam->isOfficial()) {
+                throw new DomainException('Bạn đã hoàn thành bài thi chính thức này. Không thể thi lại.');
+            }
 
-        $latestAttempt = ExamAttempt::forSchedule($schedule->id)
-            ->forUser($userId)
-            ->latestAttempt()
-            ->first();
+            $latestAttempt = ExamAttempt::forSchedule($schedule->id)
+                ->forUser($userId)
+                ->latestAttempt()
+                ->lockForUpdate()
+                ->first();
 
-        $nextNumber = $latestAttempt ? $latestAttempt->attempt_number + 1 : 1;
+            $nextNumber = $latestAttempt ? $latestAttempt->attempt_number + 1 : 1;
 
-        ExamAttempt::create([
-            'exam_schedule_id' => $schedule->id,
-            'user_id' => $userId,
-            'attempt_number' => $nextNumber,
-            'started_at' => now(),
-            'status' => ExamAttemptStatus::InProgress,
-            'ip_address' => $ipAddress,
-            'user_agent' => substr($userAgent ?? '', 0, 500),
-        ]);
+            ExamAttempt::create([
+                'exam_schedule_id' => $schedule->id,
+                'user_id' => $userId,
+                'attempt_number' => $nextNumber,
+                'started_at' => now(),
+                'status' => ExamAttemptStatus::InProgress,
+                'ip_address' => $ipAddress,
+                'user_agent' => substr($userAgent ?? '', 0, 500),
+            ]);
+        });
     }
 
     /**
