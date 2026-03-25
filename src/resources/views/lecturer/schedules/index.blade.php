@@ -3,14 +3,12 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h2 class="text-[22px] font-bold text-[#1A3A6B] mb-1">Quản lý Lịch Thi</h2>
-                    <p class="text-[13px] text-[#6B7C99]">Tất cả ca thi bạn đã lên lịch.</p>
+                    <h2 class="text-2xl font-bold text-[#1A3A6B] mb-1">Quản lý Lịch Thi</h2>
+                    <p class="text-sm text-[#6B7C99]">Tất cả ca thi bạn đã lên lịch.</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <a href="{{ route('lecturer.schedules.create') }}" class="inline-flex items-center gap-2 bg-[#1A3A6B] text-white px-4 py-2 rounded-lg text-[13px] font-semibold hover:bg-[#0F2A53] transition-all shadow-sm shadow-[#1A3A6B]/20">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
+                    <a href="{{ route('lecturer.schedules.create') }}" class="inline-flex items-center gap-2 bg-[#1A3A6B] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#0F2A53] transition-all shadow-sm shadow-[#1A3A6B]/20">
+                        <x-ui-icon name="play" class="w-4 h-4" />
                         Thêm lịch thi mới
                     </a>
                 </div>
@@ -21,15 +19,13 @@
                 @if($schedules->isEmpty())
                 <div class="text-center py-16">
                     <div class="w-16 h-16 bg-[#F4F7FC] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#D6E2F0]">
-                        <svg class="w-8 h-8 text-[#6B7C99]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
+                        <x-ui-icon name="academic-cap" class="w-8 h-8 text-[#6B7C99]" />
                     </div>
-                    <h4 class="text-[15px] font-bold text-[#1A3A6B] mb-2">Chưa có lịch thi nào</h4>
-                    <p class="text-[13px] text-[#6B7C99]">Tạo lịch thi từ trang chi tiết đề thi.</p>
+                    <h4 class="text-base font-bold text-[#1A3A6B] mb-2">Chưa có lịch thi nào</h4>
+                    <p class="text-sm text-[#6B7C99]">Tạo lịch thi từ trang chi tiết đề thi.</p>
                 </div>
                 @else
-                <table class="w-full text-[13px]">
+                <table class="w-full text-sm">
                     <thead>
                         <tr class="bg-[#F4F7FC] text-[#1A3A6B]">
                             <th class="px-5 py-3 text-left font-semibold">Đề thi</th>
@@ -59,19 +55,32 @@
                                 ];
                                 [$label, $cls] = $statusMap[$schedule->status] ?? ['—', 'bg-[#F3F4F6] text-[#6B7C99]'];
                                 @endphp
-                                <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full {{ $cls }}">{{ $label }}</span>
+                                <span class="inline-block text-xs font-medium px-2.5 py-0.5 rounded-full {{ $cls }}">{{ $label }}</span>
                             </td>
                             <td class="px-5 py-3.5 text-center">
-                                <div class="flex items-center justify-center gap-2">
-                                    <a href="{{ route('lecturer.schedules.edit', $schedule->id) }}" class="text-[#185FA5] hover:underline text-[12px]">Sửa</a>
-                                    <form method="POST" action="{{ route('lecturer.schedules.assign-students', $schedule->id) }}" class="inline">
-                                        @csrf
-                                        <button type="submit" class="text-[#065F46] hover:underline text-[12px]">Phân SV</button>
-                                    </form>
-                                    <form method="POST" action="{{ route('lecturer.schedules.destroy', $schedule->id) }}" class="inline" onsubmit="return confirm('Xoá lịch thi này?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="text-[#DC2626] hover:underline text-[12px]">Xoá</button>
-                                    </form>
+                                <div class="flex items-center justify-center gap-2" x-data="{ confirmingDelete: false }">
+                                    <a href="{{ route('lecturer.schedules.edit', $schedule->id) }}" class="text-[#185FA5] hover:underline text-xs">Sửa</a>
+                                    
+                                    <template x-if="!confirmingDelete">
+                                        <div class="flex items-center gap-2">
+                                            <form method="POST" action="{{ route('lecturer.schedules.assign-students', $schedule->id) }}" class="inline">
+                                                @csrf
+                                                <button type="submit" class="text-[#065F46] hover:underline text-xs">Phân SV</button>
+                                            </form>
+                                            <button type="button" @click="confirmingDelete = true" class="text-[#DC2626] hover:underline text-xs">Xoá</button>
+                                        </div>
+                                    </template>
+
+                                    <template x-if="confirmingDelete">
+                                        <div class="flex items-center gap-2 bg-red-50 px-2 py-1 rounded border border-red-100">
+                                            <span class="text-[10px] text-red-600 font-bold">Xác nhận?</span>
+                                            <form method="POST" action="{{ route('lecturer.schedules.destroy', $schedule->id) }}" class="inline">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="text-[10px] font-bold text-red-700 hover:underline">Có</button>
+                                            </form>
+                                            <button type="button" @click="confirmingDelete = false" class="text-[10px] text-navy-400 hover:underline">Không</button>
+                                        </div>
+                                    </template>
                                 </div>
                             </td>
                         </tr>

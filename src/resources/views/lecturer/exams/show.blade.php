@@ -9,7 +9,7 @@
             <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div>
                     <div class="flex items-center gap-3 mb-2">
-                        <h2 class="text-[22px] md:text-[28px] font-bold text-navy-900 leading-tight">{{ $exam->title }}
+                        <h2 class="text-2xl md:text-3xl font-bold text-navy-900 leading-tight">{{ $exam->title }}
                         </h2>
                         @php
                             $statusValue = $exam->status?->value;
@@ -21,13 +21,13 @@
                             $statusLabels = ['draft' => 'Nháp', 'published' => 'Đang mở', 'closed' => 'Đã đóng'];
                         @endphp
                         <span
-                            class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold border-[0.5px] {{ $statusColors[$statusValue] ?? '' }}">
+                            class="px-2.5 py-0.5 rounded-full text-xs font-semibold border-[0.5px] {{ $statusColors[$statusValue] ?? '' }}">
                             {{ $statusLabels[$statusValue] ?? $statusValue }}
                         </span>
                     </div>
-                    <p class="text-[13px] text-text-muted">{{ $exam->subject->name }}</p>
+                    <p class="text-sm text-text-muted">{{ $exam->subject->name }}</p>
                     @if($exam->description)
-                        <p class="text-[13px] text-text-muted mt-2">{{ $exam->description }}</p>
+                        <p class="text-sm text-text-muted mt-2">{{ $exam->description }}</p>
                     @endif
                 </div>
 
@@ -40,8 +40,9 @@
                                 : 'Xoá vĩnh viễn đề thi này?';
                         @endphp
                         <a href="{{ route('lecturer.exams.edit', $exam->id) }}"
-                            class="inline-flex items-center px-3 py-1.5 bg-white border border-border-clean rounded-[6px] text-[12px] font-medium text-text-muted hover:bg-surface-1 transition">
-                            ✏️ Sửa
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-border-clean rounded-[6px] text-xs font-medium text-text-muted hover:bg-surface-1 transition">
+                            <x-ui-icon name="star" class="w-3.5 h-3.5" />
+                            Sửa
                         </a>
 
 
@@ -49,38 +50,56 @@
                             <form method="POST" action="{{ route('lecturer.exams.publish', $exam->id) }}" class="inline">
                                 @csrf @method('PATCH')
                                 <button type="submit"
-                                    class="inline-flex items-center px-3 py-1.5 bg-teal-600 rounded-[6px] text-[12px] font-medium text-white hover:bg-teal-700 transition">
-                                    🚀 Mở đề
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 rounded-[6px] text-xs font-medium text-white hover:bg-teal-700 transition">
+                                    <x-ui-icon name="play" class="w-3.5 h-3.5" />
+                                    Mở đề
                                 </button>
                             </form>
                         @endif
 
                         @if($exam->status === \App\Enums\ExamStatus::Published)
-                            <form method="POST" action="{{ route('lecturer.exams.close', $exam->id) }}" class="inline"
-                                onsubmit="return confirm('Bạn có chắc muốn đóng đề thi này?')">
-                                @csrf @method('PATCH')
-                                <button type="submit"
-                                    class="inline-flex items-center px-3 py-1.5 bg-orange-500 rounded-[6px] text-[12px] font-medium text-white hover:bg-orange-600 transition">
-                                    🔒 Đóng đề
+                            <div x-data="{ confirming: false }" class="inline">
+                                <button type="button" @click="confirming = true" x-show="!confirming"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 rounded-[6px] text-xs font-medium text-white hover:bg-orange-600 transition">
+                                    <x-ui-icon name="document-text" class="w-3.5 h-3.5" />
+                                    Đóng đề
                                 </button>
-                            </form>
+                                <div x-show="confirming" x-cloak class="inline-flex items-center gap-2 bg-orange-50 px-2 py-1 rounded border border-orange-200">
+                                    <span class="text-[10px] text-orange-700 font-bold">Đóng đề?</span>
+                                    <form method="POST" action="{{ route('lecturer.exams.close', $exam->id) }}" class="inline">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="text-[10px] font-bold text-orange-600 hover:underline">Có</button>
+                                    </form>
+                                    <button type="button" @click="confirming = false" class="text-[10px] text-navy-400 hover:underline">Không</button>
+                                </div>
+                            </div>
                         @endif
 
                         @if($exam->status === \App\Enums\ExamStatus::Closed)
                             <button type="button" onclick="document.getElementById('reopen-modal').classList.remove('hidden')"
-                                class="inline-flex items-center px-3 py-1.5 bg-navy-900 rounded-[6px] text-[12px] font-medium text-white hover:bg-navy-950 transition">
-                                🔓 Mở lại
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-navy-900 rounded-[6px] text-xs font-medium text-white hover:bg-navy-950 transition">
+                                <x-ui-icon name="play" class="w-3.5 h-3.5 rotate-180" />
+                                Mở lại
                             </button>
                         @endif
 
-                        <form method="POST" action="{{ route('lecturer.exams.destroy', $exam->id) }}" class="inline"
-                            onsubmit="return confirm('{{ $deleteConfirmMessage }}')">
-                            @csrf @method('DELETE')
-                            <button type="submit"
-                                class="inline-flex items-center px-3 py-1.5 bg-red-500 rounded-[6px] text-[12px] font-medium text-white hover:bg-red-600 transition">
-                                🗑️ Xoá
+                        <div x-data="{ confirming: false }" class="inline">
+                            <button type="button" @click="confirming = true" x-show="!confirming"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500 rounded-[6px] text-xs font-medium text-white hover:bg-red-600 transition">
+                                <x-ui-icon name="x-mark" class="w-3.5 h-3.5" />
+                                Xoá
                             </button>
-                        </form>
+                            <div x-show="confirming" x-cloak class="inline-flex flex-col items-center gap-1 bg-red-50 p-2 rounded border border-red-200 min-w-[150px]">
+                                <span class="text-[10px] text-red-700 font-bold leading-tight text-center">{{ $deleteConfirmMessage }}</span>
+                                <div class="flex gap-3 mt-1">
+                                    <form method="POST" action="{{ route('lecturer.exams.destroy', $exam->id) }}" class="inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="text-[10px] font-bold text-red-600 hover:underline">Xoá</button>
+                                    </form>
+                                    <button type="button" @click="confirming = false" class="text-[10px] text-navy-400 hover:underline">Hủy</button>
+                                </div>
+                            </div>
+                        </div>
                     @endcan
                 </div>
             </div>
@@ -89,22 +108,22 @@
         {{-- Thông tin đề thi --}}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <x-card padding="true">
-                <p class="text-[11px] font-medium text-text-muted mb-0.5">Thời gian làm bài</p>
-                <p class="text-[20px] font-bold text-navy-900">{{ $exam->duration_minutes }} <span
-                        class="text-[12px] text-text-muted">phút</span></p>
+                <p class="text-xs font-medium text-text-muted mb-0.5">Thời gian làm bài</p>
+                <p class="text-xl font-bold text-navy-900">{{ $exam->duration_minutes }} <span
+                        class="text-xs text-text-muted">phút</span></p>
             </x-card>
             <x-card padding="true">
-                <p class="text-[11px] font-medium text-text-muted mb-0.5">Số câu hỏi</p>
-                <p class="text-[20px] font-bold text-navy-900">{{ $exam->questions->count() }} <span
-                        class="text-[12px] text-text-muted">câu</span></p>
+                <p class="text-xs font-medium text-text-muted mb-0.5">Số câu hỏi</p>
+                <p class="text-xl font-bold text-navy-900">{{ $exam->questions->count() }} <span
+                        class="text-xs text-text-muted">câu</span></p>
             </x-card>
             <x-card padding="true">
-                <p class="text-[11px] font-medium text-text-muted mb-0.5">Tổng điểm</p>
-                <p class="text-[20px] font-bold text-navy-900">{{ number_format($exam->total_points, 2) }}</p>
+                <p class="text-xs font-medium text-text-muted mb-0.5">Tổng điểm</p>
+                <p class="text-xl font-bold text-navy-900">{{ number_format($exam->total_points, 2) }}</p>
             </x-card>
             <x-card padding="true">
-                <p class="text-[11px] font-medium text-text-muted mb-0.5">Điểm đạt</p>
-                <p class="text-[20px] font-bold text-navy-900">{{ number_format($exam->pass_points, 2) }}</p>
+                <p class="text-xs font-medium text-text-muted mb-0.5">Điểm đạt</p>
+                <p class="text-xl font-bold text-navy-900">{{ number_format($exam->pass_points, 2) }}</p>
             </x-card>
         </div>
 
@@ -112,8 +131,8 @@
         <x-card padding="true">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <h4 class="text-[14px] font-semibold text-navy-900 mb-3">Khung thời gian</h4>
-                    <div class="space-y-2 text-[13px]">
+                    <h4 class="text-sm font-semibold text-navy-900 mb-3">Khung thời gian</h4>
+                    <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-text-muted">Mở đề:</span>
                             <span
@@ -127,8 +146,8 @@
                     </div>
                 </div>
                 <div>
-                    <h4 class="text-[14px] font-semibold text-navy-900 mb-3">Cấu hình hiển thị kết quả</h4>
-                    <div class="space-y-2 text-[13px]">
+                    <h4 class="text-sm font-semibold text-navy-900 mb-3">Cấu hình hiển thị kết quả</h4>
+                    <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-text-muted">Cho xem điểm tổng:</span>
                             <span
@@ -152,10 +171,10 @@
         @if($exam->reopen_reason)
             <x-card padding="true">
                 <div class="flex items-start gap-3">
-                    <span class="text-[18px]">📋</span>
+                    <x-ui-icon name="document-text" class="w-5 h-5 text-navy-900" />
                     <div>
-                        <p class="text-[13px] font-semibold text-navy-900 mb-1">Lý do mở lại đề thi</p>
-                        <p class="text-[13px] text-text-muted">{{ $exam->reopen_reason }}</p>
+                        <p class="text-sm font-semibold text-navy-900 mb-1">Lý do mở lại đề thi</p>
+                        <p class="text-sm text-text-muted">{{ $exam->reopen_reason }}</p>
                     </div>
                 </div>
             </x-card>
@@ -164,17 +183,17 @@
         {{-- Thống kê bài thi --}}
         <x-card padding="true">
             <x-slot name="header">
-                <h3 class="text-[17px] font-semibold text-navy-900">Sinh viên đã thi
+                <h3 class="text-lg font-semibold text-navy-900">Sinh viên đã thi
                     ({{ $completedCount }}/{{ $attemptCount }})</h3>
             </x-slot>
 
             @if($exam->attempts->isEmpty())
                 <div class="text-center py-8">
-                    <p class="text-text-muted text-[13px]">Chưa có sinh viên nào thi bài này.</p>
+                    <p class="text-text-muted text-sm">Chưa có sinh viên nào thi bài này.</p>
                 </div>
             @else
                 <div class="overflow-x-auto">
-                    <table class="w-full text-[13px]">
+                    <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-border-clean">
                                 <th class="text-left py-2 px-3 font-semibold text-text-muted">Sinh viên</th>
@@ -191,11 +210,11 @@
                                     <td class="py-2.5 px-3 text-center">
                                         @if($attempt->status === \App\Enums\ExamAttemptStatus::Completed)
                                             <span
-                                                class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-50 text-teal-700 border-[0.5px] border-teal-200">Đã
+                                                class="px-2 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border-[0.5px] border-teal-200">Đã
                                                 nộp</span>
                                         @else
                                             <span
-                                                class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border-[0.5px] border-amber-200">Đang
+                                                class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border-[0.5px] border-amber-200">Đang
                                                 thi</span>
                                         @endif
                                     </td>
@@ -228,13 +247,10 @@
             class="hidden fixed inset-0 bg-navy-950/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
             <x-card padding="true" class="w-full max-w-md">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-[17px] font-semibold text-navy-900">Mở lại đề thi</h3>
+                    <h3 class="text-lg font-semibold text-navy-900">Mở lại đề thi</h3>
                     <button onclick="document.getElementById('reopen-modal').classList.add('hidden')"
                         class="text-text-muted hover:text-navy-900">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <x-ui-icon name="x-mark" class="w-5 h-5" />
                     </button>
                 </div>
 
@@ -243,21 +259,21 @@
                     @method('PATCH')
 
                     <div>
-                        <label class="block text-[12px] font-medium text-navy-900 mb-1">Lý do mở lại <span
+                        <label class="block text-xs font-medium text-navy-900 mb-1">Lý do mở lại <span
                                 class="text-red-500">*</span></label>
                         <textarea name="reopen_reason" rows="3" required
-                            class="w-full border-border-clean focus:border-navy-600 focus:ring-blue-200 rounded-[6px] shadow-sm text-[13px]"
+                            class="w-full border-border-clean focus:border-navy-600 focus:ring-blue-200 rounded-[6px] shadow-sm text-sm"
                             placeholder="Nhập lý do mở lại đề thi..."></textarea>
                         @error('reopen_reason')
-                            <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                            <p class="mt-1 text-xs font-medium text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div class="flex justify-end gap-2">
                         <button type="button" onclick="document.getElementById('reopen-modal').classList.add('hidden')"
-                            class="px-3 py-1.5 text-[12px] font-medium text-text-muted hover:text-navy-900">Huỷ</button>
+                            class="px-3 py-1.5 text-xs font-medium text-text-muted hover:text-navy-900">Huỷ</button>
                         <button type="submit"
-                            class="px-4 py-1.5 bg-navy-900 text-white text-[12px] font-medium rounded-[6px] hover:bg-navy-950 transition">
+                            class="px-4 py-1.5 bg-navy-900 text-white text-xs font-medium rounded-[6px] hover:bg-navy-950 transition">
                             Xác nhận mở lại
                         </button>
                     </div>

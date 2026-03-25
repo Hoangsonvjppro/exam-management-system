@@ -7,8 +7,8 @@
         <x-card padding="true" variant="featured">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
-                    <h2 class="text-[22px] md:text-[28px] font-bold text-navy-900 leading-tight">Xin chào, {{ auth()->user()->name }}!</h2>
-                    <p class="mt-2 text-[13px] text-text-muted">
+                    <h2 class="text-2xl md:text-3xl font-bold text-navy-900 leading-tight">Xin chào, {{ auth()->user()->name }}!</h2>
+                    <p class="mt-2 text-sm text-text-muted">
                         @if (auth()->user()->student_code)
                         Mã sinh viên: <span class="font-semibold text-navy-900">{{ auth()->user()->student_code }}</span>
                         @if(auth()->user()->class_name)
@@ -36,36 +36,36 @@
 
         <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <x-card padding="true">
-                <p class="text-[12px] font-medium text-text-muted mb-1">Học phần đang theo</p>
+                <p class="text-xs font-medium text-text-muted mb-1">Học phần đang theo</p>
                 <div class="flex items-baseline gap-2">
-                    <p class="text-[28px] font-bold text-navy-900 leading-none">{{ $enrolledSections->count() }}</p>
-                    <span class="text-[12px] text-text-muted">lớp</span>
+                    <p class="text-3xl font-bold text-navy-900 leading-none">{{ $enrolledSections->count() }}</p>
+                    <span class="text-xs text-text-muted">lớp</span>
                 </div>
             </x-card>
             <x-card padding="true" variant="accent">
-                <p class="text-[12px] font-medium text-text-muted mb-1">Bài thi</p>
+                <p class="text-xs font-medium text-text-muted mb-1">Bài thi</p>
                 <div class="flex items-baseline gap-2">
-                    <p class="text-[28px] font-bold text-navy-900 leading-none">{{ $schedules->count() }}</p>
-                    <span class="text-[12px] text-text-muted">bài</span>
+                    <p class="text-3xl font-bold text-navy-900 leading-none">{{ $schedules->count() }}</p>
+                    <span class="text-xs text-text-muted">bài</span>
                 </div>
             </x-card>
             <x-card padding="true">
-                <p class="text-[12px] font-medium text-text-muted mb-1">Chuyên cần</p>
+                <p class="text-xs font-medium text-text-muted mb-1">Chuyên cần</p>
                 <div class="flex items-baseline gap-2">
-                    <p class="text-[28px] font-bold text-navy-900 leading-none">-%</p>
-                    <span class="text-[12px] text-text-muted">đã tham gia</span>
+                    <p class="text-3xl font-bold text-navy-900 leading-none">-%</p>
+                    <span class="text-xs text-text-muted">đã tham gia</span>
                 </div>
             </x-card>
         </section>
 
         <x-card padding="true">
             <x-slot name="header">
-                <h3 class="text-[17px] font-semibold text-navy-900">Bài Kiểm Tra & Kỳ Thi</h3>
+                <h3 class="text-lg font-semibold text-navy-900">Bài Kiểm Tra & Kỳ Thi</h3>
             </x-slot>
 
             @if($schedules->isEmpty())
             <div class="text-center py-10 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
-                <p class="text-text-muted text-[13px] font-medium">Bạn chưa có bài thi nào.</p>
+                <p class="text-text-muted text-sm font-medium">Bạn chưa có bài thi nào.</p>
             </div>
             @else
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -82,10 +82,10 @@
                             @else
                             <x-badge type="danger">Đã hết giờ</x-badge>
                             @endif
-                            <span class="text-[11px] text-text-muted">{{ $schedule->exam_date?->format('d/m/Y') ?? 'Chưa xác định' }}</span>
+                            <span class="text-xs text-text-muted">{{ $schedule->exam_date?->format('d/m/Y') ?? 'Chưa xác định' }}</span>
                         </div>
-                        <h4 class="font-semibold text-[15px] text-navy-900 leading-snug mb-1">{{ $schedule->exam->title }}</h4>
-                        <p class="text-[12px] text-text-muted">{{ $schedule->exam->subject->name ?? '—' }}</p>
+                        <h4 class="font-semibold text-base text-navy-900 leading-snug mb-1">{{ $schedule->exam->title }}</h4>
+                        <p class="text-xs text-text-muted">{{ $schedule->exam->subject->name ?? '—' }}</p>
                     </div>
 
                     <x-button variant="primary" size="sm" class="w-full" href="{{ route('student.exams.show', $schedule->id) }}">
@@ -100,14 +100,14 @@
         <x-card padding="true">
             <x-slot name="header">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h3 class="text-[17px] font-semibold text-navy-900">Lớp học phần của tôi</h3>
+                    <h3 class="text-lg font-semibold text-navy-900">Lớp học phần của tôi</h3>
                     <x-search-input x-model="searchQuery" placeholder="Tìm theo tên hoặc mã lớp..." class="!max-w-[240px]" />
                 </div>
             </x-slot>
 
             @if($enrolledSections->isEmpty())
             <div class="text-center py-10">
-                <p class="text-text-muted text-[13px] mb-4">Bạn chưa tham gia lớp nào.</p>
+                <p class="text-text-muted text-sm mb-4">Bạn chưa tham gia lớp nào.</p>
                 <x-button variant="primary" onclick="document.getElementById('join-class-modal').classList.remove('hidden')">
                     Tham gia lớp ngay
                 </x-button>
@@ -119,21 +119,34 @@
                 $searchableText = strtolower(($section->name ?? '') . ' ' . $section->code);
                 @endphp
                 <div class="border-[0.5px] border-border-clean bg-surface-0 rounded-[8px] p-4 flex items-center justify-between gap-4"
-                    x-show="searchQuery === '' || '{{ $searchableText }}'.includes(searchQuery.toLowerCase())">
+                    x-show="searchQuery === '' || '{{ $searchableText }}'.includes(searchQuery.toLowerCase())"
+                    x-data="{ confirmingLeave: false }">
                     <div>
-                        <p class="font-semibold text-[14px] text-navy-900 leading-tight">{{ $section->name ?? $section->code }}</p>
-                        <p class="text-[12px] text-text-muted mt-1 font-mono">{{ $section->code }}</p>
+                        <p class="font-semibold text-sm text-navy-900 leading-tight">{{ $section->name ?? $section->code }}</p>
+                        <p class="text-xs text-text-muted mt-1 font-mono">{{ $section->code }}</p>
                         @if($section->lecturer)
-                        <p class="text-[12px] text-text-muted mt-0.5">Giảng viên: {{ $section->lecturer->name }}</p>
+                        <p class="text-xs text-text-muted mt-0.5">Giảng viên: {{ $section->lecturer->name }}</p>
                         @endif
                     </div>
-                    <form method="POST" action="{{ route('student.leave-class', $section) }}" onsubmit="return confirm('Bạn có chắc muốn rời lớp này?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-[12px] font-medium text-red-600 hover:text-red-700 hover:underline">
+                    
+                    <div class="flex items-center gap-2">
+                        <button type="button" 
+                                x-show="!confirmingLeave"
+                                @click="confirmingLeave = true"
+                                class="text-xs font-medium text-red-600 hover:text-red-700 hover:underline">
                             Rời lớp
                         </button>
-                    </form>
+
+                        <div x-show="confirmingLeave" x-cloak class="flex items-center gap-2">
+                            <span class="text-xs text-text-muted font-medium">Chắc chắn?</span>
+                            <form method="POST" action="{{ route('student.leave-class', $section) }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-xs font-bold text-red-600 hover:text-red-700">Rời</button>
+                            </form>
+                            <button type="button" @click="confirmingLeave = false" class="text-xs font-medium text-navy-400 hover:text-navy-600">Hủy</button>
+                        </div>
+                    </div>
                 </div>
                 @endforeach
             </div>
@@ -144,17 +157,15 @@
     <div id="join-class-modal" class="hidden fixed inset-0 bg-navy-950/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <x-card padding="true" class="w-full max-w-md">
             <div class="flex items-center justify-between mb-6">
-                <h3 class="text-[17px] font-semibold text-navy-900">Tham gia lớp học</h3>
+                <h3 class="text-lg font-semibold text-navy-900">Tham gia lớp học</h3>
                 <button onclick="document.getElementById('join-class-modal').classList.add('hidden')" class="text-text-muted hover:text-navy-900">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <x-ui-icon name="x-mark" class="w-5 h-5" />
                 </button>
             </div>
 
             @if(!auth()->user()->student_code)
             <div class="bg-amber-50 border-[0.5px] border-amber-600 rounded-[8px] p-4 text-center">
-                <p class="text-[12px] text-amber-600 font-medium mb-3">Trước tiên hãy hoàn tất hồ sơ sinh viên (nhập MSSV).</p>
+                <p class="text-xs text-amber-600 font-medium mb-3">Trước tiên hãy hoàn tất hồ sơ sinh viên (nhập MSSV).</p>
                 <x-button variant="primary" class="w-full" href="{{ route('onboarding.show') }}">
                     Nhập thông tin sinh viên
                 </x-button>
@@ -163,10 +174,10 @@
             <form method="POST" action="{{ route('student.join-class') }}" class="space-y-4">
                 @csrf
                 <div>
-                    <label class="block text-[12px] font-medium text-navy-900 mb-1">Mã lớp học</label>
+                    <label class="block text-xs font-medium text-navy-900 mb-1">Mã lớp học</label>
                     <x-text-input name="invite_code" type="text" :value="old('invite_code')" required placeholder="VD: ABC123" class="font-mono" />
                     @error('invite_code')
-                    <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                    <p class="mt-1 text-xs font-medium text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
                 <div class="flex justify-end gap-2 pt-2">

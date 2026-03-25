@@ -12,11 +12,9 @@
         <div class="space-y-6">
             @if($notifications->isEmpty())
             <div class="bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[10px] p-12 text-center">
-                <svg class="w-12 h-12 text-blue-200 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <p class="text-[15px] text-navy-900 font-semibold mb-1">Bạn chưa có thông báo nào.</p>
-                <p class="text-[13px] text-text-muted">Các thông báo từ giảng viên sẽ xuất hiện tại đây.</p>
+                <x-ui-icon name="bell-slash" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
+                <p class="text-base text-navy-900 font-semibold mb-1">Bạn chưa có thông báo nào.</p>
+                <p class="text-sm text-text-muted">Các thông báo từ giảng viên sẽ xuất hiện tại đây.</p>
             </div>
             @else
             <x-card class="overflow-hidden">
@@ -32,10 +30,12 @@
                                 <span class="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 border-[0.5px] border-blue-200 rounded-[4px] text-[10px] font-bold uppercase tracking-wider">
                                     {{ $className }}
                                 </span>
-                                <span class="text-[11px] text-text-muted font-medium">{{ $notification->created_at->format('d/m/Y H:i') }}</span>
+                                <span class="text-[10px] text-text-muted font-bold uppercase tracking-tighter">
+                                    {{ $notification->created_at->format('H:i - d/m/Y') }}
+                                </span>
                             </div>
-                            <h3 class="font-bold text-[16px] text-navy-900 mb-1 truncate">{{ $notification->title }}</h3>
-                            <p class="text-text-muted text-[13px] line-clamp-2 md:max-w-3xl pr-4">{{ $notification->message }}</p>
+                            <h3 class="font-bold text-sm text-navy-900 mb-1 truncate">{{ $notification->title }}</h3>
+                            <p class="text-text-muted text-xs line-clamp-2 md:max-w-3xl pr-4 leading-relaxed">{{ $notification->message }}</p>
                         </div>
                         <div class="shrink-0 mt-2 md:mt-0 self-start">
                             @php
@@ -77,8 +77,10 @@
             <div x-on:click.outside="modalOpen = false" class="bg-white border-[0.5px] border-border-clean rounded-[10px] shadow-sm w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden">
                 <div class="p-6 border-b-[0.5px] border-border-clean flex items-start justify-between shrink-0 bg-surface-0">
                     <div>
+                    <div class="mb-6">
                         <span x-text="currentClass" class="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 border-[0.5px] border-blue-200 rounded-[4px] text-[10px] font-bold uppercase tracking-wider mb-2"></span>
-                        <h3 x-text="currentTitle" class="text-[18px] font-bold text-navy-900 leading-tight"></h3>
+                        <h3 x-text="currentTitle" class="text-xl font-bold text-navy-900 leading-tight"></h3>
+                    </div>
                     </div>
                     <button x-on:click="modalOpen = false" class="text-text-muted hover:text-navy-900 transition-colors p-1">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -86,10 +88,10 @@
                         </svg>
                     </button>
                 </div>
-                <div class="p-6 overflow-y-auto whitespace-pre-wrap text-navy-900 text-[14px] leading-relaxed" x-text="currentMessage">
+                <div class="p-6 overflow-y-auto whitespace-pre-wrap text-navy-900 text-sm leading-relaxed" x-text="currentMessage">
                 </div>
-                <div class="py-3 px-6 border-t-[0.5px] border-border-clean text-[12px] font-medium text-text-muted text-right shrink-0 bg-surface-0">
-                    Đã gửi lúc: <span x-text="currentDate" class="font-semibold text-navy-900"></span>
+                <div class="py-3 px-6 border-t-[0.5px] border-border-clean text-xs font-medium text-text-muted text-right shrink-0 bg-surface-0">
+                    Đã gửi lúc: <span x-text="currentDate" class="font-semibold text-navy-900 ml-1"></span>
                 </div>
             </div>
         </div>

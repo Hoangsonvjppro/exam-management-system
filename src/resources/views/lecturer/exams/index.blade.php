@@ -3,36 +3,33 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="mb-6 flex items-center justify-between">
                 <div>
-                    <h2 class="text-[22px] font-bold text-[#1A3A6B] mb-1">Quản lý Đề Thi</h2>
-                    <p class="text-[13px] text-[#6B7C99]">Tất cả đề thi của bạn.</p>
+                    <h2 class="text-2xl font-bold text-[#1A3A6B] mb-1">Quản lý Đề Thi</h2>
+                    <p class="text-sm text-[#6B7C99]">Tất cả đề thi của bạn trong hệ thống.</p>
                 </div>
-                <a href="{{ route('lecturer.exams.create') }}" class="inline-flex items-center px-4 py-2 bg-[#1A3A6B] border border-transparent rounded-[8px] font-medium text-white text-[13px] hover:bg-[#142d54] transition">
-                    + Thêm đề thi mới
+                <a href="{{ route('lecturer.exams.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-[#1A3A6B] border border-transparent rounded-lg font-bold text-white text-xs uppercase tracking-wider hover:bg-[#142d54] transition shadow-sm">
+                    <x-ui-icon name="plus" class="w-4 h-4" />
+                    Thêm đề thi mới
                 </a>
             </div>
 
 
             <div class="bg-white rounded-[10px] border border-[#D6E2F0] overflow-hidden shadow-sm">
                 @if($exams->isEmpty())
-                <div class="text-center py-16">
-                    <div class="w-16 h-16 bg-[#F4F7FC] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#D6E2F0]">
-                        <svg class="w-8 h-8 text-[#6B7C99]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                    </div>
-                    <h4 class="text-[15px] font-bold text-[#1A3A6B] mb-2">Chưa có đề thi nào</h4>
-                    <p class="text-[13px] text-[#6B7C99]">Nhấn "Tạo bài kiểm tra" để thêm mới.</p>
+                <div class="text-center py-20 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-xl">
+                    <x-ui-icon name="document-text" class="mx-auto w-12 h-12 text-blue-100 mb-4" />
+                    <h4 class="text-lg font-bold text-[#1A3A6B] mb-2">Chưa có đề thi nào</h4>
+                    <p class="text-sm text-[#6B7C99]">Nhấn "Thêm đề thi mới" để bắt đầu xây dựng ngân hàng đề của bạn.</p>
                 </div>
                 @else
-                <table class="w-full text-[13px]">
+                <table class="w-full text-sm">
                     <thead>
                         <tr class="bg-[#F4F7FC] text-[#1A3A6B]">
-                            <th class="px-5 py-3 text-left font-semibold">Tên đề thi</th>
-                            <th class="px-5 py-3 text-left font-semibold">Môn học</th>
-                            <th class="px-5 py-3 text-center font-semibold">Loại</th>
-                            <th class="px-5 py-3 text-center font-semibold">Thời gian</th>
-                            <th class="px-5 py-3 text-center font-semibold">Trạng thái</th>
-                            <th class="px-5 py-3 text-center font-semibold">Hành động</th>
+                            <th class="px-5 py-4 text-left font-bold uppercase text-[10px] tracking-wider">Tên đề thi</th>
+                            <th class="px-5 py-4 text-left font-bold uppercase text-[10px] tracking-wider">Môn học</th>
+                            <th class="px-5 py-4 text-center font-bold uppercase text-[10px] tracking-wider">Loại</th>
+                            <th class="px-5 py-4 text-center font-bold uppercase text-[10px] tracking-wider">Thời gian</th>
+                            <th class="px-5 py-4 text-center font-bold uppercase text-[10px] tracking-wider">Trạng thái</th>
+                            <th class="px-5 py-4 text-center font-bold uppercase text-[10px] tracking-wider">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -41,21 +38,27 @@
                         $examStatusValue = $exam->status?->value;
                         @endphp
                         <tr class="border-t border-[#EBF2FA] hover:bg-[#F8FAFD] transition-colors">
-                            <td class="px-5 py-3.5 font-medium text-[#1A3A6B]">{{ $exam->title }}</td>
-                            <td class="px-5 py-3.5 text-[#6B7C99]">{{ $exam->subject->code ?? '—' }} - {{ $exam->subject->name ?? '' }}</td>
-                            <td class="px-5 py-3.5 text-center">
-                                <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full {{ $exam->exam_type === \App\Enums\ExamType::Official ? 'bg-[#EBF2FA] text-[#1A3A6B]' : 'bg-[#FEF3C7] text-[#92400E]' }}">
+                            <td class="px-5 py-4 font-bold text-[#1A3A6B]">{{ $exam->title }}</td>
+                            <td class="px-5 py-4 text-gray-500 font-medium">
+                                <span class="font-bold text-[#1A3A6B]">{{ $exam->subject->code ?? '—' }}</span>
+                                <span class="text-xs ml-1 opacity-70">{{ $exam->subject->name ?? '' }}</span>
+                            </td>
+                            <td class="px-5 py-4 text-center">
+                                <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border {{ $exam->exam_type === \App\Enums\ExamType::Official ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-amber-50 text-amber-800 border-amber-200' }}">
                                     {{ $exam->exam_type === \App\Enums\ExamType::Official ? 'Chính thức' : 'Luyện tập' }}
                                 </span>
                             </td>
-                            <td class="px-5 py-3.5 text-center text-[#6B7C99]">{{ $exam->duration_minutes }} phút</td>
-                            <td class="px-5 py-3.5 text-center">
-                                <span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full {{ $exam->status === \App\Enums\ExamStatus::Published ? 'bg-[#ECFDF5] text-[#065F46]' : 'bg-[#F3F4F6] text-[#6B7C99]' }}">
+                            <td class="px-5 py-4 text-center font-bold text-gray-700">{{ $exam->duration_minutes }} <span class="text-[10px] text-gray-400">PHÚT</span></td>
+                            <td class="px-5 py-4 text-center">
+                                <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border {{ $exam->status === \App\Enums\ExamStatus::Published ? 'bg-teal-50 text-teal-800 border-teal-200' : 'bg-gray-50 text-gray-600 border-gray-200' }}">
                                     {{ $examStatusValue === 'published' ? 'Đã phát hành' : ucfirst((string) $examStatusValue) }}
                                 </span>
                             </td>
-                            <td class="px-5 py-3.5 text-center">
-                                <a href="{{ route('lecturer.exams.show', $exam->id) }}" class="text-[#185FA5] hover:underline text-[12px] font-medium">Xem chi tiết</a>
+                            <td class="px-5 py-4 text-center">
+                                <a href="{{ route('lecturer.exams.show', $exam->id) }}" class="inline-flex items-center gap-1.5 text-[#185FA5] hover:text-[#1A3A6B] text-xs font-bold transition-colors">
+                                    <x-ui-icon name="eye" class="w-4 h-4" />
+                                    Chi tiết
+                                </a>
                             </td>
                         </tr>
                         @endforeach

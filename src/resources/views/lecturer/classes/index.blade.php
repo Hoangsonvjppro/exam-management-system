@@ -7,40 +7,37 @@
         {{-- Header --}}
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-[24px] font-bold text-navy-900 leading-tight">Lớp học phần của tôi</h2>
-                <p class="text-[13px] font-medium text-text-muted mt-1">Quản lý và tạo các lớp học phần bạn phụ trách.</p>
+                <h2 class="text-2xl font-bold text-navy-900 leading-tight">Lớp học phần của tôi</h2>
+                <p class="text-sm font-medium text-text-muted mt-1">Quản lý và tạo các lớp học phần bạn phụ trách.</p>
             </div>
-            <x-button variant="primary" href="{{ route('lecturer.classes.create') }}" class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                </svg>
+            <x-button variant="primary" href="{{ route('lecturer.classes.create') }}" class="flex items-center gap-2 text-sm">
+                <x-ui-icon name="plus" class="w-4 h-4" />
                 Tạo lớp mới
             </x-button>
         </div>
 
         {{-- Toolbar: Search & Action --}}
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-[10px] border-[0.5px] border-border-clean shadow-sm">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-border-clean/50 shadow-sm">
             <x-search-input x-model="searchQuery" placeholder="Tìm kiếm lớp học phần..." class="!max-w-md" />
-            <div class="flex items-center gap-2">
-                <span class="text-[13px] text-text-muted">Trạng thái:</span>
-                <select class="text-[13px] border-none bg-transparent font-semibold text-navy-900 focus:ring-0 cursor-pointer">
-                    <option value="all">Tất cả</option>
-                    <option value="active">Đang mở</option>
-                    <option value="archived">Lưu trữ</option>
-                </select>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-text-muted uppercase tracking-wider">Trạng thái:</span>
+                    <select class="text-sm border-none bg-transparent font-bold text-navy-900 focus:ring-0 cursor-pointer">
+                        <option value="all">Tất cả</option>
+                        <option value="active">Đang mở</option>
+                        <option value="archived">Lưu trữ</option>
+                    </select>
+                </div>
             </div>
         </div>
 
 
         {{-- Class Grid --}}
         @if($sections->isEmpty())
-            <div class="text-center py-20 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[10px]">
-                <svg class="mx-auto w-12 h-12 text-blue-200 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                </svg>
-                <p class="font-semibold text-navy-900 text-[16px]">Chưa có lớp học phần nào</p>
-                <p class="text-[13px] text-text-muted mt-2 mb-6">Tạo lớp học phần đầu tiên và chia sẻ mã mời cho sinh viên.</p>
+            <div class="text-center py-20 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-xl">
+                <x-ui-icon name="rectangle-group" class="mx-auto w-12 h-12 text-blue-100 mb-4" />
+                <p class="font-bold text-navy-900 text-lg">Chưa có lớp học phần nào</p>
+                <p class="text-sm text-text-muted mt-2 mb-6">Tạo lớp học phần đầu tiên và chia sẻ mã mời cho sinh viên.</p>
                 <x-button variant="primary" href="{{ route('lecturer.classes.create') }}">
                     Tạo lớp ngay
                 </x-button>
@@ -59,8 +56,8 @@
                             @else bg-red-50 @endif">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
-                                    <p class="font-semibold text-[11px] uppercase tracking-wider text-text-muted">{{ $section->code }}</p>
-                                    <h3 class="font-bold text-[16px] text-navy-900 leading-tight mt-1">{{ $section->name ?? $section->code }}</h3>
+                                    <p class="font-bold text-[10px] uppercase tracking-widest text-text-muted opacity-70">{{ $section->code }}</p>
+                                    <h3 class="font-bold text-lg text-navy-900 leading-tight mt-1 group-hover:text-blue-600 transition-colors">{{ $section->name ?? $section->code }}</h3>
                                 </div>
                                 <span class="uppercase text-[10px] font-bold px-2 py-1 rounded-[4px] shrink-0
                                     @if($section->status === 'active') bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
@@ -76,14 +73,14 @@
                         </div>
 
                         {{-- Card Body --}}
-                        <div class="p-5 flex-1 space-y-4">
-                            <div class="flex items-center justify-between text-[13px]">
-                                <span class="font-medium text-text-muted">Sinh viên</span>
-                                <span class="font-bold text-navy-900">{{ $section->students_count ?? 0 }} <span class="text-text-muted font-medium">/ {{ $section->max_students }}</span></span>
+                        <div class="p-6 flex-1 space-y-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="font-bold text-xs uppercase tracking-wider text-text-muted opacity-80">Sinh viên</span>
+                                <span class="font-bold text-navy-900">{{ $section->students_count ?? 0 }} <span class="text-text-muted font-medium ml-1">/ {{ $section->max_students }}</span></span>
                             </div>
-                            <div class="flex items-center justify-between text-[13px]">
-                                <span class="font-medium text-text-muted">Mã tham gia</span>
-                                <span class="font-mono bg-surface-0 border-[0.5px] border-border-clean px-2 py-0.5 text-[12px] rounded-[4px] font-bold text-navy-600 uppercase">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="font-bold text-xs uppercase tracking-wider text-text-muted opacity-80">Mã mời</span>
+                                <span class="font-mono bg-blue-50 border border-blue-100 px-3 py-1 text-xs rounded-full font-bold text-blue-700 uppercase tracking-widest">
                                     {{ $section->invite_code ?? '—' }}
                                 </span>
                             </div>
