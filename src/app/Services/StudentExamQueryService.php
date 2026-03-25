@@ -32,17 +32,13 @@ class StudentExamQueryService
 
         return [
             'upcoming' => $schedules->filter(function($schedule) {
-                $start = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->start_time);
-                return $start->isFuture();
+                return $schedule->start_datetime->isFuture();
             }),
             'available' => $schedules->filter(function($schedule) {
-                $start = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->start_time);
-                $end = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->end_time);
-                return $start->isPast() && $end->isFuture();
+                return $schedule->start_datetime->isPast() && $schedule->end_datetime->isFuture();
             }),
             'ended' => $schedules->filter(function($schedule) {
-                $end = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->end_time);
-                return $end->isPast();
+                return $schedule->end_datetime->isPast();
             }),
         ];
     }

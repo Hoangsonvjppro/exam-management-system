@@ -111,4 +111,14 @@ class ExamSchedule extends Model
 
         return $durationEnd;
     }
+
+    public function getStartDatetimeAttribute(): Carbon
+    {
+        return Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->start_time);
+    }
+
+    public function getEndDatetimeAttribute(): Carbon
+    {
+        return Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->end_time);
+    }
 }

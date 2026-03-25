@@ -33,7 +33,7 @@
                                 @endif
                             </span>
                             @if($schedule->end_time)
-                            <span>📅 Hết hạn: {{ $schedule->end_time }}</span>
+                            <span>📅 Hết hạn: {{ $schedule->end_datetime->format('d/m/Y H:i') }}</span>
                             @endif
                         </div>
                     </a>
@@ -65,7 +65,7 @@
                                 @endif
                             </span>
                             @if($schedule->start_time)
-                            <span>📅 Mở: {{ $schedule->start_time}}</span>
+                            <span>📅 Mở: {{ $schedule->start_datetime->format('d/m/Y H:i') }}</span>
                             @endif
                         </div>
                     </div>
@@ -89,7 +89,7 @@
                         </div>
                         <p class="text-[12px] text-[#6B7C99] mb-2">{{ $schedule->courseSection->name ?? '—' }}</p>
                         <div class="text-[11.5px] text-[#6B7C99]">
-                            Kết thúc: {{ $schedule->end_time->format('d/m/Y H:i') }}
+                            Kết thúc: {{ $schedule->end_datetime->format('d/m/Y H:i') }}
                         </div>
                     </a>
                     @endforeach
