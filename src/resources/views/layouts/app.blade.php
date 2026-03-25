@@ -252,28 +252,8 @@
             <!-- Page Content -->
             <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
 
-                {{-- Flash messages --}}
-                @if (session('success'))
-                <div class="mb-4 px-4 py-3 bg-success-50 border border-success-500/20 text-success-600 rounded-[10px] text-sm flex items-center gap-2">
-                    <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    {{ session('success') }}
-                </div>
-                @endif
-
-                @if (session('error'))
-                <div class="mb-4 px-4 py-3 bg-danger-50 border border-danger-500/20 text-danger-600 rounded-[10px] text-sm flex items-center gap-2">
-                    <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    {{ session('error') }}
-                </div>
-                @endif
+                {{-- Toast messages --}}
+                <x-toast />
 
                 {{ $slot }}
             </main>

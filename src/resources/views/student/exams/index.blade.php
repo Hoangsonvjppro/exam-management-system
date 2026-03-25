@@ -6,9 +6,6 @@
                 <p class="text-[13px] text-[#6B7C99]">Bài thi từ các lớp học phần bạn đang theo học.</p>
             </div>
 
-            @if(session('success'))
-            <div class="mb-4 px-4 py-3 bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-[13px] rounded-lg">{{ session('success') }}</div>
-            @endif
 
             {{-- Bài thi đang mở --}}
             @if($available->isNotEmpty())

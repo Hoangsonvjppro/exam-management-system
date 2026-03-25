@@ -13,11 +13,6 @@
                     {{ $exam->subject->name ?? '—' }}
                 </p>
 
-                @if(session('success'))
-                <div class="p-3 bg-teal-50 border-[0.5px] border-teal-200 rounded-[6px] font-medium text-teal-800 text-[13px] mb-4 inline-block">
-                    {{ session('success') }}
-                </div>
-                @endif
             </div>
         </x-card>
 

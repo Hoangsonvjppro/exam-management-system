@@ -11,9 +11,6 @@
                 </a>
             </div>
 
-            @if(session('success'))
-            <div class="mb-4 px-4 py-3 bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-[13px] rounded-lg">{{ session('success') }}</div>
-            @endif
 
             <div class="bg-white rounded-[10px] border border-[#D6E2F0] overflow-hidden shadow-sm">
                 @if($exams->isEmpty())

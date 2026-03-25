@@ -4,9 +4,6 @@
 
     <div class="space-y-6">
 
-        @if(session('success'))
-        <div class="p-4 bg-teal-50 border-[0.5px] border-teal-200 rounded-[6px] font-medium text-teal-800 text-[13px]">{{ session('success') }}</div>
-        @endif
 
         <x-card padding="true" variant="featured">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">

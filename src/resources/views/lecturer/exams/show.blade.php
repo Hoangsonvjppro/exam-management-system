@@ -3,14 +3,6 @@
     @section('page-title', 'Chi tiết đề thi')
 
     <div class="space-y-6">
-        @if(session('success'))
-            <div class="p-4 bg-teal-50 border-[0.5px] border-teal-200 rounded-[6px] font-medium text-teal-800 text-[13px]">
-                {{ session('success') }}</div>
-        @endif
-        @if(session('error'))
-            <div class="p-4 bg-red-50 border-[0.5px] border-red-200 rounded-[6px] font-medium text-red-800 text-[13px]">
-                {{ session('error') }}</div>
-        @endif
 
         {{-- Header --}}
         <x-card padding="true" variant="featured">
