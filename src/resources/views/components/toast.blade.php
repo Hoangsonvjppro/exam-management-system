@@ -4,6 +4,9 @@
         message: '',
         type: 'success',
         init() {
+            @if(session('status'))
+                this.showToast('{{ session('status') }}', 'success');
+            @endif
             @if(session('success'))
                 this.showToast('{{ session('success') }}', 'success');
             @endif

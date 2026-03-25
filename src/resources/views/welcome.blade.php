@@ -230,16 +230,6 @@
                         class="font-black text-2xl leading-none hover:text-navy-600">&times;</button>
                 </div>
 
-                @if(session('success'))
-                <div class="mb-4 p-3 bg-green-100 brutal-border text-sm font-semibold text-green-800">
-                    {{ session('success') }}
-                </div>
-                @endif
-                @if(session('error'))
-                <div class="mb-4 p-3 bg-red-100 brutal-border text-sm font-semibold text-red-800">
-                    {{ session('error') }}
-                </div>
-                @endif
 
                 @if(!auth()->user()->student_code)
                 <p class="mb-4 font-semibold text-text-muted">Trước tiên hãy hoàn tất hồ sơ sinh viên (nhập MSSV).</p>
@@ -275,6 +265,7 @@
         @endif
         @endauth
 
+        <x-toast />
     </div>
 </body>
 

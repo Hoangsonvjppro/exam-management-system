@@ -16,9 +16,6 @@
             </p>
         </div>
 
-        @if(session('error'))
-            <div class="p-4 bg-red-50 border-[0.5px] border-red-200 rounded-[6px] font-medium text-red-800 text-[13px]">{{ session('error') }}</div>
-        @endif
 
         <x-card padding="true">
             <form method="POST" action="{{ route('lecturer.classes.store') }}" class="space-y-5">

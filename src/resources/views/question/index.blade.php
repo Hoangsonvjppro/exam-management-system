@@ -26,11 +26,6 @@
          </div>
       </div>
 
-      @if (session('status'))
-      <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
-         {{ session('status') }}
-      </div>
-      @endif
 
       <form action="{{ route('lecturer.questions.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
          <div class="bg-white p-4 rounded-xl flex flex-col gap-1">

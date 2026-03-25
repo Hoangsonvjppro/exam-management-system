@@ -44,17 +44,6 @@
                 <p class="text-[13px] text-text-muted">Vui lòng đăng nhập để truy cập hệ thống theo đúng vai trò của bạn.</p>
             </div>
 
-            @if (session('warning'))
-                <div class="mb-4 p-3 bg-amber-50 border-[0.5px] border-amber-200 rounded-[6px] text-[13px] font-medium text-amber-700">
-                    {{ session('warning') }}
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="mb-4 p-3 bg-red-50 border-[0.5px] border-red-200 rounded-[6px] text-[13px] font-medium text-red-700">
-                    {{ session('error') }}
-                </div>
-            @endif
 
             @if ($errors->has('google_auth'))
                 <div class="mb-4 p-3 bg-red-50 border-[0.5px] border-red-200 rounded-[6px] text-[13px] font-medium text-red-700">
@@ -130,5 +119,6 @@
         </div>
     </div>
 </footer>
+<x-toast />
 </body>
 </html>
