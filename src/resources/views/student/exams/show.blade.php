@@ -100,7 +100,8 @@
                 <h3 class="text-lg font-semibold text-navy-900">Lịch sử làm bài của bạn</h3>
             </x-slot>
 
-            <div class="overflow-x-auto mt-4">
+            {{-- Table View (Desktop) --}}
+            <div class="hidden md:block overflow-x-auto mt-4">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-border-clean">
@@ -139,6 +140,53 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Card View (Mobile) --}}
+            <div class="md:hidden space-y-4 mt-4">
+                @foreach($pastAttempts as $past)
+                <div class="bg-surface-0 rounded-xl border border-border-clean p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <span class="block text-xs font-medium text-text-muted mb-0.5 italic">Lần thi</span>
+                            <span class="text-sm font-bold text-navy-900">Lần {{ $past->attempt_number }}</span>
+                        </div>
+                        <div>
+                            @if($past->total_score >= $exam->pass_points)
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-100 uppercase">ĐẠT</span>
+                            @else
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100 uppercase">CHƯA ĐẠT</span>
+                            @endif
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 py-3 border-y border-dashed border-border-clean">
+                        <div>
+                            <span class="block text-[10px] font-medium text-text-muted mb-1 uppercase tracking-wider">Điểm số</span>
+                            <span class="text-xl font-black {{ $past->total_score >= $exam->pass_points ? 'text-teal-600' : 'text-red-500' }}">
+                                {{ number_format($past->total_score, 1) }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-medium text-text-muted mb-1 uppercase tracking-wider">Hoàn thành lúc</span>
+                            <span class="text-xs text-navy-900 font-bold block">{{ $past->completed_at?->format('H:i') }}</span>
+                            <span class="text-[10px] text-text-muted">{{ $past->completed_at?->format('d/m/Y') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex justify-between items-center">
+                        <span class="text-[10px] text-text-muted">Chi tiết bài làm</span>
+                        @if($past->attempt_number === $pastAttempts->first()->attempt_number)
+                            <a href="{{ route('student.exams.result', $schedule->id) }}" class="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg font-bold text-xs hover:bg-blue-100 transition">
+                                Xem kết quả 
+                                <x-ui-icon name="arrow-right" class="w-3 h-3" />
+                            </a>
+                        @else
+                            <span class="text-blue-300 text-[10px] italic font-medium px-2 py-1 bg-surface-50 rounded">Lưu trữ hệ thống</span>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
             </div>
             
             @if($exam->isPractice())
