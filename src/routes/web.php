@@ -117,6 +117,9 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         Route::get('/results', [StudentPageController::class, 'results'])->name('results.index');
 
         Route::get('/attendance', [StudentPageController::class, 'attendance'])->name('attendance.index');
+
+        // Lịch thi của sinh viên
+        Route::get('/schedules', [\App\Http\Controllers\Student\StudentScheduleController::class, 'index'])->name('schedules.index');
     });
 
 

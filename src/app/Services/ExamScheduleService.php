@@ -115,4 +115,19 @@ class ExamScheduleService
 
         return $query->orderBy('exam_date')->orderBy('start_time')->get();
     }
+
+    /**
+     * Lấy danh sách lịch thi của sinh viên (dựa trên lớp đã enrolled).
+     */
+    public function getSchedulesForStudent(int $studentId): Collection
+    {
+        return ExamSchedule::whereHas('courseSection.students', function ($q) use ($studentId) {
+            $q->where('users.id', $studentId)
+              ->where('course_section_students.status', 'enrolled');
+        })
+        ->with(['exam.subject', 'courseSection'])
+        ->orderBy('exam_date', 'desc')
+        ->orderBy('start_time')
+        ->get();
+    }
 }

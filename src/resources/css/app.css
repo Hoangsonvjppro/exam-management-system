@@ -67,7 +67,7 @@
 
 @layer components {
     .sidebar-link {
-        @apply flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium text-text-muted rounded-[6px] transition-colors duration-200 ease-in-out cursor-pointer;
+        @apply flex items-center py-2.5 text-[13px] font-medium text-text-muted rounded-[6px] transition-colors duration-200 ease-in-out cursor-pointer;
     }
 
     .sidebar-link.active {
@@ -79,7 +79,7 @@
     }
 
     .sidebar-section-title {
-        @apply px-4 pt-6 pb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted;
+        @apply pl-[48px] pr-4 pt-6 pb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted;
     }
 }
 

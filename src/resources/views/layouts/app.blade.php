@@ -20,11 +20,30 @@
 
 <body class="font-sans antialiased bg-surface-0 text-navy-900">
 
-    <div class="flex h-screen overflow-hidden" x-data="{ sidebarOpen: false, searchQuery: '' }">
+    <div class="flex h-screen overflow-hidden" 
+         x-data="{ 
+            isSidebarPinned: false, 
+            isSidebarHovered: false, 
+            get isExpanded() { return (this.isSidebarPinned || this.isSidebarHovered) || window.innerWidth < 1024 && this.isSidebarPinned; },
+            togglePin() {
+                this.isSidebarPinned = !this.isSidebarPinned;
+                localStorage.setItem('ems_sidebar_pinned', this.isSidebarPinned);
+                if (!this.isSidebarPinned) this.isSidebarHovered = false;
+            },
+            init() {
+                const stored = localStorage.getItem('ems_sidebar_pinned');
+                if (stored !== null) {
+                    this.isSidebarPinned = stored === 'true';
+                } else {
+                    this.isSidebarPinned = window.innerWidth >= 1024;
+                }
+            }
+         }"
+         @resize.window="if(window.innerWidth < 1024) isSidebarPinned = false">
 
         {{-- ─── SIDEBAR ─────────────────────────────────────────── --}}
-        <!-- Overlay (mobile) -->
-        <div x-show="sidebarOpen" x-on:click="sidebarOpen = false"
+        <!-- Overlay (mobile only) -->
+        <div x-show="isSidebarPinned && window.innerWidth < 1024" x-on:click="isSidebarPinned = false"
             x-transition:enter="transition-opacity ease-linear duration-300"
             x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100"
@@ -35,19 +54,41 @@
             style="display:none">
         </div>
 
+        <!-- Spacer for Main Content (Desktop Only) -->
+        <div class="transition-all duration-300 ease-in-out flex-shrink-0 hidden lg:block"
+             :class="isSidebarPinned ? 'w-64' : 'w-16'"></div>
+
         <!-- Sidebar -->
-        <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r-[0.5px] border-border-clean transform transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:static lg:z-auto flex flex-col"
-            :class="sidebarOpen ? 'translate-x-0' : ''">
+        <aside class="fixed inset-y-0 left-0 z-50 bg-white border-r-[0.5px] border-border-clean flex flex-col transition-all duration-300 ease-in-out overflow-hidden"
+            :class="[
+                isExpanded ? 'w-64 translate-x-0' : 'w-16 -translate-x-full lg:translate-x-0',
+                (!isSidebarPinned && isSidebarHovered) ? 'shadow-[4px_0_24px_rgba(0,0,0,0.06)] lg:border-r-transparent' : ''
+            ]"
+            @mouseenter="if(!isSidebarPinned && window.innerWidth >= 1024) isSidebarHovered = true"
+            @mouseleave="if(!isSidebarPinned && window.innerWidth >= 1024) isSidebarHovered = false">
 
-            <!-- Logo -->
-            <div class="flex items-center gap-3 px-5 h-[52px] border-b-[0.5px] border-border-clean flex-shrink-0 bg-white">
-                <div class="w-2 h-2 rounded-full bg-blue-400"></div>
-                <div>
-                    <div class="font-semibold text-navy-900 text-[15px] leading-tight uppercase tracking-wider">EduPortal</div>
+            <!-- Sidebar Inner Container (fixed width 256px so contents don't squish during transition) -->
+            <div class="w-64 h-full flex flex-col flex-shrink-0">
+                <!-- Logo & Hamburger -->
+                <div class="flex items-center h-[52px] border-b-[0.5px] border-border-clean flex-shrink-0 pl-[12px] w-full">
+                    <!-- Hamburger inside Sidebar -->
+                    <div class="flex items-center justify-center flex-shrink-0">
+                        <button class="w-10 h-10 rounded-full hover:bg-surface-1 flex items-center justify-center text-text-muted transition-colors outline-none"
+                            @click="togglePin()">
+                            <svg class="w-5 h-5 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+    
+                    <!-- Logo Text -->
+                    <div class="flex items-center gap-3 whitespace-nowrap pl-[12px]">
+                        <div class="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></div>
+                        <div class="font-semibold text-navy-900 text-[15px] leading-tight uppercase tracking-wider">EduPortal</div>
+                    </div>
                 </div>
-            </div>
 
-            <nav class="flex-1 overflow-y-auto sidebar-scroll px-3 py-4 space-y-1">
+                <nav class="flex-1 overflow-y-auto sidebar-scroll py-4 space-y-1 relative">
 
                 @role('lecturer|teaching_assistant')
                 <x-sidebar-section label="Giảng dạy">
@@ -59,7 +100,7 @@
                     {{-- Đã sửa route và bỏ :active="false" để menu tự sáng lên khi click vào --}}
                     <x-sidebar-link route="lecturer.questions.index" icon="question-mark-circle">Câu hỏi</x-sidebar-link>
                     <x-sidebar-link route="lecturer.exams.index" icon="document-text">Đề thi</x-sidebar-link>
-                    <x-sidebar-link route="lecturer.schedules.index" icon="clock">Lịch thi</x-sidebar-link>
+                    <x-sidebar-link route="lecturer.schedules.index" icon="clock">Quản lý Lịch Thi</x-sidebar-link>
                 </x-sidebar-section>
 
                 <x-sidebar-section label="Lớp học">
@@ -74,6 +115,7 @@
 
                     {{-- Thêm badge nhắc nhở (tuỳ chọn) cho sinh viên ở mục Bài tập --}}
                     <x-sidebar-link route="student.exams.index" icon="clipboard-list">Kỳ thi & Bài tập</x-sidebar-link>
+                    <x-sidebar-link route="student.schedules.index" icon="clock">Lịch thi</x-sidebar-link>
 
                     <x-sidebar-link route="student.results.index" icon="chart-bar">Kết quả học tập</x-sidebar-link>
                     <x-sidebar-link route="student.attendance.index" icon="check-circle">Điểm danh</x-sidebar-link>
@@ -85,9 +127,8 @@
                 @endrole
 
             </nav>
-
-
-        </aside>
+        </div>
+    </aside>
 
         {{-- ─── MAIN CONTENT ─────────────────────────────────────── --}}
         <div class="flex flex-col flex-1 overflow-hidden">
@@ -96,11 +137,12 @@
             <header class="sticky top-0 z-30 h-[52px] bg-navy-900 text-white">
                 <div class="flex items-center justify-between h-full px-4 sm:px-6">
 
-                    <!-- Left: Hamburger + Page title -->
+                    <!-- Left: Page title (Hamburger removed from here) -->
                     <div class="flex items-center gap-4">
+                        <!-- Hamburger only for mobile (header) -->
                         <button class="lg:hidden p-1.5 rounded-[5px] bg-navy-700 text-blue-200 hover:bg-navy-600 transition-colors"
-                            x-on:click="sidebarOpen = !sidebarOpen">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            x-on:click="isSidebarPinned = !isSidebarPinned">
+                            <svg class="w-5 h-5 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                         </button>
@@ -158,9 +200,13 @@
                                     <div class="w-1.5 h-1.5 rounded-full bg-teal-300"></div>
                                     <span class="text-blue-200 text-[11px] font-medium">{{ auth()->user()->primary_role ?? 'SV' }}</span>
                                 </div>
+                                @if(auth()->user()->google_avatar)
+                                <img src="{{ auth()->user()->google_avatar }}" alt="Avatar" class="w-[30px] h-[30px] rounded-full border-[1.5px] border-blue-400 object-cover" referrerpolicy="no-referrer">
+                                @else
                                 <div class="w-[30px] h-[30px] rounded-full bg-navy-700 flex items-center justify-center text-blue-200 font-semibold text-[11px] border-[1.5px] border-blue-400">
                                     {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}
                                 </div>
+                                @endif
                             </button>
 
                             <!-- Dropdown menu -->
