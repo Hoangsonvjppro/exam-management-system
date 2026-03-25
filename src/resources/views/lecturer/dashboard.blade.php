@@ -2,7 +2,7 @@
     @section('title', 'Dashboard - Giảng viên')
     @section('page-title', 'Tổng quan giảng dạy')
 
-    <div class="space-y-6">
+    <div class="space-y-6" x-data="{ searchQuery: '' }">
 
 
         <x-card padding="true" variant="featured">
@@ -59,9 +59,12 @@
         {{-- My class list preview --}}
         <x-card padding="true">
             <x-slot name="header">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-1">
                     <h3 class="text-[17px] font-semibold text-navy-900">Lớp học phần của tôi</h3>
-                    <a href="{{ route('lecturer.classes.index') }}" class="text-[13px] font-medium text-blue-400 hover:text-navy-900 hover:underline">Xem kết quả →</a>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <x-search-input x-model="searchQuery" placeholder="Tìm kiếm nhanh..." class="!max-w-[200px]" />
+                        <a href="{{ route('lecturer.classes.index') }}" class="text-[13px] font-medium text-blue-400 hover:text-navy-900 hover:underline">Xem tất cả →</a>
+                    </div>
                 </div>
             </x-slot>
 

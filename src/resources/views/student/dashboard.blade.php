@@ -2,7 +2,7 @@
     @section('title', 'Dashboard - Sinh vien')
     @section('page-title', 'Tong quan hoc tap')
 
-    <div class="space-y-6">
+    <div class="space-y-6" x-data="{ searchQuery: '' }">
 
         <x-card padding="true" variant="featured">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -99,7 +99,10 @@
 
         <x-card padding="true">
             <x-slot name="header">
-                <h3 class="text-[17px] font-semibold text-navy-900">Lớp học phần của tôi</h3>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h3 class="text-[17px] font-semibold text-navy-900">Lớp học phần của tôi</h3>
+                    <x-search-input x-model="searchQuery" placeholder="Tìm theo tên hoặc mã lớp..." class="!max-w-[240px]" />
+                </div>
             </x-slot>
 
             @if($enrolledSections->isEmpty())

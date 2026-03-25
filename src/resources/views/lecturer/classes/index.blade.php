@@ -2,7 +2,7 @@
     @section('title', 'Lớp học phần của tôi — EMS')
     @section('page-title', 'Lớp học phần')
 
-    <div class="space-y-6">
+    <div class="space-y-6" x-data="{ searchQuery: '' }">
 
         {{-- Header --}}
         <div class="flex items-center justify-between">
@@ -16,6 +16,19 @@
                 </svg>
                 Tạo lớp mới
             </x-button>
+        </div>
+
+        {{-- Toolbar: Search & Action --}}
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-[10px] border-[0.5px] border-border-clean shadow-sm">
+            <x-search-input x-model="searchQuery" placeholder="Tìm kiếm lớp học phần..." class="!max-w-md" />
+            <div class="flex items-center gap-2">
+                <span class="text-[13px] text-text-muted">Trạng thái:</span>
+                <select class="text-[13px] border-none bg-transparent font-semibold text-navy-900 focus:ring-0 cursor-pointer">
+                    <option value="all">Tất cả</option>
+                    <option value="active">Đang mở</option>
+                    <option value="archived">Lưu trữ</option>
+                </select>
+            </div>
         </div>
 
 

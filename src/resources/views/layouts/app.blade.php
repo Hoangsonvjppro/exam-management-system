@@ -152,20 +152,8 @@
                         </h1>
                     </div>
 
-                    <!-- Center: Search Bar -->
-                    <div class="hidden md:flex flex-1 max-w-md mx-8">
-                        <div class="relative w-full">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-4 w-4 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </div>
-                            <input type="search"
-                                x-model="searchQuery"
-                                placeholder="Tìm kiếm..."
-                                class="block w-full pl-9 pr-3 py-1.5 bg-navy-700 border-none rounded-[5px] text-[13px] text-white placeholder-blue-200 focus:bg-white focus:text-navy-900 focus:ring-0 transition-colors outline-none">
-                        </div>
-                    </div>
+                    <!-- Center: Spacer or Global Search placeholder -->
+                    <div class="hidden md:flex flex-1 max-w-md mx-8"></div>
 
                     <!-- Right side -->
                     <div class="flex items-center gap-2 sm:gap-3">
