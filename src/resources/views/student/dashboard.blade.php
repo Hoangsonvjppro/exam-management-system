@@ -45,7 +45,7 @@
             <x-card padding="true" variant="accent">
                 <p class="text-[12px] font-medium text-text-muted mb-1">Bài thi</p>
                 <div class="flex items-baseline gap-2">
-                    <p class="text-[28px] font-bold text-navy-900 leading-none">{{ $exams->count() }}</p>
+                    <p class="text-[28px] font-bold text-navy-900 leading-none">{{ $schedules->count() }}</p>
                     <span class="text-[12px] text-text-muted">bài</span>
                 </div>
             </x-card>
@@ -63,32 +63,32 @@
                 <h3 class="text-[17px] font-semibold text-navy-900">Bài Kiểm Tra & Kỳ Thi</h3>
             </x-slot>
 
-            @if($exams->isEmpty())
+            @if($schedules->isEmpty())
             <div class="text-center py-10 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
                 <p class="text-text-muted text-[13px] font-medium">Bạn chưa có bài thi nào.</p>
             </div>
             @else
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($exams as $exam)
+                @foreach($schedules as $schedule)
                 <div class="border-[0.5px] border-border-clean p-4 rounded-[8px] bg-white hover:border-blue-200 transition-colors flex flex-col justify-between">
                     <div class="mb-4">
                         <div class="flex items-center justify-between mb-2">
-                            @if($exam->isCompletedBy(auth()->id()))
+                            @if($schedule->isCompletedBy(auth()->id()))
                             <x-badge type="success">Đã hoàn thành</x-badge>
-                            @elseif($exam->is_not_started)
+                            @elseif($schedule->is_not_started)
                             <x-badge type="neutral">Chưa đến giờ</x-badge>
-                            @elseif($exam->time_left_minutes > 0)
-                            <x-badge type="warning">{{ $exam->time_left_text }}</x-badge>
+                            @elseif($schedule->time_left_minutes > 0)
+                            <x-badge type="warning">{{ $schedule->time_left_text }}</x-badge>
                             @else
                             <x-badge type="danger">Đã hết giờ</x-badge>
                             @endif
-                            <span class="text-[11px] text-text-muted">{{ $exam->start_time?->format('d/m/Y') ?? 'Chưa xác định' }}</span>
+                            <span class="text-[11px] text-text-muted">{{ $schedule->exam_date?->format('d/m/Y') ?? 'Chưa xác định' }}</span>
                         </div>
-                        <h4 class="font-semibold text-[15px] text-navy-900 leading-snug mb-1">{{ $exam->title }}</h4>
-                        <p class="text-[12px] text-text-muted">{{ $exam->subject->name ?? '—' }}</p>
+                        <h4 class="font-semibold text-[15px] text-navy-900 leading-snug mb-1">{{ $schedule->exam->title }}</h4>
+                        <p class="text-[12px] text-text-muted">{{ $schedule->exam->subject->name ?? '—' }}</p>
                     </div>
 
-                    <x-button variant="primary" size="sm" class="w-full" href="{{ route('student.exams.show', $exam->id) }}">
+                    <x-button variant="primary" size="sm" class="w-full" href="{{ route('student.exams.show', $schedule->id) }}">
                         Vào Phòng Thi
                     </x-button>
                 </div>

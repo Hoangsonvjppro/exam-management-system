@@ -15,17 +15,18 @@ class StudentDashboardService
         $enrolledSections = $user->enrolledSections()->withCount('students')->with('lecturer')->get();
         $sectionIds = $enrolledSections->pluck('id');
 
-        $exams = Exam::whereHas('schedules', function ($query) use ($sectionIds) {
-            $query->whereIn('course_section_id', $sectionIds);
-        })
-            ->published()
-            ->with('subject')
-            ->orderByDesc('created_at')
+        $schedules = \App\Models\ExamSchedule::whereIn('course_section_id', $sectionIds)
+            ->whereHas('exam', function ($query) {
+                $query->published();
+            })
+            ->with(['exam.subject'])
+            ->orderByDesc('exam_date')
+            ->orderByDesc('start_time')
             ->get();
 
         return [
             'enrolledSections' => $enrolledSections,
-            'exams' => $exams,
+            'schedules' => $schedules,
         ];
     }
 

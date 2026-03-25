@@ -121,4 +121,41 @@ class ExamSchedule extends Model
     {
         return Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->end_time);
     }
+
+    public function getIsNotStartedAttribute(): bool
+    {
+        return now()->lt($this->start_datetime);
+    }
+
+    public function getIsOverAttribute(): bool
+    {
+        return now()->gt($this->end_datetime);
+    }
+
+    public function getTimeLeftMinutesAttribute(): int
+    {
+        if ($this->is_not_started || $this->is_over) {
+            return 0;
+        }
+        return (int) now()->diffInMinutes($this->end_datetime, false);
+    }
+
+    public function getTimeLeftTextAttribute(): string
+    {
+        $minutes = $this->time_left_minutes;
+        if ($minutes <= 0) return 'Đã hết giờ';
+        if ($minutes < 60) return "Còn {$minutes} phút";
+
+        $hours = floor($minutes / 60);
+        $rem = $minutes % 60;
+        return "Còn {$hours}g {$rem}p";
+    }
+
+    public function isCompletedBy(int $userId): bool
+    {
+        return $this->attempts()
+            ->where('user_id', $userId)
+            ->completed() // Dùng scope completed() của ExamAttempt
+            ->exists();
+    }
 }
