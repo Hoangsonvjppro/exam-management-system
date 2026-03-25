@@ -7,7 +7,7 @@ use App\Models\Exam;
 use App\Models\CourseSection;
 use App\Models\ExamSchedule;
 use Carbon\Carbon;
-use Illuminate\Container\Attributes\Auth;
+use Illuminate\Support\Facades\Auth;
 
 class StoreExamScheduleRequest extends FormRequest
 {

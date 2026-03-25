@@ -1,0 +1,12 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+        - routes/
+        - database/
+        - resources/
+
+    # Mức độ quét: Từ 0 (lỏng lẻo nhất) đến 9 (nghiêm ngặt nhất)
+    level: 9

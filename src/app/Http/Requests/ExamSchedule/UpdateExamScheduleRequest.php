@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Exam;
 use App\Models\ExamSchedule;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class UpdateExamScheduleRequest extends FormRequest
 {
@@ -70,7 +71,7 @@ class UpdateExamScheduleRequest extends FormRequest
                         }
 
                         // Kiểm tra trùng lịch cho giảng viên
-                        $lecturerId = auth()->id();
+                        $lecturerId = Auth::id();
                         $hasLecturerConflict = ExamSchedule::whereHas('courseSection', function($q) use ($lecturerId) {
                                 $q->where('lecturer_id', $lecturerId);
                             })
