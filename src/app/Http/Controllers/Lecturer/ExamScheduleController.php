@@ -8,6 +8,7 @@ use App\Http\Requests\ExamSchedule\UpdateExamScheduleRequest;
 use App\Models\Exam;
 use App\Models\ExamSchedule;
 use App\Services\ExamScheduleService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -27,7 +28,11 @@ class ExamScheduleController extends Controller
     {
         $schedules = $this->scheduleService->getSchedulesForLecturer(Auth::id());
 
-        return view('lecturer.schedules.index', compact('schedules'));
+        // Load data cho slide-over form tạo lịch thi mới
+        $exams = Exam::where('created_by', Auth::id())->with('subject')->get();
+        $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->get();
+
+        return view('lecturer.schedules.index', compact('schedules', 'exams', 'courseSections'));
     }
 
     /**
@@ -35,7 +40,7 @@ class ExamScheduleController extends Controller
      */
     public function create(\Illuminate\Http\Request $request): View
     {
-        $exams = \App\Models\Exam::where('created_by', Auth::id())->with('subject')->get();
+        $exams = Exam::where('created_by', Auth::id())->with('subject')->get();
         $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->get();
         
         $preSelectedSection = null;
@@ -49,7 +54,7 @@ class ExamScheduleController extends Controller
     /*
      * Lưu lịch thi mới.
      */
-    public function store(StoreExamScheduleRequest $request): RedirectResponse
+    public function store(StoreExamScheduleRequest $request): RedirectResponse|JsonResponse
     {
         $exam = Exam::findOrFail($request->validated('exam_id'));
         Gate::authorize('manageLecturer', $exam);
@@ -63,6 +68,20 @@ class ExamScheduleController extends Controller
                     'message' => 'Bạn có một lịch thi mới cho môn học ' . ($schedule->exam->subject->name ?? 'Không xác định') . '. Ngày thi: ' . $schedule->exam_date->format('d/m/Y'),
                 ]);
             }
+        }
+
+        if ($request->wantsJson()) {
+            $htmlRows = '';
+            foreach ($schedules as $schedule) {
+                $schedule->load(['exam.subject', 'courseSection']);
+                $htmlRows .= view('lecturer.schedules.partials._schedule_row', compact('schedule'))->render();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lịch thi đã được tạo thành công cho ' . $schedules->count() . ' lớp.',
+                'html'    => $htmlRows,
+            ]);
         }
 
         return redirect()->route('lecturer.schedules.index')

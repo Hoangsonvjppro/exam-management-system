@@ -7,6 +7,7 @@ use App\Http\Requests\CourseSection\StoreCourseSectionRequest;
 use App\Http\Requests\CourseSection\UpdateCourseSectionRequest;
 use App\Models\CourseSection;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -30,7 +31,11 @@ class CourseSectionController extends Controller
             ->latest()
             ->paginate(12);
 
-        return view('lecturer.classes.index', compact('sections'));
+        // Load data cho slide-over form tạo lớp mới
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $semesters = \App\Models\Semester::orderByDesc('start_date')->get();
+
+        return view('lecturer.classes.index', compact('sections', 'subjects', 'semesters'));
     }
 
     public function create(): View
@@ -41,13 +46,26 @@ class CourseSectionController extends Controller
         return view('lecturer.classes.create', compact('subjects', 'semesters'));
     }
 
-    public function store(StoreCourseSectionRequest $request): RedirectResponse
+    public function store(StoreCourseSectionRequest $request): RedirectResponse|JsonResponse
     {
         /** @var User $user */
         $user = Auth::user();
         $validated = $request->validated();
 
         $section = $this->courseSectionService->createCourseSection($user, $validated);
+
+        if ($request->wantsJson()) {
+            $section->load(['subject', 'semester']);
+            $section->loadCount('students');
+
+            $html = view('lecturer.classes.partials._section_card', compact('section'))->render();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã tạo lớp học phần thành công. Mã tham gia: ' . $section->invite_code,
+                'html'    => $html,
+            ]);
+        }
 
         return redirect()
             ->route('lecturer.classes.show', $section)
@@ -74,11 +92,25 @@ class CourseSectionController extends Controller
         return view('lecturer.classes.edit', compact('section'));
     }
 
-    public function update(UpdateCourseSectionRequest $request, CourseSection $section): RedirectResponse
+    public function update(UpdateCourseSectionRequest $request, CourseSection $section): RedirectResponse|JsonResponse
     {
         Gate::authorize('manage', $section);
 
         $this->courseSectionService->updateCourseSection($section, $request->validated());
+
+        if ($request->wantsJson()) {
+            $section->refresh();
+            $section->load(['subject', 'semester']);
+            $section->loadCount('students');
+
+            $html = view('lecturer.classes.partials._section_card', compact('section'))->render();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật lớp học phần thành công.',
+                'html'    => $html,
+            ]);
+        }
 
         return redirect()
             ->route('lecturer.classes.show', $section)

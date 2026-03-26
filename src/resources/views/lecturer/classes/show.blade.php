@@ -2,7 +2,7 @@
     @section('title', ($section->name ?? $section->code) . ' — EMS')
     @section('page-title', 'Chi tiết lớp học phần')
 
-    <div class="space-y-6">
+    <div class="space-y-6" x-data="classDetailManager()">
 
         <div class="flex items-center justify-between">
             <a href="{{ route('lecturer.classes.index') }}"
@@ -14,13 +14,13 @@
             </a>
             <div class="flex items-center gap-3">
                 @can('manage', $section)
-                <x-button variant="outline" onclick="document.getElementById('create-notification-modal').classList.remove('hidden')">
+                <x-button variant="outline" @click="$dispatch('open-modal', 'create-notification-modal')">
                     Tạo thông báo
                 </x-button>
                 <x-button variant="secondary" href="{{ route('lecturer.exams.create') }}">
                     Tạo bài kiểm tra
                 </x-button>
-                <x-button variant="primary" href="{{ route('lecturer.classes.edit', $section) }}">
+                <x-button variant="primary" @click="$dispatch('open-slide-over', 'edit-section-slide')">
                     Chỉnh sửa
                 </x-button>
                 @endcan
@@ -126,7 +126,7 @@
                     Lịch thi
                     <span class="ml-2 text-[13px] font-semibold text-text-muted">({{ $section->examSchedules->count() }})</span>
                 </h3>
-                <x-button variant="secondary" href="{{ route('lecturer.schedules.create', ['course_section_id' => $section->id]) }}">
+                <x-button variant="secondary" @click="$dispatch('open-slide-over', 'create-schedule-inline-slide')">
                     + Lên lịch thi
                 </x-button>
             </div>
@@ -134,7 +134,7 @@
             @if($section->examSchedules->isEmpty())
             <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
                 <p class="text-[13px] font-medium text-text-muted mb-1">Chưa có đề thi nào trong lớp này.</p>
-                <p class="text-[12px] text-text-muted">Nhấn "Tạo đề thi" để bắt đầu.</p>
+                <p class="text-[12px] text-text-muted">Nhấn "+ Lên lịch thi" để bắt đầu.</p>
             </div>
             @else
             <div class="overflow-x-auto">
@@ -223,44 +223,267 @@
         @endif
         @endcan
 
-    </div>
-
-    {{-- Notification Modal --}}
-    @can('manage', $section)
-    <div id="create-notification-modal" class="hidden fixed inset-0 bg-navy-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white border-[0.5px] border-border-clean rounded-[10px] shadow-sm w-full max-w-lg p-6 md:p-8">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-[20px] font-bold text-navy-900">Tạo thông báo</h3>
-                <button onclick="document.getElementById('create-notification-modal').classList.add('hidden')" class="text-text-muted hover:text-navy-900 transition-colors">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-
-            <form method="POST" action="{{ route('lecturer.classes.notifications.store', $section) }}" class="space-y-5">
+        {{-- Slide-over: Chỉnh sửa lớp học phần --}}
+        @can('manage', $section)
+        <x-slide-over name="edit-section-slide" title="Chỉnh sửa: {{ $section->name ?? $section->code }}">
+            <form @submit.prevent="submitEditForm($el)" class="space-y-5">
                 @csrf
+                @method('PUT')
+
                 <div>
-                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Tiêu đề</label>
-                    <x-text-input name="title" type="text" :value="old('title')" required placeholder="Nhập tiêu đề thông báo mới" />
-                    @error('title')
-                    <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
-                    @enderror
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Tên lớp học phần <span class="text-red-500">*</span></label>
+                    <x-text-input name="name" type="text" value="{{ $section->name }}" required />
+                    <p class="mt-1.5 text-[11px] font-medium text-red-600 hidden" data-error="name"></p>
                 </div>
+
                 <div>
-                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Nội dung chi tiết</label>
-                    <textarea name="message" required rows="5" placeholder="Viết nội dung thông báo gửi đến sinh viên..." class="w-full p-4 bg-white border-[1.5px] border-border-clean rounded-[6px] text-[14px] text-navy-900 placeholder:text-text-muted focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none resize-y">{{ old('message') }}</textarea>
-                    @error('message')
-                    <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
-                    @enderror
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Mã lớp (nội bộ)</label>
+                    <x-text-input name="code" type="text" value="{{ $section->code }}" readonly class="bg-gray-50 cursor-not-allowed uppercase text-gray-500" />
+                    <p class="mt-1.5 text-[11px] font-medium text-text-muted">Mã duy nhất tự sinh, không thể thay đổi.</p>
                 </div>
-                <div class="pt-2 flex justify-end">
-                    <x-button type="submit" variant="primary">
-                        Đăng thông báo
+
+                <div>
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Sĩ số tối đa</label>
+                    <x-text-input name="max_students" type="number" value="{{ $section->max_students }}" min="1" max="500" />
+                    <p class="mt-1.5 text-[11px] font-medium text-red-600 hidden" data-error="max_students"></p>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Trạng thái</label>
+                    <select name="status"
+                            class="w-full px-4 py-2 border-[1.5px] border-border-clean rounded-[6px] text-navy-900 font-medium text-[14px] bg-white hover:border-blue-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none">
+                        <option value="active"    @selected($section->status === 'active')>Đang mở</option>
+                        <option value="archived"  @selected($section->status === 'archived')>Lưu trữ</option>
+                        <option value="cancelled" @selected($section->status === 'cancelled')>Đã huỷ</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-border-clean">
+                    <x-button type="button" variant="ghost" @click="$dispatch('close-slide-over', 'edit-section-slide')">Huỷ</x-button>
+                    <x-button type="submit" variant="primary" x-bind:disabled="isSubmitting">
+                        <span x-show="!isSubmitting">Lưu thay đổi</span>
+                        <span x-show="isSubmitting" class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            Đang lưu...
+                        </span>
                     </x-button>
                 </div>
             </form>
-        </div>
+        </x-slide-over>
+        @endcan
+
+        {{-- Slide-over: Tạo lịch thi inline (đã chọn sẵn lớp) --}}
+        @can('manage', $section)
+        <x-slide-over name="create-schedule-inline-slide" title="Lên Lịch Thi — {{ $section->name ?? $section->code }}">
+            <form @submit.prevent="submitScheduleForm($el)" class="space-y-5">
+                @csrf
+                <input type="hidden" name="course_section_ids[]" value="{{ $section->id }}">
+
+                <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                    <p class="text-[11px] font-bold text-blue-700 uppercase tracking-wider">Đang lên lịch cho lớp</p>
+                    <p class="text-[14px] font-bold text-navy-900 mt-0.5">{{ $section->name ?? $section->code }} ({{ $section->code }})</p>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Đề thi <span class="text-red-500">*</span></label>
+                    <select name="exam_id" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
+                        <option value="">-- Chọn đề thi --</option>
+                        @foreach(\App\Models\Exam::where('created_by', auth()->id())->with('subject')->get() as $ex)
+                            <option value="{{ $ex->id }}">[{{ $ex->subject->code }}] {{ $ex->title }}</option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1.5 text-[11px] font-medium text-red-600 hidden" data-error="exam_id"></p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Ngày thi <span class="text-red-500">*</span></label>
+                        <input type="date" name="exam_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                        <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="exam_date"></p>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Số SV tối đa</label>
+                        <input type="number" name="max_students" min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Không giới hạn">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Giờ bắt đầu <span class="text-red-500">*</span></label>
+                        <input type="time" name="start_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                        <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="start_time"></p>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Giờ kết thúc <span class="text-red-500">*</span></label>
+                        <input type="time" name="end_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                        <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_time"></p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-semibold text-navy-900 mb-1">Ghi chú</label>
+                    <textarea name="notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" rows="3" placeholder="Lưu ý cho ca thi..."></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-border-clean">
+                    <x-button type="button" variant="ghost" @click="$dispatch('close-slide-over', 'create-schedule-inline-slide')">Huỷ</x-button>
+                    <x-button type="submit" variant="primary" x-bind:disabled="isSubmitting">
+                        <span x-show="!isSubmitting">Tạo lịch thi</span>
+                        <span x-show="isSubmitting" class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            Đang tạo...
+                        </span>
+                    </x-button>
+                </div>
+            </form>
+        </x-slide-over>
+        @endcan
+
+        {{-- Modal: Tạo thông báo --}}
+        @can('manage', $section)
+        <x-modal name="create-notification-modal" maxWidth="lg">
+            <div class="p-6 md:p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-[20px] font-bold text-navy-900">Tạo thông báo</h3>
+                    <button @click="$dispatch('close-modal', 'create-notification-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form method="POST" action="{{ route('lecturer.classes.notifications.store', $section) }}" class="space-y-5">
+                    @csrf
+                    <div>
+                        <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Tiêu đề</label>
+                        <x-text-input name="title" type="text" :value="old('title')" required placeholder="Nhập tiêu đề thông báo mới" />
+                        @error('title')
+                        <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Nội dung chi tiết</label>
+                        <textarea name="message" required rows="5" placeholder="Viết nội dung thông báo gửi đến sinh viên..." class="w-full p-4 bg-white border-[1.5px] border-border-clean rounded-[6px] text-[14px] text-navy-900 placeholder:text-text-muted focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none resize-y">{{ old('message') }}</textarea>
+                        @error('message')
+                        <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div class="pt-2 flex justify-end">
+                        <x-button type="submit" variant="primary">
+                            Đăng thông báo
+                        </x-button>
+                    </div>
+                </form>
+            </div>
+        </x-modal>
+        @endcan
+
     </div>
-    @endcan
+
+    <script>
+        function classDetailManager() {
+            return {
+                isSubmitting: false,
+
+                clearErrors(formElement) {
+                    formElement.querySelectorAll('[data-error]').forEach(el => {
+                        el.textContent = '';
+                        el.classList.add('hidden');
+                    });
+                },
+
+                showErrors(formElement, errors) {
+                    for (const [field, messages] of Object.entries(errors)) {
+                        const errorEl = formElement.querySelector(`[data-error="${field}"]`);
+                        if (errorEl) {
+                            errorEl.textContent = messages[0];
+                            errorEl.classList.remove('hidden');
+                        }
+                    }
+                },
+
+                async submitEditForm(formElement) {
+                    this.isSubmitting = true;
+                    this.clearErrors(formElement);
+
+                    const formData = new FormData(formElement);
+
+                    try {
+                        const response = await fetch("{{ route('lecturer.classes.update', $section) }}", {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                            body: formData,
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            this.$dispatch('close-slide-over', 'edit-section-slide');
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message, type: 'success' }
+                            }));
+                            // Reload trang để cập nhật thông tin hiển thị
+                            setTimeout(() => window.location.reload(), 800);
+                        } else if (response.status === 422 && result.errors) {
+                            this.showErrors(formElement, result.errors);
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message || 'Có lỗi xảy ra.', type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Có lỗi hệ thống xảy ra!', type: 'error' }
+                        }));
+                    } finally {
+                        this.isSubmitting = false;
+                    }
+                },
+
+                async submitScheduleForm(formElement) {
+                    this.isSubmitting = true;
+                    this.clearErrors(formElement);
+
+                    const formData = new FormData(formElement);
+
+                    try {
+                        const response = await fetch("{{ route('lecturer.schedules.store') }}", {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                            body: formData,
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            this.$dispatch('close-slide-over', 'create-schedule-inline-slide');
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message, type: 'success' }
+                            }));
+                            // Reload để cập nhật bảng lịch thi
+                            setTimeout(() => window.location.reload(), 800);
+                        } else if (response.status === 422 && result.errors) {
+                            this.showErrors(formElement, result.errors);
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message || 'Có lỗi xảy ra.', type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Có lỗi hệ thống xảy ra!', type: 'error' }
+                        }));
+                    } finally {
+                        this.isSubmitting = false;
+                    }
+                }
+            }
+        }
+    </script>
 </x-app-layout>
