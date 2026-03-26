@@ -22,8 +22,10 @@ class ManageStudents extends ManageRecords
         return [
             CreateAction::make()
                 ->label('Thêm sinh viên')
-                ->icon('heroicon-m-plus'),
-
+                ->icon('heroicon-m-plus')
+                ->after(function ($record) {
+                    $record->assignRole('student');
+                }),
             Action::make('bulkCreatePasswords')
                 ->label('Tạo mật khẩu hàng loạt')
                 ->icon('heroicon-o-key')
