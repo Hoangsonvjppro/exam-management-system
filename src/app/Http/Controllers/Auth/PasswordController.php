@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\UpdatePasswordRequest;
+use App\Services\UserStateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 
 class PasswordController extends Controller
 {
+    public function __construct(private readonly UserStateService $userStateService)
+    {
+    }
     /**
      * Update the user's password.
      */
@@ -19,7 +23,7 @@ class PasswordController extends Controller
         $request->user()->update([
             'password' => Hash::make($validated['password']),
         ]);
-
         return back()->with('status', 'password-updated');
+        // return redirect()->intended($this->userStateService->determineHomeRoute($user))->with('status', 'password-update');
     }
 }
