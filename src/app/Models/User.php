@@ -39,6 +39,7 @@ class User extends Authenticatable
         'student_code',
         'lecturer_code',
         'class_name',
+        'date_of_birth',
         'department',
         'is_active',
         'must_change_password',
@@ -59,6 +60,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'date_of_birth'     => 'date',
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'is_active'         => 'boolean',

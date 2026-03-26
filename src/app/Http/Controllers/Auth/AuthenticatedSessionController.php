@@ -38,15 +38,15 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         // Only lecturers may use email + password login.
-        if (! $user->hasRole('lecturer')) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        // if (! $user->hasRole('lecturer')) {
+        //     Auth::guard('web')->logout();
+        //     $request->session()->invalidate();
+        //     $request->session()->regenerateToken();
 
-            return back()->withErrors([
-                'email' => 'Email/mật khẩu chỉ dành cho giảng viên. Sinh viên vui lòng đăng nhập bằng Google.',
-            ])->onlyInput('email');
-        }
+        //     return back()->withErrors([
+        //         'email' => 'Email/mật khẩu chỉ dành cho giảng viên. Sinh viên vui lòng đăng nhập bằng Google.',
+        //     ])->onlyInput('email');
+        // }
 
         if ($user->must_change_password) {
             return redirect()->route('profile.edit')

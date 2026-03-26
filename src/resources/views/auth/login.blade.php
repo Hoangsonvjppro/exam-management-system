@@ -66,9 +66,9 @@
                 @csrf
 
                 <div>
-                    <label for="email" class="block text-[12px] font-medium text-navy-900 mb-1.5">Email giảng viên</label>
-                    <x-text-input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus placeholder="lecturer@ems.local" />
-                    @error('email')
+                    <label for="login_id" class="block text-[12px] font-medium text-navy-900 mb-1.5">Mã đăng nhập</label>
+                    <x-text-input id="login_id" name="login_id" type="text" value="{{ old('login_id') }}" required autofocus placeholder="Mã đăng nhập" />
+                    @error('login_id')
                         <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
