@@ -306,102 +306,24 @@
             </div>
 
             <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'attendance'" x-transition.opacity.duration.150ms style="display:none;">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-2">
                     <h3 class="text-[18px] font-bold text-navy-900">Lưới điểm danh theo buổi</h3>
-                    <span class="text-[12px] text-text-muted">UI mẫu để thao tác nhanh theo lớp</span>
                 </div>
 
-                @php
-                $attendanceHeaders = $classSchedules->take(4)->values();
-                @endphp
-
-                <div class="overflow-x-auto border border-border-clean rounded-[8px]">
-                    <table class="w-full text-left border-collapse min-w-[760px]">
-                        <thead>
-                            <tr class="bg-surface-1 border-b border-border-clean">
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Sinh viên</th>
-                                @if($attendanceHeaders->isEmpty())
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Buổi 1</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Buổi 2</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Buổi 3</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Buổi 4</th>
-                                @else
-                                @foreach($attendanceHeaders as $session)
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
-                                    {{ $dayMap[$session->day_of_week] ?? 'Buổi' }}<br>
-                                    <span class="text-[10px] normal-case tracking-normal">Tiết {{ $session->start_period }}-{{ $session->end_period }}</span>
-                                </th>
-                                @endforeach
-                                @endif
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Tỉ lệ có mặt</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border-clean/70">
-                            @forelse($section->students->sortBy('name') as $student)
-                            <tr class="hover:bg-surface-0 transition-colors">
-                                <td class="py-3 px-4 text-[13px] font-semibold text-navy-900">{{ $student->name }}</td>
-                                @for($i = 1; $i <= max(4, $attendanceHeaders->count()); $i++)
-                                    @php $isPresent = (($loop->iteration + $i) % 3) !== 0; @endphp
-                                    <td class="py-3 px-4">
-                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold
-                                                {{ $isPresent ? 'bg-teal-50 text-teal-800 border border-teal-200' : 'bg-red-50 text-red-700 border border-red-200' }}">
-                                            {{ $isPresent ? 'P' : 'V' }}
-                                        </span>
-                                    </td>
-                                    @endfor
-                                    <td class="py-3 px-4 text-[12px] font-semibold text-navy-900">{{ 100 - (($loop->iteration % 3) * 10) }}%</td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="8" class="py-8 px-4 text-[13px] text-text-muted text-center">Chưa có sinh viên để hiển thị lưới điểm danh.</td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                    <x-ui-icon name="clipboard-document-check" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
+                    <p class="text-sm text-text-muted font-medium">Tính năng điểm danh đang được phát triển.</p>
                 </div>
             </div>
 
             <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'grading'" x-transition.opacity.duration.150ms style="display:none;">
-                <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center justify-between mb-2">
                     <h3 class="text-[18px] font-bold text-navy-900">Điểm quá trình</h3>
-                    <div class="flex items-center gap-2">
-                        <x-button variant="ghost" size="sm">Nhập Excel</x-button>
-                        <x-button variant="outline" size="sm">Xuất Excel</x-button>
-                    </div>
                 </div>
 
-                <div class="overflow-x-auto border border-border-clean rounded-[8px]">
-                    <table class="w-full text-left border-collapse min-w-[860px]">
-                        <thead>
-                            <tr class="bg-surface-1 border-b border-border-clean">
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Sinh viên</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Chuyên cần (10%)</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Bài tập (20%)</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Kiểm tra giữa kỳ (20%)</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Điểm quá trình (50%)</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Ghi chú</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border-clean/70">
-                            @forelse($section->students->sortBy('name') as $student)
-                            @php
-                            $base = 6 + ($loop->iteration % 4);
-                            @endphp
-                            <tr class="hover:bg-surface-0 transition-colors">
-                                <td class="py-3 px-4 text-[13px] font-semibold text-navy-900">{{ $student->name }}</td>
-                                <td class="py-3 px-4 text-[12px] text-text-muted">{{ $base }}.0</td>
-                                <td class="py-3 px-4 text-[12px] text-text-muted">{{ $base - 0.5 }}</td>
-                                <td class="py-3 px-4 text-[12px] text-text-muted">{{ $base + 0.5 }}</td>
-                                <td class="py-3 px-4 text-[12px] font-semibold text-navy-900">{{ $base + 0.2 }}</td>
-                                <td class="py-3 px-4 text-[12px] text-text-muted">Đang theo dõi</td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="6" class="py-8 px-4 text-[13px] text-text-muted text-center">Chưa có dữ liệu điểm quá trình.</td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                    <x-ui-icon name="chart-bar" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
+                    <p class="text-sm text-text-muted font-medium">Tính năng thống kê và quản lý điểm đang được phát triển.</p>
                 </div>
             </div>
         </x-card>
