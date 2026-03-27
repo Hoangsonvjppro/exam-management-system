@@ -341,7 +341,7 @@
                             <tr class="hover:bg-surface-0 transition-colors">
                                 <td class="py-3 px-4 text-[13px] font-semibold text-navy-900">{{ $student->name }}</td>
                                 @for($i = 1; $i <= max(4, $attendanceHeaders->count()); $i++)
-                                    @php $isPresent = (($loop->parent->iteration + $i) % 3) !== 0; @endphp
+                                    @php $isPresent = (($loop->iteration + $i) % 3) !== 0; @endphp
                                     <td class="py-3 px-4">
                                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold
                                                 {{ $isPresent ? 'bg-teal-50 text-teal-800 border border-teal-200' : 'bg-red-50 text-red-700 border border-red-200' }}">
