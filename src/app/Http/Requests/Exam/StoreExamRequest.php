@@ -4,6 +4,8 @@ namespace App\Http\Requests\Exam;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+use Illuminate\Validation\Rule;
+
 class StoreExamRequest extends FormRequest
 {
     public function authorize(): bool
@@ -20,9 +22,11 @@ class StoreExamRequest extends FormRequest
 
     public function rules(): array
     {
+        $lecturerSubjectIds = \Illuminate\Support\Facades\Auth::user()->courseSections()->pluck('subject_id')->unique()->toArray();
+
         $rules = [
             'title'                       => 'required|string|max:255',
-            'subject_id'                  => 'required|exists:subjects,id',
+            'subject_id'                  => ['required', Rule::exists('subjects', 'id')->where(fn($q) => $q->whereIn('id', $lecturerSubjectIds))],
             'description'                 => 'nullable|string',
             'duration_minutes'            => 'required|integer|min:1',
             'exam_type'                   => 'required|in:official,practice',

@@ -33,9 +33,10 @@ class ExamController extends Controller
     // Hiển thị form tạo đề thi mới
     public function create(): View
     {
-        $subjects = \App\Models\Subject::all();
-        $questions = Question::approved()->get();
-        $chapters = \App\Models\Chapter::orderBy('order')->get();
+        $lecturerSubjectIds = \Illuminate\Support\Facades\Auth::user()->courseSections()->pluck('subject_id')->unique();
+        $subjects = \App\Models\Subject::whereIn('id', $lecturerSubjectIds)->get();
+        $questions = Question::approved()->whereIn('subject_id', $lecturerSubjectIds)->get();
+        $chapters = \App\Models\Chapter::whereIn('subject_id', $lecturerSubjectIds)->orderBy('order')->get();
 
         return view("lecturer.exams.create", compact('subjects', 'questions', 'chapters'));
     }
@@ -81,8 +82,11 @@ class ExamController extends Controller
     {
         Gate::authorize('manageLecturer', $exam);
 
-        $subjects = \App\Models\Subject::all();
-        $questions = Question::approved()->get();
+        $lecturerSubjectIds = \Illuminate\Support\Facades\Auth::user()->courseSections()->pluck('subject_id')->unique();
+        $allAllowedSubjectIds = $lecturerSubjectIds->push($exam->subject_id)->unique();
+
+        $subjects = \App\Models\Subject::whereIn('id', $allAllowedSubjectIds)->get();
+        $questions = Question::approved()->whereIn('subject_id', $allAllowedSubjectIds)->get();
         $selectedQuestionIds = $exam->questions()->pluck('question_id')->toArray();
 
         return view('lecturer.exams.edit', compact('exam', 'subjects', 'questions', 'selectedQuestionIds'));
