@@ -1,16 +1,16 @@
 <x-app-layout>
     @php
-        $quickSubjectIds = $courseSections->pluck('subject_id')->filter()->unique()->values();
-        $quickSubjects = \App\Models\Subject::query()
-            ->whereIn('id', $quickSubjectIds)
-            ->orderBy('name')
-            ->get(['id', 'name', 'code']);
+    $quickSubjectIds = $courseSections->pluck('subject_id')->filter()->unique()->values();
+    $quickSubjects = \App\Models\Subject::query()
+    ->whereIn('id', $quickSubjectIds)
+    ->orderBy('name')
+    ->get(['id', 'name', 'code']);
 
-        $quickQuestionPool = \App\Models\Question::approved()
-            ->whereIn('subject_id', $quickSubjectIds)
-            ->orderByDesc('updated_at')
-            ->limit(300)
-            ->get(['id', 'subject_id', 'content']);
+    $quickQuestionPool = \App\Models\Question::approved()
+    ->whereIn('subject_id', $quickSubjectIds)
+    ->orderByDesc('updated_at')
+    ->limit(300)
+    ->get(['id', 'subject_id', 'content']);
     @endphp
     @section('title', 'Quản lý Lịch Thi — EMS')
     @section('page-title', 'Lịch thi')
@@ -57,7 +57,7 @@
                 </thead>
                 <tbody id="schedule-table-body">
                     @foreach($schedules as $schedule)
-                        @include('lecturer.schedules.partials._schedule_row', ['schedule' => $schedule])
+                    @include('lecturer.schedules.partials._schedule_row', ['schedule' => $schedule])
                     @endforeach
                 </tbody>
             </table>
@@ -77,14 +77,14 @@
                             + Tạo đề thi mới
                         </button>
                     </div>
-                    <select name="exam_id" x-model="selectedExamId" @change="onExamChange()" required 
-                            id="schedule-slide-exam-id"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
+                    <select name="exam_id" x-model="selectedExamId" @change="onExamChange()" required
+                        id="schedule-slide-exam-id"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
                         <option value="">-- Chọn đề thi --</option>
                         @foreach($exams as $ex)
-                            <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}">
-                                [{{ $ex->subject->code }}] {{ $ex->title }}
-                            </option>
+                        <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}">
+                            [{{ $ex->subject->code }}] {{ $ex->title }}
+                        </option>
                         @endforeach
                     </select>
                     <p class="mt-1 text-[11px] text-text-muted">Bạn có thể tạo đề mới ngay tại đây và chọn tự động vào lịch thi đang nhập.</p>
@@ -96,16 +96,16 @@
                     <label class="block text-[12px] font-semibold text-navy-900 mb-3">Áp dụng cho các lớp <span class="text-red-500">*</span></label>
                     <div class="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto p-3 border border-gray-200 rounded-lg bg-surface-0">
                         @foreach($courseSections as $cs)
-                            <div class="section-checkbox flex items-start gap-3 p-2 hover:bg-white rounded transition-colors"
-                                 data-subject-id="{{ $cs->subject_id }}"
-                                 x-show="!selectedSubjectId || '{{ $cs->subject_id }}' == selectedSubjectId">
-                                <input type="checkbox" name="course_section_ids[]" id="slide-cs-{{ $cs->id }}" value="{{ $cs->id }}"
-                                       class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
-                                <label for="slide-cs-{{ $cs->id }}" class="cursor-pointer">
-                                    <p class="text-[13px] font-semibold text-navy-900 leading-tight">{{ $cs->name }}</p>
-                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $cs->code }}</p>
-                                </label>
-                            </div>
+                        <div class="section-checkbox flex items-start gap-3 p-2 hover:bg-white rounded transition-colors"
+                            data-subject-id="{{ $cs->subject_id }}"
+                            x-show="!selectedSubjectId || '{{ $cs->subject_id }}' == selectedSubjectId">
+                            <input type="checkbox" name="course_section_ids[]" id="slide-cs-{{ $cs->id }}" value="{{ $cs->id }}"
+                                class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
+                            <label for="slide-cs-{{ $cs->id }}" class="cursor-pointer">
+                                <p class="text-[13px] font-semibold text-navy-900 leading-tight">{{ $cs->name }}</p>
+                                <p class="text-[11px] text-text-muted mt-0.5">{{ $cs->code }}</p>
+                            </label>
+                        </div>
                         @endforeach
                     </div>
                     <p class="mt-1.5 text-[11px] font-medium text-red-600 hidden" data-error="course_section_ids"></p>
@@ -150,7 +150,10 @@
                     <x-button type="submit" variant="primary" x-bind:disabled="isSubmitting">
                         <span x-show="!isSubmitting">Tạo lịch thi</span>
                         <span x-show="isSubmitting" class="flex items-center gap-2">
-                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
                             Đang tạo...
                         </span>
                     </x-button>
@@ -182,7 +185,7 @@
                         <select name="subject_id" x-model="quickSubjectId" @change="onQuickSubjectChange()" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
                             <option value="">-- Chọn môn học --</option>
                             @foreach($quickSubjects as $subject)
-                                <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
+                            <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -204,18 +207,18 @@
                     </div>
 
                     @if($quickQuestionPool->isEmpty())
-                        <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800">
-                            Chưa có câu hỏi đã duyệt để tạo đề nhanh. Vui lòng tạo câu hỏi trước trong Ngân hàng câu hỏi.
-                        </div>
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800">
+                        Chưa có câu hỏi đã duyệt để tạo đề nhanh. Vui lòng tạo câu hỏi trước trong Ngân hàng câu hỏi.
+                    </div>
                     @else
-                        <div class="max-h-[280px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70">
-                            @foreach($quickQuestionPool as $question)
-                                <label class="quick-question-item flex items-start gap-3 p-3 hover:bg-white cursor-pointer" data-subject-id="{{ $question->subject_id }}">
-                                    <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
-                                    <span class="text-[12px] text-navy-900 leading-relaxed">{{ \Illuminate\Support\Str::limit(trim(strip_tags($question->content)), 180) }}</span>
-                                </label>
-                            @endforeach
-                        </div>
+                    <div class="max-h-[280px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70">
+                        @foreach($quickQuestionPool as $question)
+                        <label class="quick-question-item flex items-start gap-3 p-3 hover:bg-white cursor-pointer" data-subject-id="{{ $question->subject_id }}">
+                            <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
+                            <span class="text-[12px] text-navy-900 leading-relaxed">{{ \Illuminate\Support\Str::limit(trim(strip_tags($question->content)), 180) }}</span>
+                        </label>
+                        @endforeach
+                    </div>
                     @endif
                 </div>
 
@@ -224,7 +227,10 @@
                     <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingQuickExam || {{ $quickQuestionPool->isEmpty() ? 'true' : 'false' }}">
                         <span x-show="!isSubmittingQuickExam">Tạo đề và tự chọn</span>
                         <span x-show="isSubmittingQuickExam" class="flex items-center gap-2">
-                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
                             Đang tạo...
                         </span>
                     </x-button>
@@ -247,7 +253,7 @@
                     const select = document.querySelector('select[name="exam_id"]');
                     const option = select.options[select.selectedIndex];
                     this.selectedSubjectId = option ? option.getAttribute('data-subject-id') : '';
-                    
+
                     // Uncheck lớp không khớp môn học
                     document.querySelectorAll('.section-checkbox input[type="checkbox"]').forEach(cb => {
                         const subjectId = cb.closest('.section-checkbox').getAttribute('data-subject-id');
@@ -319,18 +325,27 @@
                             this.selectedSubjectId = '';
 
                             window.dispatchEvent(new CustomEvent('toast', {
-                                detail: { message: result.message, type: 'success' }
+                                detail: {
+                                    message: result.message,
+                                    type: 'success'
+                                }
                             }));
                         } else if (response.status === 422 && result.errors) {
                             this.showErrors(formElement, result.errors);
                         } else {
                             window.dispatchEvent(new CustomEvent('toast', {
-                                detail: { message: result.message || 'Có lỗi xảy ra.', type: 'error' }
+                                detail: {
+                                    message: result.message || 'Có lỗi xảy ra.',
+                                    type: 'error'
+                                }
                             }));
                         }
                     } catch (error) {
                         window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Có lỗi hệ thống xảy ra!', type: 'error' }
+                            detail: {
+                                message: 'Có lỗi hệ thống xảy ra!',
+                                type: 'error'
+                            }
                         }));
                     } finally {
                         this.isSubmitting = false;
@@ -362,7 +377,10 @@
 
                         if (!examId) {
                             window.dispatchEvent(new CustomEvent('toast', {
-                                detail: { message: 'Không thể tạo đề nhanh. Vui lòng dùng trình tạo đầy đủ.', type: 'error' }
+                                detail: {
+                                    message: 'Không thể tạo đề nhanh. Vui lòng dùng trình tạo đầy đủ.',
+                                    type: 'error'
+                                }
                             }));
                             return;
                         }
@@ -393,11 +411,17 @@
                         this.onQuickSubjectChange();
 
                         window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Đã tạo đề thi và tự động chọn vào lịch thi.', type: 'success' }
+                            detail: {
+                                message: 'Đã tạo đề thi và tự động chọn vào lịch thi.',
+                                type: 'success'
+                            }
                         }));
                     } catch (error) {
                         window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Không thể tạo đề thi nhanh. Hãy kiểm tra dữ liệu đầu vào.', type: 'error' }
+                            detail: {
+                                message: 'Không thể tạo đề thi nhanh. Hãy kiểm tra dữ liệu đầu vào.',
+                                type: 'error'
+                            }
                         }));
                     } finally {
                         this.isSubmittingQuickExam = false;

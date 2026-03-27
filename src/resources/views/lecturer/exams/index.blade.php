@@ -1,6 +1,6 @@
 <x-app-layout>
     @php
-        $selectedSubjectId = (string) request()->query('subject_id', '');
+    $selectedSubjectId = (string) request()->query('subject_id', '');
     @endphp
     <div class="py-8 bg-[#F8FAFD] min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8" x-data="{ subjectFilter: '{{ $selectedSubjectId }}' }">

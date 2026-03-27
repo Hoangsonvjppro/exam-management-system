@@ -1,9 +1,9 @@
 <x-app-layout>
     @php
-        $quickQuestionTypes = \App\Models\QuestionType::query()
-            ->active()
-            ->orderedForQuestionBank()
-            ->get(['id', 'name']);
+    $quickQuestionTypes = \App\Models\QuestionType::query()
+    ->active()
+    ->orderedForQuestionBank()
+    ->get(['id', 'name']);
     @endphp
     <style>
         /* THAM KHAO STYLES */
@@ -209,7 +209,7 @@
                                         <select id="subject_id" name="subject_id" class="ca-select @error('subject_id') error @enderror" required onchange="onSubjectChange()">
                                             <option value="">-- Chọn môn học --</option>
                                             @foreach($subjects as $subject)
-                                                <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
+                                            <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
                                             @endforeach
                                         </select>
                                         @error('subject_id') <span class="text-error">{{ $message }}</span> @enderror
@@ -248,7 +248,7 @@
                                         </div>
                                     </label>
                                 </div>
-                                
+
                                 <div id="late_settings" class="pl-7 space-y-4 {{ old('allow_late_entrance', true) ? '' : 'hidden' }}">
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
@@ -468,7 +468,7 @@
                                 <select id="quick-question-subject" name="subject_id" required class="ca-select">
                                     <option value="">-- Chọn môn học --</option>
                                     @foreach($subjects as $subject)
-                                        <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+                                    <option value="{{ $subject->id }}">{{ $subject->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -477,7 +477,7 @@
                                 <select name="question_type_id" required class="ca-select">
                                     <option value="">-- Chọn loại --</option>
                                     @foreach($quickQuestionTypes as $type)
-                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                    <option value="{{ $type->id }}">{{ $type->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -675,16 +675,16 @@
                     // Filter questions
                     let visibleQuestions = 0;
                     document.querySelectorAll('.question-row').forEach(row => {
-                        if(row.dataset.subject == subjectId) {
+                        if (row.dataset.subject == subjectId) {
                             row.style.display = '';
                             visibleQuestions++;
                         } else {
                             row.style.display = 'none';
                             const cb = row.querySelector('.question-checkbox');
-                            if(cb) cb.checked = false;
+                            if (cb) cb.checked = false;
                         }
                     });
-                    
+
                     // Reset matrix
                     document.getElementById('matrix-body').innerHTML = '';
                     addMatrixRow();
@@ -698,7 +698,9 @@
                     if (quickSubjectSelect && subjectId) {
                         quickSubjectSelect.value = subjectId;
                     }
-                    window.dispatchEvent(new CustomEvent('open-modal', { detail: 'quick-question-modal' }));
+                    window.dispatchEvent(new CustomEvent('open-modal', {
+                        detail: 'quick-question-modal'
+                    }));
                 }
 
                 async function submitQuickQuestionForm(event) {
@@ -747,7 +749,9 @@
                         const row = document.createElement('tr');
                         row.className = 'question-row group cursor-pointer hover:bg-[#F8FAFD] transition-colors';
                         row.dataset.subject = subjectId;
-                        row.onclick = function(e) { toggleCheckbox(this, e); };
+                        row.onclick = function(e) {
+                            toggleCheckbox(this, e);
+                        };
 
                         row.innerHTML = `
                             <td class="text-center w-12">
@@ -781,7 +785,9 @@
                         updateCounter();
                         checkSelectAllState();
 
-                        window.dispatchEvent(new CustomEvent('close-modal', { detail: 'quick-question-modal' }));
+                        window.dispatchEvent(new CustomEvent('close-modal', {
+                            detail: 'quick-question-modal'
+                        }));
                         form.reset();
 
                         const selectedSubject = document.getElementById('subject_id')?.value;
@@ -791,11 +797,17 @@
                         }
 
                         window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Đã thêm câu hỏi mới và tự động đưa vào đề thi.', type: 'success' }
+                            detail: {
+                                message: 'Đã thêm câu hỏi mới và tự động đưa vào đề thi.',
+                                type: 'success'
+                            }
                         }));
                     } catch (error) {
                         window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Không thể thêm câu hỏi nhanh. Vui lòng kiểm tra dữ liệu đầu vào.', type: 'error' }
+                            detail: {
+                                message: 'Không thể thêm câu hỏi nhanh. Vui lòng kiểm tra dữ liệu đầu vào.',
+                                type: 'error'
+                            }
                         }));
                     } finally {
                         submitButton.disabled = false;

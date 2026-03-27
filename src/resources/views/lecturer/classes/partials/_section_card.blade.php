@@ -1,5 +1,8 @@
 <x-card class="flex flex-col h-full overflow-hidden"
-    x-show="(searchQuery === '' || '{{ strtolower(($section->name ?? '') . ' ' . $section->code) }}'.includes(searchQuery.toLowerCase())) && (statusFilter === 'all' || statusFilter === '{{ $section->status }}')">
+    x-show="(searchQuery === '' || '{{ strtolower(($section->name ?? '') . ' ' . $section->code) }}'.includes(searchQuery.toLowerCase()))
+        && (statusFilter === 'all' || statusFilter === '{{ $section->status }}')
+        && (semesterFilter === 'all' || semesterFilter === '{{ (string) $section->semester_id }}')
+        && (subjectFilter === 'all' || subjectFilter === '{{ (string) $section->subject_id }}')">
     {{-- Card Top --}}
     <div class="px-5 py-4 border-b-[0.5px] border-border-clean
         @if($section->status === 'active') bg-surface-1

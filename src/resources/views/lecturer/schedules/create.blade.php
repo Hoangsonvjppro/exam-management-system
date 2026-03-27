@@ -1,32 +1,32 @@
 <x-app-layout>
     @php
-        $quickSubjectIds = $courseSections->pluck('subject_id')->filter()->unique()->values();
-        $quickSubjects = \App\Models\Subject::query()
-            ->whereIn('id', $quickSubjectIds)
-            ->orderBy('name')
-            ->get(['id', 'name', 'code']);
+    $quickSubjectIds = $courseSections->pluck('subject_id')->filter()->unique()->values();
+    $quickSubjects = \App\Models\Subject::query()
+    ->whereIn('id', $quickSubjectIds)
+    ->orderBy('name')
+    ->get(['id', 'name', 'code']);
 
-        $quickQuestionPool = \App\Models\Question::approved()
-            ->whereIn('subject_id', $quickSubjectIds)
-            ->orderByDesc('updated_at')
-            ->limit(300)
-            ->get(['id', 'subject_id', 'content']);
+    $quickQuestionPool = \App\Models\Question::approved()
+    ->whereIn('subject_id', $quickSubjectIds)
+    ->orderByDesc('updated_at')
+    ->limit(300)
+    ->get(['id', 'subject_id', 'content']);
 
-        $preSelectedSubjectId = (string) ($preSelectedSection?->subject_id ?? '');
+    $preSelectedSubjectId = (string) ($preSelectedSection?->subject_id ?? '');
     @endphp
 
     <div class="py-8 bg-[#F8FAFD] min-h-screen"
-         data-pre-selected-subject-id="{{ $preSelectedSubjectId }}"
-         x-data="scheduleCreateManager($el.dataset.preSelectedSubjectId)">
+        data-pre-selected-subject-id="{{ $preSelectedSubjectId }}"
+        x-data="scheduleCreateManager($el.dataset.preSelectedSubjectId)">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="mb-6 flex items-center justify-between">
                 <div>
                     <h2 class="text-[22px] font-bold text-[#1A3A6B] mb-1">Tạo Lịch Thi Mới</h2>
                     <p class="text-[13px] text-[#6B7C99]">
                         @if($preSelectedSection)
-                            Thiết lập ca thi cho lớp <strong>{{ $preSelectedSection->name }}</strong>.
+                        Thiết lập ca thi cho lớp <strong>{{ $preSelectedSection->name }}</strong>.
                         @else
-                            Thiết lập ca thi cho một hoặc nhiều lớp học phần.
+                        Thiết lập ca thi cho một hoặc nhiều lớp học phần.
                         @endif
                     </p>
                 </div>
@@ -39,14 +39,14 @@
 
                     <div class="space-y-6">
                         @if($preSelectedSection)
-                            <div class="p-4 bg-[#F0F7FF] border border-[#D1E5FF] rounded-lg flex items-center justify-between">
-                                <div>
-                                    <p class="text-[11px] font-bold text-[#185FA5] uppercase tracking-wider">Đang lên lịch cho lớp</p>
-                                    <p class="text-[15px] font-bold text-[#1A3A6B] mt-0.5">{{ $preSelectedSection->name }} ({{ $preSelectedSection->code }})</p>
-                                </div>
-                                <input type="hidden" name="course_section_ids[]" value="{{ $preSelectedSection->id }}">
-                                <div class="text-[12px] text-[#6B7C99] italic">Môn học: {{ $preSelectedSection->subject->name }}</div>
+                        <div class="p-4 bg-[#F0F7FF] border border-[#D1E5FF] rounded-lg flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] font-bold text-[#185FA5] uppercase tracking-wider">Đang lên lịch cho lớp</p>
+                                <p class="text-[15px] font-bold text-[#1A3A6B] mt-0.5">{{ $preSelectedSection->name }} ({{ $preSelectedSection->code }})</p>
                             </div>
+                            <input type="hidden" name="course_section_ids[]" value="{{ $preSelectedSection->id }}">
+                            <div class="text-[12px] text-[#6B7C99] italic">Môn học: {{ $preSelectedSection->subject->name }}</div>
+                        </div>
                         @endif
 
                         <div>
@@ -59,9 +59,9 @@
                             <select name="exam_id" id="exam_id" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
                                 <option value="">-- Chọn đề thi --</option>
                                 @foreach($exams as $ex)
-                                    <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}" {{ old('exam_id') == $ex->id ? 'selected' : '' }}>
-                                        [{{ $ex->subject->code }}] {{ $ex->title }}
-                                    </option>
+                                <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}" {{ old('exam_id') == $ex->id ? 'selected' : '' }}>
+                                    [{{ $ex->subject->code }}] {{ $ex->title }}
+                                </option>
                                 @endforeach
                             </select>
                             <p class="text-[11px] text-[#6B7C99] mt-1">Nếu chưa có đề phù hợp, tạo nhanh ngay tại đây và hệ thống sẽ tự chọn lại vào dropdown.</p>
@@ -69,28 +69,28 @@
                         </div>
 
                         @if(!$preSelectedSection)
-                            <div id="section-selection-container" class="hidden">
-                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-3">Áp dụng cho các lớp học phần <span class="text-[#DC2626]">*</span></label>
+                        <div id="section-selection-container" class="hidden">
+                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-3">Áp dụng cho các lớp học phần <span class="text-[#DC2626]">*</span></label>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-4 border border-[#D6E2F0] rounded-lg bg-[#F9FBFF]" id="sections-list">
-                                    @foreach($courseSections as $cs)
-                                        <div class="section-item flex items-start gap-3 p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-[#D6E2F0]" data-subject-id="{{ $cs->subject_id }}">
-                                            <input type="checkbox"
-                                                name="course_section_ids[]"
-                                                id="cs-{{ $cs->id }}"
-                                                value="{{ $cs->id }}"
-                                                class="mt-0.5 rounded border-[#D6E2F0] text-[#1A3A6B] focus:ring-[#185FA5]"
-                                                {{ is_array(old('course_section_ids')) && in_array($cs->id, old('course_section_ids')) ? 'checked' : '' }}>
-                                            <label for="cs-{{ $cs->id }}" class="cursor-pointer">
-                                                <p class="text-[13px] font-semibold text-[#1A3A6B] leading-tight">{{ $cs->name }}</p>
-                                                <p class="text-[11px] text-[#6B7C99] mt-0.5">{{ $cs->code }}</p>
-                                            </label>
-                                        </div>
-                                    @endforeach
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-4 border border-[#D6E2F0] rounded-lg bg-[#F9FBFF]" id="sections-list">
+                                @foreach($courseSections as $cs)
+                                <div class="section-item flex items-start gap-3 p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-[#D6E2F0]" data-subject-id="{{ $cs->subject_id }}">
+                                    <input type="checkbox"
+                                        name="course_section_ids[]"
+                                        id="cs-{{ $cs->id }}"
+                                        value="{{ $cs->id }}"
+                                        class="mt-0.5 rounded border-[#D6E2F0] text-[#1A3A6B] focus:ring-[#185FA5]"
+                                        {{ is_array(old('course_section_ids')) && in_array($cs->id, old('course_section_ids')) ? 'checked' : '' }}>
+                                    <label for="cs-{{ $cs->id }}" class="cursor-pointer">
+                                        <p class="text-[13px] font-semibold text-[#1A3A6B] leading-tight">{{ $cs->name }}</p>
+                                        <p class="text-[11px] text-[#6B7C99] mt-0.5">{{ $cs->code }}</p>
+                                    </label>
                                 </div>
-                                <p id="no-sections-msg" class="hidden text-[13px] text-[#DC2626] italic py-4">Không tìm thấy lớp học phần nào đang học môn này.</p>
-                                @error('course_section_ids') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                                @endforeach
                             </div>
+                            <p id="no-sections-msg" class="hidden text-[13px] text-[#DC2626] italic py-4">Không tìm thấy lớp học phần nào đang học môn này.</p>
+                            @error('course_section_ids') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                        </div>
                         @endif
 
                         <div id="main-form-fields" class="{{ $preSelectedSection ? '' : 'opacity-50 pointer-events-none' }} space-y-4 transition-all duration-300">
@@ -159,7 +159,7 @@
                         <select name="subject_id" x-model="quickSubjectId" @change="onQuickSubjectChange()" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
                             <option value="">-- Chọn môn học --</option>
                             @foreach($quickSubjects as $subject)
-                                <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
+                            <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -181,18 +181,18 @@
                     </div>
 
                     @if($quickQuestionPool->isEmpty())
-                        <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800">
-                            Chưa có câu hỏi đã duyệt để tạo đề nhanh. Vui lòng tạo câu hỏi ở Ngân hàng câu hỏi trước.
-                        </div>
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800">
+                        Chưa có câu hỏi đã duyệt để tạo đề nhanh. Vui lòng tạo câu hỏi ở Ngân hàng câu hỏi trước.
+                    </div>
                     @else
-                        <div class="max-h-[280px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70">
-                            @foreach($quickQuestionPool as $question)
-                                <label class="quick-question-item flex items-start gap-3 p-3 hover:bg-white cursor-pointer" data-subject-id="{{ $question->subject_id }}">
-                                    <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
-                                    <span class="text-[12px] text-navy-900 leading-relaxed">{{ \Illuminate\Support\Str::limit(trim(strip_tags($question->content)), 180) }}</span>
-                                </label>
-                            @endforeach
-                        </div>
+                    <div class="max-h-[280px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70">
+                        @foreach($quickQuestionPool as $question)
+                        <label class="quick-question-item flex items-start gap-3 p-3 hover:bg-white cursor-pointer" data-subject-id="{{ $question->subject_id }}">
+                            <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
+                            <span class="text-[12px] text-navy-900 leading-relaxed">{{ \Illuminate\Support\Str::limit(trim(strip_tags($question->content)), 180) }}</span>
+                        </label>
+                        @endforeach
+                    </div>
                     @endif
                 </div>
 
@@ -201,7 +201,10 @@
                     <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingQuickExam || {{ $quickQuestionPool->isEmpty() ? 'true' : 'false' }}">
                         <span x-show="!isSubmittingQuickExam">Tạo đề và tự chọn</span>
                         <span x-show="isSubmittingQuickExam" class="flex items-center gap-2">
-                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
                             Đang tạo...
                         </span>
                     </x-button>
@@ -213,7 +216,7 @@
     <script>
         function scheduleCreateManager(initialSubjectId) {
             return {
-            quickSubjectId: initialSubjectId || '',
+                quickSubjectId: initialSubjectId || '',
                 isSubmittingQuickExam: false,
 
                 onQuickSubjectChange() {
@@ -253,7 +256,10 @@
 
                         if (!examId) {
                             window.dispatchEvent(new CustomEvent('toast', {
-                                detail: { message: 'Không thể tạo đề nhanh. Vui lòng dùng trình tạo đầy đủ.', type: 'error' }
+                                detail: {
+                                    message: 'Không thể tạo đề nhanh. Vui lòng dùng trình tạo đầy đủ.',
+                                    type: 'error'
+                                }
                             }));
                             return;
                         }
@@ -283,11 +289,17 @@
                         this.onQuickSubjectChange();
 
                         window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Đã tạo đề thi và tự động chọn vào lịch thi.', type: 'success' }
+                            detail: {
+                                message: 'Đã tạo đề thi và tự động chọn vào lịch thi.',
+                                type: 'success'
+                            }
                         }));
                     } catch (error) {
                         window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Không thể tạo đề thi nhanh. Hãy kiểm tra dữ liệu đầu vào.', type: 'error' }
+                            detail: {
+                                message: 'Không thể tạo đề thi nhanh. Hãy kiểm tra dữ liệu đầu vào.',
+                                type: 'error'
+                            }
                         }));
                     } finally {
                         this.isSubmittingQuickExam = false;
