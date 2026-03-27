@@ -49,36 +49,31 @@
                         </div>
                         @endif
 
+                        @if(!$preSelectedSection)
                         <div>
-                            <div class="flex items-center justify-between gap-3 mb-1.5">
-                                <label class="text-[12px] font-semibold text-[#1A3A6B]">Đề thi <span class="text-[#DC2626]">*</span></label>
-                                <button type="button" class="text-[12px] font-semibold text-[#185FA5] hover:underline" @click="$dispatch('open-modal', 'quick-create-exam-modal')">
-                                    + Tạo đề thi mới
-                                </button>
-                            </div>
-                            <select name="exam_id" id="exam_id" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
-                                <option value="">-- Chọn đề thi --</option>
-                                @foreach($exams as $ex)
-                                <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}" {{ old('exam_id') == $ex->id ? 'selected' : '' }}>
-                                    [{{ $ex->subject->code }}] {{ $ex->title }}
-                                </option>
+                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-2">Bước 1: Chọn môn học <span class="text-[#DC2626]">*</span></label>
+                            <select x-model="selectedSubjectId" @change="onSubjectChange()" required
+                                class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
+                                <option value="">-- Chọn môn học --</option>
+                                @foreach($quickSubjects as $subject)
+                                <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
                                 @endforeach
                             </select>
-                            <p class="text-[11px] text-[#6B7C99] mt-1">Nếu chưa có đề phù hợp, tạo nhanh ngay tại đây và hệ thống sẽ tự chọn lại vào dropdown.</p>
-                            @error('exam_id') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                         </div>
 
-                        @if(!$preSelectedSection)
-                        <div id="section-selection-container" class="hidden">
-                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-3">Áp dụng cho các lớp học phần <span class="text-[#DC2626]">*</span></label>
+                        <div x-show="selectedSubjectId" x-transition>
+                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-3">Bước 2: Áp dụng cho các lớp học phần <span class="text-[#DC2626]">*</span></label>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-4 border border-[#D6E2F0] rounded-lg bg-[#F9FBFF]" id="sections-list">
                                 @foreach($courseSections as $cs)
-                                <div class="section-item flex items-start gap-3 p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-[#D6E2F0]" data-subject-id="{{ $cs->subject_id }}">
+                                <div class="section-item flex items-start gap-3 p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-[#D6E2F0]" 
+                                    data-subject-id="{{ $cs->subject_id }}"
+                                    x-show="'{{ $cs->subject_id }}' == selectedSubjectId">
                                     <input type="checkbox"
                                         name="course_section_ids[]"
                                         id="cs-{{ $cs->id }}"
                                         value="{{ $cs->id }}"
+                                        @change="onSectionChange()"
                                         class="mt-0.5 rounded border-[#D6E2F0] text-[#1A3A6B] focus:ring-[#185FA5]"
                                         {{ is_array(old('course_section_ids')) && in_array($cs->id, old('course_section_ids')) ? 'checked' : '' }}>
                                     <label for="cs-{{ $cs->id }}" class="cursor-pointer">
@@ -88,12 +83,37 @@
                                 </div>
                                 @endforeach
                             </div>
-                            <p id="no-sections-msg" class="hidden text-[13px] text-[#DC2626] italic py-4">Không tìm thấy lớp học phần nào đang học môn này.</p>
+                            <p id="no-sections-msg" class="hidden text-[13px] text-[#DC2626] italic py-4">Không tìm thấy lớp học phần nào đang dạy môn này.</p>
                             @error('course_section_ids') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                         </div>
+                        @else
+                            {{-- Trạng thái đã chọn lớp từ trước (ví dụ từ trang chi tiết lớp) --}}
+                            <div x-init="hasSelectedSection = true; selectedSubjectId = '{{ $preSelectedSubjectId }}'"></div>
                         @endif
 
-                        <div id="main-form-fields" class="{{ $preSelectedSection ? '' : 'opacity-50 pointer-events-none' }} space-y-4 transition-all duration-300">
+                        <div x-show="selectedSubjectId && hasSelectedSection" x-transition>
+                            <div class="flex items-center justify-between gap-3 mb-1.5">
+                                <label class="text-[12px] font-semibold text-[#1A3A6B]">Bước {{ $preSelectedSection ? '2' : '3' }}: Chọn đề thi <span class="text-[#DC2626]">*</span></label>
+                                <button type="button" class="text-[12px] font-semibold text-[#185FA5] hover:underline" @click="$dispatch('open-modal', 'quick-create-exam-modal')">
+                                    + Tạo đề thi mới
+                                </button>
+                            </div>
+                            <select name="exam_id" id="exam_id" x-model="selectedExamId" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
+                                <option value="">-- Chọn đề thi môn hiện tại --</option>
+                                @foreach($exams as $ex)
+                                <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}" 
+                                    x-show="'{{ $ex->subject_id }}' == selectedSubjectId"
+                                    {{ old('exam_id') == $ex->id ? 'selected' : '' }}>
+                                    [{{ $ex->subject->code }}] {{ $ex->title }}
+                                </option>
+                                @endforeach
+                            </select>
+                            <p class="text-[11px] text-[#6B7C99] mt-1">Danh sách được lọc theo môn học bạn đã chọn.</p>
+                            @error('exam_id') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div id="main-form-fields" x-show="selectedSubjectId && hasSelectedSection && selectedExamId" x-transition class="space-y-4 transition-all duration-300">
+                             <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1 uppercase tracking-wider">Bước {{ $preSelectedSection ? '3' : '4' }}: Chi tiết ca thi</label>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày thi <span class="text-[#DC2626]">*</span></label>
@@ -226,8 +246,24 @@
     <script>
         function scheduleCreateManager(initialSubjectId) {
             return {
+                selectedSubjectId: initialSubjectId || '',
+                selectedExamId: '',
+                hasSelectedSection: false,
                 quickSubjectId: initialSubjectId || '',
                 isSubmittingQuickExam: false,
+
+                onSubjectChange() {
+                    this.hasSelectedSection = false;
+                    this.selectedExamId = '';
+                    document.querySelectorAll('input[name="course_section_ids[]"]').forEach(cb => cb.checked = false);
+                    this.quickSubjectId = this.selectedSubjectId;
+                    this.onQuickSubjectChange();
+                },
+
+                onSectionChange() {
+                    const checked = document.querySelectorAll('input[name="course_section_ids[]"]:checked');
+                    this.hasSelectedSection = checked.length > 0;
+                },
 
                 onQuickSubjectChange() {
                     document.querySelectorAll('.quick-question-item').forEach(item => {

@@ -67,52 +67,45 @@
         {{-- Modal: Tạo lịch thi mới --}}
         <x-modal name="create-schedule-modal" maxWidth="2xl">
             <div class="px-6 py-4 border-b border-border-clean flex items-center justify-between bg-surface-0">
-                <h3 class="text-[17px] font-bold text-navy-900">Tạo Lịch Thi Mới</h3>
+                <h3 class="text-[17px] font-bold text-navy-900">Thêm lịch thi mới</h3>
                 <button @click="$dispatch('close-modal', 'create-schedule-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
-            <div class="p-6 overflow-y-auto max-h-[80vh]">
-                <form @submit.prevent="submitCreateForm($el)" class="space-y-5">
+            <div class="p-6 overflow-y-auto max-h-[85vh]">
+                <form @submit.prevent="submitCreateForm($el)" class="space-y-6">
                     @csrf
 
-                    {{-- Chọn đề thi --}}
+                    {{-- 1. Chọn môn học --}}
                     <div>
-                        <div class="flex items-center justify-between gap-2 mb-1.5">
-                            <label class="text-[12px] font-semibold text-navy-900">Đề thi <span class="text-red-500">*</span></label>
-                            <button type="button" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700" @click="$dispatch('open-modal', 'quick-create-exam-modal')">
-                                + Tạo đề thi mới
-                            </button>
-                        </div>
-                        <select name="exam_id" x-model="selectedExamId" @change="onExamChange()" required
-                            id="schedule-modal-exam-id"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
-                            <option value="">-- Chọn đề thi --</option>
-                            @foreach($exams as $ex)
-                            <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}">
-                                [{{ $ex->subject->code }}] {{ $ex->title }}
-                            </option>
+                        <label class="block text-[12px] font-bold text-navy-900 uppercase tracking-wider mb-2">Bước 1: Chọn môn học <span class="text-red-500">*</span></label>
+                        <select x-model="selectedSubjectId" @change="onSubjectChange()" required
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] font-medium focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 bg-white">
+                            <option value="">-- Click để chọn môn học --</option>
+                            @foreach($quickSubjects as $subject)
+                            <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
                             @endforeach
                         </select>
-                        <p class="mt-1 text-[11px] text-text-muted">Bạn có thể tạo đề mới ngay tại đây và chọn tự động vào lịch thi đang nhập.</p>
-                        <p class="mt-1.5 text-[11px] font-medium text-red-600 hidden" data-error="exam_id"></p>
                     </div>
 
-                    {{-- Chọn lớp học phần bằng Checkbox --}}
-                    <div x-show="selectedExamId" x-transition>
-                        <label class="block text-[12px] font-semibold text-navy-900 mb-3">Áp dụng cho các lớp <span class="text-red-500">*</span></label>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto p-3 border border-gray-200 rounded-lg bg-surface-0 shadow-inner">
+                    {{-- 2. Chọn lớp học phần --}}
+                    <div x-show="selectedSubjectId" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform -translate-y-2">
+                        <label class="block text-[12px] font-bold text-navy-900 uppercase tracking-wider mb-3">Bước 2: Các lớp áp dụng <span class="text-red-500">*</span></label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[220px] overflow-y-auto p-4 border border-gray-200 rounded-xl bg-surface-0 shadow-inner">
                             @foreach($courseSections as $cs)
-                            <div class="section-checkbox flex items-start gap-3 p-2 hover:bg-white rounded transition-colors"
+                            <div class="section-checkbox flex items-start gap-3 p-2.5 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-border-clean"
                                 data-subject-id="{{ $cs->subject_id }}"
-                                x-show="!selectedSubjectId || '{{ $cs->subject_id }}' == selectedSubjectId">
-                                <input type="checkbox" name="course_section_ids[]" id="modal-cs-{{ $cs->id }}" value="{{ $cs->id }}"
-                                    class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
+                                x-show="'{{ $cs->subject_id }}' == selectedSubjectId">
+                                <div class="flex items-center h-5">
+                                    <input type="checkbox" name="course_section_ids[]" id="modal-cs-{{ $cs->id }}" value="{{ $cs->id }}"
+                                        @change="onSectionChange()"
+                                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                                </div>
                                 <label for="modal-cs-{{ $cs->id }}" class="cursor-pointer">
-                                    <p class="text-[13px] font-semibold text-navy-900 leading-tight">{{ $cs->name }}</p>
-                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $cs->code }}</p>
+                                    <p class="text-[13px] font-bold text-navy-900 leading-tight">{{ $cs->name }}</p>
+                                    <p class="text-[11px] text-text-muted mt-0.5 font-mono">{{ $cs->code }}</p>
                                 </label>
                             </div>
                             @endforeach
@@ -120,50 +113,78 @@
                         <p class="mt-1.5 text-[11px] font-medium text-red-600 hidden" data-error="course_section_ids"></p>
                     </div>
 
-                    {{-- Ngày thi + Số SV --}}
-                    <div class="grid grid-cols-2 gap-4" x-show="selectedExamId" x-transition>
-                        <div>
-                            <label class="block text-[12px] font-semibold text-navy-900 mb-1">Ngày thi <span class="text-red-500">*</span></label>
-                            <input type="date" name="exam_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
-                            <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="exam_date"></p>
+                    {{-- 3. Chọn đề thi --}}
+                    <div x-show="selectedSubjectId && hasSelectedSection" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform -translate-y-2">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <label class="text-[12px] font-bold text-navy-900 uppercase tracking-wider">Bước 3: Chọn đề thi <span class="text-red-500">*</span></label>
+                            <button type="button" class="text-[12px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1" @click="$dispatch('open-modal', 'quick-create-exam-modal')">
+                                <x-ui-icon name="plus" class="w-3.5 h-3.5" />
+                                Tạo nhanh đề mới
+                            </button>
                         </div>
-                        <div>
-                            <label class="block text-[12px] font-semibold text-navy-900 mb-1">Số SV tối đa</label>
-                            <input type="number" name="max_students" min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Không giới hạn">
-                        </div>
+                        <select name="exam_id" x-model="selectedExamId" required
+                            id="schedule-modal-exam-id"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] font-medium focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 bg-white">
+                            <option value="">-- Chọn đề thi môn hiện tại --</option>
+                            @foreach($exams as $ex)
+                            <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}" x-show="'{{ $ex->subject_id }}' == selectedSubjectId">
+                                [{{ $ex->subject->code }}] {{ $ex->title }}
+                            </option>
+                            @endforeach
+                        </select>
+                        <p class="mt-2 text-[11px] text-text-muted italic flex items-start gap-1">
+                            <x-ui-icon name="information-circle" class="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                            Danh sách đề thi được lọc tự động theo môn học bạn đã chọn ở Bước 1.
+                        </p>
+                        <p class="mt-1.5 text-[11px] font-medium text-red-600 hidden" data-error="exam_id"></p>
                     </div>
 
-                    {{-- Giờ --}}
-                    <div class="grid grid-cols-2 gap-4" x-show="selectedExamId" x-transition>
-                        <div>
-                            <label class="block text-[12px] font-semibold text-navy-900 mb-1">Giờ bắt đầu <span class="text-red-500">*</span></label>
-                            <input type="time" name="start_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
-                            <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="start_time"></p>
+                    {{-- 4. Thông tin chi tiết --}}
+                    <div x-show="selectedSubjectId && hasSelectedSection && selectedExamId" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform -translate-y-2" class="space-y-5 pt-2">
+                        <label class="block text-[12px] font-bold text-navy-900 uppercase tracking-wider mb-1">Bước 4: Thời gian & Cấu hình</label>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ngày thi <span class="text-red-500">*</span></label>
+                                <input type="date" name="exam_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
+                                <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="exam_date"></p>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Số SV tối đa</label>
+                                <input type="number" name="max_students" min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Không giới hạn">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-[12px] font-semibold text-navy-900 mb-1">Giờ kết thúc <span class="text-red-500">*</span></label>
-                            <input type="time" name="end_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
-                            <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_time"></p>
-                        </div>
-                    </div>
 
-                    {{-- Ghi chú --}}
-                    <div x-show="selectedExamId" x-transition>
-                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Ghi chú</label>
-                        <textarea name="notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" rows="3" placeholder="Lưu ý cho các ca thi..."></textarea>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Giờ bắt đầu <span class="text-red-500">*</span></label>
+                                <input type="time" name="start_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="start_time"></p>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Giờ kết thúc <span class="text-red-500">*</span></label>
+                                <input type="time" name="end_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_time"></p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ghi chú cho sinh viên (vị trí phòng, thiết bị...)</label>
+                            <textarea name="notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" rows="3" placeholder="Nhập ghi chú..."></textarea>
+                        </div>
                     </div>
 
                     {{-- Actions --}}
-                    <div class="flex justify-end gap-3 pt-4 border-t border-border-clean" x-show="selectedExamId" x-transition>
-                        <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'create-schedule-modal')">Huỷ</x-button>
-                        <x-button type="submit" variant="primary" x-bind:disabled="isSubmitting">
-                            <span x-show="!isSubmitting">Tạo lịch thi</span>
+                    <div class="flex justify-end gap-3 pt-6 border-t border-border-clean" x-show="selectedSubjectId && hasSelectedSection && selectedExamId" x-transition>
+                        <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'create-schedule-modal')">Hủy bỏ</x-button>
+                        <x-button type="submit" variant="primary" x-bind:disabled="isSubmitting" class="px-8">
+                            <span x-show="!isSubmitting">Lưu lịch thi</span>
                             <span x-show="isSubmitting" class="flex items-center gap-2">
                                 <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                 </svg>
-                                Đang tạo...
+                                Đang xử lý...
                             </span>
                         </x-button>
                     </div>
@@ -266,21 +287,28 @@
                 isSubmitting: false,
                 selectedExamId: '',
                 selectedSubjectId: '',
+                hasSelectedSection: false,
                 quickSubjectId: '',
                 isSubmittingQuickExam: false,
 
-                onExamChange() {
-                    const select = document.querySelector('select[name="exam_id"]');
-                    const option = select.options[select.selectedIndex];
-                    this.selectedSubjectId = option ? option.getAttribute('data-subject-id') : '';
-
-                    // Uncheck lớp không khớp môn học
-                    document.querySelectorAll('.section-checkbox input[type="checkbox"]').forEach(cb => {
-                        const subjectId = cb.closest('.section-checkbox').getAttribute('data-subject-id');
-                        if (this.selectedSubjectId && subjectId !== this.selectedSubjectId) {
-                            cb.checked = false;
-                        }
+                onSubjectChange() {
+                    // Reset dependency selections
+                    this.hasSelectedSection = false;
+                    this.selectedExamId = '';
+                    
+                    // Uncheck all classes
+                    document.querySelectorAll('input[name="course_section_ids[]"]').forEach(cb => {
+                        cb.checked = false;
                     });
+                    
+                    // Trigger custom subject filter logic for Quick Create if needed
+                    this.quickSubjectId = this.selectedSubjectId;
+                    this.onQuickSubjectChange();
+                },
+
+                onSectionChange() {
+                    const checked = document.querySelectorAll('input[name="course_section_ids[]"]:checked');
+                    this.hasSelectedSection = checked.length > 0;
                 },
 
                 onQuickSubjectChange() {
