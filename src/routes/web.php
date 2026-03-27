@@ -27,6 +27,7 @@ use App\Http\Controllers\StudentEnrollmentController;
 use App\Http\Controllers\Student\StudentDashboardController;
 use App\Http\Controllers\StudentOnboardingController;
 use App\Http\Controllers\Lecturer\ExamController;
+use App\Http\Controllers\Lecturer\ExamFormApiController;
 use App\Http\Controllers\Lecturer\ExamScheduleController;
 use App\Http\Controllers\DifficultyController;
 use App\Http\Controllers\QuestionTypeController;
@@ -213,6 +214,13 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::post('/schedules/{schedule}/assign-students', [ExamScheduleController::class, 'assignStudents'])->name('schedules.assign-students');
 
             Route::get('/attendance', [LecturerPageController::class, 'attendance'])->name('attendance.index');
+
+            // ── API AJAX cho form tạo đề thi ────────────────────────
+            Route::prefix('api/exam-form')->name('api.exam-form.')->group(function () {
+                Route::get('/questions', [ExamFormApiController::class, 'questions'])->name('questions');
+                Route::get('/availability', [ExamFormApiController::class, 'availability'])->name('availability');
+                Route::post('/quick-question', [ExamFormApiController::class, 'quickQuestion'])->name('quick-question');
+            });
         });
 
     // Dashboard cũ của giảng viên – giữ lại để tương thích với

@@ -35,10 +35,23 @@ class ExamController extends Controller
     {
         $lecturerSubjectIds = \Illuminate\Support\Facades\Auth::user()->courseSections()->pluck('subject_id')->unique();
         $subjects = \App\Models\Subject::whereIn('id', $lecturerSubjectIds)->get();
-        $questions = Question::approved()->whereIn('subject_id', $lecturerSubjectIds)->get();
         $chapters = \App\Models\Chapter::whereIn('subject_id', $lecturerSubjectIds)->orderBy('order')->get();
+        $difficulties = \App\Models\Difficulty::query()->orderedForQuestionBank()->get(['code', 'name']);
 
-        return view("lecturer.exams.create", compact('subjects', 'questions', 'chapters'));
+        // Availability map: số câu hỏi approved theo chapter_id × difficulty cho tất cả subjects được phân công
+        $availabilityRaw = Question::approved()
+            ->whereIn('subject_id', $lecturerSubjectIds)
+            ->selectRaw('subject_id, COALESCE(chapter_id, 0) as ch_id, difficulty, COUNT(*) as cnt')
+            ->groupBy('subject_id', 'ch_id', 'difficulty')
+            ->get();
+
+        $availabilityMap = [];
+        foreach ($availabilityRaw as $row) {
+            $key = $row->subject_id . '|' . ($row->ch_id == 0 ? 'null' : $row->ch_id) . '|' . $row->difficulty;
+            $availabilityMap[$key] = (int) $row->cnt;
+        }
+
+        return view("lecturer.exams.create", compact('subjects', 'chapters', 'difficulties', 'availabilityMap'));
     }
 
     // Tạo 1 đề thi mới: phân luồng manual vs matrix

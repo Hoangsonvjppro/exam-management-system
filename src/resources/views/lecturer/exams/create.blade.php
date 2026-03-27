@@ -6,165 +6,52 @@
     ->get(['id', 'name']);
     @endphp
     <style>
-        /* THAM KHAO STYLES */
-        .ds-section {
-            margin-bottom: 36px;
-        }
-
-        .ds-label {
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            color: #6B7C99;
-            margin: 0 0 14px;
-        }
-
-        .ca-card {
-            background: #fff;
-            border: 0.5px solid #D6E2F0;
-            border-radius: 10px;
-            padding: 16px;
-        }
-
-        .ca-card-accent {
-            border-top: 3px solid #1A3A6B;
-        }
-
-        .ca-input,
-        .ca-select {
-            border: 1.5px solid #D6E2F0;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 13px;
-            color: #1A3A6B;
-            background: #fff;
-            font-family: inherit;
-            outline: none;
-            width: 100%;
-            transition: all 0.2s ease;
-        }
-
-        .ca-input:focus,
-        .ca-select:focus {
-            border-color: #185FA5;
-            box-shadow: 0 0 0 3px #E6F1FB;
-        }
-
-        .ca-input.error {
-            border-color: #DC2626;
-            background: #FEF2F2;
-        }
-
-        .btn {
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            font-weight: 500;
-            padding: 8px 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            border: none;
-            font-family: inherit;
-            transition: opacity .15s;
-        }
-
-        .btn-primary {
-            background: #1A3A6B;
-            color: #fff;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: #1A3A6B;
-            border: 1.5px solid #D6E2F0;
-        }
-
-        .btn-ghost:hover {
-            background: #F4F7FC;
-        }
-
-        .ca-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            font-size: 13px;
-        }
-
-        .ca-table thead th {
-            background: #F4F7FC;
-            color: #1A3A6B;
-            font-weight: 600;
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1.5px solid #D6E2F0;
-            border-top: 1.5px solid #D6E2F0;
-            font-size: 12px;
-        }
-
-        .ca-table tbody td {
-            padding: 12px;
-            color: #374151;
-            border-bottom: 1px solid #EBF2FA;
-            background: #fff;
-        }
-
-        .ca-table tbody tr:hover td {
-            background: #F8FAFD;
-        }
-
-        .ca-table thead th:first-child {
-            border-top-left-radius: 8px;
-            border-left: 1.5px solid #D6E2F0;
-        }
-
-        .ca-table thead th:last-child {
-            border-top-right-radius: 8px;
-            border-right: 1.5px solid #D6E2F0;
-        }
-
-        .ca-table tbody tr:last-child td:first-child {
-            border-bottom-left-radius: 8px;
-            border-left: 1.5px solid #D6E2F0;
-            border-bottom: 1.5px solid #D6E2F0;
-        }
-
-        .ca-table tbody tr:last-child td:last-child {
-            border-bottom-right-radius: 8px;
-            border-right: 1.5px solid #D6E2F0;
-            border-bottom: 1.5px solid #D6E2F0;
-        }
-
-        .ca-table tbody td:first-child {
-            border-left: 1.5px solid #D6E2F0;
-        }
-
-        .ca-table tbody td:last-child {
-            border-right: 1.5px solid #D6E2F0;
-        }
-
-        .badge {
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 500;
-            padding: 3px 10px;
-            border-radius: 20px;
-        }
-
-        .s-upcoming {
-            background: #EBF2FA;
-            color: #1A3A6B;
-        }
-
-        .text-error {
-            color: #DC2626;
-            font-size: 11px;
-            margin-top: 4px;
-            display: block;
-        }
+        .ds-section { margin-bottom: 36px; }
+        .ds-label { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: #6B7C99; margin: 0 0 14px; }
+        .ca-card { background: #fff; border: 0.5px solid #D6E2F0; border-radius: 10px; padding: 16px; }
+        .ca-card-accent { border-top: 3px solid #1A3A6B; }
+        .ca-input, .ca-select { border: 1.5px solid #D6E2F0; border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #1A3A6B; background: #fff; font-family: inherit; outline: none; width: 100%; transition: all 0.2s ease; }
+        .ca-input:focus, .ca-select:focus { border-color: #185FA5; box-shadow: 0 0 0 3px #E6F1FB; }
+        .ca-input.error { border-color: #DC2626; background: #FEF2F2; }
+        .btn { display: inline-flex; justify-content: center; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 8px 18px; border-radius: 6px; cursor: pointer; border: none; font-family: inherit; transition: opacity .15s; }
+        .btn-primary { background: #1A3A6B; color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-ghost { background: transparent; color: #1A3A6B; border: 1.5px solid #D6E2F0; }
+        .btn-ghost:hover { background: #F4F7FC; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+        .ca-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        .ca-table thead th { background: #F4F7FC; color: #1A3A6B; font-weight: 600; padding: 10px 12px; text-align: left; border-bottom: 1.5px solid #D6E2F0; border-top: 1.5px solid #D6E2F0; font-size: 12px; }
+        .ca-table tbody td { padding: 12px; color: #374151; border-bottom: 1px solid #EBF2FA; background: #fff; }
+        .ca-table tbody tr:hover td { background: #F8FAFD; }
+        .ca-table thead th:first-child { border-top-left-radius: 8px; border-left: 1.5px solid #D6E2F0; }
+        .ca-table thead th:last-child { border-top-right-radius: 8px; border-right: 1.5px solid #D6E2F0; }
+        .ca-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; border-left: 1.5px solid #D6E2F0; border-bottom: 1.5px solid #D6E2F0; }
+        .ca-table tbody tr:last-child td:last-child { border-bottom-right-radius: 8px; border-right: 1.5px solid #D6E2F0; border-bottom: 1.5px solid #D6E2F0; }
+        .ca-table tbody td:first-child { border-left: 1.5px solid #D6E2F0; }
+        .ca-table tbody td:last-child { border-right: 1.5px solid #D6E2F0; }
+        .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; }
+        .s-upcoming { background: #EBF2FA; color: #1A3A6B; }
+        .text-error { color: #DC2626; font-size: 11px; margin-top: 4px; display: block; }
+        .availability-hint { font-size: 11px; color: #6B7C99; margin-top: 2px; }
+        .availability-hint.warn { color: #DC2626; font-weight: 600; }
+        .preset-btn { padding: 6px 14px; font-size: 12px; border-radius: 6px; border: 1.5px solid #D6E2F0; background: #F8FAFD; color: #1A3A6B; cursor: pointer; transition: all .15s; font-family: inherit; font-weight: 500; }
+        .preset-btn:hover { background: #E6F1FB; border-color: #185FA5; }
+        .preset-btn.active { background: #1A3A6B; color: #fff; border-color: #1A3A6B; }
+        .q-item { border: 1px solid #EBF2FA; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; transition: all .15s; background: #fff; }
+        .q-item:hover { border-color: #D6E2F0; background: #FCFDFE; }
+        .q-item.selected { border-color: #185FA5; background: #F0F7FF; }
+        .q-preview { background: #F8FAFD; border-top: 1px solid #EBF2FA; margin-top: 10px; padding: 12px 14px; border-radius: 0 0 6px 6px; }
+        .q-option { padding: 6px 10px; margin: 4px 0; border-radius: 4px; font-size: 12.5px; display: flex; align-items: flex-start; gap: 8px; }
+        .q-option.correct { background: #ECFDF5; border: 1px solid #6EE7B7; }
+        .q-option.incorrect { background: #F9FAFB; border: 1px solid #E5E7EB; }
+        .q-option-label { font-weight: 700; min-width: 20px; color: #1A3A6B; }
+        .filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .filter-bar .ca-input, .filter-bar .ca-select { width: auto; min-width: 150px; flex: 1; }
+        .filter-bar .search-input { flex: 2; min-width: 200px; }
+        .load-more-btn { width: 100%; padding: 10px; text-align: center; background: #F4F7FC; border: 1.5px dashed #D6E2F0; border-radius: 8px; color: #185FA5; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; }
+        .load-more-btn:hover { background: #E6F1FB; border-color: #185FA5; }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #D6E2F0; border-top-color: #1A3A6B; border-radius: 50%; animation: spin .6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 
     <div class="py-8 bg-[#F8FAFD] min-h-screen">
@@ -180,33 +67,33 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('lecturer.exams.store') }}">
+            <form method="POST" action="{{ route('lecturer.exams.store') }}" id="exam-form">
                 @csrf
                 <input type="hidden" name="creation_mode" id="creation_mode" value="{{ old('creation_mode', 'manual') }}">
+                {{-- Hidden container for selected question IDs (tab thủ công) --}}
+                <div id="selected-questions-container"></div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                    <!-- Cột Trái: Cấu hình chung (Lớn hơn chút) -->
+                    {{-- ═══ CỘT TRÁI: Cấu hình chung ═══ --}}
                     <div class="lg:col-span-4 space-y-6">
                         <div class="ca-card ca-card-accent">
                             <h3 class="text-[14px] font-bold text-[#1A3A6B] mb-4 uppercase tracking-wider">Thông tin kỳ thi</h3>
-
                             <div class="space-y-4">
                                 <div>
                                     <label for="title" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Tên bài kiểm tra <span class="text-[#DC2626]">*</span></label>
                                     <input id="title" type="text" name="title" value="{{ old('title') }}" required autofocus class="ca-input @error('title') error @enderror" placeholder="VD: Thi giữa kỳ" />
                                     @error('title') <span class="text-error">{{ $message }}</span> @enderror
                                 </div>
-
                                 <div>
                                     <label for="description" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Hướng dẫn làm bài</label>
                                     <textarea id="description" name="description" class="ca-input" rows="3" placeholder="Ghi chú cho sinh viên...">{{ old('description') }}</textarea>
                                     @error('description') <span class="text-error">{{ $message }}</span> @enderror
                                 </div>
-
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label for="subject_id" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Môn học <span class="text-[#DC2626]">*</span></label>
-                                        <select id="subject_id" name="subject_id" class="ca-select @error('subject_id') error @enderror" required onchange="onSubjectChange()">
+                                        <select id="subject_id" name="subject_id" class="ca-select @error('subject_id') error @enderror" required>
                                             <option value="">-- Chọn môn học --</option>
                                             @foreach($subjects as $subject)
                                             <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
@@ -220,7 +107,6 @@
                                         @error('duration_minutes') <span class="text-error">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
-
                                 <div class="grid grid-cols-1 gap-4">
                                     <div>
                                         <label for="exam_type" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Loại đề thi <span class="text-[#DC2626]">*</span></label>
@@ -243,12 +129,9 @@
                                         <input type="checkbox" name="allow_late_entrance" id="allow_late_entrance" value="1"
                                             class="mt-0.5 rounded border-[#D6E2F0] text-[#185FA5] shadow-sm focus:ring-[#E6F1FB] w-4 h-4 transition-colors group-hover:border-[#185FA5]"
                                             {{ old('allow_late_entrance', true) ? 'checked' : '' }} onchange="toggleLateSettings()">
-                                        <div>
-                                            <span class="block text-[13px] font-semibold text-[#1A3A6B]">Cho phép vào thi muộn</span>
-                                        </div>
+                                        <div><span class="block text-[13px] font-semibold text-[#1A3A6B]">Cho phép vào thi muộn</span></div>
                                     </label>
                                 </div>
-
                                 <div id="late_settings" class="pl-7 space-y-4 {{ old('allow_late_entrance', true) ? '' : 'hidden' }}">
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
@@ -266,7 +149,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div>
                                     <label for="min_duration_before_submit" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Thời gian làm tối thiểu trước khi nộp (Phút)</label>
                                     <input id="min_duration_before_submit" type="number" name="min_duration_before_submit" value="{{ old('min_duration_before_submit', 0) }}" class="ca-input @error('min_duration_before_submit') error @enderror" />
@@ -289,7 +171,6 @@
                                         <p class="text-[11.5px] text-[#6B7C99] leading-tight mt-1">Sinh viên thấy điểm ngay khi nộp</p>
                                     </div>
                                 </label>
-
                                 <label class="flex items-start gap-3 cursor-pointer group">
                                     <input type="hidden" name="show_answers_after_submit" value="0">
                                     <input type="checkbox" name="show_answers_after_submit" value="1"
@@ -304,9 +185,9 @@
                         </div>
                     </div>
 
-                    <!-- Cột Phải: Chọn câu hỏi / Ma trận -->
+                    {{-- ═══ CỘT PHẢI: Chọn câu hỏi / Ma trận ═══ --}}
                     <div class="lg:col-span-8 flex flex-col">
-                        <!-- Tab toggle -->
+                        {{-- Tab toggle --}}
                         <div class="flex mb-4 border-b border-[#D6E2F0]">
                             <button type="button" id="tab-manual" onclick="switchCreationMode('manual')" class="px-5 py-2.5 text-[13px] font-semibold border-b-2 transition-colors border-[#1A3A6B] text-[#1A3A6B]">
                                 Chọn thủ công
@@ -320,501 +201,25 @@
                         <div class="mb-3 px-4 py-2 bg-[#FEF2F2] border border-[#FCA5A5] text-[#991B1B] text-[13px] rounded-lg">{{ $message }}</div>
                         @enderror
 
-                        <!-- TAB 1: Chọn thủ công -->
-                        <div id="panel-manual" class="flex-1 flex flex-col">
-                            <div class="bg-white rounded-[10px] border-[0.5px] border-[#D6E2F0] flex flex-col h-full shadow-sm">
-                                <div class="p-5 border-b border-[#EBF2FA] flex justify-between items-center bg-[#F8FAFD] rounded-t-[10px]">
-                                    <div>
-                                        <h3 class="text-[16px] font-bold text-[#1A3A6B]">Chọn câu hỏi cho đề thi</h3>
-                                        <p class="text-[12.5px] text-[#6B7C99] mt-1">Tick chọn những câu hỏi muốn sử dụng từ ngân hàng môn học.</p>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="badge s-upcoming">Tổng: <span id="selectedCount">0</span>/{{ count($questions) }} đã chọn</div>
-                                        <button type="button" class="btn btn-ghost" onclick="openQuickQuestionModal()">
-                                            + Thêm câu hỏi mới
-                                        </button>
-                                        <button type="submit" class="btn btn-primary ml-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Lưu Đề Thi
-                                        </button>
-                                    </div>
-                                </div>
+                        {{-- ═══ TAB 1: CHỌN THỦ CÔNG (AJAX) ═══ --}}
+                        @include('lecturer.exams._partials.manual-tab')
 
-                                @error('question_ids')
-                                <div class="px-5 py-3 bg-[#FEF2F2] border-b border-[#FCA5A5] text-[#991B1B] text-[13px] font-medium">
-                                    {{ $message }}
-                                </div>
-                                @enderror
-
-                                <div class="flex-1 overflow-y-auto px-5 py-4 max-h-[700px] min-h-[400px]">
-                                    @if($questions->isEmpty())
-                                    <div class="h-full flex flex-col items-center justify-center text-center py-12">
-                                        <div class="w-16 h-16 bg-[#F4F7FC] rounded-full flex items-center justify-center mb-4 border border-[#D6E2F0]">
-                                            <svg class="w-8 h-8 text-[#6B7C99]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                            </svg>
-                                        </div>
-                                        <h4 class="text-[15px] font-bold text-[#1A3A6B] mb-2">Ngân hàng trống</h4>
-                                        <p class="text-[13px] text-[#6B7C99] max-w-sm">Môn học này hiện chưa có câu hỏi nào được phê duyệt.</p>
-                                    </div>
-                                    @else
-                                    <table class="ca-table text-left">
-                                        <thead class="sticky top-0 shadow-sm z-10 bg-[#F4F7FC]">
-                                            <tr>
-                                                <th class="w-12 text-center rounded-tl-[8px]">
-                                                    <input type="checkbox" id="selectAll" class="rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#E6F1FB] w-4 h-4 cursor-pointer">
-                                                </th>
-                                                <th class="rounded-tr-[8px]">Nội dung câu hỏi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($questions as $question)
-                                            <tr class="question-row group cursor-pointer hover:bg-[#F8FAFD] transition-colors" data-subject="{{ $question->subject_id }}" onclick="toggleCheckbox(this, event)">
-                                                <td class="text-center w-12">
-                                                    <input type="checkbox" name="question_ids[]" value="{{ $question->id }}"
-                                                        class="question-checkbox rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#E6F1FB] w-4 h-4 cursor-pointer"
-                                                        onclick="event.stopPropagation()"
-                                                        {{ (is_array(old('question_ids')) && in_array($question->id, old('question_ids'))) ? 'checked' : '' }}>
-                                                </td>
-                                                <td>
-                                                    <div class="text-[13.5px] text-[#374151] line-clamp-3">
-                                                        {!! strip_tags($question->content) !!}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- TAB 2: Sinh từ ma trận -->
-                        <div id="panel-matrix" class="flex-1 flex-col" style="display: none;">
-                            <div class="bg-white rounded-[10px] border-[0.5px] border-[#D6E2F0] flex flex-col shadow-sm">
-                                <div class="p-5 border-b border-[#EBF2FA] flex justify-between items-center bg-[#F8FAFD] rounded-t-[10px]">
-                                    <div>
-                                        <h3 class="text-[16px] font-bold text-[#1A3A6B]">Cấu trúc ma trận đề thi</h3>
-                                        <p class="text-[12.5px] text-[#6B7C99] mt-1">Định nghĩa số câu theo chương và độ khó, hệ thống sẽ tự động chọn ngẫu nhiên.</p>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="badge s-upcoming">Tổng: <span id="matrixTotalQuestions">0</span> câu • <span id="matrixTotalPoints">0</span> điểm</div>
-                                        <button type="submit" class="btn btn-primary ml-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            Tạo Đề Từ Ma Trận
-                                        </button>
-                                    </div>
-                                </div>
-
-                                @error('matrix')
-                                <div class="px-5 py-3 bg-[#FEF2F2] border-b border-[#FCA5A5] text-[#991B1B] text-[13px] font-medium">{{ $message }}</div>
-                                @enderror
-
-                                <div class="p-5">
-                                    <table class="ca-table text-left" id="matrix-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Chương</th>
-                                                <th>Độ khó</th>
-                                                <th>Số câu</th>
-                                                <th>Điểm/câu</th>
-                                                <th class="w-12"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="matrix-body">
-                                            {{-- JS sẽ thêm rows --}}
-                                        </tbody>
-                                    </table>
-
-                                    <button type="button" onclick="addMatrixRow()" class="btn btn-ghost mt-4 w-full">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                        </svg>
-                                        Thêm hàng ma trận
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        {{-- ═══ TAB 2: SINH TỪ MA TRẬN ═══ --}}
+                        @include('lecturer.exams._partials.matrix-tab')
                     </div>
-
                 </div>
             </form>
 
-            <x-modal name="quick-question-modal" maxWidth="xl">
-                <div class="p-6 md:p-7">
-                    <div class="flex items-center justify-between mb-5">
-                        <div>
-                            <h3 class="text-[18px] font-bold text-[#1A3A6B]">Thêm câu hỏi mới ngay trong lúc tạo đề</h3>
-                            <p class="text-[12px] text-[#6B7C99] mt-1">Lưu xong, câu hỏi sẽ tự động được thêm vào danh sách chọn câu hỏi.</p>
-                        </div>
-                        <button type="button" class="text-[#6B7C99] hover:text-[#1A3A6B]" @click="$dispatch('close-modal', 'quick-question-modal')">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
+            {{-- Modal thêm câu hỏi nhanh --}}
+            @include('lecturer.exams._partials.quick-question-modal')
 
-                    <form id="quick-question-form" onsubmit="submitQuickQuestionForm(event)" class="space-y-4">
-                        @csrf
+            {{-- Data injection --}}
+            <script id="chapters-data" type="application/json">@json($chapters)</script>
+            <script id="difficulties-data" type="application/json">@json($difficulties)</script>
+            <script id="availability-data" type="application/json">@json($availabilityMap)</script>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Môn học <span class="text-[#DC2626]">*</span></label>
-                                <select id="quick-question-subject" name="subject_id" required class="ca-select">
-                                    <option value="">-- Chọn môn học --</option>
-                                    @foreach($subjects as $subject)
-                                    <option value="{{ $subject->id }}">{{ $subject->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Loại câu hỏi <span class="text-[#DC2626]">*</span></label>
-                                <select name="question_type_id" required class="ca-select">
-                                    <option value="">-- Chọn loại --</option>
-                                    @foreach($quickQuestionTypes as $type)
-                                    <option value="{{ $type->id }}">{{ $type->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Mức độ <span class="text-[#DC2626]">*</span></label>
-                                <select name="difficulty" required class="ca-select">
-                                    <option value="remember">Nhớ (Remember)</option>
-                                    <option value="understand">Hiểu (Understand)</option>
-                                    <option value="apply">Áp dụng (Apply)</option>
-                                    <option value="analyze">Phân tích (Analyze)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Trạng thái</label>
-                                <input type="text" value="Đã duyệt (auto)" readonly class="ca-input bg-[#F4F7FC] cursor-not-allowed">
-                                <input type="hidden" name="status" value="approved">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Nội dung câu hỏi <span class="text-[#DC2626]">*</span></label>
-                            <textarea name="content" rows="4" required minlength="5" class="ca-input" placeholder="Nhập nội dung câu hỏi..."></textarea>
-                        </div>
-
-                        <div>
-                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Giải thích (tuỳ chọn)</label>
-                            <textarea name="explanation" rows="3" class="ca-input" placeholder="Giải thích đáp án..."></textarea>
-                        </div>
-
-                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-[#EBF2FA]">
-                            <button type="button" class="btn btn-ghost" @click="$dispatch('close-modal', 'quick-question-modal')">Huỷ</button>
-                            <button type="submit" id="quick-question-submit" class="btn btn-primary">
-                                Lưu và thêm vào đề
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </x-modal>
-
-            <script id="chapters-data" type="application/json">
-                @json($chapters)
-            </script>
-
-            <script>
-                const chapters = JSON.parse(document.getElementById('chapters-data')?.textContent || '[]');
-                let matrixRowIndex = 0;
-
-                // === Tab switching ===
-                function switchCreationMode(mode) {
-                    document.getElementById('creation_mode').value = mode;
-                    document.getElementById('panel-manual').style.display = mode === 'manual' ? 'flex' : 'none';
-                    document.getElementById('panel-matrix').style.display = mode === 'matrix' ? 'flex' : 'none';
-
-                    const tabManual = document.getElementById('tab-manual');
-                    const tabMatrix = document.getElementById('tab-matrix');
-                    if (mode === 'manual') {
-                        tabManual.classList.add('border-[#1A3A6B]', 'text-[#1A3A6B]');
-                        tabManual.classList.remove('border-transparent', 'text-[#6B7C99]');
-                        tabMatrix.classList.remove('border-[#1A3A6B]', 'text-[#1A3A6B]');
-                        tabMatrix.classList.add('border-transparent', 'text-[#6B7C99]');
-                    } else {
-                        tabMatrix.classList.add('border-[#1A3A6B]', 'text-[#1A3A6B]');
-                        tabMatrix.classList.remove('border-transparent', 'text-[#6B7C99]');
-                        tabManual.classList.remove('border-[#1A3A6B]', 'text-[#1A3A6B]');
-                        tabManual.classList.add('border-transparent', 'text-[#6B7C99]');
-                    }
-                }
-
-                // === Matrix row management ===
-                function addMatrixRow() {
-                    const i = matrixRowIndex++;
-                    const subjectId = document.getElementById('subject_id')?.value;
-                    const filteredChapters = chapters.filter(c => c.subject_id == subjectId);
-                    const chapterOptions = filteredChapters.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>
-                            <select name="matrix[${i}][chapter_id]" class="ca-select" style="min-width:140px">
-                                <option value="">Tất cả</option>
-                                ${chapterOptions}
-                            </select>
-                        </td>
-                        <td>
-                            <select name="matrix[${i}][difficulty]" class="ca-select" required style="min-width:120px">
-                                <option value="remember">Nhớ</option>
-                                <option value="understand">Hiểu</option>
-                                <option value="apply">Áp dụng</option>
-                                <option value="analyze">Phân tích</option>
-                            </select>
-                        </td>
-                        <td>
-                            <input type="number" name="matrix[${i}][question_count]" class="ca-input" value="5" min="1" required style="width:70px" oninput="updateMatrixSummary()">
-                        </td>
-                        <td>
-                            <input type="number" name="matrix[${i}][points_each]" class="ca-input" value="1.00" min="0.01" step="0.01" style="width:80px" oninput="updateMatrixSummary()">
-                        </td>
-                        <td class="text-center">
-                            <button type="button" onclick="this.closest('tr').remove(); updateMatrixSummary();" class="text-[#DC2626] hover:text-[#991B1B] text-[14px] font-bold">&times;</button>
-                        </td>
-                    `;
-                    document.getElementById('matrix-body').appendChild(row);
-                    updateMatrixSummary();
-                }
-
-                function updateMatrixSummary() {
-                    let totalQ = 0,
-                        totalP = 0;
-                    document.querySelectorAll('#matrix-body tr').forEach(row => {
-                        const count = parseInt(row.querySelector('input[name*="question_count"]')?.value || 0);
-                        const points = parseFloat(row.querySelector('input[name*="points_each"]')?.value || 1);
-                        totalQ += count;
-                        totalP += count * points;
-                    });
-                    document.getElementById('matrixTotalQuestions').textContent = totalQ;
-                    document.getElementById('matrixTotalPoints').textContent = totalP.toFixed(2);
-                }
-
-                // === Manual mode: checkbox logic ===
-                function toggleCheckbox(row, event) {
-                    if (event.target.tagName.toLowerCase() === 'input') return;
-                    const checkbox = row.querySelector('.question-checkbox');
-                    if (checkbox) {
-                        checkbox.checked = !checkbox.checked;
-                        updateCounter();
-                        checkSelectAllState();
-                    }
-                }
-
-                function updateCounter() {
-                    const count = document.querySelectorAll('.question-checkbox:checked').length;
-                    const counterEl = document.getElementById('selectedCount');
-                    if (counterEl) counterEl.textContent = count;
-                }
-
-                function checkSelectAllState() {
-                    const selectAll = document.getElementById('selectAll');
-                    const checkboxes = document.querySelectorAll('.question-checkbox');
-                    if (selectAll && checkboxes.length > 0) {
-                        selectAll.checked = document.querySelectorAll('.question-checkbox:checked').length === checkboxes.length;
-                    }
-                }
-
-                document.addEventListener('DOMContentLoaded', function() {
-                    // Restore tab from old input
-                    const savedMode = document.getElementById('creation_mode').value;
-                    if (savedMode === 'matrix') switchCreationMode('matrix');
-
-                    const selectAll = document.getElementById('selectAll');
-                    const checkboxes = document.querySelectorAll('.question-checkbox');
-
-                    if (selectAll) {
-                        selectAll.addEventListener('change', function() {
-                            checkboxes.forEach(cb => cb.checked = selectAll.checked);
-                            updateCounter();
-                        });
-                    }
-
-                    checkboxes.forEach(cb => {
-                        cb.addEventListener('change', function() {
-                            checkSelectAllState();
-                            updateCounter();
-                        });
-                    });
-
-                    updateCounter();
-                    checkSelectAllState();
-
-                    // Add initial matrix row
-                    if (document.getElementById('matrix-body').children.length === 0) {
-                        addMatrixRow();
-                    }
-
-                    // Trigger initial subject filter
-                    onSubjectChange();
-                });
-
-                function toggleLateSettings() {
-                    const cb = document.getElementById('allow_late_entrance');
-                    const settings = document.getElementById('late_settings');
-                    if (cb && settings) {
-                        settings.style.display = cb.checked ? 'block' : 'none';
-                    }
-                }
-
-                function onSubjectChange() {
-                    const subjectId = document.getElementById('subject_id')?.value;
-                    const quickSubjectSelect = document.getElementById('quick-question-subject');
-                    if (quickSubjectSelect && subjectId) {
-                        quickSubjectSelect.value = subjectId;
-                    }
-
-                    // Filter questions
-                    let visibleQuestions = 0;
-                    document.querySelectorAll('.question-row').forEach(row => {
-                        if (row.dataset.subject == subjectId) {
-                            row.style.display = '';
-                            visibleQuestions++;
-                        } else {
-                            row.style.display = 'none';
-                            const cb = row.querySelector('.question-checkbox');
-                            if (cb) cb.checked = false;
-                        }
-                    });
-
-                    // Reset matrix
-                    document.getElementById('matrix-body').innerHTML = '';
-                    addMatrixRow();
-                    updateCounter();
-                    checkSelectAllState();
-                }
-
-                function openQuickQuestionModal() {
-                    const subjectId = document.getElementById('subject_id')?.value;
-                    const quickSubjectSelect = document.getElementById('quick-question-subject');
-                    if (quickSubjectSelect && subjectId) {
-                        quickSubjectSelect.value = subjectId;
-                    }
-                    window.dispatchEvent(new CustomEvent('open-modal', {
-                        detail: 'quick-question-modal'
-                    }));
-                }
-
-                async function submitQuickQuestionForm(event) {
-                    event.preventDefault();
-
-                    const form = event.target;
-                    const submitButton = document.getElementById('quick-question-submit');
-                    const formData = new FormData(form);
-
-                    submitButton.disabled = true;
-                    submitButton.textContent = 'Đang lưu...';
-
-                    try {
-                        const response = await fetch("{{ route('lecturer.questions.store') }}", {
-                            method: 'POST',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'text/html',
-                            },
-                            body: formData,
-                            redirect: 'follow',
-                        });
-
-                        if (!response.ok) {
-                            throw new Error('Failed to create question');
-                        }
-
-                        const html = await response.text();
-                        const idMatch = html.match(/ID:\s*Q-(\d+)/);
-                        const questionId = idMatch ? idMatch[1] : null;
-
-                        if (!questionId) {
-                            throw new Error('Could not resolve created question id');
-                        }
-
-                        const tbody = document.querySelector('#panel-manual tbody');
-                        if (!tbody) {
-                            window.location.reload();
-                            return;
-                        }
-
-                        const subjectId = String(formData.get('subject_id') || '');
-                        const content = String(formData.get('content') || '').trim();
-                        const selectedSubjectId = String(document.getElementById('subject_id')?.value || '');
-
-                        const row = document.createElement('tr');
-                        row.className = 'question-row group cursor-pointer hover:bg-[#F8FAFD] transition-colors';
-                        row.dataset.subject = subjectId;
-                        row.onclick = function(e) {
-                            toggleCheckbox(this, e);
-                        };
-
-                        row.innerHTML = `
-                            <td class="text-center w-12">
-                                <input type="checkbox" name="question_ids[]" value="${questionId}"
-                                    class="question-checkbox rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#E6F1FB] w-4 h-4 cursor-pointer"
-                                    onclick="event.stopPropagation()" checked>
-                            </td>
-                            <td>
-                                <div class="text-[13.5px] text-[#374151] line-clamp-3"></div>
-                            </td>
-                        `;
-
-                        const contentCell = row.querySelector('td:nth-child(2) div');
-                        if (contentCell) {
-                            contentCell.textContent = content;
-                        }
-
-                        if (selectedSubjectId && selectedSubjectId !== subjectId) {
-                            row.style.display = 'none';
-                        }
-
-                        tbody.prepend(row);
-                        const checkbox = row.querySelector('.question-checkbox');
-                        if (checkbox) {
-                            checkbox.addEventListener('change', function() {
-                                checkSelectAllState();
-                                updateCounter();
-                            });
-                        }
-
-                        updateCounter();
-                        checkSelectAllState();
-
-                        window.dispatchEvent(new CustomEvent('close-modal', {
-                            detail: 'quick-question-modal'
-                        }));
-                        form.reset();
-
-                        const selectedSubject = document.getElementById('subject_id')?.value;
-                        const quickSubjectSelect = document.getElementById('quick-question-subject');
-                        if (quickSubjectSelect && selectedSubject) {
-                            quickSubjectSelect.value = selectedSubject;
-                        }
-
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: {
-                                message: 'Đã thêm câu hỏi mới và tự động đưa vào đề thi.',
-                                type: 'success'
-                            }
-                        }));
-                    } catch (error) {
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: {
-                                message: 'Không thể thêm câu hỏi nhanh. Vui lòng kiểm tra dữ liệu đầu vào.',
-                                type: 'error'
-                            }
-                        }));
-                    } finally {
-                        submitButton.disabled = false;
-                        submitButton.textContent = 'Lưu và thêm vào đề';
-                    }
-                }
-            </script>
+            {{-- Core JS --}}
+            @include('lecturer.exams._partials.create-scripts')
         </div>
     </div>
 </x-app-layout>
