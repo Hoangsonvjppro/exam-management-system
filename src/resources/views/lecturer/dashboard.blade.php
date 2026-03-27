@@ -20,12 +20,11 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <x-button variant="outline" href="{{ route('lecturer.classes.create') }}" class="text-sm">
-                        <x-ui-icon name="plus" class="w-4 h-4 mr-1" />
-                        Tạo lớp mới
-                    </x-button>
                     <x-button variant="secondary" href="{{ route('lecturer.classes.index') }}" class="text-sm">
-                        Quản lý lớp
+                        Mở không gian lớp
+                    </x-button>
+                    <x-button variant="outline" href="{{ route('lecturer.schedules.index') }}" class="text-sm">
+                        Quản lý lịch thi
                     </x-button>
                 </div>
             </div>

@@ -1,5 +1,23 @@
 <x-app-layout>
-    <div class="py-8 bg-[#F8FAFD] min-h-screen">
+    @php
+        $quickSubjectIds = $courseSections->pluck('subject_id')->filter()->unique()->values();
+        $quickSubjects = \App\Models\Subject::query()
+            ->whereIn('id', $quickSubjectIds)
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
+        $quickQuestionPool = \App\Models\Question::approved()
+            ->whereIn('subject_id', $quickSubjectIds)
+            ->orderByDesc('updated_at')
+            ->limit(300)
+            ->get(['id', 'subject_id', 'content']);
+
+        $preSelectedSubjectId = (string) ($preSelectedSection?->subject_id ?? '');
+    @endphp
+
+    <div class="py-8 bg-[#F8FAFD] min-h-screen"
+         data-pre-selected-subject-id="{{ $preSelectedSubjectId }}"
+         x-data="scheduleCreateManager($el.dataset.preSelectedSubjectId)">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="mb-6 flex items-center justify-between">
                 <div>
@@ -18,9 +36,8 @@
             <div class="bg-white rounded-[10px] border border-[#D6E2F0] p-6 max-w-3xl shadow-sm">
                 <form method="POST" action="{{ route('lecturer.schedules.store') }}" id="schedule-form">
                     @csrf
-                    
+
                     <div class="space-y-6">
-                        {{-- Hiển thị thông tin lớp nếu đã chọn sẵn --}}
                         @if($preSelectedSection)
                             <div class="p-4 bg-[#F0F7FF] border border-[#D1E5FF] rounded-lg flex items-center justify-between">
                                 <div>
@@ -28,53 +45,52 @@
                                     <p class="text-[15px] font-bold text-[#1A3A6B] mt-0.5">{{ $preSelectedSection->name }} ({{ $preSelectedSection->code }})</p>
                                 </div>
                                 <input type="hidden" name="course_section_ids[]" value="{{ $preSelectedSection->id }}">
-                                <div class="text-[12px] text-[#6B7C99] italic">
-                                    Môn học: {{ $preSelectedSection->subject->name }}
-                                </div>
+                                <div class="text-[12px] text-[#6B7C99] italic">Môn học: {{ $preSelectedSection->subject->name }}</div>
                             </div>
                         @endif
 
-                        {{-- Chọn đề thi --}}
                         <div>
-                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1.5">Đề thi <span class="text-[#DC2626]">*</span></label>
+                            <div class="flex items-center justify-between gap-3 mb-1.5">
+                                <label class="text-[12px] font-semibold text-[#1A3A6B]">Đề thi <span class="text-[#DC2626]">*</span></label>
+                                <button type="button" class="text-[12px] font-semibold text-[#185FA5] hover:underline" @click="$dispatch('open-slide-over', 'quick-create-exam-from-schedule')">
+                                    + Tạo đề thi mới
+                                </button>
+                            </div>
                             <select name="exam_id" id="exam_id" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
                                 <option value="">-- Chọn đề thi --</option>
                                 @foreach($exams as $ex)
-                                    <option value="{{ $ex->id }}" 
-                                        data-subject-id="{{ $ex->subject_id }}"
-                                        {{ old('exam_id') == $ex->id ? 'selected' : '' }}>
+                                    <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}" {{ old('exam_id') == $ex->id ? 'selected' : '' }}>
                                         [{{ $ex->subject->code }}] {{ $ex->title }}
                                     </option>
                                 @endforeach
                             </select>
+                            <p class="text-[11px] text-[#6B7C99] mt-1">Nếu chưa có đề phù hợp, tạo nhanh ngay tại đây và hệ thống sẽ tự chọn lại vào dropdown.</p>
                             @error('exam_id') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                         </div>
 
-                        {{-- Chọn lớp học phần bằng Checkbox (Chỉ hiện khi không có lớp chọn sẵn) --}}
                         @if(!$preSelectedSection)
-                        <div id="section-selection-container" class="hidden">
-                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-3">Áp dụng cho các lớp học phần <span class="text-[#DC2626]">*</span></label>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-4 border border-[#D6E2F0] rounded-lg bg-[#F9FBFF]" id="sections-list">
-                                @foreach($courseSections as $cs)
-                                    <div class="section-item flex items-start gap-3 p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-[#D6E2F0]" 
-                                         data-subject-id="{{ $cs->subject_id }}">
-                                        <input type="checkbox" 
-                                               name="course_section_ids[]" 
-                                               id="cs-{{ $cs->id }}" 
-                                               value="{{ $cs->id }}"
-                                               class="mt-0.5 rounded border-[#D6E2F0] text-[#1A3A6B] focus:ring-[#185FA5]"
-                                               {{ is_array(old('course_section_ids')) && in_array($cs->id, old('course_section_ids')) ? 'checked' : '' }}>
-                                        <label for="cs-{{ $cs->id }}" class="cursor-pointer">
-                                            <p class="text-[13px] font-semibold text-[#1A3A6B] leading-tight">{{ $cs->name }}</p>
-                                            <p class="text-[11px] text-[#6B7C99] mt-0.5">{{ $cs->code }}</p>
-                                        </label>
-                                    </div>
-                                @endforeach
+                            <div id="section-selection-container" class="hidden">
+                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-3">Áp dụng cho các lớp học phần <span class="text-[#DC2626]">*</span></label>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-4 border border-[#D6E2F0] rounded-lg bg-[#F9FBFF]" id="sections-list">
+                                    @foreach($courseSections as $cs)
+                                        <div class="section-item flex items-start gap-3 p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-[#D6E2F0]" data-subject-id="{{ $cs->subject_id }}">
+                                            <input type="checkbox"
+                                                name="course_section_ids[]"
+                                                id="cs-{{ $cs->id }}"
+                                                value="{{ $cs->id }}"
+                                                class="mt-0.5 rounded border-[#D6E2F0] text-[#1A3A6B] focus:ring-[#185FA5]"
+                                                {{ is_array(old('course_section_ids')) && in_array($cs->id, old('course_section_ids')) ? 'checked' : '' }}>
+                                            <label for="cs-{{ $cs->id }}" class="cursor-pointer">
+                                                <p class="text-[13px] font-semibold text-[#1A3A6B] leading-tight">{{ $cs->name }}</p>
+                                                <p class="text-[11px] text-[#6B7C99] mt-0.5">{{ $cs->code }}</p>
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <p id="no-sections-msg" class="hidden text-[13px] text-[#DC2626] italic py-4">Không tìm thấy lớp học phần nào đang học môn này.</p>
+                                @error('course_section_ids') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                             </div>
-                            <p id="no-sections-msg" class="hidden text-[13px] text-[#DC2626] italic py-4">Không tìm thấy lớp học phần nào đang học môn này.</p>
-                            @error('course_section_ids') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
-                        </div>
                         @endif
 
                         <div id="main-form-fields" class="{{ $preSelectedSection ? '' : 'opacity-50 pointer-events-none' }} space-y-4 transition-all duration-300">
@@ -118,9 +134,168 @@
                 </form>
             </div>
         </div>
+
+        <x-slide-over name="quick-create-exam-from-schedule" title="Tạo đề thi nhanh ngay trong luồng lịch thi" maxWidth="2xl">
+            <form @submit.prevent="submitQuickExamForm($el)" class="space-y-5">
+                @csrf
+
+                <input type="hidden" name="creation_mode" value="manual">
+                <input type="hidden" name="exam_type" value="official">
+                <input type="hidden" name="allow_late_entrance" value="1">
+                <input type="hidden" name="late_entrance_limit_minutes" value="15">
+                <input type="hidden" name="late_entrance_behavior" value="fixed_end">
+                <input type="hidden" name="min_duration_before_submit" value="0">
+                <input type="hidden" name="show_score_after_submit" value="1">
+                <input type="hidden" name="show_answers_after_submit" value="0">
+
+                <div>
+                    <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Tên đề thi <span class="text-red-500">*</span></label>
+                    <input type="text" name="title" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="VD: Thi giữa kỳ lớp K22">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Môn học <span class="text-red-500">*</span></label>
+                        <select name="subject_id" x-model="quickSubjectId" @change="onQuickSubjectChange()" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                            <option value="">-- Chọn môn học --</option>
+                            @foreach($quickSubjects as $subject)
+                                <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Thời lượng (phút) <span class="text-red-500">*</span></label>
+                        <input type="number" name="duration_minutes" min="1" value="45" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Mô tả</label>
+                    <input type="text" name="description" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Ghi chú ngắn cho đề thi">
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-[12px] font-semibold text-navy-900">Chọn câu hỏi <span class="text-red-500">*</span></label>
+                        <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-[#185FA5] hover:underline">Mở trình tạo đầy đủ</a>
+                    </div>
+
+                    @if($quickQuestionPool->isEmpty())
+                        <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800">
+                            Chưa có câu hỏi đã duyệt để tạo đề nhanh. Vui lòng tạo câu hỏi ở Ngân hàng câu hỏi trước.
+                        </div>
+                    @else
+                        <div class="max-h-[280px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70">
+                            @foreach($quickQuestionPool as $question)
+                                <label class="quick-question-item flex items-start gap-3 p-3 hover:bg-white cursor-pointer" data-subject-id="{{ $question->subject_id }}">
+                                    <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
+                                    <span class="text-[12px] text-navy-900 leading-relaxed">{{ \Illuminate\Support\Str::limit(trim(strip_tags($question->content)), 180) }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-border-clean">
+                    <x-button type="button" variant="ghost" @click="$dispatch('close-slide-over', 'quick-create-exam-from-schedule')">Huỷ</x-button>
+                    <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingQuickExam || {{ $quickQuestionPool->isEmpty() ? 'true' : 'false' }}">
+                        <span x-show="!isSubmittingQuickExam">Tạo đề và tự chọn</span>
+                        <span x-show="isSubmittingQuickExam" class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            Đang tạo...
+                        </span>
+                    </x-button>
+                </div>
+            </form>
+        </x-slide-over>
     </div>
 
     <script>
+        function scheduleCreateManager(initialSubjectId) {
+            return {
+            quickSubjectId: initialSubjectId || '',
+                isSubmittingQuickExam: false,
+
+                onQuickSubjectChange() {
+                    document.querySelectorAll('.quick-question-item').forEach(item => {
+                        const itemSubjectId = item.getAttribute('data-subject-id');
+                        const checkbox = item.querySelector('input[type="checkbox"]');
+                        const visible = !this.quickSubjectId || String(itemSubjectId) === String(this.quickSubjectId);
+                        item.classList.toggle('hidden', !visible);
+                        if (!visible && checkbox) {
+                            checkbox.checked = false;
+                        }
+                    });
+                },
+
+                async submitQuickExamForm(formElement) {
+                    this.isSubmittingQuickExam = true;
+                    const formData = new FormData(formElement);
+
+                    try {
+                        const response = await fetch("{{ route('lecturer.exams.store') }}", {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'text/html',
+                            },
+                            body: formData,
+                            redirect: 'follow',
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to create exam');
+                        }
+
+                        const createdUrl = response.url || '';
+                        const match = createdUrl.match(/\/lecturer\/exams\/(\d+)/);
+                        const examId = match ? match[1] : null;
+
+                        if (!examId) {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: 'Không thể tạo đề nhanh. Vui lòng dùng trình tạo đầy đủ.', type: 'error' }
+                            }));
+                            return;
+                        }
+
+                        const selectedSubject = formElement.querySelector('select[name="subject_id"] option:checked');
+                        const subjectId = selectedSubject ? selectedSubject.value : '';
+                        const subjectCode = selectedSubject ? selectedSubject.textContent.split(' - ')[0] : 'SUB';
+                        const title = String(formData.get('title') || 'Đề thi mới');
+
+                        const examSelect = document.getElementById('exam_id');
+                        if (examSelect) {
+                            const existing = Array.from(examSelect.options).some(opt => String(opt.value) === String(examId));
+                            if (!existing) {
+                                const option = document.createElement('option');
+                                option.value = examId;
+                                option.setAttribute('data-subject-id', subjectId);
+                                option.textContent = `[${subjectCode}] ${title}`;
+                                examSelect.appendChild(option);
+                            }
+                            examSelect.value = examId;
+                            examSelect.dispatchEvent(new Event('change'));
+                        }
+
+                        this.$dispatch('close-slide-over', 'quick-create-exam-from-schedule');
+                        formElement.reset();
+                        this.quickSubjectId = '';
+                        this.onQuickSubjectChange();
+
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Đã tạo đề thi và tự động chọn vào lịch thi.', type: 'success' }
+                        }));
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Không thể tạo đề thi nhanh. Hãy kiểm tra dữ liệu đầu vào.', type: 'error' }
+                        }));
+                    } finally {
+                        this.isSubmittingQuickExam = false;
+                    }
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const examSelect = document.getElementById('exam_id');
             const examOptions = Array.from(examSelect.options);
@@ -130,8 +305,8 @@
             const noSectionsMsg = document.getElementById('no-sections-msg');
             const sectionsList = document.getElementById('sections-list');
 
-            // Lấy subject_id của lớp được chọn sẵn (nếu có)
-            const preSelectedSubjectId = @json($preSelectedSection ? $preSelectedSection->subject_id : null);
+            const rootEl = document.querySelector('[data-pre-selected-subject-id]');
+            const preSelectedSubjectId = rootEl ? rootEl.dataset.preSelectedSubjectId : '';
 
             function handleExamChange() {
                 const selectedExam = examSelect.options[examSelect.selectedIndex];
@@ -151,7 +326,7 @@
                     sectionItems.forEach(item => {
                         const itemSubjectId = item.getAttribute('data-subject-id');
                         const checkbox = item.querySelector('input[type="checkbox"]');
-                        
+
                         if (itemSubjectId === subjectId) {
                             item.classList.remove('hidden');
                             visibleCount++;
@@ -171,7 +346,6 @@
                 }
             }
 
-            // Nếu đi từ trang chi tiết lớp, lọc danh sách Đề thi ngay lập tức
             if (preSelectedSubjectId) {
                 examSelect.innerHTML = '<option value="">-- Chọn đề thi --</option>';
                 examOptions.forEach(option => {
@@ -186,6 +360,11 @@
 
             if (examSelect.value) {
                 handleExamChange();
+            }
+
+            const alpineRoot = document.querySelector('[x-data^="scheduleCreateManager"]');
+            if (alpineRoot && alpineRoot.__x && typeof alpineRoot.__x.$data.onQuickSubjectChange === 'function') {
+                alpineRoot.__x.$data.onQuickSubjectChange();
             }
         });
     </script>

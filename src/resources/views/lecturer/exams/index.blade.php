@@ -1,10 +1,15 @@
 <x-app-layout>
+    @php
+        $selectedSubjectId = (string) request()->query('subject_id', '');
+    @endphp
     <div class="py-8 bg-[#F8FAFD] min-h-screen">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8" x-data="{ subjectFilter: '{{ $selectedSubjectId }}' }">
             <div class="mb-6 flex items-center justify-between">
                 <div>
                     <h2 class="text-2xl font-bold text-[#1A3A6B] mb-1">Quản lý Đề Thi</h2>
-                    <p class="text-sm text-[#6B7C99]">Tất cả đề thi của bạn trong hệ thống.</p>
+                    <p class="text-sm text-[#6B7C99]">
+                        {{ $selectedSubjectId ? 'Đang lọc theo môn học từ Sidebar.' : 'Tất cả đề thi của bạn trong hệ thống.' }}
+                    </p>
                 </div>
                 <a href="{{ route('lecturer.exams.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-[#1A3A6B] border border-transparent rounded-lg font-bold text-white text-xs uppercase tracking-wider hover:bg-[#142d54] transition shadow-sm">
                     <x-ui-icon name="plus" class="w-4 h-4" />
@@ -37,7 +42,8 @@
                         @php
                         $examStatusValue = $exam->status?->value;
                         @endphp
-                        <tr class="border-t border-[#EBF2FA] hover:bg-[#F8FAFD] transition-colors">
+                        <tr class="border-t border-[#EBF2FA] hover:bg-[#F8FAFD] transition-colors"
+                            x-show="subjectFilter === '' || subjectFilter === '{{ (string) $exam->subject_id }}'">
                             <td class="px-5 py-4 font-bold text-[#1A3A6B]">{{ $exam->title }}</td>
                             <td class="px-5 py-4 text-gray-500 font-medium">
                                 <span class="font-bold text-[#1A3A6B]">{{ $exam->subject->code ?? '—' }}</span>

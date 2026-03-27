@@ -1,4 +1,5 @@
-<x-card class="flex flex-col h-full overflow-hidden" x-show="searchQuery === '' || '{{ strtolower(($section->name ?? '') . ' ' . $section->code) }}'.includes(searchQuery.toLowerCase())">
+<x-card class="flex flex-col h-full overflow-hidden"
+    x-show="(searchQuery === '' || '{{ strtolower(($section->name ?? '') . ' ' . $section->code) }}'.includes(searchQuery.toLowerCase())) && (statusFilter === 'all' || statusFilter === '{{ $section->status }}')">
     {{-- Card Top --}}
     <div class="px-5 py-4 border-b-[0.5px] border-border-clean
         @if($section->status === 'active') bg-surface-1
@@ -25,24 +26,26 @@
     {{-- Card Body --}}
     <div class="p-6 flex-1 space-y-4">
         <div class="flex items-center justify-between text-sm">
-            <span class="font-bold text-xs uppercase tracking-wider text-text-muted opacity-80">Sinh viên</span>
-            <span class="font-bold text-navy-900">{{ $section->students_count ?? 0 }} <span class="text-text-muted font-medium ml-1">/ {{ $section->max_students }}</span></span>
+            <span class="font-bold text-xs uppercase tracking-wider text-text-muted opacity-80">Môn học</span>
+            <span class="font-bold text-navy-900 text-right max-w-[65%] truncate">{{ $section->subject->code ?? 'N/A' }} - {{ $section->subject->name ?? 'Chưa gán môn' }}</span>
         </div>
         <div class="flex items-center justify-between text-sm">
-            <span class="font-bold text-xs uppercase tracking-wider text-text-muted opacity-80">Mã mời</span>
-            <span class="font-mono bg-blue-50 border border-blue-100 px-3 py-1 text-xs rounded-full font-bold text-blue-700 uppercase tracking-widest">
-                {{ $section->invite_code ?? '—' }}
-            </span>
+            <span class="font-bold text-xs uppercase tracking-wider text-text-muted opacity-80">Học kỳ</span>
+            <span class="font-bold text-navy-900">{{ $section->semester->name ?? 'Chưa gán học kỳ' }}</span>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+            <span class="font-bold text-xs uppercase tracking-wider text-text-muted opacity-80">Sinh viên</span>
+            <span class="font-bold text-navy-900">{{ $section->students_count ?? 0 }} <span class="text-text-muted font-medium ml-1">/ {{ $section->max_students }}</span></span>
         </div>
     </div>
 
     {{-- Card Footer --}}
     <div class="px-5 pb-5 pt-2 flex gap-3">
         <x-button variant="primary" href="{{ route('lecturer.classes.show', $section) }}" class="flex-1 text-center justify-center">
-            Xem chi tiết
+            Mở workspace
         </x-button>
-        <x-button variant="outline" href="{{ route('lecturer.classes.edit', $section) }}" class="px-3">
-            Sửa
+        <x-button variant="outline" href="{{ route('lecturer.classes.show', ['section' => $section, 'tab' => 'attendance']) }}" class="px-3">
+            Điểm danh
         </x-button>
     </div>
 </x-card>

@@ -1,4 +1,10 @@
 <x-app-layout>
+    @php
+        $quickQuestionTypes = \App\Models\QuestionType::query()
+            ->active()
+            ->orderedForQuestionBank()
+            ->get(['id', 'name']);
+    @endphp
     <style>
         /* THAM KHAO STYLES */
         .ds-section {
@@ -324,6 +330,9 @@
                                     </div>
                                     <div class="flex items-center gap-3">
                                         <div class="badge s-upcoming">Tổng: <span id="selectedCount">0</span>/{{ count($questions) }} đã chọn</div>
+                                        <button type="button" class="btn btn-ghost" onclick="openQuickQuestionModal()">
+                                            + Thêm câu hỏi mới
+                                        </button>
                                         <button type="submit" class="btn btn-primary ml-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -435,6 +444,81 @@
 
                 </div>
             </form>
+
+            <x-modal name="quick-question-modal" maxWidth="xl">
+                <div class="p-6 md:p-7">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h3 class="text-[18px] font-bold text-[#1A3A6B]">Thêm câu hỏi mới ngay trong lúc tạo đề</h3>
+                            <p class="text-[12px] text-[#6B7C99] mt-1">Lưu xong, câu hỏi sẽ tự động được thêm vào danh sách chọn câu hỏi.</p>
+                        </div>
+                        <button type="button" class="text-[#6B7C99] hover:text-[#1A3A6B]" @click="$dispatch('close-modal', 'quick-question-modal')">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form id="quick-question-form" onsubmit="submitQuickQuestionForm(event)" class="space-y-4">
+                        @csrf
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Môn học <span class="text-[#DC2626]">*</span></label>
+                                <select id="quick-question-subject" name="subject_id" required class="ca-select">
+                                    <option value="">-- Chọn môn học --</option>
+                                    @foreach($subjects as $subject)
+                                        <option value="{{ $subject->id }}">{{ $subject->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Loại câu hỏi <span class="text-[#DC2626]">*</span></label>
+                                <select name="question_type_id" required class="ca-select">
+                                    <option value="">-- Chọn loại --</option>
+                                    @foreach($quickQuestionTypes as $type)
+                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Mức độ <span class="text-[#DC2626]">*</span></label>
+                                <select name="difficulty" required class="ca-select">
+                                    <option value="remember">Nhớ (Remember)</option>
+                                    <option value="understand">Hiểu (Understand)</option>
+                                    <option value="apply">Áp dụng (Apply)</option>
+                                    <option value="analyze">Phân tích (Analyze)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Trạng thái</label>
+                                <input type="text" value="Đã duyệt (auto)" readonly class="ca-input bg-[#F4F7FC] cursor-not-allowed">
+                                <input type="hidden" name="status" value="approved">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Nội dung câu hỏi <span class="text-[#DC2626]">*</span></label>
+                            <textarea name="content" rows="4" required minlength="5" class="ca-input" placeholder="Nhập nội dung câu hỏi..."></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Giải thích (tuỳ chọn)</label>
+                            <textarea name="explanation" rows="3" class="ca-input" placeholder="Giải thích đáp án..."></textarea>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-[#EBF2FA]">
+                            <button type="button" class="btn btn-ghost" @click="$dispatch('close-modal', 'quick-question-modal')">Huỷ</button>
+                            <button type="submit" id="quick-question-submit" class="btn btn-primary">
+                                Lưu và thêm vào đề
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </x-modal>
 
             <script id="chapters-data" type="application/json">
                 @json($chapters)
@@ -583,6 +667,11 @@
 
                 function onSubjectChange() {
                     const subjectId = document.getElementById('subject_id')?.value;
+                    const quickSubjectSelect = document.getElementById('quick-question-subject');
+                    if (quickSubjectSelect && subjectId) {
+                        quickSubjectSelect.value = subjectId;
+                    }
+
                     // Filter questions
                     let visibleQuestions = 0;
                     document.querySelectorAll('.question-row').forEach(row => {
@@ -601,6 +690,117 @@
                     addMatrixRow();
                     updateCounter();
                     checkSelectAllState();
+                }
+
+                function openQuickQuestionModal() {
+                    const subjectId = document.getElementById('subject_id')?.value;
+                    const quickSubjectSelect = document.getElementById('quick-question-subject');
+                    if (quickSubjectSelect && subjectId) {
+                        quickSubjectSelect.value = subjectId;
+                    }
+                    window.dispatchEvent(new CustomEvent('open-modal', { detail: 'quick-question-modal' }));
+                }
+
+                async function submitQuickQuestionForm(event) {
+                    event.preventDefault();
+
+                    const form = event.target;
+                    const submitButton = document.getElementById('quick-question-submit');
+                    const formData = new FormData(form);
+
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Đang lưu...';
+
+                    try {
+                        const response = await fetch("{{ route('lecturer.questions.store') }}", {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'text/html',
+                            },
+                            body: formData,
+                            redirect: 'follow',
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Failed to create question');
+                        }
+
+                        const html = await response.text();
+                        const idMatch = html.match(/ID:\s*Q-(\d+)/);
+                        const questionId = idMatch ? idMatch[1] : null;
+
+                        if (!questionId) {
+                            throw new Error('Could not resolve created question id');
+                        }
+
+                        const tbody = document.querySelector('#panel-manual tbody');
+                        if (!tbody) {
+                            window.location.reload();
+                            return;
+                        }
+
+                        const subjectId = String(formData.get('subject_id') || '');
+                        const content = String(formData.get('content') || '').trim();
+                        const selectedSubjectId = String(document.getElementById('subject_id')?.value || '');
+
+                        const row = document.createElement('tr');
+                        row.className = 'question-row group cursor-pointer hover:bg-[#F8FAFD] transition-colors';
+                        row.dataset.subject = subjectId;
+                        row.onclick = function(e) { toggleCheckbox(this, e); };
+
+                        row.innerHTML = `
+                            <td class="text-center w-12">
+                                <input type="checkbox" name="question_ids[]" value="${questionId}"
+                                    class="question-checkbox rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#E6F1FB] w-4 h-4 cursor-pointer"
+                                    onclick="event.stopPropagation()" checked>
+                            </td>
+                            <td>
+                                <div class="text-[13.5px] text-[#374151] line-clamp-3"></div>
+                            </td>
+                        `;
+
+                        const contentCell = row.querySelector('td:nth-child(2) div');
+                        if (contentCell) {
+                            contentCell.textContent = content;
+                        }
+
+                        if (selectedSubjectId && selectedSubjectId !== subjectId) {
+                            row.style.display = 'none';
+                        }
+
+                        tbody.prepend(row);
+                        const checkbox = row.querySelector('.question-checkbox');
+                        if (checkbox) {
+                            checkbox.addEventListener('change', function() {
+                                checkSelectAllState();
+                                updateCounter();
+                            });
+                        }
+
+                        updateCounter();
+                        checkSelectAllState();
+
+                        window.dispatchEvent(new CustomEvent('close-modal', { detail: 'quick-question-modal' }));
+                        form.reset();
+
+                        const selectedSubject = document.getElementById('subject_id')?.value;
+                        const quickSubjectSelect = document.getElementById('quick-question-subject');
+                        if (quickSubjectSelect && selectedSubject) {
+                            quickSubjectSelect.value = selectedSubject;
+                        }
+
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Đã thêm câu hỏi mới và tự động đưa vào đề thi.', type: 'success' }
+                        }));
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Không thể thêm câu hỏi nhanh. Vui lòng kiểm tra dữ liệu đầu vào.', type: 'error' }
+                        }));
+                    } finally {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Lưu và thêm vào đề';
+                    }
                 }
             </script>
         </div>
