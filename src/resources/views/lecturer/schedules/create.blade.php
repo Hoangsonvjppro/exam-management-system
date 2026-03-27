@@ -52,7 +52,7 @@
                         <div>
                             <div class="flex items-center justify-between gap-3 mb-1.5">
                                 <label class="text-[12px] font-semibold text-[#1A3A6B]">Đề thi <span class="text-[#DC2626]">*</span></label>
-                                <button type="button" class="text-[12px] font-semibold text-[#185FA5] hover:underline" @click="$dispatch('open-slide-over', 'quick-create-exam-from-schedule')">
+                                <button type="button" class="text-[12px] font-semibold text-[#185FA5] hover:underline" @click="$dispatch('open-modal', 'quick-create-exam-modal')">
                                     + Tạo đề thi mới
                                 </button>
                             </div>
@@ -135,82 +135,92 @@
             </div>
         </div>
 
-        <x-slide-over name="quick-create-exam-from-schedule" title="Tạo đề thi nhanh ngay trong luồng lịch thi" maxWidth="2xl">
-            <form @submit.prevent="submitQuickExamForm($el)" class="space-y-5">
-                @csrf
+        <x-modal name="quick-create-exam-modal" maxWidth="2xl">
+            <div class="px-6 py-4 border-b border-border-clean flex items-center justify-between bg-surface-0">
+                <h3 class="text-[17px] font-bold text-navy-900">Tạo đề thi nhanh</h3>
+                <button @click="$dispatch('close-modal', 'quick-create-exam-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[80vh]">
+                <form @submit.prevent="submitQuickExamForm($el)" class="space-y-5">
+                    @csrf
 
-                <input type="hidden" name="creation_mode" value="manual">
-                <input type="hidden" name="exam_type" value="official">
-                <input type="hidden" name="allow_late_entrance" value="1">
-                <input type="hidden" name="late_entrance_limit_minutes" value="15">
-                <input type="hidden" name="late_entrance_behavior" value="fixed_end">
-                <input type="hidden" name="min_duration_before_submit" value="0">
-                <input type="hidden" name="show_score_after_submit" value="1">
-                <input type="hidden" name="show_answers_after_submit" value="0">
+                    <input type="hidden" name="creation_mode" value="manual">
+                    <input type="hidden" name="exam_type" value="official">
+                    <input type="hidden" name="allow_late_entrance" value="1">
+                    <input type="hidden" name="late_entrance_limit_minutes" value="15">
+                    <input type="hidden" name="late_entrance_behavior" value="fixed_end">
+                    <input type="hidden" name="min_duration_before_submit" value="0">
+                    <input type="hidden" name="show_score_after_submit" value="1">
+                    <input type="hidden" name="show_answers_after_submit" value="0">
 
-                <div>
-                    <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Tên đề thi <span class="text-red-500">*</span></label>
-                    <input type="text" name="title" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="VD: Thi giữa kỳ lớp K22">
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Môn học <span class="text-red-500">*</span></label>
-                        <select name="subject_id" x-model="quickSubjectId" @change="onQuickSubjectChange()" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
-                            <option value="">-- Chọn môn học --</option>
-                            @foreach($quickSubjects as $subject)
-                            <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Tên đề thi <span class="text-red-500">*</span></label>
+                        <input type="text" name="title" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="VD: Thi giữa kỳ lớp K22">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Môn học <span class="text-red-500">*</span></label>
+                            <select name="subject_id" x-model="quickSubjectId" @change="onQuickSubjectChange()" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <option value="">-- Chọn môn học --</option>
+                                @foreach($quickSubjects as $subject)
+                                <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Thời lượng (phút) <span class="text-red-500">*</span></label>
+                            <input type="number" name="duration_minutes" min="1" value="45" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Mô tả</label>
+                        <input type="text" name="description" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Ghi chú ngắn cho đề thi">
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-[12px] font-semibold text-navy-900">Chọn câu hỏi <span class="text-red-500">*</span></label>
+                            <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-[#185FA5] hover:underline">Mở trình tạo đầy đủ</a>
+                        </div>
+
+                        @if($quickQuestionPool->isEmpty())
+                        <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800">
+                            Chưa có câu hỏi đã duyệt để tạo đề nhanh. Vui lòng tạo câu hỏi ở Ngân hàng câu hỏi trước.
+                        </div>
+                        @else
+                        <div class="max-h-[280px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70 px-2">
+                            @foreach($quickQuestionPool as $question)
+                            <label class="quick-question-item flex items-start gap-3 p-3 hover:bg-white cursor-pointer rounded-md transition-colors" data-subject-id="{{ $question->subject_id }}">
+                                <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
+                                <span class="text-[12px] text-navy-900 leading-relaxed">{{ \Illuminate\Support\Str::limit(trim(strip_tags($question->content)), 180) }}</span>
+                            </label>
                             @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Thời lượng (phút) <span class="text-red-500">*</span></label>
-                        <input type="number" name="duration_minutes" min="1" value="45" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Mô tả</label>
-                    <input type="text" name="description" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Ghi chú ngắn cho đề thi">
-                </div>
-
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label class="text-[12px] font-semibold text-navy-900">Chọn câu hỏi <span class="text-red-500">*</span></label>
-                        <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-[#185FA5] hover:underline">Mở trình tạo đầy đủ</a>
+                        </div>
+                        @endif
                     </div>
 
-                    @if($quickQuestionPool->isEmpty())
-                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800">
-                        Chưa có câu hỏi đã duyệt để tạo đề nhanh. Vui lòng tạo câu hỏi ở Ngân hàng câu hỏi trước.
+                    <div class="flex justify-end gap-3 pt-4 border-t border-border-clean">
+                        <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'quick-create-exam-modal')">Huỷ</x-button>
+                        <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingQuickExam || {{ $quickQuestionPool->isEmpty() ? 'true' : 'false' }}">
+                            <span x-show="!isSubmittingQuickExam">Tạo đề và tự chọn</span>
+                            <span x-show="isSubmittingQuickExam" class="flex items-center gap-2">
+                                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                Đang tạo...
+                            </span>
+                        </x-button>
                     </div>
-                    @else
-                    <div class="max-h-[280px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70">
-                        @foreach($quickQuestionPool as $question)
-                        <label class="quick-question-item flex items-start gap-3 p-3 hover:bg-white cursor-pointer" data-subject-id="{{ $question->subject_id }}">
-                            <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
-                            <span class="text-[12px] text-navy-900 leading-relaxed">{{ \Illuminate\Support\Str::limit(trim(strip_tags($question->content)), 180) }}</span>
-                        </label>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t border-border-clean">
-                    <x-button type="button" variant="ghost" @click="$dispatch('close-slide-over', 'quick-create-exam-from-schedule')">Huỷ</x-button>
-                    <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingQuickExam || {{ $quickQuestionPool->isEmpty() ? 'true' : 'false' }}">
-                        <span x-show="!isSubmittingQuickExam">Tạo đề và tự chọn</span>
-                        <span x-show="isSubmittingQuickExam" class="flex items-center gap-2">
-                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                            </svg>
-                            Đang tạo...
-                        </span>
-                    </x-button>
-                </div>
-            </form>
-        </x-slide-over>
+                </form>
+            </div>
+        </x-modal>
     </div>
 
     <script>
@@ -283,7 +293,7 @@
                             examSelect.dispatchEvent(new Event('change'));
                         }
 
-                        this.$dispatch('close-slide-over', 'quick-create-exam-from-schedule');
+                        this.$dispatch('close-modal', 'quick-create-exam-modal');
                         formElement.reset();
                         this.quickSubjectId = '';
                         this.onQuickSubjectChange();
