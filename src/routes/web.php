@@ -106,6 +106,12 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         // Danh sách lớp học phần của sinh viên
         Route::get('/classes', [StudentPageController::class, 'classes'])->name('classes.index');
 
+        // Chi tiết lớp học phần (Class Workspace)
+        Route::get('/classes/{section}', [StudentPageController::class, 'classShow'])->name('classes.show');
+
+        // Khiếu nại
+        Route::get('/complaints', [StudentPageController::class, 'complaints'])->name('complaints.index');
+
         Route::get('/schedules/{schedule}', [\App\Http\Controllers\Student\ExamController::class, 'show'])->name('exams.show');
         Route::post('/schedules/{schedule}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('exams.start');
         Route::get('/schedules/{schedule}/room', [\App\Http\Controllers\Student\ExamController::class, 'room'])->name('exams.room');
