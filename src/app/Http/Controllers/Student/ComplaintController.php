@@ -57,7 +57,7 @@ class ComplaintController extends Controller
         }
 
         // Create complaint and send notification within a transaction
-        $complaint = DB::transaction(function () use ($attempt, $studentId, $validated) {
+        $complaint = DB::transaction(function () use ($attempt, $studentId, $validated, $request) {
             $complaint = Complaint::create([
                 'student_id'        => $studentId,
                 'exam_attempt_id'   => $attempt->id,
