@@ -50,17 +50,20 @@ class ComplaintController extends Controller
             ], 422);
         }
 
+        // 3. Get total questions for validation
+        $totalQuestions = $complaint->schedule->exam->questions()->count();
+
         $validated = $request->validate([
-            'status'        => 'required|in:resolved,rejected',
-            'reviewer_note' => 'required_if:status,resolved|required_if:status,rejected|string|min:5',
-            'updated_score' => 'nullable|numeric|min:0',
+            'status'               => 'required|in:resolved,rejected',
+            'reviewer_note'        => 'required|string|min:5',
+            'updated_correct_count' => "nullable|integer|min:0|max:{$totalQuestions}",
         ]);
 
         // Process complaint inside transaction
-        DB::transaction(function () use ($complaint, $validated, $lecturerId) {
+        DB::transaction(function () use ($complaint, $validated, $lecturerId, $totalQuestions) {
             $status = $validated['status'];
             $note = $validated['reviewer_note'];
-            $updatedScore = $validated['updated_score'] ?? null;
+            $updatedCorrectCount = $validated['updated_correct_count'] ?? null;
 
             // Apply updates
             $complaint->status        = $status;
@@ -68,12 +71,18 @@ class ComplaintController extends Controller
             $complaint->reviewer_note = $note;
             $complaint->resolved_at   = now();
 
-            if ($status === 'resolved' && is_numeric($updatedScore)) {
-                $complaint->updated_score = $updatedScore;
+            if ($status === 'resolved' && is_numeric($updatedCorrectCount)) {
+                // Tính điểm hệ 10 từ số câu đúng mới
+                $newScore = $totalQuestions > 0
+                    ? round(($updatedCorrectCount / $totalQuestions) * 10, 1)
+                    : 0;
 
-                // Sync the total_score to ExamAttempt
+                $complaint->updated_score = $newScore;
+
+                // Sync to ExamAttempt
                 $attempt = $complaint->attempt;
-                $attempt->total_score = $updatedScore;
+                $attempt->correct_count = $updatedCorrectCount;
+                $attempt->total_score   = $newScore;
                 $attempt->save();
             }
 

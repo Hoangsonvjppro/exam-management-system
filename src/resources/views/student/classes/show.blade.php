@@ -181,8 +181,8 @@
                         <thead>
                             <tr class="bg-surface-1 border-b border-border-clean">
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Bài thi</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Điểm</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Kết quả</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Điểm (hệ 10)</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Số câu đúng</th>
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Nộp lúc</th>
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center"></th>
                             </tr>
@@ -191,7 +191,8 @@
                             @foreach($completedAttempts as $attempt)
                             @php
                                 $exam = $attempt->schedule->exam;
-                                $passed = $attempt->total_score >= ($exam->pass_points ?? 0);
+                                $correctCount = $attempt->correct_count ?? 0;
+                                $totalQuestions = $exam->questions_count ?? $exam->questions()->count();
                             @endphp
                             <tr class="hover:bg-surface-0 transition-colors">
                                 <td class="py-3 px-4">
@@ -199,16 +200,12 @@
                                     <p class="text-[11px] text-text-muted mt-0.5">Lần {{ $attempt->attempt_number }}</p>
                                 </td>
                                 <td class="py-3 px-4 text-center">
-                                    <span class="text-lg font-bold {{ $passed ? 'text-teal-600' : 'text-red-500' }}">
-                                        {{ number_format($attempt->total_score, 2) }}
+                                    <span class="text-lg font-bold text-navy-900">
+                                        {{ number_format($attempt->total_score, 1) }}/10
                                     </span>
                                 </td>
                                 <td class="py-3 px-4 text-center">
-                                    @if($passed)
-                                    <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-1 rounded-[4px] bg-teal-50 text-teal-800 border border-teal-200">ĐẠT</span>
-                                    @else
-                                    <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-1 rounded-[4px] bg-red-50 text-red-700 border border-red-200">CHƯA ĐẠT</span>
-                                    @endif
+                                    <span class="text-[13px] font-semibold text-navy-900">{{ $correctCount }}/{{ $totalQuestions }}</span>
                                 </td>
                                 <td class="py-3 px-4 text-center text-[12px] text-text-muted">
                                     {{ $attempt->completed_at?->format('H:i — d/m/Y') }}
@@ -223,7 +220,7 @@
                                         </span>
                                         @else
                                         <button type="button"
-                                            @click="openComplaintModal('{{ addslashes($exam->title) }}', '{{ $attempt->total_score }}', '{{ $attempt->id }}')"
+                                            @click="openComplaintModal('{{ addslashes($exam->title) }}', '{{ $attempt->total_score }}', '{{ $attempt->id }}', '{{ $correctCount }}', '{{ $totalQuestions }}')"
                                             class="text-[12px] font-medium text-text-muted hover:text-red-600 transition-colors">
                                             Gửi khiếu nại
                                         </button>
@@ -263,7 +260,11 @@
                         </div>
                         <div class="flex justify-between text-[12px]">
                             <span class="text-text-muted font-medium">Điểm hiện tại:</span>
-                            <span class="font-bold text-red-500" x-text="complaintCurrentScore">—</span>
+                            <span class="font-bold text-navy-900" x-text="complaintCurrentScore + '/10'">—</span>
+                        </div>
+                        <div class="flex justify-between text-[12px]">
+                            <span class="text-text-muted font-medium">Số câu đúng:</span>
+                            <span class="font-bold text-navy-900" x-text="complaintCorrectCount + '/' + complaintTotalQuestions">—</span>
                         </div>
                     </div>
 
@@ -291,6 +292,8 @@
                 complaintExamTitle: '',
                 complaintCurrentScore: '',
                 complaintAttemptId: '',
+                complaintCorrectCount: '',
+                complaintTotalQuestions: '',
                 complaintReason: '',
 
                 switchTab(tab) {
@@ -300,10 +303,12 @@
                     window.history.replaceState({}, '', url);
                 },
 
-                openComplaintModal(examTitle, score, attemptId) {
+                openComplaintModal(examTitle, score, attemptId, correctCount, totalQuestions) {
                     this.complaintExamTitle = examTitle;
                     this.complaintCurrentScore = score;
                     this.complaintAttemptId = attemptId;
+                    this.complaintCorrectCount = correctCount;
+                    this.complaintTotalQuestions = totalQuestions;
                     this.complaintReason = '';
                     this.$dispatch('open-modal', 'complaint-modal');
                 },

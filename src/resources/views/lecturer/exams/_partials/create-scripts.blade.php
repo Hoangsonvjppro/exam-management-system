@@ -272,10 +272,7 @@ function updateSelectedDisplay() {
 
 function updateManualTotal() {
     const count = selectedQuestionIds.size;
-    const pointsEach = parseFloat(document.getElementById('manual-points-each')?.value || 1);
-    const total = (count * pointsEach).toFixed(2);
-    document.getElementById('manual-total-display').innerHTML =
-        `Tổng: ${count} câu × ${pointsEach.toFixed(2)} = <strong>${total} điểm</strong>`;
+    document.getElementById('manual-total-display').textContent = `Tổng: ${count} câu`;
 }
 
 function syncSelectedHiddenInputs() {
@@ -309,7 +306,6 @@ function addMatrixRow(prefill) {
         <td><select name="matrix[${i}][chapter_id]" class="ca-select" style="min-width:140px" onchange="updateRowAvailability(this.closest('tr'))"><option value="">Tất cả</option>${chapterOpts}</select></td>
         <td><select name="matrix[${i}][difficulty]" class="ca-select" required style="min-width:120px" onchange="updateRowAvailability(this.closest('tr'))">${diffOpts}</select></td>
         <td><input type="number" name="matrix[${i}][question_count]" class="ca-input matrix-count" value="${prefill?.count || 5}" min="1" required style="width:70px" oninput="updateMatrixSummary();updateRowAvailability(this.closest('tr'))"></td>
-        <td><input type="number" name="matrix[${i}][points_each]" class="ca-input" value="${prefill?.points || '1.00'}" min="0.01" step="0.01" style="width:80px" oninput="updateMatrixSummary()"></td>
         <td class="text-center"><span class="availability-hint" data-avail>—</span></td>
         <td class="text-center"><button type="button" onclick="this.closest('tr').remove();updateMatrixSummary();checkMatrixAvailability()" class="text-[#DC2626] hover:text-[#991B1B] text-[14px] font-bold">&times;</button></td>
     `;
@@ -346,7 +342,7 @@ function applyPreset(type) {
 
     clearMatrix();
     counts.forEach(c => {
-        if (c.count > 0) addMatrixRow({ difficulty: c.code, count: c.count, points: '1.00' });
+        if (c.count > 0) addMatrixRow({ difficulty: c.code, count: c.count });
     });
 
     activePreset = type;
@@ -360,15 +356,12 @@ function updateActivePreset() {
 }
 
 function updateMatrixSummary() {
-    let totalQ = 0, totalP = 0;
+    let totalQ = 0;
     document.querySelectorAll('#matrix-body tr').forEach(row => {
         const count = parseInt(row.querySelector('.matrix-count')?.value || 0);
-        const points = parseFloat(row.querySelector('input[name*="points_each"]')?.value || 1);
         totalQ += count;
-        totalP += count * points;
     });
     document.getElementById('matrixTotalQuestions').textContent = totalQ;
-    document.getElementById('matrixTotalPoints').textContent = totalP.toFixed(2);
     checkMatrixAvailability();
 }
 
