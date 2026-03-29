@@ -22,10 +22,9 @@
             
             <template x-if="!confirmingDelete">
                 <div class="flex items-center gap-2">
-                    <form method="POST" action="{{ route('lecturer.schedules.assign-students', $schedule->id) }}" class="inline">
-                        @csrf
-                        <button type="submit" class="text-[#065F46] hover:underline text-xs">Phân SV</button>
-                    </form>
+                    <button type="button"
+                        @click='openAssignModal({{ $schedule->id }}, {!! json_encode($schedule->exam->title) !!}, {!! json_encode($schedule->courseSection->name ?? "—") !!})'
+                        class="text-[#065F46] hover:underline text-xs">Phân SV</button>
                     <button type="button" @click="confirmingDelete = true" class="text-[#DC2626] hover:underline text-xs">Xoá</button>
                 </div>
             </template>

@@ -46,6 +46,7 @@ $studentSidebarSections = auth()->user()->enrolledSections()
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'EMS'))</title>
     <meta name="description" content="@yield('description', 'EMS - Hệ thống Quản lý Thi trắc nghiệm')">
 
@@ -162,7 +163,7 @@ $studentSidebarSections = auth()->user()->enrolledSections()
                             </svg>
                         </button>
 
-                        <div x-show="openClassMenu" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
+                        <div x-show="openClassMenu && isExpanded" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
                             @forelse($lecturerSidebarSections as $section)
                             @php
                             $sectionRouteModel = request()->route('section');
@@ -186,21 +187,20 @@ $studentSidebarSections = auth()->user()->enrolledSections()
                     </div>
 
                     <div class="px-2 py-1 space-y-1 border-t border-border-clean/60 mt-2 pt-2">
-                        <button type="button"
-                            class="sidebar-link w-full"
-                            @click="openQuestionBank = !openQuestionBank">
+                        <a href="{{ route('lecturer.questions.index') }}"
+                            class="sidebar-link w-full {{ request()->routeIs('lecturer.questions.*') ? 'active' : '' }}">
                             <div class="w-[48px] flex items-center justify-center flex-shrink-0">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <span class="sidebar-label flex-1 text-left transition-opacity duration-300 pr-2" x-show="isExpanded" x-cloak>Ngân hàng câu hỏi</span>
-                            <svg x-show="isExpanded" x-cloak class="w-4 h-4 mr-3 text-text-muted transition-transform" :class="openQuestionBank ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg x-show="isExpanded" x-cloak class="w-4 h-4 mr-3 text-text-muted transition-transform cursor-pointer hover:text-navy-900" :class="openQuestionBank ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" @click.prevent.stop="openQuestionBank = !openQuestionBank">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
-                        </button>
+                        </a>
 
-                        <div x-show="openQuestionBank" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
+                        <div x-show="openQuestionBank && isExpanded" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
                             @foreach($lecturerSidebarSubjects as $subject)
                             @php
                             $questionActive = request()->routeIs('lecturer.questions.*')
@@ -232,7 +232,7 @@ $studentSidebarSections = auth()->user()->enrolledSections()
                             </svg>
                         </button>
 
-                        <div x-show="openExamBank" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
+                        <div x-show="openExamBank && isExpanded" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
                             @foreach($lecturerSidebarSubjects as $subject)
                             @php
                             $examActive = request()->routeIs('lecturer.exams.*')

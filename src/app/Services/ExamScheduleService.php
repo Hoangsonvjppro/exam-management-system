@@ -101,9 +101,59 @@ class ExamScheduleService
     }
 
     /**
+     * Đồng bộ danh sách SV được phân vào ca thi.
+     * Xóa toàn bộ assignment cũ, tạo lại theo danh sách studentIds mới.
+     *
+     * @param \Illuminate\Support\Collection<int, int> $studentIds
+     * @return int Số SV đã assign
+     */
+    public function syncAssignedStudents(ExamSchedule $schedule, \Illuminate\Support\Collection $studentIds): int
+    {
+        return DB::transaction(function () use ($schedule, $studentIds) {
+            // Xóa toàn bộ assignment cũ
+            $schedule->scheduleStudents()->delete();
+
+            // Tạo assignment mới cho từng SV
+            foreach ($studentIds as $studentId) {
+                $schedule->scheduleStudents()->create([
+                    'student_id'        => $studentId,
+                    'attendance_status' => 'pending',
+                ]);
+            }
+
+            return $studentIds->count();
+        });
+    }
+
+    /**
+     * Lấy danh sách SV trong lớp và trạng thái đã phân vào ca thi.
+     */
+    public function getStudentsForAssignment(ExamSchedule $schedule): array
+    {
+        $courseSection = $schedule->courseSection;
+        if (!$courseSection) {
+            return ['students' => collect(), 'assigned_ids' => []];
+        }
+
+        // Lấy SV enrolled trong lớp
+        $students = $courseSection->students()
+            ->wherePivot('status', 'enrolled')
+            ->orderBy('name')
+            ->get(['users.id', 'users.name', 'users.email', 'users.student_code']);
+
+        // Lấy danh sách SV đã được assign
+        $assignedIds = $schedule->scheduleStudents()->pluck('student_id')->toArray();
+
+        return [
+            'students' => $students,
+            'assigned_ids' => $assignedIds
+        ];
+    }
+
+    /**
      * Lấy danh sách lịch thi của giảng viên.
      */
-    public function getSchedulesForLecturer(int $lecturerId, ?int $semesterId = null): Collection
+    public function getSchedulesForLecturer(int $lecturerId, ?int $semesterId = null, ?string $search = null, ?string $subjectId = null): Collection
     {
         $query = ExamSchedule::whereHas('courseSection', function ($q) use ($lecturerId) {
             $q->where('lecturer_id', $lecturerId);
@@ -111,6 +161,18 @@ class ExamScheduleService
 
         if ($semesterId) {
             $query->whereHas('courseSection', fn($q) => $q->where('semester_id', $semesterId));
+        }
+
+        if ($search) {
+            $query->whereHas('exam', function ($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($subjectId) {
+            $query->whereHas('exam', function ($q) use ($subjectId) {
+                $q->where('subject_id', $subjectId);
+            });
         }
 
         return $query->orderBy('exam_date')->orderBy('start_time')->get();
