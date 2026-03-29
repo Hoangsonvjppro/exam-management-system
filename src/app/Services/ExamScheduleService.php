@@ -101,6 +101,31 @@ class ExamScheduleService
     }
 
     /**
+     * Đồng bộ danh sách SV được phân vào ca thi.
+     * Xóa toàn bộ assignment cũ, tạo lại theo danh sách studentIds mới.
+     *
+     * @param \Illuminate\Support\Collection<int, int> $studentIds
+     * @return int Số SV đã assign
+     */
+    public function syncAssignedStudents(ExamSchedule $schedule, \Illuminate\Support\Collection $studentIds): int
+    {
+        return DB::transaction(function () use ($schedule, $studentIds) {
+            // Xóa toàn bộ assignment cũ
+            $schedule->scheduleStudents()->delete();
+
+            // Tạo assignment mới cho từng SV
+            foreach ($studentIds as $studentId) {
+                $schedule->scheduleStudents()->create([
+                    'student_id'        => $studentId,
+                    'attendance_status' => 'pending',
+                ]);
+            }
+
+            return $studentIds->count();
+        });
+    }
+
+    /**
      * Lấy danh sách lịch thi của giảng viên.
      */
     public function getSchedulesForLecturer(int $lecturerId, ?int $semesterId = null, ?string $search = null, ?string $subjectId = null): Collection

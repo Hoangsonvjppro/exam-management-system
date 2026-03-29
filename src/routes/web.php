@@ -212,6 +212,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::put('/schedules/{schedule}', [ExamScheduleController::class, 'update'])->name('schedules.update');
             Route::delete('/schedules/{schedule}', [ExamScheduleController::class, 'destroy'])->name('schedules.destroy');
             Route::post('/schedules/{schedule}/assign-students', [ExamScheduleController::class, 'assignStudents'])->name('schedules.assign-students');
+            Route::get('/schedules/{schedule}/students', [ExamScheduleController::class, 'getStudents'])->name('schedules.students');
 
             Route::get('/attendance', [LecturerPageController::class, 'attendance'])->name('attendance.index');
 

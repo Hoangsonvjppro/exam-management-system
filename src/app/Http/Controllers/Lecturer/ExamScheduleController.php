@@ -135,14 +135,69 @@ class ExamScheduleController extends Controller
     }
 
     /**
-     * Tự động phân sinh viên vào ca thi.
+     * Lấy danh sách sinh viên trong lớp cho popup phân SV (AJAX).
      */
-    public function assignStudents(ExamSchedule $schedule): RedirectResponse
+    public function getStudents(ExamSchedule $schedule): JsonResponse
     {
         Gate::authorize('manageLecturer', $schedule->exam);
 
-        $count = $this->scheduleService->autoAssignStudents($schedule);
+        $courseSection = $schedule->courseSection;
+        if (!$courseSection) {
+            return response()->json(['students' => [], 'assigned_ids' => []]);
+        }
 
-        return back()->with('success', "Đã phân {$count} sinh viên vào ca thi.");
+        // Lấy SV enrolled trong lớp
+        $students = $courseSection->students()
+            ->wherePivot('status', 'enrolled')
+            ->orderBy('name')
+            ->get(['users.id', 'users.name', 'users.email', 'users.student_code']);
+
+        // Lấy danh sách SV đã được assign
+        $assignedIds = $schedule->scheduleStudents()->pluck('student_id')->toArray();
+
+        return response()->json([
+            'students' => $students->map(fn($s) => [
+                'id'         => $s->id,
+                'name'       => $s->name,
+                'email'      => $s->email,
+                'student_id' => $s->student_code,
+            ]),
+            'assigned_ids'  => $assignedIds,
+            'total_enrolled' => $students->count(),
+        ]);
+    }
+
+    /**
+     * Phân sinh viên vào ca thi (AJAX) — nhận danh sách student_ids cụ thể.
+     */
+    public function assignStudents(\Illuminate\Http\Request $request, ExamSchedule $schedule): JsonResponse
+    {
+        Gate::authorize('manageLecturer', $schedule->exam);
+
+        $request->validate([
+            'student_ids'   => 'required|array',
+            'student_ids.*' => 'integer|exists:users,id',
+        ]);
+
+        $studentIds = collect($request->input('student_ids'));
+
+        $count = $this->scheduleService->syncAssignedStudents($schedule, $studentIds);
+
+        $courseSection = $schedule->courseSection;
+        $totalEnrolled = $courseSection
+            ? $courseSection->students()->wherePivot('status', 'enrolled')->count()
+            : 0;
+
+        if ($count === $totalEnrolled && $totalEnrolled > 0) {
+            $message = "Đã phân toàn bộ {$count} sinh viên trong lớp vào ca thi.";
+        } else {
+            $message = "Đã phân {$count} sinh viên vào ca thi.";
+        }
+
+        return response()->json([
+            'success'        => true,
+            'message'        => $message,
+            'assigned_count' => $count,
+        ]);
     }
 }
