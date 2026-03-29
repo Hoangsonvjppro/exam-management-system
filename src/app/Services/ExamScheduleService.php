@@ -126,6 +126,31 @@ class ExamScheduleService
     }
 
     /**
+     * Lấy danh sách SV trong lớp và trạng thái đã phân vào ca thi.
+     */
+    public function getStudentsForAssignment(ExamSchedule $schedule): array
+    {
+        $courseSection = $schedule->courseSection;
+        if (!$courseSection) {
+            return ['students' => collect(), 'assigned_ids' => []];
+        }
+
+        // Lấy SV enrolled trong lớp
+        $students = $courseSection->students()
+            ->wherePivot('status', 'enrolled')
+            ->orderBy('name')
+            ->get(['users.id', 'users.name', 'users.email', 'users.student_code']);
+
+        // Lấy danh sách SV đã được assign
+        $assignedIds = $schedule->scheduleStudents()->pluck('student_id')->toArray();
+
+        return [
+            'students' => $students,
+            'assigned_ids' => $assignedIds
+        ];
+    }
+
+    /**
      * Lấy danh sách lịch thi của giảng viên.
      */
     public function getSchedulesForLecturer(int $lecturerId, ?int $semesterId = null, ?string $search = null, ?string $subjectId = null): Collection

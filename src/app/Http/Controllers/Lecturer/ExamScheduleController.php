@@ -141,19 +141,9 @@ class ExamScheduleController extends Controller
     {
         Gate::authorize('manageLecturer', $schedule->exam);
 
-        $courseSection = $schedule->courseSection;
-        if (!$courseSection) {
-            return response()->json(['students' => [], 'assigned_ids' => []]);
-        }
-
-        // Lấy SV enrolled trong lớp
-        $students = $courseSection->students()
-            ->wherePivot('status', 'enrolled')
-            ->orderBy('name')
-            ->get(['users.id', 'users.name', 'users.email', 'users.student_code']);
-
-        // Lấy danh sách SV đã được assign
-        $assignedIds = $schedule->scheduleStudents()->pluck('student_id')->toArray();
+        $data = $this->scheduleService->getStudentsForAssignment($schedule);
+        $students = $data['students'];
+        $assignedIds = $data['assigned_ids'];
 
         return response()->json([
             'students' => $students->map(fn($s) => [
