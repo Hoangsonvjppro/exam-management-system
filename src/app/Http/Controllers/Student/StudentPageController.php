@@ -50,6 +50,14 @@ class StudentPageController extends Controller
 
     public function complaints(): View
     {
-        return view('student.complaints.index');
+        /** @var User $user */
+        $user = Auth::user();
+
+        $complaints = \App\Models\Complaint::where('student_id', $user->id)
+            ->with(['schedule.exam', 'section', 'reviewer'])
+            ->latest()
+            ->paginate(15);
+
+        return view('student.complaints.index', compact('complaints'));
     }
 }

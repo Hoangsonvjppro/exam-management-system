@@ -134,7 +134,7 @@ class StudentDashboardService
         $completedAttempts = \App\Models\ExamAttempt::where('user_id', $user->id)
             ->whereHas('schedule', fn ($q) => $q->where('course_section_id', $section->id))
             ->where('status', 'completed')
-            ->with(['schedule.exam'])
+            ->with(['schedule.exam', 'complaint'])
             ->orderByDesc('completed_at')
             ->get();
 

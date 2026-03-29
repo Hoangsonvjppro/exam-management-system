@@ -111,6 +111,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
 
         // Khiếu nại
         Route::get('/complaints', [StudentPageController::class, 'complaints'])->name('complaints.index');
+        Route::post('/complaints', [\App\Http\Controllers\Student\ComplaintController::class, 'store'])->name('complaints.store');
 
         Route::get('/schedules/{schedule}', [\App\Http\Controllers\Student\ExamController::class, 'show'])->name('exams.show');
         Route::post('/schedules/{schedule}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('exams.start');
@@ -147,6 +148,12 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             // Dashboard giảng viên (route mới, dùng closure)
             Route::get('/dashboard', [LecturerPageController::class, 'dashboard'])
                 ->name('dashboard_redirect');
+
+            // ── Quản lý Khiếu nại (Complaints) ─────────────────────
+            Route::get('/complaints', [\App\Http\Controllers\Lecturer\ComplaintController::class, 'index'])
+                ->name('complaints.index');
+            Route::put('/complaints/{complaint}', [\App\Http\Controllers\Lecturer\ComplaintController::class, 'update'])
+                ->name('complaints.update');
 
             // ── Quản lý lớp học (Course Sections) ──────────────────
             // Tự động tạo các route CRUD: index, create, store,

@@ -259,6 +259,16 @@ $studentSidebarSections = auth()->user()->enrolledSections()
                             </div>
                             <span class="sidebar-label truncate flex-1 transition-opacity duration-300 pr-3" x-show="isExpanded" x-cloak>Lịch thi</span>
                         </a>
+
+                        <a href="{{ route('lecturer.complaints.index') }}"
+                            class="sidebar-link {{ request()->routeIs('lecturer.complaints.*') ? 'active' : '' }}">
+                            <div class="w-[48px] flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                </svg>
+                            </div>
+                            <span class="sidebar-label truncate flex-1 transition-opacity duration-300 pr-3" x-show="isExpanded" x-cloak>Khiếu nại</span>
+                        </a>
                     </div>
                     @endif
 
