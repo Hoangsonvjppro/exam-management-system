@@ -155,7 +155,7 @@
 
                     <div class="flex justify-end gap-3 pt-2">
                         <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'review-modal')">Hủy</x-button>
-                        <x-button type="button" variant="primary" @click="submitReview()" :disabled="isSubmitting">
+                        <x-button type="button" variant="primary" @click="submitReview()" x-bind:disabled="isSubmitting">
                             <span x-show="!isSubmitting">Lưu kết quả</span>
                             <span x-show="isSubmitting">Đang lưu...</span>
                         </x-button>

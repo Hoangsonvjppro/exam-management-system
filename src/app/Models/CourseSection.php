@@ -100,6 +100,11 @@ class CourseSection extends Model
         return $this->hasMany(ExamSchedule::class);
     }
 
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class, 'course_section_id');
+    }
+
     // ── Code Generation ────────────────────────────────────────
 
     public static function generateCode(int|string|null $subjectId, int|string|null $semesterId): ?string

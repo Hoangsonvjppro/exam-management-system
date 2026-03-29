@@ -50,6 +50,20 @@
                 </x-slot>
                 {{ __('Ngân hàng câu hỏi') }}
             </x-sidebar-link>
+
+            <x-sidebar-link :href="route('lecturer.complaints.index')" :active="request()->routeIs('lecturer.complaints.*')">
+                <x-slot name="icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                </x-slot>
+                {{ __('Khiếu nại điểm') }}
+                @if(isset($pendingComplaintsCount) && $pendingComplaintsCount > 0)
+                    <span class="ml-auto bg-danger-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse transition-all">
+                        {{ $pendingComplaintsCount }}
+                    </span>
+                @endif
+            </x-sidebar-link>
         @endif
 
         <x-sidebar-link href="#" :active="request()->routeIs('courses.*')">
