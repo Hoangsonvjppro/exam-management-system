@@ -24,15 +24,22 @@ class ExamScheduleController extends Controller
     /**
      * Danh sách lịch thi của giảng viên.
      */
-    public function index(): View
+    public function index(\Illuminate\Http\Request $request): View
     {
-        $schedules = $this->scheduleService->getSchedulesForLecturer(Auth::id());
+        $search = $request->query('search');
+        $subjectId = $request->query('subject_id');
+
+        $schedules = $this->scheduleService->getSchedulesForLecturer(Auth::id(), null, $search, $subjectId);
 
         // Load data cho slide-over form tạo lịch thi mới
         $exams = Exam::where('created_by', Auth::id())->with('subject')->get();
         $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->get();
 
-        return view('lecturer.schedules.index', compact('schedules', 'exams', 'courseSections'));
+        // Subjects for filter dropdown
+        $filterSubjects = $courseSections->pluck('subject_id')->filter()->unique()->values();
+        $filterSubjects = \App\Models\Subject::whereIn('id', $filterSubjects)->orderBy('name')->get(['id', 'name', 'code']);
+
+        return view('lecturer.schedules.index', compact('schedules', 'exams', 'courseSections', 'filterSubjects'));
     }
 
     /**

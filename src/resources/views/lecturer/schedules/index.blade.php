@@ -29,6 +29,43 @@
             </x-button>
         </div>
 
+        {{-- Search & Filter --}}
+        <form action="{{ route('lecturer.schedules.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <svg class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Tìm kiếm theo tên đề thi..."
+                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-border-clean rounded-[10px] text-sm font-medium text-navy-900 placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all shadow-sm" />
+            </div>
+            <div class="w-full sm:w-56">
+                <select name="subject_id" onchange="this.form.submit()"
+                    class="w-full px-4 py-2.5 bg-white border border-border-clean rounded-[10px] text-sm font-medium text-navy-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all shadow-sm cursor-pointer appearance-none"
+                    style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%236B7C99%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem;">
+                    <option value="">Tất cả môn học</option>
+                    @foreach($filterSubjects as $subject)
+                    <option value="{{ $subject->id }}" {{ (string) request('subject_id') === (string) $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <button type="submit" class="px-5 py-2.5 bg-navy-900 text-white rounded-[10px] text-sm font-semibold hover:bg-navy-950 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Tìm kiếm
+            </button>
+            @if(request('search') || request('subject_id'))
+            <a href="{{ route('lecturer.schedules.index') }}" class="px-4 py-2.5 bg-white text-text-muted border border-border-clean rounded-[10px] text-sm font-semibold hover:bg-surface-1 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Xóa lọc
+            </a>
+            @endif
+        </form>
+
         {{-- Table --}}
         <div class="bg-white rounded-[10px] border border-border-clean overflow-hidden shadow-sm">
             @if($schedules->isEmpty())

@@ -103,7 +103,7 @@ class ExamScheduleService
     /**
      * Lấy danh sách lịch thi của giảng viên.
      */
-    public function getSchedulesForLecturer(int $lecturerId, ?int $semesterId = null): Collection
+    public function getSchedulesForLecturer(int $lecturerId, ?int $semesterId = null, ?string $search = null, ?string $subjectId = null): Collection
     {
         $query = ExamSchedule::whereHas('courseSection', function ($q) use ($lecturerId) {
             $q->where('lecturer_id', $lecturerId);
@@ -111,6 +111,18 @@ class ExamScheduleService
 
         if ($semesterId) {
             $query->whereHas('courseSection', fn($q) => $q->where('semester_id', $semesterId));
+        }
+
+        if ($search) {
+            $query->whereHas('exam', function ($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($subjectId) {
+            $query->whereHas('exam', function ($q) use ($subjectId) {
+                $q->where('subject_id', $subjectId);
+            });
         }
 
         return $query->orderBy('exam_date')->orderBy('start_time')->get();
