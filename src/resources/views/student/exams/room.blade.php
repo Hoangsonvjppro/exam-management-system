@@ -7,660 +7,500 @@ $totalQuestions = count($questions);
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>{{ $exam->title }} - EduPortal</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style data-purpose="custom-styles">
-        * {
-            box-sizing: border-box;
-        }
+    <title>{{ $exam->title }} — Phòng thi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            background-color: #F8FAFD;
-            font-family: 'Be Vietnam Pro', 'Inter', system-ui, sans-serif;
-            color: #374151;
-            margin: 0;
-        }
-
-        .text-h1 {
-            font-size: 28px;
-            font-weight: 700;
-            line-height: 1.2;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #F4F7FC;
             color: #1A3A6B;
+            overflow: hidden;
+            height: 100vh;
         }
 
-        .text-h2 {
-            font-size: 22px;
-            font-weight: 600;
-            line-height: 1.3;
-            color: #1A3A6B;
-        }
-
-        .text-h3 {
-            font-size: 17px;
-            font-weight: 600;
-            color: #1A3A6B;
-        }
-
-        .text-body {
-            font-size: 14px;
-            color: #374151;
-            line-height: 1.6;
-        }
-
-        .text-caption {
-            font-size: 12px;
-            color: #6B7C99;
-        }
-
-        .text-mono {
-            font-size: 13px;
-            color: #1A3A6B;
-            font-family: monospace;
-        }
-
-        /* Navbar */
-        .nav-bar {
+        /* ── Slim Top Bar ── */
+        .zen-bar {
+            height: 44px;
             background: #1A3A6B;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             padding: 0 20px;
-            height: 52px;
-            gap: 8px;
+            flex-shrink: 0;
         }
-
-        .nav-logo {
+        .zen-bar-left {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-right: 24px;
+            gap: 10px;
         }
-
-        .nav-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #34D399;
-        }
-
-        .nav-logo-text {
+        .zen-bar-dot { width: 6px; height: 6px; border-radius: 50%; background: #34D399; }
+        .zen-bar-title {
             color: #fff;
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 400px;
         }
-
-        .nav-right {
-            margin-left: auto;
+        .zen-bar-right {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
         }
-
-        .nav-user-role {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            padding: 4px 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .nav-role-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: #34D399;
-        }
-
-        .nav-role-text {
-            color: #93BAE8;
-            font-size: 11px;
-        }
-
-        .nav-avatar {
-            width: 30px;
-            height: 30px;
+        .zen-bar-avatar {
+            width: 28px; height: 28px;
             border-radius: 50%;
             background: #2A5298;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #93BAE8;
-            font-size: 11px;
-            font-weight: 600;
+            display: flex; align-items: center; justify-content: center;
+            color: #93BAE8; font-size: 10px; font-weight: 700;
             border: 1.5px solid #3A6AC8;
             text-transform: uppercase;
         }
 
-        /* Cards */
-        .ca-card {
+        /* ── Main Layout: 2 Columns ── */
+        .zen-layout {
+            display: flex;
+            height: calc(100vh - 44px);
+            overflow: hidden;
+        }
+
+        /* Left Column — Questions (large) */
+        .zen-left {
+            flex: 1;
+            min-width: 0;
+            overflow-y: auto;
+            padding: 32px 48px;
+        }
+
+        /* Right Column — Controls (fixed, narrow) */
+        .zen-right {
+            width: 300px;
+            flex-shrink: 0;
             background: #fff;
-            border: 0.5px solid #D6E2F0;
-            border-radius: 10px;
-            padding: 16px;
+            border-left: 1px solid #D6E2F0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
         }
 
-        .ca-card-accent {
-            background: #fff;
-            border: 0.5px solid #D6E2F0;
-            border-radius: 10px;
-            padding: 16px;
-            border-top: 3px solid #1A3A6B;
+        /* ── Timer ── */
+        .timer-block {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #D6E2F0;
+            background: #F8FAFD;
         }
-
-        .ca-card-featured {
-            background: #F4F7FC;
-            border: 0.5px solid #B5D4F4;
-            border-radius: 10px;
-            padding: 16px;
+        .timer-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6B7C99;
+            margin-bottom: 6px;
         }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            font-size: 13px;
-            font-weight: 500;
-            padding: 8px 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            border: none;
-            font-family: inherit;
-            transition: opacity .15s;
-            outline: none;
-        }
-
-        .btn-primary {
-            background: #1A3A6B;
-            color: #fff;
-        }
-
-        .btn-secondary {
-            background: #E6F1FB;
+        .timer-display {
+            font-size: 42px;
+            font-weight: 700;
             color: #1A3A6B;
+            letter-spacing: 2px;
+            font-variant-numeric: tabular-nums;
+            transition: color 0.3s;
         }
-
-        .btn-outline {
-            background: transparent;
-            color: #1A3A6B;
-            border: 1.5px solid #1A3A6B;
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: #1A3A6B;
-            border: 1.5px solid #D6E2F0;
-        }
-
-        .btn-danger {
-            background: #FEE2E2;
-            color: #991B1B;
-        }
-
-        .btn-sm {
-            font-size: 11px;
-            padding: 5px 12px;
-            border-radius: 5px;
-        }
-
-        .btn-lg {
-            font-size: 15px;
-            padding: 11px 24px;
-            border-radius: 8px;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Form inputs */
-        .ca-input {
-            border: 1.5px solid #D6E2F0;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 13px;
-            color: #1A3A6B;
-            background: #fff;
-            font-family: inherit;
-            outline: none;
-            width: 100%;
-            transition: all 0.2s;
-            resize: none;
-        }
-
-        .ca-input:focus {
-            border-color: #185FA5;
-            box-shadow: 0 0 0 3px #E6F1FB;
-        }
-
-        /* Status */
-        .status {
+        .timer-display.urgent { color: #DC2626; }
+        .timer-status {
             display: inline-flex;
             align-items: center;
             gap: 5px;
             font-size: 11px;
             font-weight: 500;
-            padding: 3px 9px;
+            padding: 3px 10px;
             border-radius: 20px;
-        }
-
-        .status-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .s-ongoing {
             background: #D1FAE5;
             color: #065F46;
+            margin-top: 8px;
         }
+        .timer-status-dot { width: 5px; height: 5px; border-radius: 50%; background: #10B981; }
 
-        .s-ongoing .status-dot {
-            background: #10B981;
+        /* ── Question Map ── */
+        .qmap-block {
+            padding: 16px 20px;
+            flex: 1;
+            overflow-y: auto;
         }
-
-        /* Question Navigator */
-        .question-btn {
-            width: 42px;
-            height: 42px;
-            display: inline-flex;
+        .qmap-header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .qmap-title { font-size: 13px; font-weight: 700; color: #1A3A6B; }
+        .qmap-count { font-size: 11px; color: #6B7C99; }
+        .qmap-count strong { color: #1A3A6B; }
+
+        .qmap-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+        .q-btn {
+            width: 100%; aspect-ratio: 1;
+            display: flex; align-items: center; justify-content: center;
             border-radius: 6px;
-            font-weight: 500;
-            font-size: 13px;
+            font-weight: 600; font-size: 13px;
             border: 1.5px solid #D6E2F0;
-            background-color: #fff;
-            color: #6B7C99;
-            position: relative;
-            transition: all 0.2s;
+            background: #fff; color: #6B7C99;
             cursor: pointer;
-            padding: 0;
+            transition: all 0.15s;
+            position: relative;
             font-family: inherit;
         }
-
-        .question-btn:hover {
-            background-color: #F8FAFD;
-            border-color: #185FA5;
-            color: #1A3A6B;
-        }
-
-        .question-btn.answered {
-            background-color: #E1F5EE;
-            color: #085041;
-            border-color: #1D9E75;
-        }
-
-        .question-btn.current {
-            background-color: #1A3A6B;
-            color: #fff;
-            border-color: #1A3A6B;
-            font-weight: 600;
-        }
-
-        .question-btn.flagged {
-            border-color: #D97706;
-        }
-
-        .flag-indicator {
-            position: absolute;
-            top: -1px;
-            right: -1px;
-            width: 0;
-            height: 0;
-            border-top: 14px solid #D97706;
-            border-left: 14px solid transparent;
+        .q-btn:hover { border-color: #185FA5; color: #1A3A6B; background: #F8FAFD; }
+        .q-btn.answered { background: #E1F5EE; color: #085041; border-color: #1D9E75; }
+        .q-btn.current { background: #1A3A6B; color: #fff; border-color: #1A3A6B; }
+        .q-btn.flagged { border-color: #D97706; }
+        .q-btn.flagged::after {
+            content: '';
+            position: absolute; top: -1px; right: -1px;
+            border-top: 12px solid #D97706;
+            border-left: 12px solid transparent;
             border-top-right-radius: 5px;
-            display: none;
         }
 
-        .question-btn.flagged .flag-indicator {
-            display: block;
+        .qmap-legend {
+            display: flex; flex-wrap: wrap; gap: 12px;
+            margin-top: 16px; padding-top: 12px;
+            border-top: 1px solid #D6E2F0;
+            font-size: 11px; color: #6B7C99;
         }
+        .qmap-legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-box {
+            width: 12px; height: 12px; border-radius: 3px;
+            border: 1.5px solid #D6E2F0; background: #fff;
+        }
+        .legend-box.answered { border-color: #1D9E75; background: #E1F5EE; }
+        .legend-box.current { border-color: #1A3A6B; background: #1A3A6B; }
+        .legend-box.flagged { border-color: #D97706; }
 
-        .flag-icon-xs {
-            font-size: 7px;
+        /* ── Submit Button ── */
+        .submit-block {
+            padding: 16px 20px;
+            border-top: 1px solid #D6E2F0;
+            background: #F8FAFD;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: #1A3A6B;
             color: #fff;
-            position: absolute;
-            top: 1px;
-            right: 2px;
-            z-index: 10;
-            display: none;
-        }
-
-        .question-btn.flagged .flag-icon-xs {
-            display: block;
-        }
-
-        /* Option Cards */
-        .option-card {
-            border: 1.5px solid #D6E2F0;
+            border: none;
             border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            background-color: #fff;
-            transition: all 0.2s;
-            min-height: 48px;
-        }
-
-        .option-card:hover {
-            border-color: #185FA5;
-            background-color: #F8FAFD;
-        }
-
-        .option-card.selected {
-            background-color: #E6F1FB;
-            border-color: #185FA5;
-        }
-
-        .custom-radio {
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border: 1.5px solid #D6E2F0;
-            border-radius: 50%;
-            margin-right: 12px;
-            outline: none;
-            position: relative;
-            flex-shrink: 0;
-            cursor: pointer;
-            background-color: #fff;
-            transition: all 0.15s;
-        }
-
-        .option-card:hover .custom-radio {
-            border-color: #185FA5;
-        }
-
-        .custom-radio:checked {
-            border-color: #185FA5;
-            border-width: 5px;
-        }
-
-        .question-container {
-            display: none;
-        }
-
-        .question-container.active {
-            display: flex;
-            flex-direction: column;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(4px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Layout */
-        .main-layout {
-            display: flex;
-            gap: 24px;
-            max-width: 1400px;
-            margin: 32px auto;
-            padding: 0 24px;
-            align-items: flex-start;
-        }
-
-        .col-left {
-            width: 320px;
-            flex-shrink: 0;
-        }
-
-        .col-center {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .col-right {
-            width: 280px;
-            flex-shrink: 0;
-        }
-
-        .timer-display {
-            font-size: 40px;
+            font-size: 14px;
             font-weight: 700;
-            color: #DC2626;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-submit:hover { background: #0F2A53; }
+        .submit-note {
             text-align: center;
-            letter-spacing: 2px;
+            font-size: 11px;
+            color: #6B7C99;
             margin-top: 8px;
         }
 
-        .toast {
-            position: absolute;
-            top: 24px;
-            right: 24px;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
+        /* ── Question Content ── */
+        .question-container { display: none; }
+        .question-container.active {
+            display: flex; flex-direction: column;
+            animation: fadeSlide 0.25s ease-out;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
-            z-index: 50;
+            padding-bottom: 20px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid #D6E2F0;
+        }
+        .question-number { font-size: 22px; font-weight: 700; color: #1A3A6B; }
+        .question-badge {
+            font-size: 12px; color: #6B7C99; font-weight: 500;
+            background: #F4F7FC; padding: 4px 12px; border-radius: 20px;
+        }
+
+        .btn-flag {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 12px; border-radius: 5px;
+            font-size: 12px; font-weight: 500;
+            color: #6B7C99; background: transparent;
+            border: 1.5px solid #D6E2F0;
+            cursor: pointer; font-family: inherit;
+            transition: all 0.15s;
+        }
+        .btn-flag:hover { border-color: #D97706; color: #D97706; }
+        .btn-flag.active { border-color: #D97706; color: #D97706; background: #FEF3C7; }
+
+        .question-text {
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.7;
+            color: #1A3A6B;
+            margin-bottom: 32px;
+        }
+
+        /* ── Option Cards ── */
+        .option-card {
+            border: 1.5px solid #D6E2F0;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            display: flex; align-items: center;
+            cursor: pointer;
+            background: #fff;
+            transition: all 0.2s;
+            min-height: 52px;
+        }
+        .option-card:hover { border-color: #185FA5; background: #F8FAFD; }
+        .option-card.selected { background: #E6F1FB; border-color: #185FA5; }
+
+        .custom-radio {
+            appearance: none;
+            width: 20px; height: 20px;
+            border: 1.5px solid #D6E2F0;
+            border-radius: 50%;
+            margin-right: 14px;
+            outline: none;
+            flex-shrink: 0;
+            cursor: pointer;
+            background: #fff;
+            transition: all 0.15s;
+        }
+        .option-card:hover .custom-radio { border-color: #185FA5; }
+        .custom-radio:checked { border-color: #185FA5; border-width: 5px; }
+        .custom-radio:focus { box-shadow: 0 0 0 3px #E6F1FB; border-color: #185FA5; }
+
+        .option-text { font-size: 14px; color: #374151; line-height: 1.5; }
+
+        /* ── Navigation Buttons ── */
+        .nav-buttons {
+            display: flex; gap: 12px;
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid #D6E2F0;
+        }
+        .btn-nav {
+            flex: 1; height: 44px;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            font-size: 13px; font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer; font-family: inherit;
+            transition: all 0.15s;
+            border: 1.5px solid #D6E2F0;
+            background: transparent; color: #1A3A6B;
+        }
+        .btn-nav:hover { background: #F4F7FC; border-color: #185FA5; }
+        .btn-nav:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-nav.primary { background: #1A3A6B; color: #fff; border-color: #1A3A6B; }
+        .btn-nav.primary:hover { background: #0F2A53; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed; top: 56px; right: 20px;
+            padding: 10px 16px; border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+            z-index: 100;
             transition: all 0.3s;
-            opacity: 0;
-            transform: translateY(-10px);
+            opacity: 0; transform: translateY(-10px);
             pointer-events: none;
             border: 0.5px solid #059669;
-            background: #D1FAE5;
-            color: #065F46;
+            background: #D1FAE5; color: #065F46;
         }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.error { border-color: #DC2626; background: #FEF2F2; color: #991B1B; }
+        .toast.warning { border-color: #D97706; background: #FEF3C7; color: #78350F; }
 
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .toast.error {
-            border-color: #DC2626;
-            background: #FEF2F2;
-            color: #991B1B;
-        }
-
-        .toast.warning {
-            border-color: #D97706;
-            background: #FEF3C7;
-            color: #78350F;
-        }
-
-        .grid-nav {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-        }
-
-        @media (max-width: 1100px) {
-            .grid-nav {
-                grid-template-columns: repeat(4, 1fr);
+        /* ── Mobile ── */
+        @media (max-width: 768px) {
+            .zen-layout { flex-direction: column; }
+            .zen-left { padding: 20px 16px; flex: 1; }
+            .zen-right {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #D6E2F0;
+                position: fixed;
+                bottom: 0; left: 0; right: 0;
+                height: auto;
+                max-height: 60vh;
+                z-index: 50;
+                border-radius: 16px 16px 0 0;
+                box-shadow: 0 -4px 24px rgba(0,0,0,0.1);
+                transform: translateY(calc(100% - 60px));
+                transition: transform 0.3s ease;
             }
+            .zen-right.expanded { transform: translateY(0); }
+            .zen-right-handle {
+                display: flex;
+                justify-content: center;
+                padding: 8px;
+                cursor: pointer;
+            }
+            .zen-right-handle-bar {
+                width: 36px; height: 4px;
+                border-radius: 2px; background: #D6E2F0;
+            }
+            .qmap-grid { grid-template-columns: repeat(7, 1fr); }
+        }
+        @media (min-width: 769px) {
+            .zen-right-handle { display: none; }
         }
     </style>
 </head>
 
 <body>
-
-    <div class="nav-bar">
-        <div class="nav-logo">
-            <div class="nav-dot"></div>
-            <span class="nav-logo-text">EduPortal</span>
+    {{-- ─── Slim Top Bar (Zen Mode) ─── --}}
+    <div class="zen-bar">
+        <div class="zen-bar-left">
+            <div class="zen-bar-dot"></div>
+            <span class="zen-bar-title">{{ $exam->title }}</span>
         </div>
-        <div class="nav-right">
-            <div class="nav-user-role">
-                <div class="nav-role-dot"></div>
-                <span class="nav-role-text">Sinh viên</span>
-            </div>
-            <div class="nav-avatar" title="{{ Auth::user()->name ?? 'Sinh viên' }}">
+        <div class="zen-bar-right">
+            <span style="color:#93BAE8; font-size:11px; font-weight:500;">{{ $exam->subject->name ?? '' }}</span>
+            <div class="zen-bar-avatar" title="{{ Auth::user()->name ?? 'SV' }}">
                 {{ strtoupper(substr(Auth::user()->name ?? 'SV', 0, 2)) }}
             </div>
         </div>
     </div>
 
-    <main class="main-layout" id="main-content">
+    {{-- ─── 2-Column Layout ─── --}}
+    <div class="zen-layout" id="main-content">
         <div id="exam-config" data-total-questions="{{ $totalQuestions }}" data-time-left="{{ $timeLeftSeconds }}" hidden></div>
 
-        <!-- Left Column: Navigation -->
-        <div class="col-left">
-            <div class="ca-card">
-                <div style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
-                    <h2 class="text-h3" style="margin: 0;">Danh sách câu hỏi</h2>
-                    <span class="text-caption">Đã làm: <span id="answered-count" style="color: #1A3A6B; font-weight: 600;">0</span>/{{ $totalQuestions }}</span>
+        {{-- ═══ Left Column: Questions ═══ --}}
+        <div class="zen-left">
+            <form id="exam-form" action="{{ route('student.exams.submit', $schedule->id) }}" method="POST">
+                @csrf
+
+                @foreach($questions as $index => $question)
+                <div class="question-container {{ $index === 0 ? 'active' : '' }}" id="question-{{ $index }}">
+
+                    <div class="question-header">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span class="question-number">Câu {{ $index + 1 }}</span>
+                            <span class="question-badge">/ {{ $totalQuestions }}</span>
+                        </div>
+                        <button type="button" data-flag-index="{{ $index }}" id="flag-btn-{{ $index }}" class="btn-flag">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                            <span class="flag-label">Đặt cờ</span>
+                        </button>
+                    </div>
+
+                    <div class="question-text">{!! $question->content !!}</div>
+
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        @foreach($question->options as $option)
+                        @php $isChecked = isset($savedAnswers[$question->id]) && $savedAnswers[$question->id] == $option->id; @endphp
+                        <label class="option-card {{ $isChecked ? 'selected' : '' }}" data-option-index="{{ $index }}">
+                            <input type="radio"
+                                name="answers[{{ $question->id }}]"
+                                value="{{ $option->id }}"
+                                data-question-id="{{ $question->id }}"
+                                class="answer-radio custom-radio"
+                                {{ $isChecked ? 'checked' : '' }}>
+                            <span class="option-text">{!! $option->content !!}</span>
+                        </label>
+                        @endforeach
+                    </div>
+                </div>
+                @endforeach
+            </form>
+
+            {{-- Navigation Controls --}}
+            <div class="nav-buttons">
+                <button type="button" data-action="prev-question" id="btn-prev" class="btn-nav">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    Câu trước
+                </button>
+                <button type="button" data-action="next-question" id="btn-next" class="btn-nav primary">
+                    Câu tiếp
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
+
+        {{-- ═══ Right Column: Timer + Map + Submit ═══ --}}
+        <div class="zen-right" id="zen-panel">
+            {{-- Mobile handle --}}
+            <div class="zen-right-handle" id="panel-handle">
+                <div class="zen-right-handle-bar"></div>
+            </div>
+
+            {{-- Timer --}}
+            <div class="timer-block">
+                <div class="timer-label">Thời gian còn lại</div>
+                <div id="countdown-timer" class="timer-display">--:--</div>
+                <div class="timer-status">
+                    <span class="timer-status-dot"></span>
+                    Đang thi
+                </div>
+            </div>
+
+            {{-- Question Map --}}
+            <div class="qmap-block">
+                <div class="qmap-header">
+                    <span class="qmap-title">Bản đồ câu hỏi</span>
+                    <span class="qmap-count">Đã làm: <strong id="answered-count">0</strong>/{{ $totalQuestions }}</span>
                 </div>
 
-                <div class="grid-nav" id="question-navigator">
+                <div class="qmap-grid" id="question-navigator">
                     @foreach($questions as $index => $question)
                     <button type="button"
-                        class="question-btn {{ $index === 0 ? 'current' : '' }} {{ isset($savedAnswers[$question->id]) ? 'answered' : '' }}"
+                        class="q-btn {{ $index === 0 ? 'current' : '' }} {{ isset($savedAnswers[$question->id]) ? 'answered' : '' }}"
                         data-question-index="{{ $index }}"
                         id="nav-btn-{{ $index }}">
                         {{ $index + 1 }}
-                        <div class="flag-indicator"></div>
-                        <i class="fa-solid fa-flag flag-icon-xs"></i>
                     </button>
                     @endforeach
                 </div>
 
-                <hr style="border: none; border-top: 0.5px solid #D6E2F0; margin: 24px 0;">
-
-                <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px; color: #4A5F7A;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 14px; height: 14px; border: 1.5px solid #D6E2F0; border-radius: 3px; background: #fff;"></div>
-                        <span>Chưa trả lời</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 14px; height: 14px; border: 1.5px solid #1D9E75; border-radius: 3px; background: #E1F5EE;"></div>
-                        <span>Đã trả lời</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 14px; height: 14px; border: 1.5px solid #D97706; border-radius: 3px; background: #fff;"></div>
-                        <span>Đã gắn cờ</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 14px; height: 14px; border: 1.5px solid #1A3A6B; border-radius: 3px; background: #1A3A6B;"></div>
-                        <span>Câu hiện tại</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Center Column -->
-        <div class="col-center">
-            <div class="ca-card ca-card-accent" style="min-height: 60vh; display: flex; flex-direction: column; position: relative;">
-
-                <form id="exam-form" action="{{ route('student.exams.submit', $schedule->id) }}" method="POST" style="flex: 1; display: flex; flex-direction: column;">
-                    @csrf
-
-                    @foreach($questions as $index => $question)
-                    <div class="question-container {{ $index === 0 ? 'active' : '' }}" id="question-{{ $index }}" style="flex: 1;">
-
-                        <!-- Header -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid #D6E2F0; padding-bottom: 20px; margin-bottom: 24px;">
-                            <h2 class="text-h2" style="margin: 0;">Câu {{ $index + 1 }}</h2>
-                            <button type="button" data-flag-index="{{ $index }}" id="flag-btn-{{ $index }}" class="btn btn-ghost btn-sm" style="display: flex; gap: 6px;">
-                                <i class="fa-regular fa-flag"></i> Đặt cờ
-                            </button>
-                        </div>
-
-                        <!-- Content -->
-                        <div class="question-text-content" style="margin-bottom: 32px; font-size: 15px; color: #1A3A6B; font-weight: 500; line-height: 1.6;">
-                            {!! $question->content !!}
-                        </div>
-
-                        <!-- Options -->
-                        <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
-                            @foreach($question->options as $option)
-                            @php
-                            $isChecked = isset($savedAnswers[$question->id]) && $savedAnswers[$question->id] == $option->id;
-                            @endphp
-                            <label class="option-card {{ $isChecked ? 'selected' : '' }}" data-option-index="{{ $index }}">
-                                <input type="radio"
-                                    name="answers[{{ $question->id }}]"
-                                    value="{{ $option->id }}"
-                                    data-question-id="{{ $question->id }}"
-                                    class="answer-radio custom-radio"
-                                    {{ $isChecked ? 'checked' : '' }}>
-                                <span style="font-size: 14px; color: #374151;">{!! $option->content !!}</span>
-                            </label>
-                            @endforeach
-                        </div>
-                    </div>
-                    @endforeach
-                </form>
-
-                <!-- Navigation Controls -->
-                <div style="display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 0.5px solid #D6E2F0;">
-                    <button type="button" data-action="prev-question" id="btn-prev" class="btn btn-outline" style="flex: 1; height: 44px;">
-                        <i class="fa-solid fa-arrow-left" style="margin-right: 6px;"></i> Câu trước
-                    </button>
-                    <button type="button" data-action="next-question" id="btn-next" class="btn btn-primary" style="flex: 1; height: 44px;">
-                        Câu tiếp theo <i class="fa-solid fa-arrow-right" style="margin-left: 6px;"></i>
-                    </button>
-                </div>
-
-                <!-- Toast Positioned Relative to Card -->
-                <div id="save-toast" class="toast">
-                    <i class="fa-solid fa-check-circle"></i> <span id="toast-msg">Đã lưu tự động</span>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Right Column: Info & Action -->
-        <div class="col-right">
-            <!-- Exam Meta -->
-            <div class="ca-card-featured" style="margin-bottom: 24px; text-align: center;">
-                <p class="text-caption" style="text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 8px;">Thời gian còn lại</p>
-                <div id="countdown-timer" class="timer-display">--:--</div>
-                <div style="margin-top: 12px; display: inline-flex;">
-                    <span class="status s-ongoing"><span class="status-dot"></span>Đang thi</span>
+                <div class="qmap-legend">
+                    <div class="qmap-legend-item"><div class="legend-box"></div> Chưa làm</div>
+                    <div class="qmap-legend-item"><div class="legend-box answered"></div> Đã làm</div>
+                    <div class="qmap-legend-item"><div class="legend-box current"></div> Đang chọn</div>
+                    <div class="qmap-legend-item"><div class="legend-box flagged"></div> Gắn cờ</div>
                 </div>
             </div>
 
-            <!-- Submit -->
-            <div class="ca-card" style="margin-bottom: 24px;">
-                <p class="text-h3" style="text-align: center; margin: 0 0 16px;">Hoàn tất bài làm?</p>
-                <button type="button" data-action="submit-exam" class="btn btn-primary btn-lg" style="width: 100%;">
+            {{-- Submit --}}
+            <div class="submit-block">
+                <button type="button" data-action="submit-exam" class="btn-submit">
                     Nộp bài thi
                 </button>
-                <p class="text-caption" style="text-align: center; margin: 12px 0 0;">(Không thể sửa sau khi nộp)</p>
-            </div>
-
-            <!-- Tools -->
-            <div class="ca-card">
-                <h3 class="text-h3" style="margin: 0 0 16px;">Tiện ích</h3>
-
-                <p class="text-caption" style="margin: 0 0 8px;">Cỡ chữ</p>
-                <div style="display: flex; gap: 8px; margin-bottom: 20px;">
-                    <button type="button" data-action="font-minus" class="btn btn-outline btn-sm" style="flex: 1;">A-</button>
-                    <button type="button" data-action="font-plus" class="btn btn-outline btn-sm" style="flex: 1;">A+</button>
-                </div>
-
-                <p class="text-caption" style="margin: 0 0 8px;">Giấy nháp</p>
-                <textarea class="ca-input" rows="5" placeholder="Ghi chú nhanh tại đây..."></textarea>
+                <p class="submit-note">Không thể sửa sau khi nộp</p>
             </div>
         </div>
-    </main>
+    </div>
+
+    {{-- Toast --}}
+    <div id="save-toast" class="toast">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+        <span id="toast-msg">Đã lưu tự động</span>
+    </div>
 
     <script>
         const configEl = document.getElementById('exam-config');
         const totalQuestions = parseInt(configEl?.dataset.totalQuestions || '0', 10);
         let currentQuestionIndex = 0;
-        let baseFontSize = 15;
 
         const saveUrl = "{{ route('student.exams.save-answer', $schedule->id) }}";
         const csrfToken = "{{ csrf_token() }}";
@@ -675,30 +515,37 @@ $totalQuestions = count($questions);
             const timerDisplay = document.getElementById('countdown-timer');
             const examForm = document.getElementById('exam-form');
 
+            // Question navigator
             document.querySelectorAll('[data-question-index]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     goToQuestion(parseInt(btn.dataset.questionIndex || '0', 10));
                 });
             });
 
+            // Flag buttons
             document.querySelectorAll('[data-flag-index]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     toggleFlag(parseInt(btn.dataset.flagIndex || '0', 10));
                 });
             });
 
+            // Option cards
             document.querySelectorAll('[data-option-index]').forEach(label => {
                 label.addEventListener('click', () => {
                     selectOption(label, parseInt(label.dataset.optionIndex || '0', 10));
                 });
             });
 
+            // Nav buttons
             document.querySelector('[data-action="prev-question"]')?.addEventListener('click', prevQuestion);
             document.querySelector('[data-action="next-question"]')?.addEventListener('click', nextQuestion);
-            document.querySelector('[data-action="submit-exam"]')?.addEventListener('click', () => examForm.submit());
-            document.querySelector('[data-action="font-minus"]')?.addEventListener('click', () => changeFontSize(-1));
-            document.querySelector('[data-action="font-plus"]')?.addEventListener('click', () => changeFontSize(1));
+            document.querySelector('[data-action="submit-exam"]')?.addEventListener('click', () => {
+                if (confirm('Bạn chắc chắn muốn nộp bài? Không thể sửa sau khi nộp.')) {
+                    examForm.submit();
+                }
+            });
 
+            // Countdown
             const countdown = setInterval(function() {
                 if (timeLeft <= 0) {
                     clearInterval(countdown);
@@ -713,11 +560,12 @@ $totalQuestions = count($questions);
                     timeLeft -= 1;
 
                     if (timeLeft < 300) {
-                        timerDisplay.style.color = '#991B1B';
+                        timerDisplay.classList.add('urgent');
                     }
                 }
             }, 1000);
 
+            // Answer change → auto-save
             document.querySelectorAll('.answer-radio').forEach(radio => {
                 radio.addEventListener('change', function() {
                     const questionIdx = this.closest('.question-container').id.split('-')[1];
@@ -727,56 +575,69 @@ $totalQuestions = count($questions);
                     autoSave(this.getAttribute('data-question-id'), this.value);
                 });
             });
+
+            // Mobile panel toggle
+            const panelHandle = document.getElementById('panel-handle');
+            const zenPanel = document.getElementById('zen-panel');
+            if (panelHandle && zenPanel) {
+                panelHandle.addEventListener('click', () => {
+                    zenPanel.classList.toggle('expanded');
+                });
+            }
+
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    prevQuestion();
+                } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    nextQuestion();
+                }
+            });
         });
 
         function updateAnsweredCount() {
-            const answered = document.querySelectorAll('.question-btn.answered').length;
+            const answered = document.querySelectorAll('.q-btn.answered').length;
             document.getElementById('answered-count').innerText = answered;
         }
 
         let toastTimeout;
-
         function showToast(message, type = 'success') {
             toastMsg.innerText = message;
             toastEl.className = 'toast show';
             if (type === 'error') toastEl.classList.add('error');
             if (type === 'warning') toastEl.classList.add('warning');
-
             clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toastEl.classList.remove('show');
-            }, 2500);
+            toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
         }
 
         function autoSave(questionId, optionId) {
             showToast('Đang lưu...', 'warning');
-
             fetch(saveUrl, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": csrfToken
-                    },
-                    body: JSON.stringify({
-                        question_id: questionId,
-                        question_option_id: optionId,
-                        tab_switch_count: tabSwitchCount
-                    })
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken
+                },
+                body: JSON.stringify({
+                    question_id: questionId,
+                    question_option_id: optionId,
+                    tab_switch_count: tabSwitchCount
                 })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast('Đã lưu bài tự động', 'success');
-                    } else {
-                        showToast('Không thể lưu!', 'error');
-                    }
-                })
-                .catch(() => {
-                    showToast('Lỗi kết nối!', 'error');
-                });
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Đã lưu tự động', 'success');
+                } else {
+                    showToast('Không thể lưu!', 'error');
+                }
+            })
+            .catch(() => showToast('Lỗi kết nối!', 'error'));
         }
 
-        // ── Anti-cheat: Tab switch tracking ──────────────────
+        // Anti-cheat: Tab switch tracking
         let tabSwitchCount = 0;
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
@@ -787,24 +648,18 @@ $totalQuestions = count($questions);
 
         function goToQuestion(index) {
             if (index < 0 || index >= totalQuestions) return;
-
             document.getElementById(`question-${currentQuestionIndex}`).classList.remove('active');
             document.getElementById(`nav-btn-${currentQuestionIndex}`).classList.remove('current');
-
             currentQuestionIndex = index;
             document.getElementById(`question-${currentQuestionIndex}`).classList.add('active');
             document.getElementById(`nav-btn-${currentQuestionIndex}`).classList.add('current');
-
             updateNavigationButtons();
+            // Scroll question nav button into view
+            document.getElementById(`nav-btn-${currentQuestionIndex}`).scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
 
-        function prevQuestion() {
-            goToQuestion(currentQuestionIndex - 1);
-        }
-
-        function nextQuestion() {
-            goToQuestion(currentQuestionIndex + 1);
-        }
+        function prevQuestion() { goToQuestion(currentQuestionIndex - 1); }
+        function nextQuestion() { goToQuestion(currentQuestionIndex + 1); }
 
         function updateNavigationButtons() {
             document.getElementById('btn-prev').disabled = (currentQuestionIndex === 0);
@@ -820,24 +675,12 @@ $totalQuestions = count($questions);
         function toggleFlag(index) {
             const navBtn = document.getElementById(`nav-btn-${index}`);
             const flagBtn = document.getElementById(`flag-btn-${index}`);
-
             const isFlagged = navBtn.classList.toggle('flagged');
-
-            if (isFlagged) {
-                flagBtn.innerHTML = '<i class="fa-solid fa-flag" style="color: #D97706;"></i> <span style="color: #D97706;">Bỏ cờ</span>';
-            } else {
-                flagBtn.innerHTML = '<i class="fa-regular fa-flag"></i> Đặt cờ';
+            const label = flagBtn.querySelector('.flag-label');
+            if (label) {
+                label.textContent = isFlagged ? 'Bỏ cờ' : 'Đặt cờ';
             }
-        }
-
-        function changeFontSize(direction) {
-            baseFontSize += (direction * 2);
-            if (baseFontSize < 13) baseFontSize = 13;
-            if (baseFontSize > 24) baseFontSize = 24;
-
-            document.querySelectorAll('.question-text-content').forEach(el => {
-                el.style.fontSize = `${baseFontSize}px`;
-            });
+            flagBtn.classList.toggle('active', isFlagged);
         }
     </script>
 </body>
