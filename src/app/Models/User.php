@@ -4,12 +4,14 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -39,6 +41,7 @@ class User extends Authenticatable
         'student_code',
         'lecturer_code',
         'class_name',
+        'date_of_birth',
         'department',
         'is_active',
         'must_change_password',
@@ -59,6 +62,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'date_of_birth'     => 'date',
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'is_active'         => 'boolean',
@@ -72,7 +76,7 @@ class User extends Authenticatable
     /**
      * Scope a query to only include active users.
      */
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
@@ -80,7 +84,7 @@ class User extends Authenticatable
     /**
      * Scope a query to only include students.
      */
-    public function scopeStudents($query)
+    public function scopeStudents(Builder $query): Builder
     {
         return $query->role('student');
     }
@@ -88,7 +92,7 @@ class User extends Authenticatable
     /**
      * Scope a query to only include lecturers.
      */
-    public function scopeLecturers($query)
+    public function scopeLecturers(Builder $query): Builder
     {
         return $query->role('lecturer');
     }
@@ -145,22 +149,29 @@ class User extends Authenticatable
         return $this->hasMany(File::class, 'uploaded_by');
     }
 
+    public function examAttempts(): HasMany
+    {
+        return $this->hasMany(ExamAttempt::class);
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────
 
     /**
      * Get the user's avatar URL or a default placeholder.
      */
-    public function getAvatarUrlAttribute(): string
+    protected function avatarUrl(): Attribute
     {
-        if ($this->google_avatar) {
-            return $this->google_avatar;
-        }
+        return Attribute::get(function () {
+            if ($this->google_avatar) {
+                return $this->google_avatar;
+            }
 
-        if ($this->avatar_file_id && $this->avatar) {
-            return asset('storage/' . $this->avatar->path);
-        }
+            if ($this->avatar_file_id && $this->avatar) {
+                return asset('storage/' . $this->avatar->path);
+            }
 
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=4f46e5&color=fff';
+            return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=4f46e5&color=fff';
+        });
     }
 
     /**
@@ -174,17 +185,19 @@ class User extends Authenticatable
     /**
      * Get primary role display name.
      */
-    public function getPrimaryRoleAttribute(): string
+    protected function primaryRole(): Attribute
     {
-        if ($this->hasRole('lecturer')) {
-            return 'Giảng viên';
-        }
+        return Attribute::get(function () {
+            if ($this->hasRole('lecturer')) {
+                return 'Giảng viên';
+            }
 
-        if ($this->hasRole('student')) {
-            return 'Sinh viên';
-        }
+            if ($this->hasRole('student')) {
+                return 'Sinh viên';
+            }
 
-        return 'Người dùng đã đăng nhập';
+            return 'Người dùng đã đăng nhập';
+        });
     }
 
     /**

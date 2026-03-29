@@ -155,6 +155,24 @@ class CourseSectionSeeder extends Seeder
                 }
             }
 
+            // Tạo thời khóa biểu mẫu (2 buổi/tuần)
+            $dayOfWeek = rand(2, 4); // Thứ 2 - Thứ 4
+            ClassSchedule::create([
+                'course_section_id' => $section->id,
+                'day_of_week'      => $dayOfWeek,
+                'start_period'     => 1,
+                'end_period'       => 3,
+                'room'             => 'A' . rand(100, 300),
+            ]);
+
+            ClassSchedule::create([
+                'course_section_id' => $section->id,
+                'day_of_week'      => $dayOfWeek + 2, // Thứ 4 - Thứ 6
+                'start_period'     => 4,
+                'end_period'       => 6,
+                'room'             => 'B' . rand(100, 300),
+            ]);
+
             $createdCount++;
         }
 

@@ -148,45 +148,60 @@ erDiagram
     %% NHÓM C: NGÂN HÀNG CÂU HỎI
     %% ════════════════════════════════════════
 
-    question_types {
-        BIGINT id PK
-        VARCHAR code UK
-        VARCHAR name
-        JSON answer_schema
-        TINYINT is_auto_grade
-    }
+    Bảng difficulties (Mới)
+Thay vì dùng ENUM, bảng này giúp bạn tùy biến điểm số và nhãn độ khó dễ dàng.
 
-    questions {
-        BIGINT id PK
-        BIGINT subject_id FK
-        BIGINT chapter_id FK
-        BIGINT question_type_id FK
-        BIGINT created_by FK
-        TEXT content
-        ENUM difficulty
-        BIGINT image_file_id FK
-        JSON answer_data
-        ENUM status
-        INT version
-        DECIMAL correct_rate
-        TIMESTAMP deleted_at
-    }
+id (PK): BIGINT
 
-    question_options {
-        BIGINT id PK
-        BIGINT question_id FK
-        CHAR label
-        TEXT content
-        BIGINT image_file_id FK
-        TINYINT is_correct
-        TINYINT order_num
-    }
+name: VARCHAR (Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao)
 
-    question_tags {
-        BIGINT id PK
-        BIGINT question_id FK
-        VARCHAR tag
-    }
+score_weight: DECIMAL (Ví dụ: 1.0, 1.5, 2.0)
+
+Bảng question_types
+id (PK): BIGINT
+
+code (UK): VARCHAR (Ví dụ: SINGLE_CHOICE, MULTIPLE_CHOICE)
+
+name: VARCHAR
+
+answer_schema: JSON (Dùng để định nghĩa cấu trúc dữ liệu cho từng loại câu hỏi)
+
+is_auto_grade: TINYINT (1: Tự động chấm, 0: Cần giáo viên chấm)
+
+Bảng questions (Bảng chính)
+id (PK): BIGINT
+subject_id (FK): BIGINT
+chapter_id (FK): BIGINT
+question_type_id (FK): BIGINT
+difficulty_id (FK): BIGINT (Nối sang bảng difficulties)
+created_by (FK): BIGINT
+content: TEXT (Nội dung câu hỏi)
+correct_option_id (FK): BIGINT (Trỏ trực tiếp đến id của question_options để check đáp án cực nhanh)
+explanation: TEXT (Lời giải thích sau khi hoàn thành)
+image_file_id (FK): BIGINT
+status: ENUM ('draft', 'published', 'archived')
+version: INT
+total_attempts: INT (Tổng lượt làm câu này)
+total_correct: INT (Tổng lượt làm đúng)
+correct_rate: DECIMAL(5,2) (Tỉ lệ % làm đúng)
+created_at: TIMESTAMP
+deleted_at: TIMESTAMP (Soft delete)
+
+Bảng question_options
+id (PK): BIGINT
+question_id (FK): BIGINT
+label: CHAR (A, B, C, D)
+content: TEXT
+image_file_id (FK): BIGINT
+is_correct: TINYINT (Dùng để hiển thị trong Admin)
+order_num: TINYINT (Thứ tự hiển thị)
+
+Bảng tags & question_tag_map (Chuẩn hóa)
+Tách tag ra bảng riêng để tối ưu tốc độ lọc câu hỏi.
+
+tags: id (PK), name (VARCHAR, UK)
+
+question_tag_map: question_id (FK), tag_id (FK) - (Tạo Composite PK từ 2 cột này)
 
     question_types ||--o{ questions : "categorizes"
     subjects ||--o{ questions : "belongs to"

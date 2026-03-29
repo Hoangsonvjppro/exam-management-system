@@ -41,6 +41,31 @@
             {{ __('Tổng quan') }}
         </x-sidebar-link>
 
+        @if(auth()->user()->hasRole('lecturer'))
+            <x-sidebar-link :href="route('questions.index')" :active="request()->routeIs('lecturer.questions.*')">
+                <x-slot name="icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </x-slot>
+                {{ __('Ngân hàng câu hỏi') }}
+            </x-sidebar-link>
+
+            <x-sidebar-link :href="route('lecturer.complaints.index')" :active="request()->routeIs('lecturer.complaints.*')">
+                <x-slot name="icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                </x-slot>
+                {{ __('Khiếu nại điểm') }}
+                @if(isset($pendingComplaintsCount) && $pendingComplaintsCount > 0)
+                    <span class="ml-auto bg-danger-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse transition-all">
+                        {{ $pendingComplaintsCount }}
+                    </span>
+                @endif
+            </x-sidebar-link>
+        @endif
+
         <x-sidebar-link href="#" :active="request()->routeIs('courses.*')">
             <x-slot name="icon">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,15 +94,6 @@
             {{ __('Kết quả học tập') }}
         </x-sidebar-link>
 
-        <x-sidebar-link href="#" :active="request()->routeIs('schedule.*')">
-            <x-slot name="icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-            </x-slot>
-            {{ __('Lịch biểu') }}
-        </x-sidebar-link>
-
         {{-- CÀI ĐẶT --}}
         <div class="sidebar-section-title">{{ __('CÀI ĐẶT') }}</div>
 
@@ -102,19 +118,4 @@
 
     </nav>
 
-    {{-- Help/Support Card --}}
-    <div class="flex-shrink-0 px-4 pb-4">
-        <div class="bg-sidebar-light/80 rounded-xl p-4 text-center">
-            <div class="w-10 h-10 bg-primary-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <p class="text-white text-sm font-semibold mb-1">{{ __('Cần hỗ trợ?') }}</p>
-            <p class="text-sidebar-text text-xs mb-3">{{ __('Liên hệ phòng đào tạo nếu bạn gặp sự cố.') }}</p>
-            <button class="w-full bg-white/10 hover:bg-white/20 text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors">
-                {{ __('Gửi yêu cầu') }}
-            </button>
-        </div>
-    </div>
 </aside>

@@ -23,15 +23,19 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="text-xs text-gray-500 mb-1">Kỳ thi sắp tới</p>
-                            <h3 class="font-bold text-gray-900 text-sm leading-snug">Toán Rời Rạc & Lý...</h3>
-                            <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                            <p class="text-xs text-text-muted mb-1">Kỳ thi sắp tới</p>
+                            <h3 class="font-bold text-navy-900 text-sm leading-snug">Toán Rời Rạc & Lý...</h3>
+                            <div class="flex items-center gap-3 mt-2 text-xs text-text-muted">
                                 <span class="flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
                                     08:00 AM
                                 </span>
                                 <span class="flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
                                     25/10/2023
                                 </span>
                             </div>
@@ -50,14 +54,14 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500 mb-1">Tiến độ học tập</p>
+                        <p class="text-xs text-text-muted mb-1">Tiến độ học tập</p>
                         <div class="flex items-baseline gap-2">
-                            <span class="text-3xl font-extrabold text-gray-900">75%</span>
-                            <span class="text-xs text-gray-500">Học kỳ 1</span>
+                            <span class="text-3xl font-extrabold text-navy-900">75%</span>
+                            <span class="text-xs text-text-muted">Học kỳ 1</span>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Hoàn thành 3/4 môn học đăng ký</p>
+                        <p class="text-xs text-text-muted mt-1">Hoàn thành 3/4 môn học đăng ký</p>
                         {{-- Progress bar --}}
-                        <div class="mt-2 w-full bg-gray-100 rounded-full h-2">
+                        <div class="mt-2 w-full bg-surface-1 rounded-full h-2">
                             <div class="bg-success-500 h-2 rounded-full" style="width: 75%"></div>
                         </div>
                     </div>
@@ -73,20 +77,22 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500 mb-1">Điểm trung bình (GPA)</p>
+                        <p class="text-xs text-text-muted mb-1">Điểm trung bình (GPA)</p>
                         <div class="flex items-baseline gap-1">
-                            <span class="text-3xl font-extrabold text-gray-900">3.6</span>
-                            <span class="text-sm text-gray-400">/ 4.0</span>
+                            <span class="text-3xl font-extrabold text-navy-900">3.6</span>
+                            <span class="text-sm text-blue-200">/ 4.0</span>
                         </div>
                         <div class="flex items-center gap-2 mt-1">
                             <span class="text-xs text-success-500 font-semibold flex items-center gap-0.5">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                </svg>
                                 +0.4
                             </span>
-                            <span class="text-xs text-gray-400">Xếp hạng: Xuất sắc</span>
+                            <span class="text-xs text-blue-200">Xếp hạng: Xuất sắc</span>
                         </div>
                         {{-- GPA bar --}}
-                        <div class="mt-2 w-full bg-gray-100 rounded-full h-2">
+                        <div class="mt-2 w-full bg-surface-1 rounded-full h-2">
                             <div class="bg-warning-500 h-2 rounded-full" style="width: 90%"></div>
                         </div>
                     </div>
@@ -99,12 +105,12 @@
         {{-- ============================================================ --}}
         <x-card>
             <x-slot name="header">
-                <h2 class="text-lg font-bold text-gray-900">Buttons & Badges</h2>
+                <h2 class="text-lg font-bold text-navy-900">Buttons & Badges</h2>
             </x-slot>
 
             {{-- Button variants --}}
             <div class="space-y-4">
-                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Button Variants</h3>
+                <h3 class="text-sm font-semibold text-text-muted uppercase tracking-wide">Button Variants</h3>
                 <div class="flex flex-wrap items-center gap-3">
                     <x-button variant="primary">Primary</x-button>
                     <x-button variant="secondary">Secondary</x-button>
@@ -115,7 +121,7 @@
                     <x-button variant="outline">Outline</x-button>
                 </div>
 
-                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mt-6">Button Sizes</h3>
+                <h3 class="text-sm font-semibold text-text-muted uppercase tracking-wide mt-6">Button Sizes</h3>
                 <div class="flex flex-wrap items-center gap-3">
                     <x-button variant="primary" size="xs">Extra Small</x-button>
                     <x-button variant="primary" size="sm">Small</x-button>
@@ -123,40 +129,55 @@
                     <x-button variant="primary" size="lg">Large</x-button>
                 </div>
 
-                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mt-6">With Icons (like Nộp bài, Làm bài...)</h3>
+                <h3 class="text-sm font-semibold text-text-muted uppercase tracking-wide mt-6">With Icons (like Nộp bài, Làm bài...)</h3>
                 <div class="flex flex-wrap items-center gap-3">
                     <x-button variant="primary">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
                         Nộp bài
                     </x-button>
                     <x-button variant="secondary">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                         Xem ngay
                     </x-button>
                     <x-button variant="outline">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
                         Làm bài
                     </x-button>
                     <x-button variant="danger" size="sm">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         Sắp hết hạn
                     </x-button>
                 </div>
 
-                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mt-6">Icon-Only Buttons</h3>
+                <h3 class="text-sm font-semibold text-text-muted uppercase tracking-wide mt-6">Icon-Only Buttons</h3>
                 <div class="flex flex-wrap items-center gap-3">
                     <x-button variant="ghost" :iconOnly="true">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
                     </x-button>
                     <x-button variant="ghost" :iconOnly="true">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                     </x-button>
                     <x-button variant="ghost" :iconOnly="true">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
                     </x-button>
                 </div>
 
-                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mt-6">Badges</h3>
+                <h3 class="text-sm font-semibold text-text-muted uppercase tracking-wide mt-6">Badges</h3>
                 <div class="flex flex-wrap items-center gap-3">
                     <x-badge type="info">Đang học</x-badge>
                     <x-badge type="success">Hoàn thành</x-badge>
@@ -172,7 +193,7 @@
         {{-- ============================================================ --}}
         <x-card>
             <x-slot name="header">
-                <h2 class="text-lg font-bold text-gray-900">Form Inputs</h2>
+                <h2 class="text-lg font-bold text-navy-900">Form Inputs</h2>
             </x-slot>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -194,7 +215,7 @@
                 </div>
                 <div class="md:col-span-2">
                     <x-input-label value="Ghi chú" />
-                    <textarea rows="3" class="mt-1 w-full border-border bg-white text-gray-800 placeholder-gray-400 focus:border-primary-500 focus:ring-primary-500 rounded-lg shadow-sm text-sm py-2.5 px-4 transition duration-150" placeholder="Nhập ghi chú..."></textarea>
+                    <textarea rows="3" class="mt-1 w-full border-border bg-white text-navy-900 placeholder-text-muted focus:border-navy-600 focus:ring-blue-200 rounded-[10px] shadow-sm text-sm py-2.5 px-4 transition duration-150" placeholder="Nhập ghi chú..."></textarea>
                 </div>
                 <div class="md:col-span-2">
                     <x-input-label value="Trạng thái (disabled)" />
@@ -208,7 +229,7 @@
         {{-- ============================================================ --}}
         <x-table>
             <x-slot name="header">
-                <h2 class="text-lg font-bold text-gray-900">Nhiệm vụ cần hoàn thành</h2>
+                <h2 class="text-lg font-bold text-navy-900">Nhiệm vụ cần hoàn thành</h2>
                 <a href="#" class="text-sm text-primary-500 hover:text-primary-600 font-medium">Xem tất cả →</a>
             </x-slot>
 
@@ -224,12 +245,14 @@
             <tr class="hover:bg-surface-hover transition-colors">
                 <x-table-cell>
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 bg-danger-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-danger-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <div class="w-9 h-9 bg-danger-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-danger-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-900">Bài tập lớn nhóm - Phân tích thiết kế</p>
-                            <p class="text-xs text-gray-500">Môn: Công nghệ phần mềm</p>
+                            <p class="font-semibold text-navy-900">Bài tập lớn nhóm - Phân tích thiết kế</p>
+                            <p class="text-xs text-text-muted">Môn: Công nghệ phần mềm</p>
                         </div>
                     </div>
                 </x-table-cell>
@@ -247,12 +270,14 @@
             <tr class="hover:bg-surface-hover transition-colors">
                 <x-table-cell>
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                        <div class="w-9 h-9 bg-primary-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-900">Quiz Tuần 5: CSS Flexbox</p>
-                            <p class="text-xs text-gray-500">Môn: Thiết kế Web</p>
+                            <p class="font-semibold text-navy-900">Quiz Tuần 5: CSS Flexbox</p>
+                            <p class="text-xs text-text-muted">Môn: Thiết kế Web</p>
                         </div>
                     </div>
                 </x-table-cell>
@@ -270,12 +295,14 @@
             <tr class="hover:bg-surface-hover transition-colors">
                 <x-table-cell>
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 bg-secondary-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-secondary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        <div class="w-9 h-9 bg-secondary-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-secondary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-900">Xem lại bài giảng: Con trỏ trong C++</p>
-                            <p class="text-xs text-gray-500">Môn: Lập trình nâng cao</p>
+                            <p class="font-semibold text-navy-900">Xem lại bài giảng: Con trỏ trong C++</p>
+                            <p class="text-xs text-text-muted">Môn: Lập trình nâng cao</p>
                         </div>
                     </div>
                 </x-table-cell>
@@ -293,12 +320,14 @@
             <tr class="hover:bg-surface-hover transition-colors">
                 <x-table-cell>
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 bg-success-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <div class="w-9 h-9 bg-success-50 rounded-[10px] flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-900">Báo cáo thực hành - Tuần 4</p>
-                            <p class="text-xs text-gray-500">Môn: Cơ sở dữ liệu</p>
+                            <p class="font-semibold text-navy-900">Báo cáo thực hành - Tuần 4</p>
+                            <p class="text-xs text-text-muted">Môn: Cơ sở dữ liệu</p>
                         </div>
                     </div>
                 </x-table-cell>
@@ -324,18 +353,20 @@
                 <x-card hoverable>
                     <div class="flex items-center gap-3 mb-3">
                         <div class="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
-                            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-900 text-sm">Lập trình C</h4>
-                            <p class="text-xs text-gray-500">CS101 • 3 tín chỉ</p>
+                            <h4 class="font-semibold text-navy-900 text-sm">Lập trình C</h4>
+                            <p class="text-xs text-text-muted">CS101 • 3 tín chỉ</p>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+                    <div class="flex items-center justify-between text-xs text-text-muted mb-2">
                         <span>Tiến độ</span>
-                        <span class="font-semibold text-gray-700">60%</span>
+                        <span class="font-semibold text-text-muted">60%</span>
                     </div>
-                    <div class="w-full bg-gray-100 rounded-full h-1.5">
+                    <div class="w-full bg-surface-1 rounded-full h-1.5">
                         <div class="bg-primary-500 h-1.5 rounded-full" style="width: 60%"></div>
                     </div>
                 </x-card>
@@ -344,18 +375,20 @@
                 <x-card hoverable>
                     <div class="flex items-center gap-3 mb-3">
                         <div class="w-10 h-10 bg-success-50 rounded-xl flex items-center justify-center">
-                            <svg class="w-5 h-5 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" /></svg>
+                            <svg class="w-5 h-5 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                            </svg>
                         </div>
                         <div>
-                            <h4 class="font-semibold text-gray-900 text-sm">Cơ sở dữ liệu</h4>
-                            <p class="text-xs text-gray-500">CS201 • 4 tín chỉ</p>
+                            <h4 class="font-semibold text-navy-900 text-sm">Cơ sở dữ liệu</h4>
+                            <p class="text-xs text-text-muted">CS201 • 4 tín chỉ</p>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+                    <div class="flex items-center justify-between text-xs text-text-muted mb-2">
                         <span>Tiến độ</span>
-                        <span class="font-semibold text-gray-700">85%</span>
+                        <span class="font-semibold text-text-muted">85%</span>
                     </div>
-                    <div class="w-full bg-gray-100 rounded-full h-1.5">
+                    <div class="w-full bg-surface-1 rounded-full h-1.5">
                         <div class="bg-success-500 h-1.5 rounded-full" style="width: 85%"></div>
                     </div>
                 </x-card>
@@ -369,7 +402,7 @@
                         Đăng ký học phần kỳ tới sẽ bắt đầu vào ngày 01/11. Vui lòng kiểm tra lộ trình.
                     </p>
                 </div>
-                <button class="mt-4 w-full bg-white text-primary-600 font-semibold text-sm py-2.5 px-4 rounded-lg hover:bg-primary-50 transition-colors">
+                <button class="mt-4 w-full bg-white text-primary-600 font-semibold text-sm py-2.5 px-4 rounded-[10px] hover:bg-primary-50 transition-colors">
                     Xem chi tiết
                 </button>
             </div>
@@ -380,9 +413,9 @@
         {{-- ============================================================ --}}
         <x-card>
             <x-slot name="header">
-                <h2 class="text-lg font-bold text-gray-900">Legacy Breeze Components</h2>
+                <h2 class="text-lg font-bold text-navy-900">Legacy Breeze Components</h2>
             </x-slot>
-            <p class="text-sm text-gray-500 mb-4">Kiểm tra các component cũ của Breeze vẫn hoạt động với design mới.</p>
+            <p class="text-sm text-text-muted mb-4">Kiểm tra các component cũ của Breeze vẫn hoạt động với design mới.</p>
             <div class="flex flex-wrap items-center gap-3">
                 <x-primary-button>Primary Button</x-primary-button>
                 <x-secondary-button>Secondary Button</x-secondary-button>
@@ -391,7 +424,7 @@
         </x-card>
 
         {{-- Footer --}}
-        <div class="text-center text-xs text-gray-400 py-4">
+        <div class="text-center text-xs text-blue-200 py-4">
             © 2023 EduPro LMS. Bản quyền thuộc về nhà trường.
         </div>
 

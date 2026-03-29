@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,6 +22,22 @@ class Chapter extends Model
     protected function casts(): array
     {
         return ['order' => 'integer'];
+    }
+
+    public function scopeOrderedForQuestionBank(Builder $query): Builder
+    {
+        return $query->orderBy('order')->orderBy('id');
+    }
+
+    public function scopeForSubjectCode(Builder $query, ?string $subjectCode): Builder
+    {
+        if (! $subjectCode) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->whereHas('subject', function (Builder $subjectQuery) use ($subjectCode) {
+            $subjectQuery->where('code', $subjectCode);
+        });
     }
 
     public function subject(): BelongsTo

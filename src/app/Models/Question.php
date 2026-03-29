@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -51,6 +53,20 @@ class Question extends Model
         ];
     }
 
+    // ── Scopes ─────────────────────────────────────────────────
+
+    public function scopeApprovedForSubject(Builder $query, int $subjectId): Builder
+    {
+        return $query->where('status', 'approved')->where('subject_id', $subjectId);
+    }
+
+    public function scopeApproved(Builder $query): Builder
+    {
+        return $query->where('status', 'approved');
+    }
+
+    // ── Relationships ─────────────────────────────────────────
+
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
@@ -76,13 +92,18 @@ class Question extends Model
         return $this->belongsTo(File::class, 'image_file_id');
     }
 
+    public function difficultyLevel(): BelongsTo
+    {
+        return $this->belongsTo(Difficulty::class, 'difficulty', 'code');
+    }
+
     public function options(): HasMany
     {
         return $this->hasMany(QuestionOption::class)->orderBy('order');
     }
 
-    public function tags(): HasMany
+    public function tags(): BelongsToMany
     {
-        return $this->hasMany(QuestionTag::class);
+        return $this->belongsToMany(Tag::class, 'question_tag_map', 'question_id', 'tag_id');
     }
 }

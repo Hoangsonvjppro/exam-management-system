@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -37,12 +38,12 @@ class Notification extends Model
 
     // ─── Scopes ───────────────────────────────────────────────────
 
-    public function scopeUnread($query)
+    public function scopeUnread(Builder $query): Builder
     {
         return $query->whereNull('read_at');
     }
 
-    public function scopeRead($query)
+    public function scopeRead(Builder $query): Builder
     {
         return $query->whereNotNull('read_at');
     }

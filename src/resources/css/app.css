@@ -1,35 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-    .brutal-border {
-        border: 3px solid #000000;
-    }
-
-    .brutal-shadow {
-        box-shadow: 4px 4px 0px 0px #000000;
-    }
-
-    .brutal-shadow-lg {
-        box-shadow: 8px 8px 0px 0px #000000;
-    }
-
-    .brutal-btn:active {
-        transform: translate(2px, 2px);
-        box-shadow: 2px 2px 0px 0px #000000;
-    }
-}
-
 @layer base {
-    body {
-        @apply font-sans text-gray-800 antialiased;
+    :root {
+        --ems-navy-950: #0b2347;
+        --ems-navy-900: #1a3a6b;
+        --ems-navy-700: #2a5298;
+        --ems-navy-600: #185fa5;
+        --ems-blue-400: #378add;
+        --ems-blue-200: #b5d4f4;
+        --ems-blue-50: #e6f1fb;
+        --ems-teal-800: #065f46;
+        --ems-teal-500: #1d9e75;
+        --ems-teal-50: #e1f5ee;
+        --ems-surface-0: #f8fafd;
+        --ems-surface-1: #f4f7fc;
+        --ems-surface-2: #ebf2fa;
+        --ems-border-clean: #d6e2f0;
+        --ems-text-muted: #6b7c99;
     }
 
-    /* Custom scrollbar for sidebar */
+    body {
+        @apply antialiased;
+        font-family: "Be Vietnam Pro", Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+        background: var(--ems-surface-0);
+        color: var(--ems-navy-900);
+    }
+
     .sidebar-scroll::-webkit-scrollbar {
         width: 4px;
     }
@@ -44,25 +46,122 @@
 }
 
 @layer components {
+    .brutal-border {
+        border: 1.5px solid var(--ems-border-clean);
+        border-radius: 10px;
+    }
 
-    /* Sidebar nav item base style */
+    .brutal-shadow {
+        box-shadow: 0 1px 3px rgba(26, 58, 107, 0.1);
+    }
+
+    .brutal-shadow-lg {
+        box-shadow: 0 8px 18px rgba(26, 58, 107, 0.12);
+    }
+
+    .brutal-btn:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 2px rgba(26, 58, 107, 0.16);
+    }
+}
+
+@layer components {
     .sidebar-link {
-        @apply flex items-center gap-3 px-4 py-2.5 text-sm font-black uppercase tracking-wide text-slate-800 bg-white border-[2px] border-black transition-all duration-200 ease-in-out;
+        @apply flex items-center py-2.5 text-[13px] font-medium text-text-muted rounded-[6px] transition-colors duration-200 ease-in-out cursor-pointer;
     }
 
     .sidebar-link.active {
-        @apply bg-ems-primary text-white;
-        box-shadow: 4px 4px 0px 0px #000000;
+        @apply bg-navy-50 text-navy-900 font-semibold;
     }
 
-    .sidebar-link:hover {
-        /* @apply bg-background-light; */
-        box-shadow: 4px 4px 0px 0px #000000;
-        transform: translate(-5px, -1px);
+    .sidebar-link:hover:not(.active) {
+        @apply bg-surface-1 text-navy-900;
     }
 
-    /* Sidebar section title */
     .sidebar-section-title {
-        @apply px-1 pt-5 pb-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500;
+        @apply pl-[48px] pr-4 pt-6 pb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted;
     }
+}
+
+/* Compatibility bridge for legacy Breeze classes */
+.text-gray-900,
+.text-gray-800,
+.text-slate-900 {
+    color: var(--ems-navy-900) !important;
+}
+
+.text-gray-700,
+.text-gray-600,
+.text-gray-500,
+.text-slate-700,
+.text-slate-600,
+.text-slate-500 {
+    color: var(--ems-text-muted) !important;
+}
+
+.text-gray-400,
+.text-slate-400 {
+    color: #95a6bf !important;
+}
+
+.bg-gray-50,
+.bg-gray-100,
+.bg-slate-100,
+.bg-slate-50 {
+    background-color: var(--ems-surface-1) !important;
+}
+
+.border-gray-100,
+.border-gray-200,
+.border-gray-300,
+.border-slate-200,
+.border-slate-300 {
+    border-color: var(--ems-border-clean) !important;
+}
+
+.text-indigo-600,
+.text-indigo-700,
+.text-sky-600,
+.text-sky-700 {
+    color: var(--ems-navy-600) !important;
+}
+
+.bg-indigo-50,
+.bg-sky-50 {
+    background-color: var(--ems-blue-50) !important;
+}
+
+.border-indigo-200,
+.border-indigo-400,
+.border-sky-200,
+.border-sky-500 {
+    border-color: var(--ems-blue-200) !important;
+}
+
+.bg-indigo-600,
+.bg-sky-600 {
+    background-color: var(--ems-navy-900) !important;
+}
+
+.hover\:bg-indigo-700:hover,
+.hover\:bg-sky-700:hover {
+    background-color: var(--ems-navy-950) !important;
+}
+
+.focus\:ring-indigo-500:focus,
+.focus\:ring-sky-300:focus,
+.focus\:ring-sky-200:focus {
+    --tw-ring-color: var(--ems-blue-200) !important;
+}
+
+.shadow,
+.shadow-sm,
+.shadow-md,
+.shadow-lg,
+.shadow-xl {
+    box-shadow: 0 1px 3px rgba(26, 58, 107, 0.1) !important;
+}
+
+[x-cloak] {
+    display: none !important;
 }

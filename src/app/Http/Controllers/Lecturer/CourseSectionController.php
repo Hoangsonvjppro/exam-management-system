@@ -3,16 +3,24 @@
 namespace App\Http\Controllers\Lecturer;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CourseSection\StoreCourseSectionRequest;
+use App\Http\Requests\CourseSection\UpdateCourseSectionRequest;
 use App\Models\CourseSection;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class CourseSectionController extends Controller
 {
+    public function __construct(
+        private readonly \App\Services\CourseSectionService $courseSectionService
+    ) {
+    }
+
     public function index(): View
     {
         /** @var User $user */
@@ -23,74 +31,87 @@ class CourseSectionController extends Controller
             ->latest()
             ->paginate(12);
 
-        return view('lecturer.classes.index', compact('sections'));
+        // Load data cho slide-over form tạo lớp mới
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $semesters = \App\Models\Semester::orderByDesc('start_date')->get();
+
+        return view('lecturer.classes.index', compact('sections', 'subjects', 'semesters'));
     }
 
     public function create(): View
     {
-        return view('lecturer.classes.create');
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $semesters = \App\Models\Semester::orderByDesc('start_date')->get();
+
+        return view('lecturer.classes.create', compact('subjects', 'semesters'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreCourseSectionRequest $request): RedirectResponse|JsonResponse
     {
-        $validated = $request->validate([
-            'name'         => ['required', 'string', 'max:255'],
-            'code'         => ['required', 'string', 'max:50', 'unique:course_sections,code'],
-            'max_students' => ['nullable', 'integer', 'min:1', 'max:500'],
-        ]);
-
         /** @var User $user */
         $user = Auth::user();
+        $validated = $request->validated();
 
-        $section = CourseSection::create([
-            'name'         => $validated['name'],
-            'code'         => strtoupper($validated['code']),
-            'invite_code'  => strtoupper(Str::random(6)),
-            'lecturer_id'  => $user->id,
-            'max_students' => $validated['max_students'] ?? 100,
-            'status'       => 'active',
-        ]);
+        $section = $this->courseSectionService->createCourseSection($user, $validated);
+
+        if ($request->wantsJson()) {
+            $section->load(['subject', 'semester']);
+            $section->loadCount('students');
+
+            $html = view('lecturer.classes.partials._section_card', compact('section'))->render();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã tạo lớp học phần thành công. Mã tham gia: ' . $section->invite_code,
+                'html'    => $html,
+            ]);
+        }
 
         return redirect()
             ->route('lecturer.classes.show', $section)
-            ->with('success', 'Tạo lớp học phần thành công. Mã tham gia: ' . $section->invite_code);
+            ->with('success', 'Tạo lớp học phần thành công. Mã lớp nội bộ: ' . $section->code . '. Mã tham gia: ' . $section->invite_code);
     }
 
     public function show(CourseSection $section): View
     {
-        $this->authorizeSection($section);
+        Gate::authorize('manage', $section);
 
-        $section->load(['students' => function ($q) {
-            $q->orderBy('name');
-        }]);
+        $section->load([
+            'students' => fn($q) => $q->orderBy('name'),
+            // Sửa 'exams' thành 'examSchedules.exam' để lấy số lượng câu hỏi thông qua đề thi của ca thi
+            'examSchedules.exam' => fn($q) => $q->withCount('questions'),
+            'complaints.student' => fn($q) => $q->latest(),
+        ]);
 
         return view('lecturer.classes.show', compact('section'));
     }
 
     public function edit(CourseSection $section): View
     {
-        $this->authorizeSection($section);
+        Gate::authorize('manage', $section);
 
         return view('lecturer.classes.edit', compact('section'));
     }
 
-    public function update(Request $request, CourseSection $section): RedirectResponse
+    public function update(UpdateCourseSectionRequest $request, CourseSection $section): RedirectResponse|JsonResponse
     {
-        $this->authorizeSection($section);
+        Gate::authorize('manage', $section);
 
-        $validated = $request->validate([
-            'name'         => ['required', 'string', 'max:255'],
-            'code'         => ['required', 'string', 'max:50', 'unique:course_sections,code,' . $section->id],
-            'max_students' => ['nullable', 'integer', 'min:1', 'max:500'],
-            'status'       => ['required', 'in:active,archived,cancelled'],
-        ]);
+        $this->courseSectionService->updateCourseSection($section, $request->validated());
 
-        $section->update([
-            'name'         => $validated['name'],
-            'code'         => strtoupper($validated['code']),
-            'max_students' => $validated['max_students'] ?? $section->max_students,
-            'status'       => $validated['status'],
-        ]);
+        if ($request->wantsJson()) {
+            $section->refresh();
+            $section->load(['subject', 'semester']);
+            $section->loadCount('students');
+
+            $html = view('lecturer.classes.partials._section_card', compact('section'))->render();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật lớp học phần thành công.',
+                'html'    => $html,
+            ]);
+        }
 
         return redirect()
             ->route('lecturer.classes.show', $section)
@@ -99,33 +120,24 @@ class CourseSectionController extends Controller
 
     public function destroy(CourseSection $section): RedirectResponse
     {
-        $this->authorizeSection($section);
+        Gate::authorize('manage', $section);
 
-        // Only allow deletion if no students are enrolled
-        if ($section->students()->exists()) {
-            return back()->with('error', 'Không thể xoá lớp có sinh viên đang theo học. Hãy đổi trạng thái sang "Huỷ".');
+        $result = $this->courseSectionService->deleteCourseSection($section);
+        if (!$result['deleted']) {
+            return back()->with('error', $result['message']);
         }
-
-        $section->delete();
 
         return redirect()
             ->route('lecturer.classes.index')
-            ->with('success', 'Đã xoá lớp học phần.');
+            ->with('success', $result['message']);
     }
 
     public function regenerateCode(CourseSection $section): RedirectResponse
     {
-        $this->authorizeSection($section);
+        Gate::authorize('manage', $section);
 
-        $section->update(['invite_code' => strtoupper(Str::random(6))]);
+        $section = $this->courseSectionService->regenerateInviteCode($section);
 
         return back()->with('success', 'Đã tạo mã mời mới: ' . $section->invite_code);
-    }
-
-    private function authorizeSection(CourseSection $section): void
-    {
-        if ($section->lecturer_id !== Auth::id()) {
-            abort(403, 'Bạn không có quyền truy cập lớp học này.');
-        }
     }
 }

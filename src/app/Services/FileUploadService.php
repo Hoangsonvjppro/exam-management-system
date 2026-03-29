@@ -4,8 +4,9 @@ namespace App\Services;
 
 use App\Models\File;
 use App\Models\Setting;
+use Illuminate\Database\QueryException;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -41,7 +42,7 @@ class FileUploadService
      * @throws \InvalidArgumentException Khi file không hợp lệ
      * @throws \RuntimeException         Khi lưu file thất bại
      */
-    public function upload(UploadedFile $uploadedFile, array $options = []): File
+    public function upload(UploadedFile $uploadedFile, array $options = [], ?int $uploadedBy = null): File
     {
         // ── Merge options với defaults ──────────────────────
         $directory = $options['directory'] ?? 'uploads';
@@ -83,7 +84,7 @@ class FileUploadService
 
         // ── Tạo record trong DB ────────────────────────────
         $file = File::create([
-            'uploaded_by' => Auth::id(),
+            'uploaded_by' => $uploadedBy ?? ($options['uploaded_by'] ?? null),
             'disk' => $disk,
             'path' => $storedPath,
             'original_name' => $originalName,
@@ -133,6 +134,7 @@ class FileUploadService
      */
     public function getUrl(File $file, int $expireMinutes = 30): ?string
     {
+        /** @var FilesystemAdapter $storage */
         $storage = Storage::disk($file->disk);
 
         if (!$storage->exists($file->path)) {
@@ -149,9 +151,7 @@ class FileUploadService
         try {
             return $storage->temporaryUrl($file->path, now()->addMinutes($expireMinutes));
         } catch (\RuntimeException $e) {
-            // Local disk không hỗ trợ temporaryUrl
-            // Trả về URL route download thay thế
-            return route('files.show', $file->id);
+            return null;
         }
     }
 
@@ -186,6 +186,9 @@ class FileUploadService
 
         $count = 0;
         foreach ($orphans as $file) {
+            if (! $file instanceof File) {
+                continue;
+            }
             $this->delete($file);
             $count++;
         }
@@ -220,7 +223,7 @@ class FileUploadService
         if ($file->getSize() > $maxSizeBytes) {
             throw new \InvalidArgumentException(
                 "File vượt quá dung lượng cho phép ({$maxSizeMb}MB). " .
-                "Kích thước file: " . number_format($file->getSize() / 1048576, 2) . "MB."
+                    "Kích thước file: " . number_format($file->getSize() / 1048576, 2) . "MB."
             );
         }
 
@@ -229,7 +232,7 @@ class FileUploadService
         if (!in_array($extension, $allowedExtArray)) {
             throw new \InvalidArgumentException(
                 "Loại file '.{$extension}' không được phép. " .
-                "Các loại cho phép: " . implode(', ', $allowedExtArray)
+                    "Các loại cho phép: " . implode(', ', $allowedExtArray)
             );
         }
 
@@ -267,7 +270,7 @@ class FileUploadService
     {
         try {
             return Setting::getValue($key, $default);
-        } catch (\Exception $e) {
+        } catch (QueryException | \RuntimeException $e) {
             return $default;
         }
     }

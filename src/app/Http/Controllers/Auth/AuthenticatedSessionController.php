@@ -13,9 +13,7 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function __construct(private readonly UserStateService $userStateService)
-    {
-    }
+    public function __construct(private readonly UserStateService $userStateService) {}
 
     /**
      * Display the login view.
@@ -38,22 +36,22 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         // Only lecturers may use email + password login.
-        if (! $user->hasRole('lecturer')) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+        // if (! $user->hasRole('lecturer')) {
+        //     Auth::guard('web')->logout();
+        //     $request->session()->invalidate();
+        //     $request->session()->regenerateToken();
 
-            return back()->withErrors([
-                'email' => 'Email/mật khẩu chỉ dành cho giảng viên. Sinh viên vui lòng đăng nhập bằng Google.',
-            ])->onlyInput('email');
-        }
+        //     return back()->withErrors([
+        //         'email' => 'Email/mật khẩu chỉ dành cho giảng viên. Sinh viên vui lòng đăng nhập bằng Google.',
+        //     ])->onlyInput('email');
+        // }
 
         if ($user->must_change_password) {
             return redirect()->route('profile.edit')
                 ->with('warning', 'Bạn cần đổi mật khẩu tạm trước khi tiếp tục.');
         }
 
-        return redirect()->intended($this->userStateService->determineHomeRoute($user));
+        return redirect()->intended(route($this->userStateService->determineHomeRouteName($user)));
     }
 
     /**
@@ -69,5 +67,4 @@ class AuthenticatedSessionController extends Controller
 
         return redirect()->route('login');
     }
-
 }

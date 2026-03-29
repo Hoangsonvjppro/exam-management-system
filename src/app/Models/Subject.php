@@ -2,21 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Subject Model — Môn học.
- *
- * @property int    $id
- * @property string $code       Mã môn: CS101
- * @property string $name       Tên môn học
- * @property int    $credits    Số tín chỉ
- * @property string $department Khoa quản lý
- */
 class Subject extends Model
 {
+    use HasFactory;
     use SoftDeletes;
 
     protected $fillable = [
@@ -27,19 +21,14 @@ class Subject extends Model
         'description',
     ];
 
-    protected function casts(): array
+    public function scopeOrderedForQuestionBank(Builder $query): Builder
     {
-        return ['credits' => 'integer'];
+        return $query->orderBy('name');
     }
 
     public function chapters(): HasMany
     {
-        return $this->hasMany(Chapter::class)->orderBy('order');
-    }
-
-    public function questions(): HasMany
-    {
-        return $this->hasMany(Question::class);
+        return $this->hasMany(Chapter::class);
     }
 
     public function courseSections(): HasMany

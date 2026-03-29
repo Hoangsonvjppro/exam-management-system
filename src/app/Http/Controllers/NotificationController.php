@@ -2,27 +2,34 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Notification\StoreNotificationRequest;
 use App\Models\CourseSection;
-use App\Models\Notification;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use App\Services\NotificationService;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Gate;
 
 class NotificationController extends Controller
 {
+    public function __construct(private readonly NotificationService $notificationService) {}
+
     /**
      * Display a listing of notifications for the currently authenticated student.
      */
-    public function index()
+    public function index(): View
     {
-        $notifications = auth()->user()->notifications()->latest()->paginate(10);
-        
-        // Mark all unread as read when they visit the page? 
-        // Or wait, the requirement says "khi ấn vào nút chi tiết mới hiện toàn bộ thông báo" 
-        // We can just keep it simple and mark them read when viewing the page, 
-        // Or mark them read via a dedicated endpoint. Let's mark them read on index for simplicity,
-        // or just let them stay unread until a specific action if needed. 
-        // If we want the red dot to disappear when they visit the page:
-        auth()->user()->notifications()->unread()->update(['read_at' => now()]);
+        /** @var User $user */
+        $user = request()->user();
+
+        $notifications = $user->notifications()->latest()->paginate(10);
+
+        // Đánh dấu tất cả thông báo chưa đọc thành đã đọc khi họ truy cập trang?
+        // Hoặc chờ đã, yêu cầu nói là "khi ấn vào nút chi tiết mới hiện toàn bộ thông báo"
+        // Chúng ta có thể làm đơn giản bằng cách đánh dấu đã đọc khi xem trang,
+        // Hoặc đánh dấu đã đọc qua một endpoint riêng. Hãy đánh dấu đã đọc tại hàm index cho đơn giản,
+        // hoặc cứ để chúng ở trạng thái chưa đọc cho đến khi có hành động cụ thể nếu cần.
+        // Nếu chúng ta muốn dấu chấm đỏ biến mất khi họ truy cập trang:
+        $user->notifications()->unread()->update(['read_at' => now()]);
 
         return view('student.notifications.index', compact('notifications'));
     }
@@ -30,45 +37,15 @@ class NotificationController extends Controller
     /**
      * Store a newly created notification sent by a lecturer to a specific class.
      */
-    public function store(Request $request, CourseSection $section)
+    public function store(StoreNotificationRequest $request, CourseSection $section)
     {
-        // Add authorization check: only the lecturer of this section can send notifications
-        if (auth()->id() !== (int) $section->lecturer_id) {
-            abort(403, 'Unauthorized action.');
+        Gate::authorize('sendNotification', $section);
+
+        try {
+            $this->notificationService->sendToSection($section, $request->validated());
+        } catch (\DomainException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        $validated = $request->validate([
-            'title'   => 'required|string|max:255',
-            'message' => 'required|string',
-        ]);
-
-        $students = $section->students;
-
-        if ($students->isEmpty()) {
-            return back()->with('error', 'Lớp học phần này chưa có sinh viên nào để gửi thông báo.');
-        }
-
-        $now = now();
-        $notificationsToInsert = [];
-
-        foreach ($students as $student) {
-            $notificationsToInsert[] = [
-                'id'         => (string) \Illuminate\Support\Str::uuid(),
-                'user_id'    => $student->id,
-                'type'       => 'course_announcement',
-                'title'      => $validated['title'],
-                'message'    => $validated['message'],
-                'data'       => json_encode([
-                    'course_section_id'   => $section->id,
-                    'course_section_name' => $section->name ?? $section->code,
-                ]),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
-        }
-
-        // Bulk insert for performance
-        Notification::insert($notificationsToInsert);
 
         return back()->with('success', 'Đã gửi thông báo đến lớp học phần thành công.');
     }

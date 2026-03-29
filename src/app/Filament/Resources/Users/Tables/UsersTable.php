@@ -27,7 +27,7 @@ class UsersTable
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Ho ten')
+                    ->label('Họ tên')
                     ->searchable()
                     ->sortable(),
 
@@ -37,30 +37,30 @@ class UsersTable
                     ->copyable(),
 
                 TextColumn::make('roles.name')
-                    ->label('Vai tro')
+                    ->label('Vai trò')
                     ->badge()
                     ->separator(',')
                     ->searchable(),
 
                 IconColumn::make('is_active')
-                    ->label('Trang thai')
+                    ->label('Trạng thái')
                     ->boolean(),
 
                 IconColumn::make('must_change_password')
-                    ->label('Doi mat khau')
+                    ->label('Đổi mật khẩu')
                     ->boolean(),
 
                 TextColumn::make('updated_at')
-                    ->label('Cap nhat')
+                    ->label('Cập nhật lần cuối')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('role_name')
-                    ->label('Vai tro')
+                    ->label('Vai trò')
                     ->options([
-                        'lecturer' => 'Giang vien',
-                        'student' => 'Sinh vien',
+                        'lecturer' => 'Giảng viên',
+                        'student' => 'Sinh viên',
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         $role = $data['value'] ?? null;
@@ -73,9 +73,9 @@ class UsersTable
                     }),
 
                 TernaryFilter::make('is_active')
-                    ->label('Kich hoat')
-                    ->trueLabel('Dang hoat dong')
-                    ->falseLabel('Da bi khoa'),
+                    ->label('Kích hoạt')
+                    ->trueLabel('Đang hoạt động')
+                    ->falseLabel('Đã bị khóa'),
 
                 TrashedFilter::make(),
             ])
@@ -83,8 +83,8 @@ class UsersTable
                 EditAction::make(),
 
                 Action::make('toggle_active')
-                    ->label(fn (User $record): string => $record->is_active ? 'Khoa tai khoan' : 'Mo khoa')
-                    ->color(fn (User $record): string => $record->is_active ? 'danger' : 'success')
+                    ->label(fn(User $record): string => $record->is_active ? 'Khoa tài khoản' : 'Mở khóa')
+                    ->color(fn(User $record): string => $record->is_active ? 'danger' : 'success')
                     ->requiresConfirmation()
                     ->visible(function (): bool {
                         $admin = auth('admin')->user();
@@ -92,30 +92,33 @@ class UsersTable
                         return $admin ? Gate::forUser($admin)->allows('admin.users.block') : false;
                     })
                     ->action(function (User $record): void {
-                        $isActive = app(AdminUserLifecycleService::class)->toggleActive($record);
+                        $actorAdminId = auth('admin')->id();
+                        $isActive = app(AdminUserLifecycleService::class)->toggleActive($record, $actorAdminId);
 
                         Notification::make()
-                            ->title($isActive ? 'Da mo khoa tai khoan' : 'Da khoa tai khoan')
+                            ->title($isActive ? 'Đã mở khóa tài khoản' : 'Đã khóa tài khoản')
                             ->success()
                             ->send();
                     }),
 
                 Action::make('reset_password')
-                    ->label('Reset mat khau tam')
+                    ->label('Reset mật khẩu tạm')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->visible(fn (User $record): bool =>
+                    ->visible(
+                        fn(User $record): bool =>
                         $record->hasRole('lecturer')
-                        && (($admin = auth('admin')->user())
-                            ? Gate::forUser($admin)->allows('admin.users.reset-password')
-                            : false)
+                            && (($admin = auth('admin')->user())
+                                ? Gate::forUser($admin)->allows('admin.users.reset-password')
+                                : false)
                     )
                     ->action(function (User $record): void {
-                        $tempPassword = app(AdminUserLifecycleService::class)->resetLecturerPassword($record);
+                        $actorAdminId = auth('admin')->id();
+                        $tempPassword = app(AdminUserLifecycleService::class)->resetLecturerPassword($record, $actorAdminId);
 
                         Notification::make()
-                            ->title('Da reset mat khau tam')
-                            ->body("Mat khau tam moi: {$tempPassword}")
+                            ->title('Đã reset mật khẩu tạm thời')
+                            ->body("Mật khẩu tạm mới: {$tempPassword}")
                             ->warning()
                             ->persistent()
                             ->send();

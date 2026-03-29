@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -91,6 +93,7 @@ class File extends Model
      */
     public function getUrlAttribute(): ?string
     {
+        /** @var FilesystemAdapter $storage */
         $storage = Storage::disk($this->disk);
 
         if (!$storage->exists($this->path)) {
@@ -131,7 +134,7 @@ class File extends Model
      * Scope: File mồ côi (không ai sử dụng).
      * Dùng để dọn rác định kỳ.
      */
-    public function scopeOrphaned($query)
+    public function scopeOrphaned(Builder $query): Builder
     {
         return $query->whereNull('used_by_type')
             ->whereNull('used_by_id');
@@ -141,7 +144,7 @@ class File extends Model
      * Scope: Lọc theo MIME type.
      * VD: File::ofMimeType('image')->get()
      */
-    public function scopeOfMimeType($query, string $mimePrefix)
+    public function scopeOfMimeType(Builder $query, string $mimePrefix): Builder
     {
         return $query->where('mime_type', 'like', $mimePrefix . '%');
     }
@@ -150,7 +153,7 @@ class File extends Model
      * Scope: Lọc theo extension.
      * VD: File::ofExtension('pdf')->get()
      */
-    public function scopeOfExtension($query, string $extension)
+    public function scopeOfExtension(Builder $query, string $extension): Builder
     {
         return $query->where('extension', strtolower($extension));
     }

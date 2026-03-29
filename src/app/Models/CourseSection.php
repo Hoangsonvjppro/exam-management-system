@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -22,6 +23,7 @@ class CourseSection extends Model
 {
     protected $fillable = [
         'code',
+        'name',
         'invite_code',
         'subject_id',
         'semester_id',
@@ -70,9 +72,19 @@ class CourseSection extends Model
 
     // ── Scopes ─────────────────────────────────────────────────
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
+    }
+
+    public function scopeOwnedBy(Builder $query, int $lecturerId): Builder
+    {
+        return $query->where('lecturer_id', $lecturerId);
+    }
+
+    public function scopeWithInviteCode(Builder $query, string $code): Builder
+    {
+        return $query->where('invite_code', $code);
     }
 
     // ── Helpers ────────────────────────────────────────────────
@@ -81,5 +93,82 @@ class CourseSection extends Model
     public function getEnrolledCountAttribute(): int
     {
         return $this->students()->wherePivot('status', 'enrolled')->count();
+    }
+
+    public function examSchedules(): HasMany
+    {
+        return $this->hasMany(ExamSchedule::class);
+    }
+
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class, 'course_section_id');
+    }
+
+    // ── Code Generation ────────────────────────────────────────
+
+    public static function generateCode(int|string|null $subjectId, int|string|null $semesterId): ?string
+    {
+        if (blank($subjectId) || blank($semesterId)) {
+            return null;
+        }
+
+        $subject = Subject::find($subjectId);
+        $semester = Semester::find($semesterId);
+
+        if (!$subject || !$semester) {
+            return null;
+        }
+
+        $groupNumber = static::resolveNextMissingGroupNumber((int) $subject->id, (int) $semester->id);
+
+        $termCode = match ((int) $semester->term) {
+            1 => 'HK1',
+            2 => 'HK2',
+            3 => 'HK3',
+            default => 'HK' . (int) $semester->term,
+        };
+
+        $startYear = (int) $semester->year;
+        $yearCode = sprintf('%02d%02d', $startYear % 100, ($startYear + 1) % 100);
+
+        return strtoupper(sprintf(
+            '%s-%02d-%s-%s',
+            $subject->code,
+            $groupNumber,
+            $termCode,
+            $yearCode,
+        ));
+    }
+
+    protected static function resolveNextMissingGroupNumber(int $subjectId, int $semesterId): int
+    {
+        $used = static::query()
+            ->where('subject_id', $subjectId)
+            ->where('semester_id', $semesterId)
+            ->pluck('code')
+            ->map(function ($code) {
+                $parts = explode('-', $code);
+                return isset($parts[1]) && is_numeric($parts[1]) ? (int) $parts[1] : null;
+            })
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        $expected = 1;
+
+        foreach ($used as $n) {
+            if ($n === $expected) {
+                $expected++;
+                continue;
+            }
+            if ($n > $expected) {
+                break;
+            }
+        }
+
+        return $expected;
     }
 }

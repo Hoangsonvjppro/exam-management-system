@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\Onboarding\StoreOnboardingRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -13,12 +13,9 @@ class StudentOnboardingController extends Controller
         return view('onboarding');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreOnboardingRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'student_code' => ['required', 'string', 'max:20', 'unique:users,student_code'],
-            'class_name' => ['required', 'string', 'max:100'],
-        ]);
+        $validated = $request->validated();
 
         $user = auth()->user();
         $user->student_code = $validated['student_code'];

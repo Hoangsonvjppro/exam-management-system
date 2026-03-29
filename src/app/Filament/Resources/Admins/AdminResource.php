@@ -21,11 +21,11 @@ class AdminResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $navigationLabel = 'Quan tri vien';
+    protected static ?string $navigationLabel = 'Quản trị viên';
 
-    protected static ?string $modelLabel = 'Quan tri vien';
+    protected static ?string $modelLabel = 'Quản trị viên';
 
-    protected static ?string $pluralModelLabel = 'Quan tri vien';
+    protected static ?string $pluralModelLabel = 'Quản trị viên';
 
     public static function form(Schema $schema): Schema
     {

@@ -38,8 +38,8 @@ class CreateUser extends CreateRecord
 
         if ($this->generatedPassword) {
             Notification::make()
-                ->title('Da tao tai khoan voi mat khau tam')
-                ->body("Mat khau tam: {$this->generatedPassword}")
+                ->title('Đã tạo tài khoản với mật khẩu tạm thời')
+                ->body("Mật khẩu tạm thời: {$this->generatedPassword}")
                 ->success()
                 ->persistent()
                 ->send();

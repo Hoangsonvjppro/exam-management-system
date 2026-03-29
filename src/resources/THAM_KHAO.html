@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .ds-section {
+            margin-bottom: 36px;
+        }
+
+        .ds-label {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: #6B7C99;
+            margin: 0 0 14px;
+        }
+
+        .ds-divider {
+            border: none;
+            border-top: 0.5px solid #D6E2F0;
+            margin: 32px 0;
+        }
+
+        /* PHILOSOPHY */
+        .phi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .phi-card {
+            background: #F4F7FC;
+            border-radius: 10px;
+            padding: 14px 16px;
+            border-left: 3px solid #1A3A6B;
+        }
+
+        .phi-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1A3A6B;
+            margin: 0 0 5px;
+        }
+
+        .phi-desc {
+            font-size: 12px;
+            color: #4A5F7A;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* COLOR PALETTE */
+        .swatch-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .swatch-group {
+            display: flex;
+            gap: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 0.5px solid #D6E2F0;
+        }
+
+        .swatch {
+            flex: 1;
+            height: 52px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 5px 7px;
+        }
+
+        .swatch-name {
+            font-size: 9px;
+            font-weight: 600;
+            opacity: .85;
+        }
+
+        .swatch-hex {
+            font-size: 9px;
+            opacity: .7;
+            font-family: monospace;
+        }
+
+        .color-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .color-role {
+            font-size: 11px;
+            color: #4A5F7A;
+        }
+
+        .color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* TYPOGRAPHY */
+        .type-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .type-item {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+            padding: 10px 14px;
+            background: #F4F7FC;
+            border-radius: 8px;
+        }
+
+        .type-spec {
+            font-size: 11px;
+            color: #6B7C99;
+            min-width: 140px;
+            flex-shrink: 0;
+            font-family: monospace;
+        }
+
+        .type-sample {
+            color: #1A3A6B;
+        }
+
+        /* SPACING */
+        .space-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .space-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .space-box {
+            background: #B5D4F4;
+            border-radius: 4px;
+            width: 28px;
+        }
+
+        .space-val {
+            font-size: 10px;
+            color: #4A5F7A;
+            font-family: monospace;
+            text-align: center;
+        }
+
+        /* RADIUS */
+        .radius-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .radius-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .radius-box {
+            width: 56px;
+            height: 36px;
+            background: #E6F1FB;
+            border: 1.5px solid #185FA5;
+        }
+
+        .radius-label {
+            font-size: 11px;
+            color: #4A5F7A;
+            font-family: monospace;
+        }
+
+        /* BUTTONS */
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+            transition: opacity .15s;
+        }
+
+        .btn-primary {
+            background: #1A3A6B;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #E6F1FB;
+            color: #1A3A6B;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #1A3A6B;
+            border: 1.5px solid #1A3A6B;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: #1A3A6B;
+            border: 1.5px solid #D6E2F0;
+        }
+
+        .btn-danger {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .btn-sm {
+            font-size: 11px;
+            padding: 5px 12px;
+            border-radius: 5px;
+        }
+
+        .btn-lg {
+            font-size: 15px;
+            padding: 11px 24px;
+            border-radius: 8px;
+        }
+
+        .btn-icon {
+            padding: 8px;
+            border-radius: 6px;
+            background: #E6F1FB;
+            color: #1A3A6B;
+            font-size: 14px;
+        }
+
+        /* BADGES */
+        .badge-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        /* CARDS */
+        .card-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .ca-card {
+            background: #fff;
+            border: 0.5px solid #D6E2F0;
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .ca-card-accent {
+            border-top: 3px solid #1A3A6B;
+        }
+
+        .ca-card-featured {
+            background: #F4F7FC;
+            border: 0.5px solid #B5D4F4;
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1A3A6B;
+            margin: 0 0 4px;
+        }
+
+        .card-sub {
+            font-size: 11px;
+            color: #6B7C99;
+            margin: 0 0 10px;
+        }
+
+        .card-body {
+            font-size: 12px;
+            color: #374151;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* INPUT */
+        .input-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #1A3A6B;
+        }
+
+        .ca-input {
+            border: 1.5px solid #D6E2F0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            color: #1A3A6B;
+            background: #fff;
+            font-family: inherit;
+            outline: none;
+            width: 100%;
+        }
+
+        .ca-input:focus {
+            border-color: #185FA5;
+            box-shadow: 0 0 0 3px #E6F1FB;
+        }
+
+        .ca-input.error {
+            border-color: #DC2626;
+            background: #FEF2F2;
+        }
+
+        .input-hint {
+            font-size: 11px;
+            color: #6B7C99;
+            margin: 0;
+        }
+
+        .input-error-msg {
+            font-size: 11px;
+            color: #DC2626;
+            margin: 0;
+        }
+
+        .ca-select {
+            border: 1.5px solid #D6E2F0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            color: #1A3A6B;
+            background: #fff;
+            font-family: inherit;
+            width: 100%;
+        }
+
+        /* NAV */
+        .nav-demo {
+            background: #1A3A6B;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            height: 52px;
+            gap: 8px;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 24px;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #93BAE8;
+        }
+
+        .nav-logo-text {
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            color: #93BAE8;
+            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .nav-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #2A5298;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #93BAE8;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1.5px solid #3A6AC8;
+        }
+
+        /* TABLE */
+        .ca-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .ca-table thead th {
+            background: #F4F7FC;
+            color: #1A3A6B;
+            font-weight: 600;
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1.5px solid #D6E2F0;
+            font-size: 11px;
+            letter-spacing: .03em;
+        }
+
+        .ca-table tbody td {
+            padding: 9px 12px;
+            color: #374151;
+            border-bottom: 0.5px solid #EBF2FA;
+        }
+
+        .ca-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .ca-table tbody tr:hover td {
+            background: #F8FAFD;
+        }
+
+        /* STATUS CHIP */
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 9px;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .s-upcoming {
+            background: #EBF2FA;
+            color: #1A3A6B;
+        }
+
+        .s-upcoming .status-dot {
+            background: #378ADD;
+        }
+
+        .s-ongoing {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .s-ongoing .status-dot {
+            background: #10B981;
+        }
+
+        .s-done {
+            background: #F1EFE8;
+            color: #444441;
+        }
+
+        .s-done .status-dot {
+            background: #888780;
+        }
+
+        .s-urgent {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .s-urgent .status-dot {
+            background: #EF4444;
+        }
+
+        /* BREADCRUMB */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #6B7C99;
+        }
+
+        .breadcrumb a {
+            color: #185FA5;
+            text-decoration: none;
+        }
+
+        .breadcrumb span {
+            color: #B0BECE;
+        }
+    </style>
+
+    <!-- PHILOSOPHY -->
+    <div class="ds-section">
+        <p class="ds-label">Triết lý thiết kế</p>
+        <div class="phi-grid">
+            <div class="phi-card">
+                <p class="phi-title">Tin cậy trước, đẹp sau</p>
+                <p class="phi-desc">Giao diện phải gợi lên cảm giác của một tổ chức giáo dục nghiêm túc. Tính nhất quán
+                    và
+                    trật tự được ưu tiên hơn sáng tạo.</p>
+            </div>
+            <div class="phi-card">
+                <p class="phi-title">Phân cấp thông tin rõ ràng</p>
+                <p class="phi-desc">Người dùng nhìn vào là biết ngay cái gì quan trọng nhất. Không có hai thứ cùng mức
+                    độ ưu
+                    tiên thị giác.</p>
+            </div>
+            <div class="phi-card">
+                <p class="phi-title">Khoảng trắng là ngôn ngữ</p>
+                <p class="phi-desc">Whitespace không phải chỗ trống — đó là cách nhóm các thông tin liên quan và tạo
+                    nhịp
+                    thở cho nội dung.</p>
+            </div>
+        </div>
+    </div>
+
+    <hr class="ds-divider">
+
+    <!-- COLOR PALETTE -->
+    <div class="ds-section">
+        <p class="ds-label">Bảng màu — Color tokens</p>
+
+        <div class="swatch-row">
+
+            <div>
+                <div class="swatch-group" style="margin-bottom:6px;">
+                    <div class="swatch" style="background:#0B2347;"><span class="swatch-name"
+                            style="color:#93BAE8;">Navy
+                            950</span><span class="swatch-hex" style="color:#6A93C4;">#0B2347</span></div>
+                    <div class="swatch" style="background:#1A3A6B;"><span class="swatch-name"
+                            style="color:#93BAE8;">Navy
+                            900</span><span class="swatch-hex" style="color:#6A93C4;">#1A3A6B</span></div>
+                    <div class="swatch" style="background:#2A5298;"><span class="swatch-name"
+                            style="color:#B5D4F4;">Navy
+                            700</span><span class="swatch-hex" style="color:#93BAE8;">#2A5298</span></div>
+                    <div class="swatch" style="background:#185FA5;"><span class="swatch-name"
+                            style="color:#B5D4F4;">Navy
+                            600</span><span class="swatch-hex" style="color:#93BAE8;">#185FA5</span></div>
+                    <div class="swatch" style="background:#378ADD;"><span class="swatch-name"
+                            style="color:#1A3A6B;">Blue
+                            400</span><span class="swatch-hex" style="color:#0C447C;">#378ADD</span></div>
+                    <div class="swatch" style="background:#B5D4F4;"><span class="swatch-name"
+                            style="color:#185FA5;">Blue
+                            200</span><span class="swatch-hex" style="color:#185FA5;">#B5D4F4</span></div>
+                    <div class="swatch" style="background:#E6F1FB;"><span class="swatch-name"
+                            style="color:#185FA5;">Blue
+                            50</span><span class="swatch-hex" style="color:#185FA5;">#E6F1FB</span></div>
+                </div>
+                <div class="color-meta">
+                    <div class="color-dot" style="background:#1A3A6B;"></div><span class="color-role">Màu chủ đạo —
+                        Navbar,
+                        nút primary, tiêu đề quan trọng, border accent</span>
+                </div>
+            </div>
+
+            <div>
+                <div class="swatch-group" style="margin-bottom:6px;">
+                    <div class="swatch" style="background:#065F46;"><span class="swatch-name"
+                            style="color:#6EE7B7;">Teal
+                            800</span><span class="swatch-hex" style="color:#34D399;">#065F46</span></div>
+                    <div class="swatch" style="background:#0F6E56;"><span class="swatch-name"
+                            style="color:#6EE7B7;">Teal
+                            700</span><span class="swatch-hex" style="color:#34D399;">#0F6E56</span></div>
+                    <div class="swatch" style="background:#1D9E75;"><span class="swatch-name"
+                            style="color:#A7F3D0;">Teal
+                            500</span><span class="swatch-hex" style="color:#6EE7B7;">#1D9E75</span></div>
+                    <div class="swatch" style="background:#5DCAA5;"><span class="swatch-name"
+                            style="color:#065F46;">Teal
+                            300</span><span class="swatch-hex" style="color:#0F6E56;">#5DCAA5</span></div>
+                    <div class="swatch" style="background:#9FE1CB;"><span class="swatch-name"
+                            style="color:#065F46;">Teal
+                            200</span><span class="swatch-hex" style="color:#0F6E56;">#9FE1CB</span></div>
+                    <div class="swatch" style="background:#E1F5EE;"><span class="swatch-name"
+                            style="color:#065F46;">Teal
+                            50</span><span class="swatch-hex" style="color:#0F6E56;">#E1F5EE</span></div>
+                </div>
+                <div class="color-meta">
+                    <div class="color-dot" style="background:#1D9E75;"></div><span class="color-role">Màu thứ hai —
+                        Trạng
+                        thái "hoàn thành", badge môn học, accent tích cực</span>
+                </div>
+            </div>
+
+            <div>
+                <div class="swatch-group" style="margin-bottom:6px;">
+                    <div class="swatch" style="background:#F8FAFD;"><span class="swatch-name"
+                            style="color:#6B7C99;">Surface
+                            0</span><span class="swatch-hex" style="color:#6B7C99;">#F8FAFD</span></div>
+                    <div class="swatch" style="background:#F4F7FC;"><span class="swatch-name"
+                            style="color:#4A5F7A;">Surface
+                            1</span><span class="swatch-hex" style="color:#4A5F7A;">#F4F7FC</span></div>
+                    <div class="swatch" style="background:#EBF2FA;"><span class="swatch-name"
+                            style="color:#1A3A6B;">Surface
+                            2</span><span class="swatch-hex" style="color:#1A3A6B;">#EBF2FA</span></div>
+                    <div class="swatch" style="background:#D6E2F0;"><span class="swatch-name"
+                            style="color:#1A3A6B;">Border</span><span class="swatch-hex"
+                            style="color:#1A3A6B;">#D6E2F0</span></div>
+                    <div class="swatch" style="background:#6B7C99;"><span class="swatch-name"
+                            style="color:#EBF2FA;">Text
+                            muted</span><span class="swatch-hex" style="color:#D6E2F0;">#6B7C99</span></div>
+                    <div class="swatch" style="background:#1A3A6B;"><span class="swatch-name"
+                            style="color:#93BAE8;">Text
+                            primary</span><span class="swatch-hex" style="color:#6A93C4;">#1A3A6B</span></div>
+                </div>
+                <div class="color-meta">
+                    <div class="color-dot" style="background:#D6E2F0;"></div><span class="color-role">Màu trung tính —
+                        Nền
+                        trang, border, text phụ, phân tách section</span>
+                </div>
+            </div>
+
+            <div>
+                <div class="swatch-group" style="margin-bottom:6px;">
+                    <div class="swatch" style="background:#D97706;"><span class="swatch-name"
+                            style="color:#FEF3C7;">Amber
+                            600</span><span class="swatch-hex" style="color:#FDE68A;">#D97706</span></div>
+                    <div class="swatch" style="background:#FBBF24;"><span class="swatch-name"
+                            style="color:#78350F;">Amber
+                            400</span><span class="swatch-hex" style="color:#92400E;">#FBBF24</span></div>
+                    <div class="swatch" style="background:#FEF3C7;"><span class="swatch-name"
+                            style="color:#78350F;">Amber
+                            50</span><span class="swatch-hex" style="color:#92400E;">#FEF3C7</span></div>
+                    <div class="swatch" style="background:#DC2626;"><span class="swatch-name" style="color:#FEE2E2;">Red
+                            600</span><span class="swatch-hex" style="color:#FCA5A5;">#DC2626</span></div>
+                    <div class="swatch" style="background:#FEE2E2;"><span class="swatch-name" style="color:#991B1B;">Red
+                            50</span><span class="swatch-hex" style="color:#991B1B;">#FEE2E2</span></div>
+                </div>
+                <div class="color-meta">
+                    <div class="color-dot" style="background:#D97706;"></div><span class="color-role">Màu ngữ nghĩa —
+                        Cảnh
+                        báo (amber), lỗi/thi sắp tới (red)</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <hr class="ds-divider">
+
+    <!-- TYPOGRAPHY -->
+    <div class="ds-section">
+        <p class="ds-label">Typography</p>
+        <div class="type-row">
+            <div class="type-item">
+                <span class="type-spec">H1 · 28px · 700</span>
+                <span class="type-sample" style="font-size:28px;font-weight:700;line-height:1.2;">Quản lý lịch
+                    học</span>
+            </div>
+            <div class="type-item">
+                <span class="type-spec">H2 · 22px · 600</span>
+                <span class="type-sample" style="font-size:22px;font-weight:600;line-height:1.3;">Lịch thi học kỳ
+                    2</span>
+            </div>
+            <div class="type-item">
+                <span class="type-spec">H3 · 17px · 600</span>
+                <span class="type-sample" style="font-size:17px;font-weight:600;color:#1A3A6B;">Toán cao cấp — Nhóm
+                    3</span>
+            </div>
+            <div class="type-item">
+                <span class="type-spec">Body · 14px · 400</span>
+                <span class="type-sample" style="font-size:14px;color:#374151;">Sinh viên cần đăng nhập trước 15 phút để
+                    kiểm tra kết nối trước khi thi.</span>
+            </div>
+            <div class="type-item">
+                <span class="type-spec">Caption · 12px · 400</span>
+                <span class="type-sample" style="font-size:12px;color:#6B7C99;">Cập nhật lần cuối: 18/03/2026 ·
+                    09:42</span>
+            </div>
+            <div class="type-item">
+                <span class="type-spec">Mono · 13px · 400</span>
+                <span class="type-sample" style="font-size:13px;color:#1A3A6B;font-family:monospace;">SV2024001 · Phòng
+                    A3.01</span>
+            </div>
+        </div>
+        <div
+            style="margin-top:10px;padding:10px 14px;background:#F4F7FC;border-radius:8px;font-size:12px;color:#4A5F7A;">
+            Font ưu tiên: <strong style="color:#1A3A6B;">Be Vietnam Pro</strong> (tiếng Việt) → <strong
+                style="color:#1A3A6B;">Inter</strong> → system-ui. Line-height: 1.6 cho body, 1.2–1.3 cho heading.
+        </div>
+    </div>
+
+    <hr class="ds-divider">
+
+    <!-- SPACING & RADIUS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:36px;">
+        <div>
+            <p class="ds-label">Khoảng cách — Spacing scale</p>
+            <div class="space-row">
+                <div class="space-block">
+                    <div class="space-box" style="height:4px;"></div><span class="space-val">4px</span>
+                </div>
+                <div class="space-block">
+                    <div class="space-box" style="height:8px;"></div><span class="space-val">8px</span>
+                </div>
+                <div class="space-block">
+                    <div class="space-box" style="height:12px;"></div><span class="space-val">12px</span>
+                </div>
+                <div class="space-block">
+                    <div class="space-box" style="height:16px;"></div><span class="space-val">16px</span>
+                </div>
+                <div class="space-block">
+                    <div class="space-box" style="height:24px;"></div><span class="space-val">24px</span>
+                </div>
+                <div class="space-block">
+                    <div class="space-box" style="height:32px;"></div><span class="space-val">32px</span>
+                </div>
+                <div class="space-block">
+                    <div class="space-box" style="height:48px;"></div><span class="space-val">48px</span>
+                </div>
+            </div>
+        </div>
+        <div>
+            <p class="ds-label">Bo góc — Border radius</p>
+            <div class="radius-row">
+                <div class="radius-item">
+                    <div class="radius-box" style="border-radius:0px;"></div><span class="radius-label">0px — thi
+                        online</span>
+                </div>
+                <div class="radius-item">
+                    <div class="radius-box" style="border-radius:4px;"></div><span class="radius-label">4px —
+                        badge</span>
+                </div>
+                <div class="radius-item">
+                    <div class="radius-box" style="border-radius:6px;"></div><span class="radius-label">6px —
+                        button</span>
+                </div>
+                <div class="radius-item">
+                    <div class="radius-box" style="border-radius:10px;"></div><span class="radius-label">10px —
+                        card</span>
+                </div>
+                <div class="radius-item">
+                    <div class="radius-box" style="border-radius:999px;width:56px;"></div><span
+                        class="radius-label">pill —
+                        tag</span>
+                </div>
+            </div>
+            <div
+                style="margin-top:12px;padding:10px 14px;background:#F4F7FC;border-radius:8px;font-size:12px;color:#4A5F7A;">
+                Quy tắc: <strong style="color:#1A3A6B;">Không bo góc lớn</strong> — góc vuông hơn gợi lên sự nghiêm túc,
+                học
+                thuật. Max 10px cho card thông thường.
+            </div>
+        </div>
+    </div>
+
+    <hr class="ds-divider">
+
+    <!-- NAVBAR -->
+    <div class="ds-section">
+        <p class="ds-label">Navigation bar</p>
+        <div class="nav-demo">
+            <div class="nav-bar">
+                <div class="nav-logo">
+                    <div class="nav-dot"></div>
+                    <span class="nav-logo-text">EduPortal</span>
+                </div>
+                <span class="nav-item active">Lịch học</span>
+                <span class="nav-item">Lịch thi</span>
+                <span class="nav-item">Thi online</span>
+                <span class="nav-item">Kết quả</span>
+                <div class="nav-right">
+                    <div
+                        style="background:rgba(255,255,255,.1);border-radius:5px;padding:4px 10px;display:flex;align-items:center;gap:6px;">
+                        <div style="width:5px;height:5px;border-radius:50%;background:#34D399;"></div>
+                        <span style="color:#93BAE8;font-size:11px;">Sinh viên</span>
+                    </div>
+                    <div class="nav-avatar">NV</div>
+                </div>
+            </div>
+        </div>
+        <p style="font-size:11px;color:#6B7C99;margin:8px 0 0;">Navbar nền navy #1A3A6B · Active item: nền trắng mờ 12%
+            ·
+            Dot role indicator màu xanh lá</p>
+    </div>
+
+    <hr class="ds-divider">
+
+    <!-- BUTTONS -->
+    <div class="ds-section">
+        <p class="ds-label">Buttons</p>
+        <div class="btn-row" style="margin-bottom:10px;">
+            <button class="btn btn-primary">Nộp bài thi</button>
+            <button class="btn btn-secondary">Xem lịch thi</button>
+            <button class="btn btn-outline">Đăng ký môn</button>
+            <button class="btn btn-ghost">Huỷ bỏ</button>
+            <button class="btn btn-danger">Xoá lịch</button>
+        </div>
+        <div class="btn-row" style="margin-bottom:10px;">
+            <button class="btn btn-primary btn-sm">Lưu</button>
+            <button class="btn btn-primary">Bắt đầu thi</button>
+            <button class="btn btn-primary btn-lg">Vào phòng thi</button>
+        </div>
+        <div style="padding:10px 14px;background:#F4F7FC;border-radius:8px;font-size:12px;color:#4A5F7A;">
+            Nút primary: <strong style="color:#1A3A6B;">#1A3A6B</strong> · Height: sm=28px, default=36px, lg=44px ·
+            Border-radius: 6px · Font-weight: 500 · Không dùng bo cong quá lớn
+        </div>
+    </div>
+
+    <hr class="ds-divider">
+
+    <!-- BADGES & STATUS -->
+    <div class="ds-section">
+        <p class="ds-label">Badges & trạng thái</p>
+        <div class="badge-row" style="margin-bottom:12px;">
+            <span class="badge" style="background:#E6F1FB;color:#0C447C;">Toán cao cấp</span>
+            <span class="badge" style="background:#E1F5EE;color:#085041;">Lập trình</span>
+            <span class="badge" style="background:#EEEDFE;color:#3C3489;">Vật lý</span>
+            <span class="badge" style="background:#F4F7FC;color:#1A3A6B;border:0.5px solid #D6E2F0;">Tín chỉ: 3</span>
+            <span class="badge" style="background:#FEF3C7;color:#78350F;">Điểm danh</span>
+        </div>
+        <div class="badge-row">
+            <span class="status s-upcoming"><span class="status-dot"></span>Sắp diễn ra</span>
+            <span class="status s-ongoing"><span class="status-dot"></span>Đang thi</span>
+            <span class="status s-done"><span class="status-dot"></span>Đã kết thúc</span>
+            <span class="status s-urgent"><span class="status-dot"></span>Cần chú ý</span>
+        </div>
+    </div>
+
+    <hr class="ds-divider">
+
+    <!-- CARDS -->
+    <div class="ds-section">
+        <p class="ds-label">Cards</p>
+        <div class="card-row">
+            <div class="ca-card">
+                <p class="card-title">Card thông thường</p>
+                <p class="card-sub">Border: #D6E2F0 · 0.5px</p>
+                <p class="card-body">Nền trắng thuần, border xanh nhạt. Dùng cho danh sách môn học, lịch học thông
+                    thường.
+                </p>
+            </div>
+            <div class="ca-card ca-card-accent">
+                <p class="card-title">Card accent</p>
+                <p class="card-sub">Border-top: #1A3A6B · 3px</p>
+                <p class="card-body">Viền trên màu navy. Dùng để highlight môn quan trọng, thông báo ưu tiên cao.</p>
+            </div>
+            <div class="ca-card-featured">
+                <p class="card-title">Card nổi bật</p>
+                <p class="card-sub">Nền: #F4F7FC · Border: #B5D4F4</p>
+                <p class="card-body">Nền xanh nhạt. Dùng cho thông tin quan trọng như lịch thi hôm nay, thông báo khẩn.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <hr class="ds-divider">
+
+    <!-- FORM INPUTS -->
+    <div class="ds-section">
+        <p class="ds-label">Form inputs</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="input-row">
+                <div class="input-group">
+                    <label class="input-label">Mã sinh viên</label>
+                    <input class="ca-input" type="text" placeholder="VD: SV2024001" value="SV2024001">
+                    <p class="input-hint">Nhập đúng mã trên thẻ sinh viên</p>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Mật khẩu <span style="color:#DC2626;">*</span></label>
+                    <input class="ca-input error" type="password" placeholder="Nhập mật khẩu" value="abc">
+                    <p class="input-error-msg">Mật khẩu phải có ít nhất 8 ký tự</p>
+                </div>
+            </div>
+            <div class="input-row">
+                <div class="input-group">
+                    <label class="input-label">Môn học</label>
+                    <select class="ca-select">
+                        <option>Toán cao cấp A1</option>
+                        <option>Lập trình Python</option>
+                        <option>Vật lý đại cương</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">Ghi chú</label>
+                    <textarea class="ca-input" rows="3" placeholder="Nhập ghi chú cho buổi học..."></textarea>
+                </div>
+            </div>
+        </div>
+        <p style="font-size:11px;color:#6B7C99;margin:10px 0 0;">Border mặc định: <strong
+                style="color:#1A3A6B;">#D6E2F0</strong> · Focus: <strong style="color:#1A3A6B;">#185FA5</strong> + ring
+            <strong style="color:#1A3A6B;">#E6F1FB</strong> · Error: <strong style="color:#DC2626;">#DC2626</strong>
+        </p>
+    </div>
+
+    <hr class="ds-divider">
+
+    <!-- TABLE -->
+    <div class="ds-section">
+        <p class="ds-label">Data table — lịch thi</p>
+        <div style="border:0.5px solid #D6E2F0;border-radius:10px;overflow:hidden;">
+            <table class="ca-table">
+                <thead>
+                    <tr>
+                        <th>Môn học</th>
+                        <th>Ngày thi</th>
+                        <th>Giờ</th>
+                        <th>Phòng</th>
+                        <th>Hình thức</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight:500;color:#1A3A6B;">Toán cao cấp A1</td>
+                        <td>20/03/2026</td>
+                        <td>08:00 – 10:00</td>
+                        <td>A3.01</td>
+                        <td>Tự luận</td>
+                        <td><span class="status s-urgent"><span class="status-dot"></span>Cần chú ý</span></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:500;color:#1A3A6B;">Lập trình Python</td>
+                        <td>25/03/2026</td>
+                        <td>13:30 – 15:30</td>
+                        <td>Online</td>
+                        <td>Trắc nghiệm</td>
+                        <td><span class="status s-upcoming"><span class="status-dot"></span>Sắp diễn ra</span></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:500;color:#1A3A6B;">Vật lý đại cương</td>
+                        <td>15/03/2026</td>
+                        <td>07:30 – 09:30</td>
+                        <td>B2.04</td>
+                        <td>Tự luận</td>
+                        <td><span class="status s-done"><span class="status-dot"></span>Đã kết thúc</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <hr class="ds-divider">
+
+    <!-- BREADCRUMB + MISC -->
+    <div class="ds-section">
+        <p class="ds-label">Navigation phụ & micro-components</p>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="padding:10px 14px;background:#F4F7FC;border-radius:8px;">
+                <div class="breadcrumb">
+                    <a href="#">Trang chủ</a>
+                    <span>/</span>
+                    <a href="#">Lịch thi</a>
+                    <span>/</span>
+                    <span style="color:#1A3A6B;font-weight:500;">Toán cao cấp A1</span>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <div
+                    style="background:#fff;border:0.5px solid #D6E2F0;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:10px;">
+                    <div
+                        style="width:36px;height:36px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#1A3A6B;">
+                        NV</div>
+                    <div>
+                        <p style="font-size:13px;font-weight:500;color:#1A3A6B;margin:0;">Nguyễn Văn A</p>
+                        <p style="font-size:11px;color:#6B7C99;margin:0;">SV2024001 · K22</p>
+                    </div>
+                </div>
+                <div
+                    style="background:#FEF3C7;border:0.5px solid #D97706;border-radius:8px;padding:12px 16px;display:flex;align-items:flex-start;gap:8px;max-width:260px;">
+                    <div
+                        style="width:6px;height:6px;border-radius:50%;background:#D97706;margin-top:4px;flex-shrink:0;">
+                    </div>
+                    <p style="font-size:12px;color:#78350F;margin:0;line-height:1.5;">Còn <strong>2 ngày</strong> đến kỳ
+                        thi
+                        Toán cao cấp. Hãy kiểm tra thiết bị trước.</p>
+                </div>
+                <div
+                    style="background:#D1FAE5;border:0.5px solid #059669;border-radius:8px;padding:12px 16px;display:flex;align-items:flex-start;gap:8px;max-width:240px;">
+                    <div
+                        style="width:6px;height:6px;border-radius:50%;background:#059669;margin-top:4px;flex-shrink:0;">
+                    </div>
+                    <p style="font-size:12px;color:#065F46;margin:0;line-height:1.5;">Nộp bài thành công. Điểm sẽ có sau
+                        5
+                        ngày làm việc.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

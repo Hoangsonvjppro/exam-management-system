@@ -1,33 +1,33 @@
 @props([
-    'striped' => false,
-    'hoverable' => true,
+'striped' => false,
+'hoverable' => true,
 ])
 
-<div {{ $attributes->merge(['class' => 'bg-white rounded-card shadow-card border border-border/60 overflow-hidden']) }}>
+<div {{ $attributes->merge(['class' => 'bg-white border-[0.5px] border-border-clean rounded-[10px] overflow-hidden']) }}>
     @isset($header)
-        <div class="px-6 py-4 border-b border-border flex items-center justify-between">
-            {{ $header }}
-        </div>
+    <div class="px-4 py-3 border-b-[0.5px] border-border-clean bg-surface-0 flex items-center justify-between">
+        {{ $header }}
+    </div>
     @endisset
 
     <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left">
+        <table class="w-full text-left">
             @isset($head)
-                <thead class="bg-surface-muted border-b border-border">
-                    <tr>
-                        {{ $head }}
-                    </tr>
-                </thead>
+            <thead>
+                <tr>
+                    {{ $head }}
+                </tr>
+            </thead>
             @endisset
-            <tbody class="divide-y divide-border/60">
+            <tbody>
                 {{ $slot }}
             </tbody>
         </table>
     </div>
 
     @isset($footer)
-        <div class="px-6 py-4 border-t border-border bg-surface-muted">
-            {{ $footer }}
-        </div>
+    <div class="px-4 py-3 border-t-[0.5px] border-border-clean bg-surface-0">
+        {{ $footer }}
+    </div>
     @endisset
 </div>
