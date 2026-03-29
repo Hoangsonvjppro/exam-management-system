@@ -16,6 +16,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleAndPermissionSeeder::class, // Phân quyền (Bắt buộc chạy đầu tiên)
             AdminRootSeeder::class,         // Tạo Admin Root
+            DepartmentSeeder::class,        // Khoa
+            MajorSeeder::class,             // Ngành
+            StudentClassSeeder::class,      // Lớp
             UserSeeder::class,              // Tạo GV Nguyễn Thanh Sang
             DifficultySeeder::class,        // Tạo mức độ khó (Dễ, Trung bình...)
             SemesterSeeder::class,          // Tạo học kỳ

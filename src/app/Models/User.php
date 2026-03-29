@@ -12,6 +12,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -40,9 +43,9 @@ class User extends Authenticatable
         'google_avatar',
         'student_code',
         'lecturer_code',
-        'class_name',
+        'student_class_id',
         'date_of_birth',
-        'department',
+        'department_id',
         'is_active',
         'must_change_password',
         'password_changed_at',
@@ -105,6 +108,26 @@ class User extends Authenticatable
     public function avatar(): BelongsTo
     {
         return $this->belongsTo(File::class, 'avatar_file_id');
+    }
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+    public function studentClass(): BelongsTo
+    {
+        return $this->belongsTo(StudentClass::class);
+    }
+
+    public function major(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Major::class,
+            StudentClass::class,
+            'id',              // FK của StudentClass trên bảng student_classes
+            'id',              // FK của Major trên bảng majors
+            'student_class_id',// local key của User
+            'major_id'         // local key của StudentClass
+        );  
     }
 
     /**
@@ -222,5 +245,48 @@ class User extends Authenticatable
     public function isStudent(): bool
     {
         return $this->hasRole('student');
+    }
+
+    /**
+     * Students của một section với pivot + filter.
+     */
+    public static function studentsOfSection(
+        CourseSection $section,
+        Request $request
+    ): Builder {
+        return $section->students()
+            ->withPivot('status', 'enrolled_at')
+            ->when(
+                $request->search,
+                fn($q, string $s) =>
+                $q->where(
+                    fn($q) =>
+                    $q->where('name',          'like', "%{$s}%")
+                        ->orWhere('email',        'like', "%{$s}%")
+                        ->orWhere('student_code', 'like', "%{$s}%")
+                )
+            )
+            ->when(
+                $request->status,
+                fn($q, string $status) =>
+                $q->wherePivot('status', $status)
+            )
+            ->orderByPivot('enrolled_at');
+    }
+
+    public static function enrolledInSection(CourseSection $section): Collection
+    {
+        return $section->students()
+            ->wherePivot('status', 'enrolled')
+            ->orderBy('name')
+            ->get();
+    }
+
+    public static function statusCountsForSection(CourseSection $section): Collection
+    {
+        return $section->students()
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
     }
 }

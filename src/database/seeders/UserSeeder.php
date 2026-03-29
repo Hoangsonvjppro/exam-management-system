@@ -36,7 +36,7 @@ class UserSeeder extends Seeder
                     'name'              => $data['name'],
                     'password'          => Hash::make('password'),
                     'lecturer_code'     => $data['lecturer_code'],
-                    'department'        => 'Khoa Công nghệ Thông tin',
+                    'department_id'        => '1',
                     'is_active'         => true,
                     'email_verified_at' => now(),
                 ]
@@ -56,6 +56,9 @@ class UserSeeder extends Seeder
                     'student_code'      => $studentCode,
                     'is_active'         => true,
                     'email_verified_at' => now(),
+                    'department_id'     => '1',
+                    'student_class_id'  => '7',
+                    'date_of_birth'     => '10-10-2005'
                 ]
             );
             $student->syncRoles(['student']);
