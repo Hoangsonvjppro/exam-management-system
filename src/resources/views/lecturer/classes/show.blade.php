@@ -4,7 +4,7 @@
 
     @php
     $activeTab = request()->query('tab', 'overview');
-    if (!in_array($activeTab, ['overview', 'students', 'attendance', 'grading'], true)) {
+    if (!in_array($activeTab, ['overview', 'students', 'attendance', 'grading', 'complaints'], true)) {
     $activeTab = 'overview';
     }
 
@@ -107,6 +107,17 @@
                         :class="activeTab === 'grading' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
                         class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
                         Điểm quá trình
+                    </button>
+                    <button type="button"
+                        @click="switchTab('complaints')"
+                        :class="activeTab === 'complaints' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors flex items-center gap-1.5">
+                        Khiếu nại điểm
+                        @if($section->complaints->where('status', 'pending')->count() > 0)
+                            <span class="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                                {{ $section->complaints->where('status', 'pending')->count() }}
+                            </span>
+                        @endif
                     </button>
                 </div>
             </div>
@@ -326,6 +337,75 @@
                     <p class="text-sm text-text-muted font-medium">Tính năng thống kê và quản lý điểm đang được phát triển.</p>
                 </div>
             </div>
+
+            {{-- ═══ TAB: Khiếu nại ═══ --}}
+            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'complaints'" x-transition.opacity.duration.150ms style="display:none;">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-[18px] font-bold text-navy-900">Khiếu nại điểm thi</h3>
+                    <p class="text-[12px] text-text-muted font-medium">Danh sách các khiếu nại của lớp học này.</p>
+                </div>
+
+                @if($section->complaints->isEmpty())
+                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                    <x-ui-icon name="information-circle" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
+                    <p class="text-[13px] text-text-muted">Chưa có khiếu nại nào từ sinh viên trong lớp này.</p>
+                </div>
+                @else
+                <div class="overflow-x-auto border border-border-clean rounded-[8px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-surface-1 border-b border-border-clean">
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Sinh viên</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Điểm</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Lý do</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Trạng thái</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-clean/70">
+                            @foreach($section->complaints as $complaint)
+                            <tr class="hover:bg-surface-0 transition-colors">
+                                <td class="py-3 px-4 align-top">
+                                    <p class="text-[13px] font-bold text-navy-900">{{ $complaint->student->name }}</p>
+                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $complaint->created_at->format('H:i d/m/y') }}</p>
+                                </td>
+                                <td class="py-3 px-4 align-top text-center">
+                                    <span class="text-[14px] font-bold text-navy-900">{{ number_format($complaint->current_score, 2) }}</span>
+                                    @if($complaint->updated_score)
+                                        <span class="block text-[11px] font-bold text-teal-600">→ {{ number_format($complaint->updated_score, 2) }}</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 px-4 align-top">
+                                    <p class="text-[12px] text-text-muted line-clamp-2" title="{{ $complaint->reason }}">{{ $complaint->reason }}</p>
+                                </td>
+                                <td class="py-3 px-4 align-top text-center">
+                                    @php
+                                        $st = match($complaint->status) {
+                                            'pending'   => ['bg-yellow-50 text-yellow-700 border-yellow-200', 'Chờ'],
+                                            'resolved'  => ['bg-teal-50 text-teal-700 border-teal-200', 'Xong'],
+                                            'rejected'  => ['bg-red-50 text-red-700 border-red-200', 'Từ chối'],
+                                            default     => ['bg-gray-50 text-gray-500 border-gray-200', 'N/A']
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center text-[10px] font-bold uppercase rounded-[4px] px-2 py-0.5 border {{ $st[0] }}">
+                                        {{ $st[1] }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 align-top text-center">
+                                    @if($complaint->status === 'pending')
+                                        <button @click="openReviewModal({{ $complaint->id }}, '{{ addslashes($complaint->student->name) }}', '{{ addslashes($complaint->reason) }}', {{ $complaint->current_score }})"
+                                            class="text-[12px] font-bold text-blue-600 hover:underline">Xử lý</button>
+                                    @else
+                                        <span class="text-[11px] text-text-muted">Đã xử lý</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
+            </div>
         </x-card>
 
         @can('manage', $section)
@@ -515,6 +595,75 @@
                 </form>
             </div>
         </x-modal>
+
+        {{-- Modal Xử lý khiếu nại --}}
+        <x-modal name="review-modal" maxWidth="lg">
+            <div class="p-6 md:p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-[20px] font-bold text-navy-900">Xử lý khiếu nại</h3>
+                    <button @click="$dispatch('close-modal', 'review-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="p-4 bg-surface-1 border border-border-clean rounded-lg space-y-3">
+                        <div>
+                            <span class="block text-[11px] text-text-muted font-medium uppercase tracking-wider mb-1">Sinh viên</span>
+                            <span class="text-[14px] font-bold text-navy-900" x-text="reviewStudentName"></span>
+                        </div>
+                        <div>
+                            <span class="block text-[11px] text-text-muted font-medium uppercase tracking-wider mb-1">Lý do khiếu nại</span>
+                            <span class="text-[13px] text-navy-900 leading-relaxed break-words" x-text="reviewReason"></span>
+                        </div>
+                        <div>
+                            <span class="block text-[11px] text-text-muted font-medium uppercase tracking-wider mb-1">Điểm hiện tại</span>
+                            <span class="text-[14px] font-bold text-red-500" x-text="reviewCurrentScore"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-2">
+                        <label class="relative flex items-center justify-center gap-2 p-3 border-2 rounded-[8px] cursor-pointer transition-all"
+                            :class="resolutionStatus === 'resolved' ? 'border-teal-500 bg-teal-50/30' : 'border-border-clean hover:bg-surface-0'">
+                            <input type="radio" name="status" value="resolved" x-model="resolutionStatus" class="sr-only">
+                            <div class="w-4 h-4 rounded-full border border-teal-500 flex items-center justify-center" :class="resolutionStatus === 'resolved' ? 'bg-teal-500' : 'bg-white'">
+                                <svg x-show="resolutionStatus === 'resolved'" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                            <span class="text-[13px] font-bold text-teal-700">Chấp nhận</span>
+                        </label>
+                        <label class="relative flex items-center justify-center gap-2 p-3 border-2 rounded-[8px] cursor-pointer transition-all"
+                            :class="resolutionStatus === 'rejected' ? 'border-red-500 bg-red-50/30' : 'border-border-clean hover:bg-surface-0'">
+                            <input type="radio" name="status" value="rejected" x-model="resolutionStatus" class="sr-only">
+                            <div class="w-4 h-4 rounded-full border border-red-500 flex items-center justify-center" :class="resolutionStatus === 'rejected' ? 'bg-red-500' : 'bg-white'">
+                                <svg x-show="resolutionStatus === 'rejected'" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </div>
+                            <span class="text-[13px] font-bold text-red-700">Từ chối</span>
+                        </label>
+                    </div>
+
+                    <div x-show="resolutionStatus === 'resolved'" x-transition.opacity.duration.200ms>
+                        <label for="updatedScore" class="block text-[12px] font-semibold text-navy-900 mb-1.5">Điểm mới (thay thế điểm cũ) <span class="text-red-500">*</span></label>
+                        <input id="updatedScore" type="number" step="0.01" min="0" x-model="updatedScore" placeholder="Nhập điểm cập nhật" class="w-full h-11 px-3 bg-white border-[1.5px] border-border-clean rounded-[6px] text-[14px] text-navy-900 placeholder:text-text-muted focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none" />
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Ghi chú phản hồi <span class="text-red-500">*</span></label>
+                        <textarea x-model="reviewerNote" rows="3" placeholder="Nhập giải thích cho quyết định của bạn..."
+                            class="w-full p-3 bg-white border-[1.5px] border-border-clean rounded-[6px] text-[13px] text-navy-900 placeholder:text-text-muted focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none resize-y"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-2">
+                        <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'review-modal')">Hủy</x-button>
+                        <x-button type="button" variant="primary" @click="submitReview()" x-bind:disabled="isSubmittingReview">
+                            <span x-show="!isSubmittingReview">Lưu kết quả</span>
+                            <span x-show="isSubmittingReview">Đang lưu...</span>
+                        </x-button>
+                    </div>
+                </div>
+            </div>
+        </x-modal>
         @endcan
     </div>
 
@@ -524,6 +673,14 @@
                 activeTab: initialTab || 'overview',
                 isSubmittingSchedule: false,
                 isSubmittingQuickExam: false,
+                isSubmittingReview: false,
+                complaintId: null,
+                reviewStudentName: '',
+                reviewReason: '',
+                reviewCurrentScore: 0,
+                resolutionStatus: 'resolved',
+                updatedScore: '',
+                reviewerNote: '',
 
                 switchTab(tab) {
                     this.activeTab = tab;
@@ -663,6 +820,70 @@
                         }));
                     } finally {
                         this.isSubmittingQuickExam = false;
+                    }
+                },
+
+                openReviewModal(id, studentName, reason, currentScore) {
+                    this.complaintId = id;
+                    this.reviewStudentName = studentName;
+                    this.reviewReason = reason;
+                    this.reviewCurrentScore = currentScore;
+                    this.resolutionStatus = 'resolved';
+                    this.updatedScore = currentScore;
+                    this.reviewerNote = '';
+                    this.$dispatch('open-modal', 'review-modal');
+                },
+
+                async submitReview() {
+                    if (!this.reviewerNote || this.reviewerNote.trim().length < 5) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Vui lòng nhập ghi chú phản hồi (ít nhất 5 ký tự).', type: 'error' }
+                        }));
+                        return;
+                    }
+
+                    if (this.resolutionStatus === 'resolved' && (this.updatedScore === '' || this.updatedScore < 0)) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Vui lòng nhập điểm mới hợp lệ.', type: 'error' }
+                        }));
+                        return;
+                    }
+
+                    this.isSubmittingReview = true;
+
+                    try {
+                        const response = await fetch(`/lecturer/complaints/${this.complaintId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                status: this.resolutionStatus,
+                                reviewer_note: this.reviewerNote,
+                                updated_score: this.resolutionStatus === 'resolved' ? parseFloat(this.updatedScore) : null
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok) {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message, type: 'success' }
+                            }));
+                            this.$dispatch('close-modal', 'review-modal');
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message || 'Có lỗi xảy ra', type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Lỗi kết nối máy chủ', type: 'error' }
+                        }));
+                    } finally {
+                        this.isSubmittingReview = false;
                     }
                 }
             }

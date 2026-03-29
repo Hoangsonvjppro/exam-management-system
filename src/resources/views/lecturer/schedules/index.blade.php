@@ -29,6 +29,43 @@
             </x-button>
         </div>
 
+        {{-- Search & Filter --}}
+        <form action="{{ route('lecturer.schedules.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <svg class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Tìm kiếm theo tên đề thi..."
+                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-border-clean rounded-[10px] text-sm font-medium text-navy-900 placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all shadow-sm" />
+            </div>
+            <div class="w-full sm:w-56">
+                <select name="subject_id" onchange="this.form.submit()"
+                    class="w-full px-4 py-2.5 bg-white border border-border-clean rounded-[10px] text-sm font-medium text-navy-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all shadow-sm cursor-pointer appearance-none"
+                    style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%236B7C99%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem;">
+                    <option value="">Tất cả môn học</option>
+                    @foreach($filterSubjects as $subject)
+                    <option value="{{ $subject->id }}" {{ (string) request('subject_id') === (string) $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <button type="submit" class="px-5 py-2.5 bg-navy-900 text-white rounded-[10px] text-sm font-semibold hover:bg-navy-950 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Tìm kiếm
+            </button>
+            @if(request('search') || request('subject_id'))
+            <a href="{{ route('lecturer.schedules.index') }}" class="px-4 py-2.5 bg-white text-text-muted border border-border-clean rounded-[10px] text-sm font-semibold hover:bg-surface-1 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Xóa lọc
+            </a>
+            @endif
+        </form>
+
         {{-- Table --}}
         <div class="bg-white rounded-[10px] border border-border-clean overflow-hidden shadow-sm">
             @if($schedules->isEmpty())
@@ -279,6 +316,129 @@
             </div>
         </x-modal>
 
+        {{-- Modal: Phân sinh viên vào ca thi --}}
+        <div x-show="assignModalOpen" x-cloak
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            {{-- Overlay --}}
+            <div class="fixed inset-0 bg-black/40" @click="assignModalOpen = false"></div>
+
+            {{-- Modal Content --}}
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95">
+
+                {{-- Header --}}
+                <div class="px-6 py-4 border-b border-border-clean flex items-center justify-between bg-surface-0 flex-shrink-0">
+                    <div>
+                        <h3 class="text-[17px] font-bold text-navy-900">Phân sinh viên vào ca thi</h3>
+                        <p class="text-[12px] text-text-muted mt-0.5" x-text="assignModalExamTitle + ' — ' + assignModalClassName"></p>
+                    </div>
+                    <button @click="assignModalOpen = false" class="text-text-muted hover:text-navy-900 transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Search & Actions --}}
+                <div class="px-6 py-3 border-b border-border-clean/60 flex-shrink-0 space-y-3">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input type="text" x-model="assignSearchQuery" placeholder="Tìm kiếm sinh viên..."
+                            class="w-full pl-9 pr-4 py-2 bg-surface-0 border border-border-clean rounded-lg text-[13px] font-medium text-navy-900 placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all" />
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="selectAllStudents()" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 px-2 py-1 rounded hover:bg-blue-50 transition-colors">Chọn tất cả</button>
+                            <button type="button" @click="deselectAllStudents()" class="text-[11px] font-bold text-text-muted hover:text-navy-900 px-2 py-1 rounded hover:bg-surface-1 transition-colors">Bỏ chọn tất cả</button>
+                        </div>
+                        <span class="text-[11px] font-bold text-text-muted">
+                            Đã chọn <span class="text-navy-900" x-text="assignSelectedIds.length"></span> / <span x-text="assignStudents.length"></span> SV
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Loading state --}}
+                <div x-show="assignLoading" class="flex-1 flex items-center justify-center py-12">
+                    <div class="flex flex-col items-center gap-3">
+                        <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span class="text-[13px] text-text-muted">Đang tải danh sách sinh viên...</span>
+                    </div>
+                </div>
+
+                {{-- Student List --}}
+                <div x-show="!assignLoading" class="flex-1 overflow-y-auto px-3 py-2" style="max-height: 400px;">
+                    <template x-if="filteredStudents().length === 0 && !assignLoading">
+                        <div class="text-center py-8">
+                            <p class="text-[13px] text-text-muted" x-text="assignSearchQuery ? 'Không tìm thấy sinh viên phù hợp.' : 'Lớp chưa có sinh viên nào.'"></p>
+                        </div>
+                    </template>
+
+                    <template x-for="student in filteredStudents()" :key="student.id">
+                        <label class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-1 cursor-pointer transition-colors group">
+                            <input type="checkbox"
+                                :value="student.id"
+                                :checked="assignSelectedIds.includes(student.id)"
+                                @change="toggleStudent(student.id)"
+                                class="rounded border-gray-300 text-navy-900 focus:ring-blue-500 w-4 h-4 flex-shrink-0" />
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[13px] font-semibold text-navy-900 truncate" x-text="student.name"></p>
+                                <p class="text-[11px] text-text-muted truncate">
+                                    <span x-text="student.student_id || ''"></span>
+                                    <span x-show="student.student_id && student.email"> · </span>
+                                    <span x-text="student.email || ''"></span>
+                                </p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <span x-show="assignSelectedIds.includes(student.id)" class="inline-block w-2 h-2 bg-green-500 rounded-full"></span>
+                            </div>
+                        </label>
+                    </template>
+                </div>
+
+                {{-- Footer --}}
+                <div class="px-6 py-4 border-t border-border-clean flex items-center justify-between bg-surface-0 flex-shrink-0">
+                    <p class="text-[11px] text-text-muted">
+                        <span x-show="assignSelectedIds.length === assignStudents.length && assignStudents.length > 0" class="text-green-600 font-bold">✓ Toàn bộ sinh viên được chọn</span>
+                        <span x-show="assignSelectedIds.length !== assignStudents.length || assignStudents.length === 0" x-text="assignSelectedIds.length + ' sinh viên được chọn'"></span>
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <button type="button" @click="assignModalOpen = false"
+                            class="px-4 py-2 text-[13px] font-semibold text-text-muted hover:text-navy-900 hover:bg-surface-1 rounded-lg transition-all">Hủy</button>
+                        <button type="button" @click="submitAssign()"
+                            :disabled="assignSaving || assignSelectedIds.length === 0"
+                            class="px-5 py-2 bg-navy-900 text-white rounded-lg text-[13px] font-semibold hover:bg-navy-950 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                            <span x-show="!assignSaving">Lưu phân công</span>
+                            <span x-show="assignSaving" class="flex items-center gap-2">
+                                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                Đang lưu...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -290,6 +450,116 @@
                 hasSelectedSection: false,
                 quickSubjectId: '',
                 isSubmittingQuickExam: false,
+
+                // Assign Students Modal
+                assignModalOpen: false,
+                assignModalScheduleId: null,
+                assignModalExamTitle: '',
+                assignModalClassName: '',
+                assignLoading: false,
+                assignSaving: false,
+                assignStudents: [],
+                assignSelectedIds: [],
+                assignSearchQuery: '',
+
+                openAssignModal(scheduleId, examTitle, className) {
+                    this.assignModalScheduleId = scheduleId;
+                    this.assignModalExamTitle = examTitle;
+                    this.assignModalClassName = className;
+                    this.assignSearchQuery = '';
+                    this.assignStudents = [];
+                    this.assignSelectedIds = [];
+                    this.assignModalOpen = true;
+                    this.assignLoading = true;
+                    this.loadStudents(scheduleId);
+                },
+
+                async loadStudents(scheduleId) {
+                    try {
+                        const response = await fetch(`/lecturer/schedules/${scheduleId}/students`, {
+                            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        const data = await response.json();
+                        this.assignStudents = data.students || [];
+                        // Nếu đã có assignment thì tick những SV đã assign, ngược lại chọn tất cả
+                        if (data.assigned_ids && data.assigned_ids.length > 0) {
+                            this.assignSelectedIds = [...data.assigned_ids];
+                        } else {
+                            // Mặc định chọn tất cả
+                            this.assignSelectedIds = this.assignStudents.map(s => s.id);
+                        }
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Không thể tải danh sách sinh viên.', type: 'error' }
+                        }));
+                    } finally {
+                        this.assignLoading = false;
+                    }
+                },
+
+                filteredStudents() {
+                    if (!this.assignSearchQuery) return this.assignStudents;
+                    const q = this.assignSearchQuery.toLowerCase();
+                    return this.assignStudents.filter(s =>
+                        (s.name && s.name.toLowerCase().includes(q)) ||
+                        (s.email && s.email.toLowerCase().includes(q)) ||
+                        (s.student_id && s.student_id.toLowerCase().includes(q))
+                    );
+                },
+
+                toggleStudent(id) {
+                    const idx = this.assignSelectedIds.indexOf(id);
+                    if (idx >= 0) {
+                        this.assignSelectedIds.splice(idx, 1);
+                    } else {
+                        this.assignSelectedIds.push(id);
+                    }
+                },
+
+                selectAllStudents() {
+                    this.assignSelectedIds = this.assignStudents.map(s => s.id);
+                },
+
+                deselectAllStudents() {
+                    this.assignSelectedIds = [];
+                },
+
+                async submitAssign() {
+                    this.assignSaving = true;
+                    try {
+                        const response = await fetch(`/lecturer/schedules/${this.assignModalScheduleId}/assign-students`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value
+                            },
+                            body: JSON.stringify({ student_ids: this.assignSelectedIds })
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            this.assignModalOpen = false;
+                            // Cập nhật số SV trên bảng
+                            window.location.reload();
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message, type: 'success' }
+                            }));
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message || 'Có lỗi xảy ra.', type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Có lỗi hệ thống xảy ra!', type: 'error' }
+                        }));
+                    } finally {
+                        this.assignSaving = false;
+                    }
+                },
 
                 onSubjectChange() {
                     // Reset dependency selections

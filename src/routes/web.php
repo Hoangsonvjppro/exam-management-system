@@ -106,6 +106,13 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         // Danh sách lớp học phần của sinh viên
         Route::get('/classes', [StudentPageController::class, 'classes'])->name('classes.index');
 
+        // Chi tiết lớp học phần (Class Workspace)
+        Route::get('/classes/{section}', [StudentPageController::class, 'classShow'])->name('classes.show');
+
+        // Khiếu nại
+        Route::get('/complaints', [StudentPageController::class, 'complaints'])->name('complaints.index');
+        Route::post('/complaints', [\App\Http\Controllers\Student\ComplaintController::class, 'store'])->name('complaints.store');
+
         Route::get('/schedules/{schedule}', [\App\Http\Controllers\Student\ExamController::class, 'show'])->name('exams.show');
         Route::post('/schedules/{schedule}/start', [\App\Http\Controllers\Student\ExamController::class, 'start'])->name('exams.start');
         Route::get('/schedules/{schedule}/room', [\App\Http\Controllers\Student\ExamController::class, 'room'])->name('exams.room');
@@ -141,6 +148,12 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             // Dashboard giảng viên (route mới, dùng closure)
             Route::get('/dashboard', [LecturerPageController::class, 'dashboard'])
                 ->name('dashboard_redirect');
+
+            // ── Quản lý Khiếu nại (Complaints) ─────────────────────
+            Route::get('/complaints', [\App\Http\Controllers\Lecturer\ComplaintController::class, 'index'])
+                ->name('complaints.index');
+            Route::put('/complaints/{complaint}', [\App\Http\Controllers\Lecturer\ComplaintController::class, 'update'])
+                ->name('complaints.update');
 
             // ── Quản lý lớp học (Course Sections) ──────────────────
             // Tự động tạo các route CRUD: index, create, store,
@@ -212,6 +225,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::put('/schedules/{schedule}', [ExamScheduleController::class, 'update'])->name('schedules.update');
             Route::delete('/schedules/{schedule}', [ExamScheduleController::class, 'destroy'])->name('schedules.destroy');
             Route::post('/schedules/{schedule}/assign-students', [ExamScheduleController::class, 'assignStudents'])->name('schedules.assign-students');
+            Route::get('/schedules/{schedule}/students', [ExamScheduleController::class, 'getStudents'])->name('schedules.students');
 
             Route::get('/attendance', [LecturerPageController::class, 'attendance'])->name('attendance.index');
 

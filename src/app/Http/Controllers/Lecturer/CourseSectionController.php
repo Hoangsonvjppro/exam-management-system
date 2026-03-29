@@ -80,6 +80,7 @@ class CourseSectionController extends Controller
             'students' => fn($q) => $q->orderBy('name'),
             // Sửa 'exams' thành 'examSchedules.exam' để lấy số lượng câu hỏi thông qua đề thi của ca thi
             'examSchedules.exam' => fn($q) => $q->withCount('questions'),
+            'complaints.student' => fn($q) => $q->latest(),
         ]);
 
         return view('lecturer.classes.show', compact('section'));

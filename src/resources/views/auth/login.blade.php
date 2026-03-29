@@ -67,7 +67,7 @@
                         <label for="password" class="block text-[12px] font-medium text-navy-900">Mật khẩu</label>
                         <a href="#" class="text-[11px] text-blue-400 hover:text-navy-600 transition-colors">Quên mật khẩu?</a>
                     </div>
-                    <x-text-input id="password" name="password" type="password" required placeholder="••••••••" />
+                    <x-password-input id="password" name="password" required placeholder="••••••••" />
                     @error('password')
                         <p class="mt-1 text-[11px] font-medium text-red-600">{{ $message }}</p>
                     @enderror

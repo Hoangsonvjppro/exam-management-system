@@ -63,5 +63,7 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('unreadNotificationCount', $unreadNotificationCount);
         });
+
+        \Illuminate\Support\Facades\View::composer('layouts.sidebar', \App\Http\View\Composers\LecturerComplaintComposer::class);
     }
 }

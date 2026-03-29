@@ -24,15 +24,22 @@ class ExamScheduleController extends Controller
     /**
      * Danh sách lịch thi của giảng viên.
      */
-    public function index(): View
+    public function index(\Illuminate\Http\Request $request): View
     {
-        $schedules = $this->scheduleService->getSchedulesForLecturer(Auth::id());
+        $search = $request->query('search');
+        $subjectId = $request->query('subject_id');
+
+        $schedules = $this->scheduleService->getSchedulesForLecturer(Auth::id(), null, $search, $subjectId);
 
         // Load data cho slide-over form tạo lịch thi mới
         $exams = Exam::where('created_by', Auth::id())->with('subject')->get();
         $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->get();
 
-        return view('lecturer.schedules.index', compact('schedules', 'exams', 'courseSections'));
+        // Subjects for filter dropdown
+        $filterSubjects = $courseSections->pluck('subject_id')->filter()->unique()->values();
+        $filterSubjects = \App\Models\Subject::whereIn('id', $filterSubjects)->orderBy('name')->get(['id', 'name', 'code']);
+
+        return view('lecturer.schedules.index', compact('schedules', 'exams', 'courseSections', 'filterSubjects'));
     }
 
     /**
@@ -128,14 +135,59 @@ class ExamScheduleController extends Controller
     }
 
     /**
-     * Tự động phân sinh viên vào ca thi.
+     * Lấy danh sách sinh viên trong lớp cho popup phân SV (AJAX).
      */
-    public function assignStudents(ExamSchedule $schedule): RedirectResponse
+    public function getStudents(ExamSchedule $schedule): JsonResponse
     {
         Gate::authorize('manageLecturer', $schedule->exam);
 
-        $count = $this->scheduleService->autoAssignStudents($schedule);
+        $data = $this->scheduleService->getStudentsForAssignment($schedule);
+        $students = $data['students'];
+        $assignedIds = $data['assigned_ids'];
 
-        return back()->with('success', "Đã phân {$count} sinh viên vào ca thi.");
+        return response()->json([
+            'students' => $students->map(fn($s) => [
+                'id'         => $s->id,
+                'name'       => $s->name,
+                'email'      => $s->email,
+                'student_id' => $s->student_code,
+            ]),
+            'assigned_ids'  => $assignedIds,
+            'total_enrolled' => $students->count(),
+        ]);
+    }
+
+    /**
+     * Phân sinh viên vào ca thi (AJAX) — nhận danh sách student_ids cụ thể.
+     */
+    public function assignStudents(\Illuminate\Http\Request $request, ExamSchedule $schedule): JsonResponse
+    {
+        Gate::authorize('manageLecturer', $schedule->exam);
+
+        $request->validate([
+            'student_ids'   => 'required|array',
+            'student_ids.*' => 'integer|exists:users,id',
+        ]);
+
+        $studentIds = collect($request->input('student_ids'));
+
+        $count = $this->scheduleService->syncAssignedStudents($schedule, $studentIds);
+
+        $courseSection = $schedule->courseSection;
+        $totalEnrolled = $courseSection
+            ? $courseSection->students()->wherePivot('status', 'enrolled')->count()
+            : 0;
+
+        if ($count === $totalEnrolled && $totalEnrolled > 0) {
+            $message = "Đã phân toàn bộ {$count} sinh viên trong lớp vào ca thi.";
+        } else {
+            $message = "Đã phân {$count} sinh viên vào ca thi.";
+        }
+
+        return response()->json([
+            'success'        => true,
+            'message'        => $message,
+            'assigned_count' => $count,
+        ]);
     }
 }

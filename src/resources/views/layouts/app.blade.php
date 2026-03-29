@@ -28,6 +28,16 @@ $lecturerSidebarSubjects = \App\Models\Subject::query()
 ->get(['id', 'name', 'code']);
 }
 }
+
+$isStudentUser = auth()->check() && auth()->user()->hasRole('student');
+$studentSidebarSections = collect();
+
+if ($isStudentUser) {
+$studentSidebarSections = auth()->user()->enrolledSections()
+->with(['subject:id,name,code', 'lecturer:id,name'])
+->orderByDesc('updated_at')
+->get();
+}
 @endphp
 
 <!DOCTYPE html>
@@ -36,6 +46,7 @@ $lecturerSidebarSubjects = \App\Models\Subject::query()
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'EMS'))</title>
     <meta name="description" content="@yield('description', 'EMS - Hệ thống Quản lý Thi trắc nghiệm')">
 
@@ -152,7 +163,7 @@ $lecturerSidebarSubjects = \App\Models\Subject::query()
                             </svg>
                         </button>
 
-                        <div x-show="openClassMenu" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
+                        <div x-show="openClassMenu && isExpanded" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
                             @forelse($lecturerSidebarSections as $section)
                             @php
                             $sectionRouteModel = request()->route('section');
@@ -176,21 +187,20 @@ $lecturerSidebarSubjects = \App\Models\Subject::query()
                     </div>
 
                     <div class="px-2 py-1 space-y-1 border-t border-border-clean/60 mt-2 pt-2">
-                        <button type="button"
-                            class="sidebar-link w-full"
-                            @click="openQuestionBank = !openQuestionBank">
+                        <a href="{{ route('lecturer.questions.index') }}"
+                            class="sidebar-link w-full {{ request()->routeIs('lecturer.questions.*') ? 'active' : '' }}">
                             <div class="w-[48px] flex items-center justify-center flex-shrink-0">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <span class="sidebar-label flex-1 text-left transition-opacity duration-300 pr-2" x-show="isExpanded" x-cloak>Ngân hàng câu hỏi</span>
-                            <svg x-show="isExpanded" x-cloak class="w-4 h-4 mr-3 text-text-muted transition-transform" :class="openQuestionBank ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg x-show="isExpanded" x-cloak class="w-4 h-4 mr-3 text-text-muted transition-transform cursor-pointer hover:text-navy-900" :class="openQuestionBank ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" @click.prevent.stop="openQuestionBank = !openQuestionBank">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
-                        </button>
+                        </a>
 
-                        <div x-show="openQuestionBank" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
+                        <div x-show="openQuestionBank && isExpanded" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
                             @foreach($lecturerSidebarSubjects as $subject)
                             @php
                             $questionActive = request()->routeIs('lecturer.questions.*')
@@ -222,7 +232,7 @@ $lecturerSidebarSubjects = \App\Models\Subject::query()
                             </svg>
                         </button>
 
-                        <div x-show="openExamBank" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
+                        <div x-show="openExamBank && isExpanded" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
                             @foreach($lecturerSidebarSubjects as $subject)
                             @php
                             $examActive = request()->routeIs('lecturer.exams.*')
@@ -249,22 +259,103 @@ $lecturerSidebarSubjects = \App\Models\Subject::query()
                             </div>
                             <span class="sidebar-label truncate flex-1 transition-opacity duration-300 pr-3" x-show="isExpanded" x-cloak>Lịch thi</span>
                         </a>
+
+                        <a href="{{ route('lecturer.complaints.index') }}"
+                            class="sidebar-link {{ request()->routeIs('lecturer.complaints.*') ? 'active' : '' }}">
+                            <div class="w-[48px] flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                </svg>
+                            </div>
+                            <span class="sidebar-label truncate flex-1 transition-opacity duration-300 pr-3" x-show="isExpanded" x-cloak>Khiếu nại</span>
+                        </a>
                     </div>
                     @endif
 
                     @role('student')
-                    <x-sidebar-section label="Menu chính">
-                        <x-sidebar-link route="student.dashboard" icon="grid">Tổng quan</x-sidebar-link>
-                        <x-sidebar-link route="student.classes.index" icon="book-open">Học phần của tôi</x-sidebar-link>
-                        <x-sidebar-link route="student.exams.index" icon="clipboard-list">Kỳ thi & Bài tập</x-sidebar-link>
-                        <x-sidebar-link route="student.schedules.index" icon="clock">Lịch thi</x-sidebar-link>
-                        <x-sidebar-link route="student.results.index" icon="chart-bar">Kết quả học tập</x-sidebar-link>
-                        <x-sidebar-link route="student.attendance.index" icon="check-circle">Điểm danh</x-sidebar-link>
-                    </x-sidebar-section>
+                    <div class="px-3">
+                        <a href="{{ route('student.dashboard') }}"
+                            class="sidebar-link {{ request()->routeIs('student.dashboard') ? 'active' : '' }}">
+                            <div class="w-[48px] flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                </svg>
+                            </div>
+                            <span class="sidebar-label truncate flex-1 transition-opacity duration-300 pr-4" x-show="isExpanded" x-cloak>Tổng quan</span>
+                        </a>
+                    </div>
 
-                    <x-sidebar-section label="Cài đặt">
-                        <x-sidebar-link route="profile.edit" icon="user">Hồ sơ cá nhân</x-sidebar-link>
-                    </x-sidebar-section>
+                    <div class="px-2 py-1 space-y-1">
+                        <button type="button"
+                            class="sidebar-link w-full"
+                            @click="openClassMenu = !openClassMenu">
+                            <div class="w-[48px] flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                                </svg>
+                            </div>
+                            <span class="sidebar-label flex-1 text-left transition-opacity duration-300 pr-2" x-show="isExpanded" x-cloak>Lớp học của tôi</span>
+                            <svg x-show="isExpanded" x-cloak class="w-4 h-4 mr-3 text-text-muted transition-transform" :class="openClassMenu ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div x-show="openClassMenu" x-transition.opacity.duration.150ms class="space-y-1 pl-2 pr-1" style="display:none;">
+                            @forelse($studentSidebarSections as $section)
+                            @php
+                            $sectionRouteModel = request()->route('section');
+                            $sectionActive = request()->routeIs('student.classes.show')
+                            && ((int) optional($sectionRouteModel)->id === (int) $section->id);
+                            @endphp
+                            <a href="{{ route('student.classes.show', $section) }}"
+                                class="sidebar-link {{ $sectionActive ? 'active' : '' }}">
+                                <div class="w-[48px] flex items-center justify-center flex-shrink-0">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                                </div>
+                                <span class="sidebar-label flex-1 min-w-0 transition-opacity duration-300 pr-3" x-show="isExpanded" x-cloak>
+                                    <span class="block truncate">{{ $section->name ?? $section->code }}</span>
+                                    <span class="block text-[10px] text-text-muted truncate">{{ $section->subject->name ?? $section->code }}</span>
+                                </span>
+                            </a>
+                            @empty
+                            <p class="text-[11px] text-text-muted px-3 py-2" x-show="isExpanded" x-cloak>Chưa có lớp học phần nào.</p>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <div class="px-2 py-1 space-y-1 border-t border-border-clean/60 mt-2 pt-2">
+                        <a href="{{ route('student.results.index') }}"
+                            class="sidebar-link {{ request()->routeIs('student.results.*') ? 'active' : '' }}">
+                            <div class="w-[48px] flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            </div>
+                            <span class="sidebar-label truncate flex-1 transition-opacity duration-300 pr-3" x-show="isExpanded" x-cloak>Kết quả học tập</span>
+                        </a>
+
+                        <a href="{{ route('student.complaints.index') }}"
+                            class="sidebar-link {{ request()->routeIs('student.complaints.*') ? 'active' : '' }}">
+                            <div class="w-[48px] flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                </svg>
+                            </div>
+                            <span class="sidebar-label truncate flex-1 transition-opacity duration-300 pr-3" x-show="isExpanded" x-cloak>Khiếu nại</span>
+                        </a>
+                    </div>
+
+                    <div class="px-2 py-1 space-y-1 border-t border-border-clean/60 mt-1 pt-2">
+                        <a href="{{ route('profile.edit') }}"
+                            class="sidebar-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
+                            <div class="w-[48px] flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <span class="sidebar-label truncate flex-1 transition-opacity duration-300 pr-3" x-show="isExpanded" x-cloak>Hồ sơ cá nhân</span>
+                        </a>
+                    </div>
                     @endrole
                 </nav>
             </div>
