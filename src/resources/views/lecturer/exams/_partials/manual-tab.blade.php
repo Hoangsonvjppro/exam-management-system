@@ -18,11 +18,9 @@
                 </div>
             </div>
 
-            {{-- Tính tổng điểm --}}
+            {{-- Tổng số câu --}}
             <div class="flex items-center gap-3 mb-3 p-2.5 bg-white rounded-lg border border-[#EBF2FA]">
-                <label class="text-[12px] font-semibold text-[#1A3A6B] whitespace-nowrap">Điểm/câu:</label>
-                <input type="number" id="manual-points-each" value="1.00" min="0.01" step="0.01" class="ca-input" style="width:80px" oninput="updateManualTotal()">
-                <span class="text-[13px] text-[#1A3A6B] font-semibold" id="manual-total-display">Tổng: 0 câu × 1.00 = <strong>0.00 điểm</strong></span>
+                <span class="text-[13px] text-[#1A3A6B] font-semibold" id="manual-total-display">Tổng: 0 câu</span>
             </div>
 
             {{-- Filter bar --}}

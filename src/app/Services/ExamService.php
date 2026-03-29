@@ -59,7 +59,7 @@ class ExamService
                     'difficulty' => $row['difficulty'],
                     'question_type_id' => $row['question_type_id'] ?? null,
                     'question_count' => $row['question_count'],
-                    'points_each' => $row['points_each'] ?? 1.00,
+                    'points_each' => 1.00,
                 ]);
             }
 
