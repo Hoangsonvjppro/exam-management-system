@@ -217,11 +217,17 @@
                                     <div class="flex items-center justify-center gap-2">
                                         <a href="{{ route('student.exams.result', $attempt->exam_schedule_id) }}"
                                            class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">Chi tiết</a>
+                                        @if($attempt->complaint)
+                                        <span class="text-[12px] font-medium text-orange-500/70" title="Đã gửi khiếu nại">
+                                            Đã khiếu nại
+                                        </span>
+                                        @else
                                         <button type="button"
-                                            @click="openComplaintModal('{{ addslashes($exam->title) }}', '{{ $attempt->total_score }}', '{{ $attempt->exam_schedule_id }}')"
+                                            @click="openComplaintModal('{{ addslashes($exam->title) }}', '{{ $attempt->total_score }}', '{{ $attempt->id }}')"
                                             class="text-[12px] font-medium text-text-muted hover:text-red-600 transition-colors">
                                             Gửi khiếu nại
                                         </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -284,7 +290,7 @@
                 activeTab: initialTab || 'feed',
                 complaintExamTitle: '',
                 complaintCurrentScore: '',
-                complaintScheduleId: '',
+                complaintAttemptId: '',
                 complaintReason: '',
 
                 switchTab(tab) {
@@ -294,10 +300,10 @@
                     window.history.replaceState({}, '', url);
                 },
 
-                openComplaintModal(examTitle, score, scheduleId) {
+                openComplaintModal(examTitle, score, attemptId) {
                     this.complaintExamTitle = examTitle;
                     this.complaintCurrentScore = score;
-                    this.complaintScheduleId = scheduleId;
+                    this.complaintAttemptId = attemptId;
                     this.complaintReason = '';
                     this.$dispatch('open-modal', 'complaint-modal');
                 },
@@ -310,11 +316,37 @@
                         return;
                     }
 
-                    // UI-only for now — backend not implemented yet
-                    this.$dispatch('close-modal', 'complaint-modal');
-                    window.dispatchEvent(new CustomEvent('toast', {
-                        detail: { message: 'Tính năng khiếu nại đang được phát triển. Vui lòng liên hệ giảng viên trực tiếp.', type: 'warning' }
-                    }));
+                    fetch('{{ route("student.complaints.store") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : ''
+                        },
+                        body: JSON.stringify({
+                            attempt_id: this.complaintAttemptId,
+                            reason: this.complaintReason
+                        })
+                    })
+                    .then(response => response.json().then(data => ({status: response.status, body: data})))
+                    .then(res => {
+                        this.$dispatch('close-modal', 'complaint-modal');
+                        if (res.status === 201 || res.status === 200) {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: res.body.message, type: 'success' }
+                            }));
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: res.body.message || 'Có lỗi xảy ra', type: 'error' }
+                            }));
+                        }
+                    })
+                    .catch(() => {
+                        this.$dispatch('close-modal', 'complaint-modal');
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Lỗi kết nối máy chủ', type: 'error' }
+                        }));
+                    });
                 },
             }
         }

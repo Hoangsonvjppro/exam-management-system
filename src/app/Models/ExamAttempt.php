@@ -78,4 +78,9 @@ class ExamAttempt extends Model
     {
         return $this->hasMany(StudentAnswer::class);
     }
+
+    public function complaint()
+    {
+        return $this->hasOne(Complaint::class, 'exam_attempt_id');
+    }
 }
