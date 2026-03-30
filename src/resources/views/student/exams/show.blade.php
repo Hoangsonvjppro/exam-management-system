@@ -37,8 +37,8 @@
                     <span class="text-lg font-bold text-navy-900">{{ $exam->questions->count() }} Câu</span>
                 </div>
                 <div class="text-center">
-                    <span class="block text-xs font-medium text-text-muted mb-1">Điểm đạt</span>
-                    <span class="text-lg font-bold text-navy-900">{{ number_format($exam->pass_points, 2) }}</span>
+                    <span class="block text-xs font-medium text-text-muted mb-1">Tổng số câu</span>
+                    <span class="text-lg font-bold text-navy-900">{{ $exam->questions->count() }} câu</span>
                 </div>
             </div>
 
@@ -106,8 +106,7 @@
                     <thead>
                         <tr class="border-b border-border-clean">
                             <th class="text-center py-2 px-3 font-semibold text-text-muted">Lần thi</th>
-                            <th class="text-center py-2 px-3 font-semibold text-text-muted">Trạng thái</th>
-                            <th class="text-center py-2 px-3 font-semibold text-text-muted">Điểm</th>
+                            <th class="text-center py-2 px-3 font-semibold text-text-muted">Điểm (hệ 10)</th>
                             <th class="text-center py-2 px-3 font-semibold text-text-muted">Nộp bài lúc</th>
                             <th class="text-center py-2 px-3 font-semibold text-text-muted"></th>
                         </tr>
@@ -116,15 +115,8 @@
                         @foreach($pastAttempts as $past)
                         <tr class="border-b border-border-clean hover:bg-surface-0 transition-colors">
                             <td class="py-3 px-3 text-center font-medium text-navy-900">Lần {{ $past->attempt_number }}</td>
-                            <td class="py-3 px-3 text-center">
-                                @if($past->total_score >= $exam->pass_points)
-                                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border-[0.5px] border-teal-200">ĐẠT</span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border-[0.5px] border-red-200">CHƯA ĐẠT</span>
-                                @endif
-                            </td>
-                            <td class="py-3 px-3 text-center font-bold {{ $past->total_score >= $exam->pass_points ? 'text-teal-600' : 'text-red-500' }}">
-                                {{ number_format($past->total_score, 2) }}
+                            <td class="py-3 px-3 text-center font-bold text-navy-900">
+                                {{ number_format($past->total_score, 1) }}/10
                             </td>
                             <td class="py-3 px-3 text-center text-text-muted">{{ $past->completed_at?->format('H:i - d/m/Y') }}</td>
                             <td class="py-3 px-3 text-center">
@@ -151,20 +143,13 @@
                             <span class="block text-xs font-medium text-text-muted mb-0.5 italic">Lần thi</span>
                             <span class="text-sm font-bold text-navy-900">Lần {{ $past->attempt_number }}</span>
                         </div>
-                        <div>
-                            @if($past->total_score >= $exam->pass_points)
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-100 uppercase">ĐẠT</span>
-                            @else
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100 uppercase">CHƯA ĐẠT</span>
-                            @endif
-                        </div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4 py-3 border-y border-dashed border-border-clean">
                         <div>
                             <span class="block text-[10px] font-medium text-text-muted mb-1 uppercase tracking-wider">Điểm số</span>
-                            <span class="text-xl font-black {{ $past->total_score >= $exam->pass_points ? 'text-teal-600' : 'text-red-500' }}">
-                                {{ number_format($past->total_score, 1) }}
+                            <span class="text-xl font-black text-navy-900">
+                                {{ number_format($past->total_score, 1) }}/10
                             </span>
                         </div>
                         <div>

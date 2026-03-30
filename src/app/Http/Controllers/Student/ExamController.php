@@ -166,7 +166,6 @@ class ExamController extends Controller
         $answers = $resultData['answers'];
         $correctCount = $resultData['correctCount'];
         $totalQuestions = $resultData['totalQuestions'];
-        $passed = $resultData['passed'];
 
         return view('student.exams.result', compact(
             'exam',
@@ -174,8 +173,7 @@ class ExamController extends Controller
             'attempt',
             'answers',
             'correctCount',
-            'totalQuestions',
-            'passed'
+            'totalQuestions'
         ));
     }
 }

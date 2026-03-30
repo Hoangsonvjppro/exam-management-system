@@ -107,9 +107,8 @@ class StudentExamQueryService
 
         return [
             'answers' => $answers,
-            'correctCount' => $answers->where('is_correct', true)->count(),
+            'correctCount' => $attempt->correct_count ?? $answers->where('is_correct', true)->count(),
             'totalQuestions' => $exam->questions()->count(),
-            'passed' => $attempt->total_score >= $exam->pass_points,
         ];
     }
 }

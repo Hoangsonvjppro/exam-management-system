@@ -25,7 +25,7 @@
                         <tr class="bg-surface-1 border-b border-border-clean">
                             <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Sinh viên</th>
                             <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Bài thi / Lớp</th>
-                            <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Điểm hiện tại</th>
+                            <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Số câu đúng</th>
                             <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Trạng thái</th>
                             <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Lý do</th>
                             <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Hành động</th>
@@ -44,9 +44,14 @@
                                 <p class="text-[10px] text-text-muted mt-0.5">{{ $complaint->created_at->format('H:i d/m/Y') }}</p>
                             </td>
                             <td class="py-3 px-4 align-top text-center">
-                                <span class="text-[14px] font-bold text-navy-900">{{ number_format($complaint->current_score, 2) }}</span>
+                                @php
+                                    $attemptCorrectCount = $complaint->attempt->correct_count ?? 0;
+                                    $attemptTotalQuestions = $complaint->schedule->exam->questions()->count();
+                                @endphp
+                                <span class="text-[14px] font-bold text-navy-900">{{ $attemptCorrectCount }}/{{ $attemptTotalQuestions }}</span>
+                                <span class="block text-[11px] text-text-muted mt-0.5">Điểm: {{ number_format($complaint->current_score, 1) }}/10</span>
                                 @if($complaint->updated_score)
-                                    <span class="block text-[12px] font-bold text-teal-600 mt-1">-> {{ number_format($complaint->updated_score, 2) }}</span>
+                                    <span class="block text-[12px] font-bold text-teal-600 mt-1">-> {{ number_format($complaint->updated_score, 1) }}/10</span>
                                 @endif
                             </td>
                             <td class="py-3 px-4 align-top text-center">
@@ -76,7 +81,7 @@
                             <td class="py-3 px-4 align-top text-center">
                                 @if(in_array($complaint->status, ['pending', 'reviewing']))
                                     <x-button type="button" variant="primary" size="sm" 
-                                        @click="openReviewModal({{ $complaint->id }}, '{{ addslashes($complaint->student->name) }}', '{{ addslashes($complaint->reason) }}', {{ $complaint->current_score }})">
+                                        @click="openReviewModal({{ $complaint->id }}, '{{ addslashes($complaint->student->name) }}', '{{ addslashes($complaint->reason) }}', {{ $attemptCorrectCount }}, {{ $attemptTotalQuestions }})">
                                         Xử lý
                                     </x-button>
                                 @else
@@ -118,8 +123,12 @@
                             <span class="text-[13px] text-navy-900 leading-relaxed break-words" x-text="reviewReason"></span>
                         </div>
                         <div>
+                            <span class="block text-[11px] text-text-muted font-medium uppercase tracking-wider mb-1">Số câu đúng hiện tại</span>
+                            <span class="text-[14px] font-bold text-navy-900" x-text="reviewCurrentCorrectCount + '/' + reviewTotalQuestions"></span>
+                        </div>
+                        <div>
                             <span class="block text-[11px] text-text-muted font-medium uppercase tracking-wider mb-1">Điểm hiện tại</span>
-                            <span class="text-[14px] font-bold text-red-500" x-text="reviewCurrentScore"></span>
+                            <span class="text-[14px] font-bold text-red-500" x-text="currentScoreDisplay"></span>
                         </div>
                     </div>
 
@@ -142,9 +151,12 @@
                         </label>
                     </div>
 
-                    <div x-show="resolutionStatus === 'resolved'" x-transition.opacity.duration.200ms>
-                        <label for="updatedScore" class="block text-[12px] font-semibold text-navy-900 mb-1.5">Điểm mới (thay thế điểm cũ) <span class="text-red-500">*</span></label>
-                        <input id="updatedScore" type="number" step="0.01" min="0" x-model="updatedScore" placeholder="Nhập điểm cập nhật" class="w-full h-11 px-3 bg-white border-[1.5px] border-border-clean rounded-[6px] text-[14px] text-navy-900 placeholder:text-text-muted focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none" />
+                    <div x-show="resolutionStatus === 'resolved'" x-transition.opacity.duration.200ms class="space-y-3">
+                        <div>
+                            <label for="updatedCorrectCount" class="block text-[12px] font-semibold text-navy-900 mb-1.5">Số câu đúng mới <span class="text-red-500">*</span></label>
+                            <input id="updatedCorrectCount" type="number" step="1" min="0" :max="reviewTotalQuestions" x-model="updatedCorrectCount" :placeholder="'Nhập số từ 0 đến ' + reviewTotalQuestions" class="w-full h-11 px-3 bg-white border-[1.5px] border-border-clean rounded-[6px] text-[14px] text-navy-900 placeholder:text-text-muted focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all outline-none" />
+                            <p class="text-[11px] text-text-muted mt-1">Điểm sẽ tự tính: <strong class="text-navy-900" x-text="previewScore"></strong>/10</p>
+                        </div>
                     </div>
 
                     <div>
@@ -171,19 +183,34 @@
                 complaintId: null,
                 reviewStudentName: '',
                 reviewReason: '',
-                reviewCurrentScore: 0,
+                reviewCurrentCorrectCount: 0,
+                reviewTotalQuestions: 0,
                 resolutionStatus: 'resolved',
-                updatedScore: '',
+                updatedCorrectCount: '',
                 reviewerNote: '',
                 isSubmitting: false,
 
-                openReviewModal(id, studentName, reason, currentScore) {
+                get currentScoreDisplay() {
+                    if (this.reviewTotalQuestions > 0) {
+                        return (this.reviewCurrentCorrectCount / this.reviewTotalQuestions * 10).toFixed(1) + '/10';
+                    }
+                    return '0/10';
+                },
+
+                get previewScore() {
+                    const count = parseInt(this.updatedCorrectCount);
+                    if (isNaN(count) || this.reviewTotalQuestions === 0) return '—';
+                    return (count / this.reviewTotalQuestions * 10).toFixed(1);
+                },
+
+                openReviewModal(id, studentName, reason, currentCorrectCount, totalQuestions) {
                     this.complaintId = id;
                     this.reviewStudentName = studentName;
                     this.reviewReason = reason;
-                    this.reviewCurrentScore = currentScore;
+                    this.reviewCurrentCorrectCount = currentCorrectCount;
+                    this.reviewTotalQuestions = totalQuestions;
                     this.resolutionStatus = 'resolved';
-                    this.updatedScore = currentScore;
+                    this.updatedCorrectCount = currentCorrectCount;
                     this.reviewerNote = '';
                     this.$dispatch('open-modal', 'review-modal');
                 },
@@ -196,11 +223,14 @@
                         return;
                     }
 
-                    if (this.resolutionStatus === 'resolved' && (this.updatedScore === '' || this.updatedScore < 0)) {
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Vui lòng nhập điểm mới hợp lệ.', type: 'error' }
-                        }));
-                        return;
+                    if (this.resolutionStatus === 'resolved') {
+                        const count = parseInt(this.updatedCorrectCount);
+                        if (isNaN(count) || count < 0 || count > this.reviewTotalQuestions || this.updatedCorrectCount.toString().includes('.')) {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: `Số câu đúng phải là số nguyên từ 0 đến ${this.reviewTotalQuestions}.`, type: 'error' }
+                            }));
+                            return;
+                        }
                     }
 
                     this.isSubmitting = true;
@@ -214,7 +244,7 @@
                         body: JSON.stringify({
                             status: this.resolutionStatus,
                             reviewer_note: this.reviewerNote,
-                            updated_score: this.resolutionStatus === 'resolved' ? parseFloat(this.updatedScore) : null
+                            updated_correct_count: this.resolutionStatus === 'resolved' ? parseInt(this.updatedCorrectCount) : null
                         })
                     })
                     .then(r => r.json().then(data => ({status: r.status, body: data})))
@@ -227,8 +257,11 @@
                             this.$dispatch('close-modal', 'review-modal');
                             setTimeout(() => window.location.reload(), 1500);
                         } else {
+                            const errorMsg = res.body.errors 
+                                ? Object.values(res.body.errors).flat().join(', ') 
+                                : (res.body.message || 'Có lỗi xảy ra');
                             window.dispatchEvent(new CustomEvent('toast', {
-                                detail: { message: res.body.message || 'Có lỗi xảy ra', type: 'error' }
+                                detail: { message: errorMsg, type: 'error' }
                             }));
                         }
                     })

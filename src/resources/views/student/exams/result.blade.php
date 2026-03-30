@@ -12,21 +12,20 @@
                 <p class="text-sm text-text-muted mb-4">
                     {{ $exam->subject->name ?? '—' }}
                 </p>
-
             </div>
         </x-card>
 
         {{-- Thông tin tổng quan --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {{-- Điểm số --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {{-- Điểm số (hệ 10) --}}
             <x-card padding="true">
                 <div class="text-center">
                     <p class="text-xs font-medium text-text-muted mb-1">Điểm số</p>
                     @if($exam->show_score_after_submit)
-                    <p class="text-4xl font-bold leading-none {{ $passed ? 'text-teal-600' : 'text-red-500' }}">
-                        {{ number_format($attempt->total_score, 2) }}
+                    <p class="text-4xl font-bold leading-none text-navy-900">
+                        {{ number_format($attempt->total_score, 1) }}
                     </p>
-                    <p class="text-xs text-text-muted mt-1">/ {{ number_format($exam->total_points, 2) }} điểm</p>
+                    <p class="text-xs text-text-muted mt-1">/ 10 điểm</p>
                     @else
                     <p class="text-3xl font-bold text-navy-900 leading-none">—</p>
                     <p class="text-xs text-text-muted mt-1">Giảng viên chưa cho phép xem điểm</p>
@@ -34,36 +33,11 @@
                 </div>
             </x-card>
 
-            {{-- Kết quả --}}
-            <x-card padding="true">
-                <div class="text-center">
-                    <p class="text-xs font-medium text-text-muted mb-1">Kết quả</p>
-                    @if($exam->show_score_after_submit)
-                    @if($passed)
-                    <div class="inline-flex items-center gap-2">
-                        <x-ui-icon name="check-circle" class="w-8 h-8 text-teal-600" />
-                        <span class="text-xl font-bold text-teal-600">ĐẠT</span>
-                    </div>
-                    <p class="text-xs text-text-muted mt-1">Điểm đạt: {{ number_format($exam->pass_points, 2) }}</p>
-                    @else
-                    <div class="inline-flex items-center gap-2">
-                        <x-ui-icon name="x-mark" class="w-8 h-8 text-red-500" />
-                        <span class="text-xl font-bold text-red-500">CHƯA ĐẠT</span>
-                    </div>
-                    <p class="text-xs text-text-muted mt-1">Cần tối thiểu: {{ number_format($exam->pass_points, 2) }}</p>
-                    @endif
-                    @else
-                    <p class="text-3xl font-bold text-navy-900 leading-none">—</p>
-                    <p class="text-xs text-text-muted mt-1">Chưa công bố</p>
-                    @endif
-                </div>
-            </x-card>
-
-            {{-- Thống kê --}}
+            {{-- Số câu đúng --}}
             <x-card padding="true">
                 <div class="text-center">
                     <p class="text-xs font-medium text-text-muted mb-1">Số câu đúng</p>
-                    @if($exam->show_answers_after_submit)
+                    @if($exam->show_score_after_submit)
                     <p class="text-4xl font-bold text-navy-900 leading-none">
                         {{ $correctCount }}<span class="text-lg text-text-muted">/{{ $totalQuestions }}</span>
                     </p>
@@ -132,7 +106,7 @@
                             <p class="text-sm font-medium text-navy-900 leading-relaxed">{!! $answer->question->content !!}</p>
                         </div>
                         <span class="flex-shrink-0 text-xs font-semibold {{ $answer->is_correct ? 'text-teal-600' : 'text-red-500' }}">
-                            {{ $answer->is_correct ? '+' . number_format($answer->points_awarded, 2) : '0.00' }} đ
+                            {{ $answer->is_correct ? '✓ Đúng' : '✗ Sai' }}
                         </span>
                     </div>
 
