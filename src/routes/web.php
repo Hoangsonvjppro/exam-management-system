@@ -162,6 +162,12 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::resource('classes', LecturerSectionController::class)
                 ->parameters(['classes' => 'section']);
 
+            // Nhóm route Điểm danh (Attendance Sessions)
+            Route::post('/classes/{section}/attendance-sessions', [\App\Http\Controllers\Lecturer\AttendanceSessionController::class, 'store'])
+                ->name('classes.attendance.store');
+            Route::patch('/classes/{section}/attendance-sessions/{session}/records/{record}', [\App\Http\Controllers\Lecturer\AttendanceSessionController::class, 'updateRecord'])
+                ->name('classes.attendance.updateRecord');
+
             // Tạo lại mã tham gia lớp học
             Route::post('/classes/{section}/regenerate-code', [LecturerSectionController::class, 'regenerateCode'])
                 ->name('classes.regenerate-code');

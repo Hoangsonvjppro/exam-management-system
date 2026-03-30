@@ -8,11 +8,4 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    // Thêm cấu hình server dành cho mạng nội bộ
-    server: {
-        host: '0.0.0.0', 
-        hmr: {
-            host: '172.16.0.229', 
-        },
-    },
 });

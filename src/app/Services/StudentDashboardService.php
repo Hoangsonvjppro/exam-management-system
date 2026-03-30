@@ -138,11 +138,20 @@ class StudentDashboardService
             ->orderByDesc('completed_at')
             ->get();
 
+        // Attendance
+        $attendanceSessions = \App\Models\AttendanceSession::where('course_section_id', $section->id)
+            ->with(['records' => function($q) use ($user) {
+                $q->where('student_id', $user->id);
+            }])
+            ->orderByDesc('date')
+            ->get();
+
         return [
-            'section'           => $section->load(['subject', 'lecturer', 'semester']),
-            'notifications'     => $notifications,
-            'examSchedules'     => $examSchedules,
-            'completedAttempts' => $completedAttempts,
+            'section'            => $section->load(['subject', 'lecturer', 'semester']),
+            'notifications'      => $notifications,
+            'examSchedules'      => $examSchedules,
+            'completedAttempts'  => $completedAttempts,
+            'attendanceSessions' => $attendanceSessions,
         ];
     }
 }

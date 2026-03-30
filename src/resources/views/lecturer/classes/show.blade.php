@@ -316,15 +316,101 @@
                 @endif
             </div>
 
-            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'attendance'" x-transition.opacity.duration.150ms style="display:none;">
+            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'attendance'" x-transition.opacity.duration.150ms style="display:none;" x-data="attendanceManager({{ $section->id }})">
                 <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-[18px] font-bold text-navy-900">Lưới điểm danh theo buổi</h3>
+                    <div>
+                        <h3 class="text-[18px] font-bold text-navy-900">Lưới điểm danh ({{ $section->attendanceSessions->count() }} buổi)</h3>
+                        <p class="text-[12px] text-text-muted font-medium mt-1">Bấm vào ô để thay đổi: Có mặt (Xanh) - Vắng (Đỏ) - Muộn (Vàng) - Có phép (Xám).</p>
+                    </div>
+                    @can('manage', $section)
+                    <x-button variant="primary" @click="$dispatch('open-modal', 'create-attendance-session-modal')">
+                        + Tạo buổi điểm danh
+                    </x-button>
+                    @endcan
                 </div>
 
+                @if($section->attendanceSessions->isEmpty())
                 <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
                     <x-ui-icon name="clipboard-document-check" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
-                    <p class="text-sm text-text-muted font-medium">Tính năng điểm danh đang được phát triển.</p>
+                    <p class="text-sm text-text-muted font-medium">Lớp chưa có buổi điểm danh nào.</p>
                 </div>
+                @else
+                <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-surface-1 border-b border-border-clean">
+                                <th class="sticky left-0 z-10 bg-surface-1 py-3 px-4 w-[250px] text-[12px] font-semibold text-text-muted border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">Sinh viên</th>
+                                @foreach($section->attendanceSessions->sortBy('date') as $session)
+                                <th class="py-2 px-3 text-center border-r border-border-clean min-w-[100px]">
+                                    <p class="text-[12px] font-bold text-navy-900" title="{{ $session->title }}">{{ \Illuminate\Support\Str::limit($session->title, 15) }}</p>
+                                    <p class="text-[10px] text-text-muted mt-0.5">{{ $session->date->format('d/m/Y') }}</p>
+                                </th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-clean/70">
+                            @foreach($section->students->sortBy('name') as $student)
+                            <tr class="hover:bg-surface-0 transition-colors group">
+                                <td class="sticky left-0 z-10 bg-white py-3 px-4 border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-surface-0 transition-colors">
+                                    <p class="text-[13px] font-semibold text-navy-900">{{ $student->name }}</p>
+                                    <p class="text-[11px] text-text-muted font-mono mt-0.5">{{ $student->student_code ?? '—' }}</p>
+                                </td>
+                                @foreach($section->attendanceSessions->sortBy('date') as $session)
+                                    @php
+                                        $record = $session->records->where('student_id', $student->id)->first();
+                                        $status = $record ? $record->status : 'absent';
+                                        $recordId = $record ? $record->id : 'null';
+                                    @endphp
+                                <td class="p-0 text-center border-r border-border-clean align-middle">
+                                    <button type="button" 
+                                        @if($recordId !== 'null')
+                                        class="w-full h-full min-h-[50px] px-2 py-2 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                                        :class="{
+                                            'bg-teal-50 hover:bg-teal-100': records['{{ $session->id }}_{{ $student->id }}'] === 'present',
+                                            'bg-red-50 hover:bg-red-100': records['{{ $session->id }}_{{ $student->id }}'] === 'absent',
+                                            'bg-yellow-50 hover:bg-yellow-100': records['{{ $session->id }}_{{ $student->id }}'] === 'late',
+                                            'bg-gray-50 hover:bg-gray-100': records['{{ $session->id }}_{{ $student->id }}'] === 'excused'
+                                        }"
+                                        @click="toggleStatus({{ $session->id }}, {{ $student->id }}, {{ $recordId }})"
+                                        x-init="records['{{ $session->id }}_{{ $student->id }}'] = '{{ $status }}'"
+                                        @else
+                                        class="w-full h-full min-h-[50px] flex items-center justify-center bg-gray-50 text-gray-300"
+                                        disabled
+                                        @endif
+                                    >
+                                        @if($recordId !== 'null')
+                                        <div class="w-5 h-5 rounded-full flex items-center justify-center shadow-sm border transition-colors"
+                                            :class="{
+                                                'bg-teal-500 border-teal-600 text-white': records['{{ $session->id }}_{{ $student->id }}'] === 'present',
+                                                'bg-red-500 border-red-600 text-white': records['{{ $session->id }}_{{ $student->id }}'] === 'absent',
+                                                'bg-yellow-500 border-yellow-600 text-white': records['{{ $session->id }}_{{ $student->id }}'] === 'late',
+                                                'bg-white border-gray-300 text-gray-500': records['{{ $session->id }}_{{ $student->id }}'] === 'excused'
+                                            }">
+                                            <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'present'">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                            </template>
+                                            <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'absent'">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </template>
+                                            <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'late'">
+                                                <span class="text-[9px] font-bold uppercase">M</span>
+                                            </template>
+                                            <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'excused'">
+                                                <span class="text-[9px] font-bold uppercase">P</span>
+                                            </template>
+                                        </div>
+                                        @else
+                                            <span class="text-xs text-text-muted">N/A</span>
+                                        @endif
+                                    </button>
+                                </td>
+                                @endforeach
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
             </div>
 
             <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'grading'" x-transition.opacity.duration.150ms style="display:none;">
@@ -560,6 +646,40 @@
             </form>
         </x-slide-over>
 
+        <x-modal name="create-attendance-session-modal" maxWidth="lg">
+            <div class="p-6 md:p-8" x-data="attendanceManager({{ $section->id }})">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-[20px] font-bold text-navy-900">Tạo phiên điểm danh mới</h3>
+                    <button @click="$dispatch('close-modal', 'create-attendance-session-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form @submit.prevent="submitAttendanceSessionForm($el)" class="space-y-5">
+                    @csrf
+                    <div>
+                        <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Tên phiên điểm danh <span class="text-red-500">*</span></label>
+                        <x-text-input name="title" type="text" value="Buổi học ngày {{ now()->format('d/m/Y') }}" required placeholder="Ví dụ: Buổi 1, Bù tuần 2..." />
+                        <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="title"></p>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Ngày thực hiện <span class="text-red-500">*</span></label>
+                        <x-text-input name="date" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}" required />
+                        <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="date"></p>
+                    </div>
+                    <div class="pt-2 flex justify-end gap-3">
+                        <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'create-attendance-session-modal')">Hủy</x-button>
+                        <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingSession">
+                            <span x-show="!isSubmittingSession">Tạo phiên</span>
+                            <span x-show="isSubmittingSession">Đang tạo...</span>
+                        </x-button>
+                    </div>
+                </form>
+            </div>
+        </x-modal>
+
         <x-modal name="create-notification-modal" maxWidth="lg">
             <div class="p-6 md:p-8">
                 <div class="flex items-center justify-between mb-6">
@@ -668,6 +788,104 @@
     </div>
 
     <script>
+        function attendanceManager(sectionId) {
+            return {
+                records: {},
+                isSubmittingSession: false,
+                isUpdatingRecord: false,
+
+                async submitAttendanceSessionForm(formElement) {
+                    this.isSubmittingSession = true;
+                    formElement.querySelectorAll('[data-error]').forEach(el => {
+                        el.textContent = ''; el.classList.add('hidden');
+                    });
+
+                    const formData = new FormData(formElement);
+
+                    try {
+                        const response = await fetch(`/lecturer/classes/${sectionId}/attendance-sessions`, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                            body: formData,
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message, type: 'success' }
+                            }));
+                            setTimeout(() => window.location.reload(), 800);
+                        } else if (response.status === 422 && result.errors) {
+                            for (const [field, messages] of Object.entries(result.errors)) {
+                                const errorEl = formElement.querySelector(`[data-error="${field}"]`);
+                                if (errorEl) {
+                                    errorEl.textContent = messages[0];
+                                    errorEl.classList.remove('hidden');
+                                }
+                            }
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message || 'Có lỗi xảy ra', type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Lỗi hệ thống', type: 'error' }
+                        }));
+                    } finally {
+                        this.isSubmittingSession = false;
+                    }
+                },
+
+                async toggleStatus(sessionId, studentId, recordId) {
+                    if (this.isUpdatingRecord || !recordId) return;
+
+                    const currentStatus = this.records[`${sessionId}_${studentId}`];
+                    let nextStatus = 'present';
+                    if (currentStatus === 'present') nextStatus = 'absent';
+                    else if (currentStatus === 'absent') nextStatus = 'late';
+                    else if (currentStatus === 'late') nextStatus = 'excused';
+                    else if (currentStatus === 'excused') nextStatus = 'present';
+
+                    // Optimistic update
+                    this.records[`${sessionId}_${studentId}`] = nextStatus;
+                    this.isUpdatingRecord = true;
+
+                    try {
+                         const response = await fetch(`/lecturer/classes/${sectionId}/attendance-sessions/${sessionId}/records/${recordId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ status: nextStatus })
+                        });
+
+                        const result = await response.json();
+                        if (!response.ok || !result.success) {
+                            // Revert on fail
+                            this.records[`${sessionId}_${studentId}`] = currentStatus;
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message || 'Không thể lưu trạng thái', type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                         this.records[`${sessionId}_${studentId}`] = currentStatus;
+                         window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Lỗi mất kết nối mạng', type: 'error' }
+                        }));
+                    } finally {
+                        this.isUpdatingRecord = false;
+                    }
+                }
+            }
+        }
+
         function classWorkspaceManager(initialTab) {
             return {
                 activeTab: initialTab || 'overview',

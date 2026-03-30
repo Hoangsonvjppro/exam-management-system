@@ -4,7 +4,7 @@
 
     @php
     $activeTab = request()->query('tab', 'feed');
-    if (!in_array($activeTab, ['feed', 'exams', 'grades'], true)) {
+    if (!in_array($activeTab, ['feed', 'exams', 'grades', 'attendance'], true)) {
         $activeTab = 'feed';
     }
     @endphp
@@ -73,6 +73,15 @@
                         <span class="flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                             Điểm số
+                        </span>
+                    </button>
+                    <button type="button"
+                        @click="switchTab('attendance')"
+                        :class="activeTab === 'attendance' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Điểm danh
                         </span>
                     </button>
                 </div>
@@ -231,6 +240,78 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+                @endif
+            </div>
+
+            {{-- ═══ TAB 4: Điểm danh (Attendance) ═══ --}}
+            <div class="p-4 sm:p-6 space-y-4" x-show="activeTab === 'attendance'" x-transition.opacity.duration.150ms style="display:none;">
+                @if($attendanceSessions->isEmpty())
+                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                    <x-ui-icon name="clipboard-document-check" class="w-10 h-10 text-blue-100 mx-auto mb-3" />
+                    <p class="text-sm text-text-muted font-medium">Chưa có thông tin điểm danh.</p>
+                </div>
+                @else
+                @php
+                    $totalSessions = $attendanceSessions->count();
+                    $presentCount = 0;
+                    foreach ($attendanceSessions as $session) {
+                        $record = $session->records->first();
+                        if ($record && in_array($record->status, ['present', 'late', 'excused'])) {
+                            $presentCount++;
+                        }
+                    }
+                    $absentCount = $totalSessions - $presentCount;
+                    $attendanceRate = $totalSessions > 0 ? round(($presentCount / $totalSessions) * 100) : 100;
+                @endphp
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="p-4 rounded-xl border border-border-clean bg-white flex flex-col justify-center">
+                        <p class="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Tỷ lệ đi học</p>
+                        <p class="text-2xl font-black {{ $attendanceRate >= 80 ? 'text-teal-600' : 'text-red-500' }}">{{ $attendanceRate }}%</p>
+                    </div>
+                    <div class="p-4 rounded-xl border border-border-clean bg-white flex flex-col justify-center">
+                        <p class="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Có mặt / Đi trễ</p>
+                        <p class="text-2xl font-black text-navy-900">{{ $presentCount }} <span class="text-sm text-text-muted font-medium ml-1">buổi</span></p>
+                    </div>
+                    <div class="p-4 rounded-xl border border-border-clean bg-white flex flex-col justify-center">
+                        <p class="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Vắng mặt</p>
+                        <p class="text-2xl font-black {{ $absentCount > 0 ? 'text-red-500' : 'text-navy-900' }}">{{ $absentCount }} <span class="text-sm text-text-muted font-medium ml-1">buổi</span></p>
+                    </div>
+                </div>
+
+                <div class="border-[0.5px] border-border-clean rounded-[8px] bg-white overflow-hidden">
+                    <ul class="divide-y divide-border-clean/70">
+                        @foreach($attendanceSessions as $session)
+                        @php
+                            $record = $session->records->first();
+                            $status = $record ? $record->status : 'absent';
+                        @endphp
+                        <li class="flex items-center justify-between p-4 hover:bg-surface-0 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center border {{ $status === 'present' ? 'bg-teal-50 border-teal-200 text-teal-600' : ($status === 'late' ? 'bg-yellow-50 border-yellow-200 text-yellow-600' : ($status === 'excused' ? 'bg-gray-50 border-gray-200 text-gray-500' : 'bg-red-50 border-red-200 text-red-600')) }}">
+                                    @if($status === 'present')
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                    @elseif($status === 'late')
+                                        <span class="text-[11px] font-bold uppercase">M</span>
+                                    @elseif($status === 'excused')
+                                        <span class="text-[11px] font-bold uppercase">P</span>
+                                    @else
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    @endif
+                                </div>
+                                <div>
+                                    <h4 class="text-[13px] font-bold text-navy-900">{{ $session->title }}</h4>
+                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $session->date->format('H:i - d/m/Y') }}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded-[4px] border {{ $status === 'present' ? 'bg-teal-50 text-teal-700 border-teal-200' : ($status === 'late' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ($status === 'excused' ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-red-50 text-red-700 border-red-200')) }}">
+                                    {{ match($status) { 'present' => 'Có mặt', 'absent' => 'Vắng mặt', 'late' => 'Đi muộn', 'excused' => 'Có phép', default => 'N/A' } }}
+                                </span>
+                            </div>
+                        </li>
+                        @endforeach
+                    </ul>
                 </div>
                 @endif
             </div>
