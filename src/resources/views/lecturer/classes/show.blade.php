@@ -522,16 +522,140 @@
                 @endif
             </div>
 
-            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'grading'" x-transition.opacity.duration.150ms style="display:none;">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-[18px] font-bold text-navy-900">Điểm quá trình</h3>
+            {{-- ═══ TAB: Điểm quá trình ═══ --}}
+            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'grading'" x-transition.opacity.duration.150ms style="display:none;" x-data="gradeManager({{ $section->id }})" x-init="initData()">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-[18px] font-bold text-navy-900">Điểm quá trình</h3>
+                        <p class="text-[12px] text-text-muted font-medium mt-1">Quản lý các cột điểm thành phần. Tổng trọng số: <span class="font-bold border-b border-dashed" :class="totalWeight > 100 ? 'text-red-500 border-red-500' : 'text-teal-600 border-teal-600'" x-text="totalWeight + '%'"></span></p>
+                    </div>
+                    @can('manage', $section)
+                    <x-button variant="primary" @click="$dispatch('open-modal', 'column-modal'); isEditingColumn = false; columnData = {name: '', weight: 10};">
+                        + Thêm cột điểm
+                    </x-button>
+                    @endcan
                 </div>
 
-                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
-                    <x-ui-icon name="chart-bar" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
-                    <p class="text-sm text-text-muted font-medium">Tính năng thống kê và quản lý điểm đang được phát triển.</p>
+                @if($section->students->isEmpty())
+                <div class="text-center py-10 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
+                    <p class="text-[13px] text-text-muted">Lớp học phần chưa có sinh viên, không thể nhập điểm.</p>
                 </div>
-            </div>
+                @else
+                <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white shadow-sm">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-surface-1 border-b border-border-clean">
+                                <th class="sticky left-0 z-10 bg-surface-1 py-3 px-4 w-[250px] text-[12px] font-semibold text-text-muted border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                    Thành viên lớp
+                                </th>
+                                @forelse($section->gradeColumns->sortBy('order') as $col)
+                                <th class="py-2 px-3 text-center border-r border-border-clean min-w-[130px] group relative">
+                                    <p class="text-[13px] font-bold text-navy-900 leading-tight" title="{{ $col->name }}">{{ \Illuminate\Support\Str::limit($col->name, 20) }}</p>
+                                    <p class="text-[11px] text-text-muted mt-0.5 mb-1">{{ (float)$col->weight }}%</p>
+                                    @can('manage', $section)
+                                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm px-1 py-0.5 rounded shadow-sm border border-border-clean flex items-center hidden group-hover:flex gap-1.5 z-20">
+                                        <button @click="editColumn({{ $col->id }}, '{{ addslashes($col->name) }}', {{ (float)$col->weight }})" class="text-[10px] text-blue-600 hover:text-blue-800" title="Sửa cột"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                                        <button @click="deleteColumn({{ $col->id }})" class="text-[10px] text-red-600 hover:text-red-800" title="Xóa cột"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                                    </div>
+                                    @endcan
+                                </th>
+                                @empty
+                                <th class="py-3 px-4 text-center text-[12px] text-text-muted italic bg-surface-0 border-border-clean">
+                                    Chưa có cột điểm nào. Hãy nhấp "+ Thêm cột điểm".
+                                </th>
+                                @endforelse
+                                <!-- Cột tính tổng tạm điểm quá trình -->
+                                @if($section->gradeColumns->count() > 0)
+                                <th class="py-2 px-3 text-center border-l bg-surface-0/50 min-w-[100px]">
+                                    <p class="text-[12px] font-bold text-indigo-700">Tổng điểm QT</p>
+                                    <p class="text-[10px] text-text-muted">(Tạm tính)</p>
+                                </th>
+                                @endif
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-clean/70 relative">
+                            <!-- Overlay loading indicator per row inline update could exist, but we do top progress bar -->
+                            <div x-show="isSaving" class="absolute top-0 left-0 right-0 h-0.5 bg-blue-500 z-20 animate-pulse" style="display: none;"></div>
+                            
+                            @foreach($section->students->sortBy('name') as $student)
+                            <tr class="hover:bg-surface-0 transition-colors group">
+                                <td class="sticky left-0 z-10 bg-white py-2.5 px-4 border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-surface-0 transition-colors">
+                                    <p class="text-[13px] font-semibold text-navy-900">{{ $student->name }}</p>
+                                    <p class="text-[11px] text-text-muted font-mono mt-0.5">{{ $student->student_code ?? '—' }}</p>
+                                </td>
+                                
+                                @foreach($section->gradeColumns->sortBy('order') as $col)
+                                @php
+                                    $grade = $col->studentGrades->where('student_id', $student->id)->first();
+                                    $score = $grade ? $grade->score : '';
+                                    $note = $grade ? $grade->note : '';
+                                @endphp
+                                <td class="p-0 border-r border-border-clean align-middle relative">
+                                    <div class="absolute right-0 top-0 bottom-0 w-1 bg-green-400 opacity-0 transition-opacity" :class="{'opacity-100': saved['{{$col->id}}_{{$student->id}}']}"></div>
+                                    <input type="number" step="0.01" min="0" max="10" 
+                                        class="w-full h-full min-h-[46px] text-center border-none bg-transparent text-[14px] font-bold text-navy-900 focus:ring-0 focus:bg-blue-50/50 hover:bg-gray-50/50 transition-colors outline-none cursor-text
+                                            {{ $score === '' ? 'text-gray-400 font-normal placeholder:text-gray-300' : '' }}"
+                                        placeholder="-" 
+                                        @can('manage', $section)
+                                        x-model="scores['{{$col->id}}_{{$student->id}}']"
+                                        @blur="saveScore({{ $col->id }}, {{ $student->id }}, $event.target.value)"
+                                        @keydown.enter="$event.target.blur()"
+                                        @endcan
+                                        @cannot('manage', $section)
+                                        value="{{ $score }}" disabled
+                                        @endcannot
+                                    />
+                                    @can('manage', $section)
+                                    <input type="hidden" x-init="initialScores['{{$col->id}}_{{$student->id}}'] = '{{ $score }}'; scores['{{$col->id}}_{{$student->id}}'] = '{{ $score }}';">
+                                    @endcan
+                                </td>
+                                @endforeach
+                                
+                                @if($section->gradeColumns->count() > 0)
+                                <td class="py-2 px-3 text-center border-l bg-surface-0/30 align-middle">
+                                    <div class="text-[14px] font-black text-indigo-700" x-text="calculateProcessGrade({{ $student->id }})"></div>
+                                </td>
+                                @endif
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                
+                <p class="text-[12px] text-text-muted mt-2">
+                    <span class="inline-block w-2 h-2 rounded-full bg-green-400 mr-1 align-baseline"></span> Có viền xanh lá: Điểm đã được lưu tự động thành công. Tab/Click ra ngoài để lưu điểm.
+                </p>
+                @endif
+
+                <x-modal name="column-modal" maxWidth="md">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="text-[18px] font-bold text-navy-900" x-text="isEditingColumn ? 'Sửa cột điểm' : 'Thêm cột điểm mới'"></h3>
+                        <button @click="$dispatch('close-modal', 'column-modal')" class="text-text-muted hover:text-navy-900"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                    </div>
+                    
+                    <form @submit.prevent="submitColumnForm()" class="space-y-4">
+                        <div>
+                            <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Tên cột <span class="text-red-500">*</span></label>
+                            <input type="text" x-model="columnData.name" required class="w-full border border-border-clean rounded-[6px] px-3 py-2 text-[13px] focus:border-blue-500 focus:ring-1 focus:ring-blue-200" placeholder="VD: Giữa kỳ, Bài tập số 1...">
+                        </div>
+                        <div>
+                            <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Trọng số (%) <span class="text-red-500">*</span></label>
+                            <input type="number" step="0.5" min="0" max="100" x-model="columnData.weight" required class="w-full border border-border-clean rounded-[6px] px-3 py-2 text-[13px] focus:border-blue-500 focus:ring-1 focus:ring-blue-200">
+                            <p class="text-[11px] text-text-muted mt-1">Nên tính trên tổng 100% của tất cả các cột điểm quá trình.</p>
+                        </div>
+                        
+                        <div class="pt-4 flex justify-end gap-2 border-t border-border-clean">
+                            <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'column-modal')">Huỷ</x-button>
+                            <x-button type="submit" variant="primary">
+                                <span x-show="!isSubmittingColumn" x-text="isEditingColumn ? 'Cập nhật' : 'Thêm cột'"></span>
+                                <span x-show="isSubmittingColumn">Đang xử lý...</span>
+                            </x-button>
+                        </div>
+                    </form>
+                </div>
+            </x-modal>
+        </div>
 
             {{-- ═══ TAB: Khiếu nại ═══ --}}
             <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'complaints'" x-transition.opacity.duration.150ms style="display:none;">
@@ -1278,6 +1402,127 @@
                     } finally {
                         this.isSubmittingReview = false;
                     }
+                }
+            }
+        }
+
+        function gradeManager(sectionId) {
+            return {
+                isSaving: false,
+                isSubmittingColumn: false,
+                isEditingColumn: false,
+                editingColumnId: null,
+                totalWeight: {{ $section->gradeColumns->sum('weight') }},
+                columnData: { name: '', weight: 10 },
+                scores: {},
+                initialScores: {},
+                saved: {},
+                weights: {
+                    @foreach($section->gradeColumns as $col)
+                    '{{$col->id}}': {{ (float)$col->weight }},
+                    @endforeach
+                },
+                
+                initData() {
+                },
+                
+                editColumn(id, name, weight) {
+                    this.isEditingColumn = true;
+                    this.editingColumnId = id;
+                    this.columnData = { name: name, weight: weight };
+                    this.$dispatch('open-modal', 'column-modal');
+                },
+                
+                async submitColumnForm() {
+                    this.isSubmittingColumn = true;
+                    const url = this.isEditingColumn 
+                        ? `/lecturer/classes/${sectionId}/grade-columns/${this.editingColumnId}`
+                        : `/lecturer/classes/${sectionId}/grade-columns`;
+                    const method = this.isEditingColumn ? 'PUT' : 'POST';
+                    
+                    try {
+                        const res = await fetch(url, {
+                            method: method,
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(this.columnData)
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            window.location.reload();
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {detail:{message: data.message || 'Lỗi', type: 'error'}}));
+                        }
+                    } catch (e) {
+                         window.dispatchEvent(new CustomEvent('toast', {detail:{message: 'Lỗi mạng', type: 'error'}}));
+                    } finally {
+                        this.isSubmittingColumn = false;
+                    }
+                },
+                
+                async deleteColumn(id) {
+                    if(!confirm('Xoá cột điểm này sẽ xoá toàn bộ điểm của sinh viên trong cột. Tiếp tục?')) return;
+                    try {
+                        const res = await fetch(`/lecturer/classes/${sectionId}/grade-columns/${id}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (res.ok) window.location.reload();
+                    } catch (e) {}
+                },
+                
+                async saveScore(columnId, studentId, value) {
+                    const key = `${columnId}_${studentId}`;
+                    if (this.initialScores[key] === value) return; // Không thay đổi
+                    
+                    this.isSaving = true;
+                    try {
+                        const res = await fetch(`/lecturer/classes/${sectionId}/grade-columns/${columnId}/grades`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ student_id: studentId, score: value === '' ? null : parseFloat(value) })
+                        });
+                        if (res.ok) {
+                            this.initialScores[key] = value;
+                            this.scores[key] = value;
+                            this.saved[key] = true;
+                            setTimeout(() => this.saved[key] = false, 2000);
+                        } else {
+                            const err = await res.json();
+                            this.scores[key] = this.initialScores[key]; // revert
+                            window.dispatchEvent(new CustomEvent('toast', {detail:{message: err.message || 'Lỗi lưu điểm', type: 'error'}}));
+                        }
+                    } catch (e) {
+                        this.scores[key] = this.initialScores[key]; // revert
+                    } finally {
+                        this.isSaving = false;
+                    }
+                },
+                
+                calculateProcessGrade(studentId) {
+                    let total = 0;
+                    let hasAnyScore = false;
+                    for (const [colId, weight] of Object.entries(this.weights)) {
+                        const key = `${colId}_${studentId}`;
+                        const score = this.scores[key];
+                        if (score !== undefined && score !== '' && score !== null) {
+                            total += (parseFloat(score) * (parseFloat(weight) / 100));
+                            hasAnyScore = true;
+                        }
+                    }
+                    if (!this.totalWeight || this.totalWeight <= 0 || !hasAnyScore) return '-';
+                    // Quy đổi ra thang 10 so với totalWeight của Process Grade (Điểm quá trình do GV nắm)
+                    return ((total * 100) / this.totalWeight).toFixed(2);
                 }
             }
         }

@@ -186,15 +186,90 @@
             </div>
 
             {{-- ═══ TAB 3: Điểm số ═══ --}}
-            <div class="p-4 sm:p-6 space-y-4" x-show="activeTab === 'grades'" x-transition.opacity.duration.150ms style="display:none;">
+            <div class="p-4 sm:p-6 space-y-8" x-show="activeTab === 'grades'" x-transition.opacity.duration.150ms style="display:none;">
+                {{-- 1. Điểm Quá Trình --}}
+                <div class="space-y-3">
+                    <h4 class="text-[15px] font-bold text-navy-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
+                        Điểm quá trình
+                    </h4>
+                    @if($section->gradeColumns->isEmpty())
+                    <div class="text-center py-6 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                        <p class="text-[13px] text-text-muted">Chưa có cột điểm nào được thiết lập.</p>
+                    </div>
+                    @else
+                    <div class="overflow-x-auto border border-border-clean rounded-[8px]">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-surface-1 border-b border-border-clean">
+                                    <th class="py-3 px-4 w-[250px] text-[12px] font-semibold text-text-muted border-r border-border-clean">Cột điểm</th>
+                                    <th class="py-3 px-4 text-[12px] font-semibold text-text-muted text-center border-r border-border-clean">Trọng số</th>
+                                    <th class="py-3 px-4 text-[12px] font-semibold text-text-muted text-center">Điểm số</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-clean/70 bg-white">
+                                @php
+                                    $totalWeight = $section->gradeColumns->sum('weight');
+                                    $processScoreTotal = 0;
+                                    $hasAnyProcessScore = false;
+                                @endphp
+                                @foreach($section->gradeColumns->sortBy('order') as $col)
+                                    @php
+                                        $grade = $col->studentGrades->first();
+                                        if ($grade && $grade->score !== null) {
+                                            $processScoreTotal += ($grade->score * ($col->weight / 100));
+                                            $hasAnyProcessScore = true;
+                                        }
+                                    @endphp
+                                    <tr class="hover:bg-surface-0 transition-colors">
+                                        <td class="py-2.5 px-4 border-r border-border-clean">
+                                            <p class="text-[13px] font-semibold text-navy-900">{{ $col->name }}</p>
+                                        </td>
+                                        <td class="py-2.5 px-4 text-center border-r border-border-clean text-[13px] text-text-muted font-mono">
+                                            {{ floatval($col->weight) }}%
+                                        </td>
+                                        <td class="py-2.5 px-4 text-center">
+                                            @if($grade && $grade->score !== null)
+                                            <span class="text-[14px] font-bold text-navy-900">{{ number_format($grade->score, 2) }}</span>
+                                            @else
+                                            <span class="text-[14px] font-medium text-text-muted">—</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            @if($hasAnyProcessScore && $totalWeight > 0)
+                            <tfoot class="bg-indigo-50/30 border-t-2 border-indigo-100">
+                                <tr>
+                                    <td colspan="2" class="py-3 px-4 text-right border-r border-border-clean">
+                                        <p class="text-[13px] font-bold text-indigo-800">Điểm quá trình (Tạm tính)</p>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span class="text-[16px] font-black text-indigo-700">
+                                            {{ number_format(($processScoreTotal * 100) / $totalWeight, 2) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                            @endif
+                        </table>
+                    </div>
+                    @endif
+                </div>
+
+                {{-- 2. Điểm Thi EMS --}}
+                <div class="space-y-3">
+                    <h4 class="text-[15px] font-bold text-navy-900 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Điểm bài thi hệ thống
+                    </h4>
                 @if($completedAttempts->isEmpty())
                 <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
-                    <x-ui-icon name="chart-bar" class="w-10 h-10 text-blue-100 mx-auto mb-3" />
-                    <p class="text-sm text-text-muted font-medium">Chưa có điểm số nào.</p>
-                    <p class="text-xs text-text-muted mt-1">Hoàn thành bài thi để xem điểm tại đây.</p>
+                    <x-ui-icon name="document-check" class="w-10 h-10 text-blue-100 mx-auto mb-3" />
+                    <p class="text-sm text-text-muted font-medium">Chưa có bài thi nào được hoàn thành.</p>
                 </div>
                 @else
-                <div class="overflow-x-auto border border-border-clean rounded-[8px]">
+                <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-surface-1 border-b border-border-clean">
@@ -251,6 +326,7 @@
                     </table>
                 </div>
                 @endif
+                </div>
             </div>
 
             {{-- ═══ TAB 4: Điểm danh (Attendance) ═══ --}}

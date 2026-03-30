@@ -152,8 +152,18 @@ class StudentDashboardService
             ->orderByDesc('created_at')
             ->get();
 
+        // Eager load section with grade columns for process score
+        $section->load([
+            'subject',
+            'lecturer',
+            'semester',
+            'gradeColumns.studentGrades' => function ($query) use ($user) {
+                $query->where('student_id', $user->id);
+            }
+        ]);
+
         return [
-            'section'            => $section->load(['subject', 'lecturer', 'semester']),
+            'section'            => $section,
             'notifications'      => $notifications,
             'examSchedules'      => $examSchedules,
             'completedAttempts'  => $completedAttempts,

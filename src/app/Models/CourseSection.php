@@ -115,6 +115,11 @@ class CourseSection extends Model
         return $this->hasMany(LeaveRequest::class, 'course_section_id');
     }
 
+    public function gradeColumns(): HasMany
+    {
+        return $this->hasMany(GradeColumn::class);
+    }
+
     // ── Code Generation ────────────────────────────────────────
 
     public static function generateCode(int|string|null $subjectId, int|string|null $semesterId): ?string

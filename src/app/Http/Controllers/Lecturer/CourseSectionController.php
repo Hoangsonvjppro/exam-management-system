@@ -82,6 +82,7 @@ class CourseSectionController extends Controller
             'examSchedules.exam' => fn($q) => $q->withCount('questions'),
             'complaints.student' => fn($q) => $q->latest(),
             'attendanceSessions.records',
+            'gradeColumns.studentGrades',
         ]);
 
         return view('lecturer.classes.show', compact('section'));

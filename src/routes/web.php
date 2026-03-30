@@ -176,6 +176,16 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::patch('/classes/{section}/leave-requests/{leaveRequest}', [\App\Http\Controllers\Lecturer\LeaveRequestController::class, 'update'])
                 ->name('classes.leave-requests.update');
 
+            // Quản lý điểm (Grade Management)
+            Route::post('/classes/{section}/grade-columns', [\App\Http\Controllers\Lecturer\GradeManagerController::class, 'storeColumn'])
+                ->name('classes.grade-columns.store');
+            Route::put('/classes/{section}/grade-columns/{column}', [\App\Http\Controllers\Lecturer\GradeManagerController::class, 'updateColumn'])
+                ->name('classes.grade-columns.update');
+            Route::delete('/classes/{section}/grade-columns/{column}', [\App\Http\Controllers\Lecturer\GradeManagerController::class, 'destroyColumn'])
+                ->name('classes.grade-columns.destroy');
+            Route::post('/classes/{section}/grade-columns/{column}/grades', [\App\Http\Controllers\Lecturer\GradeManagerController::class, 'saveGrades'])
+                ->name('classes.grades.save');
+
             // Tạo lại mã tham gia lớp học
             Route::post('/classes/{section}/regenerate-code', [LecturerSectionController::class, 'regenerateCode'])
                 ->name('classes.regenerate-code');
