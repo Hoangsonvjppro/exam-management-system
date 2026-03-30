@@ -9,6 +9,7 @@ use App\Models\CourseSection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AttendanceSessionController extends Controller
@@ -32,6 +33,8 @@ class AttendanceSessionController extends Controller
             $session = $section->attendanceSessions()->create([
                 'title' => $validated['title'],
                 'date' => $validated['date'],
+                'secret_code' => strtoupper(Str::random(6)),
+                'is_open' => true,
             ]);
 
             $students = $section->students()->get();
@@ -43,7 +46,7 @@ class AttendanceSessionController extends Controller
                 $records[] = [
                     'attendance_session_id' => $session->id,
                     'student_id' => $student->id,
-                    'status' => 'present',
+                    'status' => 'absent',
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
@@ -70,6 +73,29 @@ class AttendanceSessionController extends Controller
     }
 
     /**
+     * Update the attendance session's open status.
+     */
+    public function toggleOpen(Request $request, CourseSection $section, AttendanceSession $session): JsonResponse
+    {
+        $this->authorize('manage', $section);
+
+        if ($session->course_section_id !== $section->id) {
+            abort(404);
+        }
+
+        $session->update([
+            'is_open' => !$session->is_open
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $session->is_open ? 'Đã mở điểm danh' : 'Đã đóng điểm danh',
+            'is_open' => $session->is_open,
+            'secret_code' => $session->secret_code
+        ]);
+    }
+
+    /**
      * Update the attendance status of a specific record.
      */
     public function updateRecord(Request $request, CourseSection $section, AttendanceSession $session, AttendanceRecord $record): JsonResponse
@@ -81,7 +107,7 @@ class AttendanceSessionController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => ['required', Rule::in(['present', 'absent', 'late', 'excused'])],
+            'status' => ['required', Rule::in(['present', 'absent', 'excused'])],
         ]);
 
         $record->update([

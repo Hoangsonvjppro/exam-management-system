@@ -12,6 +12,8 @@ return new class extends Migration {
             $table->foreignId('course_section_id')->constrained()->cascadeOnDelete();
             $table->string('title');
             $table->dateTime('date');
+            $table->string('secret_code', 10)->nullable();
+            $table->boolean('is_open')->default(false);
             $table->timestamps();
         });
 
@@ -19,7 +21,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('attendance_session_id')->constrained()->cascadeOnDelete();
             $table->foreignId('student_id')->constrained('users')->cascadeOnDelete();
-            $table->enum('status', ['present', 'absent', 'late', 'excused'])->default('present');
+            $table->enum('status', ['present', 'absent', 'excused'])->default('absent');
             $table->string('note')->nullable();
             $table->timestamps();
 

@@ -5,23 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class AttendanceSession extends Model
+class LeaveRequest extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'course_section_id',
-        'title',
+        'student_id',
         'date',
-        'secret_code',
-        'is_open'
+        'reason',
+        'status',
     ];
 
     protected $casts = [
-        'date' => 'datetime',
-        'is_open' => 'boolean',
+        'date' => 'date',
     ];
 
     public function courseSection(): BelongsTo
@@ -29,8 +27,8 @@ class AttendanceSession extends Model
         return $this->belongsTo(CourseSection::class);
     }
 
-    public function records(): HasMany
+    public function student(): BelongsTo
     {
-        return $this->hasMany(AttendanceRecord::class);
+        return $this->belongsTo(User::class, 'student_id');
     }
 }

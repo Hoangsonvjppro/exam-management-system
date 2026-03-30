@@ -146,12 +146,19 @@ class StudentDashboardService
             ->orderByDesc('date')
             ->get();
 
+        // Leave Requests
+        $leaveRequests = \App\Models\LeaveRequest::where('student_id', $user->id)
+            ->where('course_section_id', $section->id)
+            ->orderByDesc('created_at')
+            ->get();
+
         return [
             'section'            => $section->load(['subject', 'lecturer', 'semester']),
             'notifications'      => $notifications,
             'examSchedules'      => $examSchedules,
             'completedAttempts'  => $completedAttempts,
             'attendanceSessions' => $attendanceSessions,
+            'leaveRequests'      => $leaveRequests,
         ];
     }
 }

@@ -159,6 +159,11 @@ class User extends Authenticatable
         return $this->hasMany(AttendanceRecord::class, 'student_id');
     }
 
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class, 'student_id');
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────
 
     /**
