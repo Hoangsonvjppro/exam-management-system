@@ -38,7 +38,8 @@ class ExamAttemptService
             
             // 2. Chấm điểm toàn bộ answers dựa trên snapshot
             $answers = $attempt->answers()->get();
-            $totalScore = 0;
+            $correctCount = 0;
+            $totalQuestions = $examQuestions->count();
 
             foreach ($answers as $answer) {
                 $examQuestion = $examQuestions->get($answer->question_id);
@@ -53,9 +54,10 @@ class ExamAttemptService
                 $selectedOption = $options->firstWhere('id', $answer->question_option_id);
                 $isCorrect = $selectedOption['is_correct'] ?? false;
 
-                $point = $examQuestion->points ?? 1.00;
-                $awardedPoint = $isCorrect ? $point : 0;
-                $totalScore += $awardedPoint;
+                $awardedPoint = $isCorrect ? 1 : 0;
+                if ($isCorrect) {
+                    $correctCount++;
+                }
 
                 $answer->update([
                     'is_correct'     => $isCorrect,
@@ -63,11 +65,17 @@ class ExamAttemptService
                 ]);
             }
 
-            // 3. Cập nhật trạng thái attempt + submitted_answers_count
+            // 3. Tính điểm hệ 10: (số câu đúng / tổng câu) × 10, làm tròn 1 số thập phân
+            $totalScore = $totalQuestions > 0
+                ? round(($correctCount / $totalQuestions) * 10, 1)
+                : 0;
+
+            // 4. Cập nhật trạng thái attempt
             $attempt->update([
                 'status'                  => ExamAttemptStatus::Completed,
                 'completed_at'            => now(),
                 'total_score'             => $totalScore,
+                'correct_count'           => $correctCount,
                 'submitted_answers_count' => $answers->count(),
             ]);
         });

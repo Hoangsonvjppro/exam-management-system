@@ -128,14 +128,24 @@ class ExamController extends Controller
         $exam = $schedule->exam;
         $this->authorize('attemptExam', $exam);
 
-        $attempt = ExamAttempt::forSchedule($schedule->id)->forUser(Auth::id())->inProgress()->firstOrFail();
+        $attempt = ExamAttempt::forSchedule($schedule->id)
+            ->forUser(Auth::id())
+            ->inProgress()
+            ->first();
 
-        // 1. Kiểm tra thời gian làm bài tối thiểu
-        $minDuration = $exam->min_duration_before_submit ?? 0;
-        if ($minDuration > 0) {
-            $minutesPassed = $attempt->started_at->diffInMinutes(now());
-            if ($minutesPassed < $minDuration) {
-                return back()->with('error', "Bạn phải làm bài ít nhất {$minDuration} phút trước khi nộp bài. Bạn đã làm được {$minutesPassed} phút.");
+        if (!$attempt) {
+            return redirect()->route('student.exams.result', $schedule->id)
+                ->with('info', 'Bài thi đã được nộp');
+        }
+
+        // 1. Kiểm tra thời gian làm bài tối thiểu (bỏ qua nếu nộp phạt vi phạm quy chế)
+        if (!$request->has('is_forced_submit')) {
+            $minDuration = $exam->min_duration_before_submit ?? 0;
+            if ($minDuration > 0) {
+                $minutesPassed = $attempt->started_at->diffInMinutes(now());
+                if ($minutesPassed < $minDuration) {
+                    return back()->with('error', "Bạn phải làm bài ít nhất {$minDuration} phút trước khi nộp bài. Bạn đã làm được {$minutesPassed} phút.");
+                }
             }
         }
 
@@ -166,7 +176,6 @@ class ExamController extends Controller
         $answers = $resultData['answers'];
         $correctCount = $resultData['correctCount'];
         $totalQuestions = $resultData['totalQuestions'];
-        $passed = $resultData['passed'];
 
         return view('student.exams.result', compact(
             'exam',
@@ -174,8 +183,7 @@ class ExamController extends Controller
             'attempt',
             'answers',
             'correctCount',
-            'totalQuestions',
-            'passed'
+            'totalQuestions'
         ));
     }
 }

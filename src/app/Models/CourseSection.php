@@ -105,6 +105,16 @@ class CourseSection extends Model
         return $this->hasMany(Complaint::class, 'course_section_id');
     }
 
+    public function attendanceSessions(): HasMany
+    {
+        return $this->hasMany(AttendanceSession::class, 'course_section_id');
+    }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class, 'course_section_id');
+    }
+
     // ── Code Generation ────────────────────────────────────────
 
     public static function generateCode(int|string|null $subjectId, int|string|null $semesterId): ?string

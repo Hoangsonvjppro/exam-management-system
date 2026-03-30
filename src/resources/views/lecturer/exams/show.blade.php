@@ -118,12 +118,14 @@
                         class="text-xs text-text-muted">câu</span></p>
             </x-card>
             <x-card padding="true">
-                <p class="text-xs font-medium text-text-muted mb-0.5">Tổng điểm</p>
-                <p class="text-xl font-bold text-navy-900">{{ number_format($exam->total_points, 2) }}</p>
+                <p class="text-xs font-medium text-text-muted mb-0.5">Tổng số câu</p>
+                <p class="text-xl font-bold text-navy-900">{{ $exam->questions->count() }} <span
+                        class="text-xs text-text-muted">câu</span></p>
             </x-card>
             <x-card padding="true">
-                <p class="text-xs font-medium text-text-muted mb-0.5">Điểm đạt</p>
-                <p class="text-xl font-bold text-navy-900">{{ number_format($exam->pass_points, 2) }}</p>
+                <p class="text-xs font-medium text-text-muted mb-0.5">Điểm/câu</p>
+                <p class="text-xl font-bold text-navy-900">1 <span
+                        class="text-xs text-text-muted">điểm</span></p>
             </x-card>
         </div>
 
@@ -219,8 +221,8 @@
                                         @endif
                                     </td>
                                     <td
-                                        class="py-2.5 px-3 text-center font-semibold {{ ($attempt->total_score ?? 0) >= $exam->pass_points ? 'text-teal-600' : 'text-red-500' }}">
-                                        {{ $attempt->total_score !== null ? number_format($attempt->total_score, 2) : '—' }}
+                                        class="py-2.5 px-3 text-center font-semibold text-navy-900">
+                                        {{ $attempt->total_score !== null ? number_format($attempt->total_score, 1) . '/10' : '—' }}
                                     </td>
                                     <td class="py-2.5 px-3 text-center text-text-muted">
                                         {{ $attempt->started_at->format('H:i d/m') }}</td>

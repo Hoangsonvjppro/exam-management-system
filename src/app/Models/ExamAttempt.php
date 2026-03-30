@@ -20,6 +20,7 @@ class ExamAttempt extends Model
         'completed_at',
         'status',
         'total_score',
+        'correct_count',
         'ip_address',
         'user_agent',
         'submitted_answers_count',
@@ -30,7 +31,8 @@ class ExamAttempt extends Model
     protected $casts = [
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
-        'total_score' => 'decimal:2',
+        'total_score' => 'decimal:1',
+        'correct_count' => 'integer',
         'focus_lost_at' => 'array',
         'status' => ExamAttemptStatus::class,
     ];

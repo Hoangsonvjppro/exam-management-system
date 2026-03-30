@@ -4,7 +4,7 @@
 
     @php
     $activeTab = request()->query('tab', 'feed');
-    if (!in_array($activeTab, ['feed', 'exams', 'grades'], true)) {
+    if (!in_array($activeTab, ['feed', 'exams', 'grades', 'attendance', 'leaves'], true)) {
         $activeTab = 'feed';
     }
     @endphp
@@ -73,6 +73,24 @@
                         <span class="flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                             Điểm số
+                        </span>
+                    </button>
+                    <button type="button"
+                        @click="switchTab('attendance')"
+                        :class="activeTab === 'attendance' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Điểm danh
+                        </span>
+                    </button>
+                    <button type="button"
+                        @click="switchTab('leaves')"
+                        :class="activeTab === 'leaves' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            Xin phép
                         </span>
                     </button>
                 </div>
@@ -181,8 +199,8 @@
                         <thead>
                             <tr class="bg-surface-1 border-b border-border-clean">
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Bài thi</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Điểm</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Kết quả</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Điểm (hệ 10)</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Số câu đúng</th>
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Nộp lúc</th>
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center"></th>
                             </tr>
@@ -191,7 +209,8 @@
                             @foreach($completedAttempts as $attempt)
                             @php
                                 $exam = $attempt->schedule->exam;
-                                $passed = $attempt->total_score >= ($exam->pass_points ?? 0);
+                                $correctCount = $attempt->correct_count ?? 0;
+                                $totalQuestions = $exam->questions_count ?? $exam->questions()->count();
                             @endphp
                             <tr class="hover:bg-surface-0 transition-colors">
                                 <td class="py-3 px-4">
@@ -199,16 +218,12 @@
                                     <p class="text-[11px] text-text-muted mt-0.5">Lần {{ $attempt->attempt_number }}</p>
                                 </td>
                                 <td class="py-3 px-4 text-center">
-                                    <span class="text-lg font-bold {{ $passed ? 'text-teal-600' : 'text-red-500' }}">
-                                        {{ number_format($attempt->total_score, 2) }}
+                                    <span class="text-lg font-bold text-navy-900">
+                                        {{ number_format($attempt->total_score, 1) }}/10
                                     </span>
                                 </td>
                                 <td class="py-3 px-4 text-center">
-                                    @if($passed)
-                                    <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-1 rounded-[4px] bg-teal-50 text-teal-800 border border-teal-200">ĐẠT</span>
-                                    @else
-                                    <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-1 rounded-[4px] bg-red-50 text-red-700 border border-red-200">CHƯA ĐẠT</span>
-                                    @endif
+                                    <span class="text-[13px] font-semibold text-navy-900">{{ $correctCount }}/{{ $totalQuestions }}</span>
                                 </td>
                                 <td class="py-3 px-4 text-center text-[12px] text-text-muted">
                                     {{ $attempt->completed_at?->format('H:i — d/m/Y') }}
@@ -223,7 +238,7 @@
                                         </span>
                                         @else
                                         <button type="button"
-                                            @click="openComplaintModal('{{ addslashes($exam->title) }}', '{{ $attempt->total_score }}', '{{ $attempt->id }}')"
+                                            @click="openComplaintModal('{{ addslashes($exam->title) }}', '{{ $attempt->total_score }}', '{{ $attempt->id }}', '{{ $correctCount }}', '{{ $totalQuestions }}')"
                                             class="text-[12px] font-medium text-text-muted hover:text-red-600 transition-colors">
                                             Gửi khiếu nại
                                         </button>
@@ -234,6 +249,204 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+                @endif
+            </div>
+
+            {{-- ═══ TAB 4: Điểm danh (Attendance) ═══ --}}
+            <div class="p-4 sm:p-6 space-y-4" x-show="activeTab === 'attendance'" x-transition.opacity.duration.150ms style="display:none;" x-data="{
+                secretCode: '',
+                isSubmittingCode: false,
+                init() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.has('qr_code')) {
+                        this.secretCode = urlParams.get('qr_code');
+                        window.history.replaceState({}, document.title, window.location.pathname + '?tab=attendance');
+                        this.submitQRCheckIn();
+                    }
+                },
+                async submitQRCheckIn() {
+                    this.isSubmittingCode = true;
+                    try {
+                        const res = await fetch(`/student/classes/{{ $section->id }}/attendance`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') },
+                            body: JSON.stringify({ secret_code: this.secretCode })
+                        });
+                        const result = await res.json();
+                        if(res.ok && result.success) {
+                            window.dispatchEvent(new CustomEvent('toast', { detail: { message: result.message, type: 'success' }}));
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', { detail: { message: result.message || 'Mã không hợp lệ', type: 'error' }}));
+                        }
+                    } catch(e) { window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Lỗi mạng', type: 'error' }})); }
+                    finally { this.isSubmittingCode = false; }
+                }
+            }">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-[10px] p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+                    <div>
+                        <h4 class="text-[15px] font-bold text-navy-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+                            Điểm danh mã PIN / QR
+                        </h4>
+                        <p class="text-[12px] text-text-muted mt-1 leading-relaxed">Nhập mã PIN do giảng viên cung cấp để xác nhận có mặt.</p>
+                    </div>
+                    <form @submit.prevent="submitQRCheckIn" class="flex items-center gap-2 w-full md:w-auto relative">
+                        <input type="text" x-model="secretCode" placeholder="Nhập mã PIN (VD: AB12C3)" required
+                               class="h-10 px-4 w-full md:w-64 bg-white border border-border-clean rounded-[6px] text-[13px] font-mono font-bold text-navy-900 uppercase tracking-widest placeholder:tracking-normal focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all outline-none" />
+                        <button type="submit" :disabled="isSubmittingCode"
+                                class="h-10 px-5 bg-blue-600 text-white text-[13px] font-bold rounded-[6px] hover:bg-blue-700 disabled:opacity-75 disabled:cursor-not-allowed transition-colors whitespace-nowrap flex items-center gap-2">
+                            <span x-show="!isSubmittingCode">Xác nhận</span>
+                            <span x-show="isSubmittingCode" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full block"></span>
+                        </button>
+                    </form>
+                </div>
+                @if($attendanceSessions->isEmpty())
+                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                    <x-ui-icon name="clipboard-document-check" class="w-10 h-10 text-blue-100 mx-auto mb-3" />
+                    <p class="text-sm text-text-muted font-medium">Chưa có thông tin điểm danh.</p>
+                </div>
+                @else
+                @php
+                    $totalSessions = $attendanceSessions->count();
+                    $presentCount = 0;
+                    foreach ($attendanceSessions as $session) {
+                        $record = $session->records->first();
+                        if ($record && in_array($record->status, ['present', 'late', 'excused'])) {
+                            $presentCount++;
+                        }
+                    }
+                    $absentCount = $totalSessions - $presentCount;
+                    $attendanceRate = $totalSessions > 0 ? round(($presentCount / $totalSessions) * 100) : 100;
+                @endphp
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="p-4 rounded-xl border border-border-clean bg-white flex flex-col justify-center">
+                        <p class="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Tỷ lệ đi học</p>
+                        <p class="text-2xl font-black {{ $attendanceRate >= 80 ? 'text-teal-600' : 'text-red-500' }}">{{ $attendanceRate }}%</p>
+                    </div>
+                    <div class="p-4 rounded-xl border border-border-clean bg-white flex flex-col justify-center">
+                        <p class="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Có mặt / Đi trễ</p>
+                        <p class="text-2xl font-black text-navy-900">{{ $presentCount }} <span class="text-sm text-text-muted font-medium ml-1">buổi</span></p>
+                    </div>
+                    <div class="p-4 rounded-xl border border-border-clean bg-white flex flex-col justify-center">
+                        <p class="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-1">Vắng mặt</p>
+                        <p class="text-2xl font-black {{ $absentCount > 0 ? 'text-red-500' : 'text-navy-900' }}">{{ $absentCount }} <span class="text-sm text-text-muted font-medium ml-1">buổi</span></p>
+                    </div>
+                </div>
+
+                <div class="border-[0.5px] border-border-clean rounded-[8px] bg-white overflow-hidden">
+                    <ul class="divide-y divide-border-clean/70">
+                        @foreach($attendanceSessions as $session)
+                        @php
+                            $record = $session->records->first();
+                            $status = $record ? $record->status : 'absent';
+                        @endphp
+                        <li class="flex items-center justify-between p-4 hover:bg-surface-0 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center border {{ $status === 'present' ? 'bg-teal-50 border-teal-200 text-teal-600' : ($status === 'late' ? 'bg-yellow-50 border-yellow-200 text-yellow-600' : ($status === 'excused' ? 'bg-gray-50 border-gray-200 text-gray-500' : 'bg-red-50 border-red-200 text-red-600')) }}">
+                                    @if($status === 'present')
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                    @elseif($status === 'late')
+                                        <span class="text-[11px] font-bold uppercase">M</span>
+                                    @elseif($status === 'excused')
+                                        <span class="text-[11px] font-bold uppercase">P</span>
+                                    @else
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    @endif
+                                </div>
+                                <div>
+                                    <h4 class="text-[13px] font-bold text-navy-900">{{ $session->title }}</h4>
+                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $session->date->format('H:i - d/m/Y') }}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded-[4px] border {{ $status === 'present' ? 'bg-teal-50 text-teal-700 border-teal-200' : ($status === 'late' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ($status === 'excused' ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-red-50 text-red-700 border-red-200')) }}">
+                                    {{ match($status) { 'present' => 'Có mặt', 'absent' => 'Vắng mặt', 'late' => 'Đi muộn', 'excused' => 'Có phép', default => 'N/A' } }}
+                                </span>
+                            </div>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+            </div>
+            </div>
+
+            {{-- ═══ TAB 5: Xin phép (Leaves) ═══ --}}
+            <div class="p-4 sm:p-6 space-y-4" x-show="activeTab === 'leaves'" x-transition.opacity.duration.150ms style="display:none;" x-data="{
+                formDate: '{{ now()->format('Y-m-d') }}',
+                formReason: '',
+                isSubmittingLeave: false,
+                async submitLeaveRequest() {
+                    this.isSubmittingLeave = true;
+                    try {
+                        const res = await fetch(`/student/classes/{{ $section->id }}/leave-requests`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') },
+                            body: JSON.stringify({ date: this.formDate, reason: this.formReason })
+                        });
+                        const result = await res.json();
+                        if(res.ok && result.success) {
+                            window.dispatchEvent(new CustomEvent('toast', { detail: { message: result.message, type: 'success' }}));
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', { detail: { message: result.message || 'Lỗi gửi đơn', type: 'error' }}));
+                        }
+                    } catch(e) { window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Lỗi mạng', type: 'error' }})); }
+                    finally { this.isSubmittingLeave = false; }
+                }
+            }">
+                <div class="bg-surface-0 border-[0.5px] border-border-clean rounded-[10px] p-5 mb-6">
+                    <h4 class="text-[15px] font-bold text-navy-900 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        Tạo đơn xin nghỉ phép
+                    </h4>
+                    <form @submit.prevent="submitLeaveRequest" class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                        <div class="md:col-span-3">
+                            <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Ngày nghỉ <span class="text-red-500">*</span></label>
+                            <input type="date" x-model="formDate" required min="{{ now()->format('Y-m-d') }}"
+                                   class="w-full h-10 px-3 bg-white border border-border-clean rounded-[6px] text-[13px] text-navy-900 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all outline-none" />
+                        </div>
+                        <div class="md:col-span-7">
+                            <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Lý do nghỉ <span class="text-red-500">*</span></label>
+                            <input type="text" x-model="formReason" required placeholder="Nhập lý do vắng mặt..." minlength="5" maxlength="1000"
+                                   class="w-full h-10 px-3 bg-white border border-border-clean rounded-[6px] text-[13px] text-navy-900 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all outline-none" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <button type="submit" :disabled="isSubmittingLeave"
+                                    class="w-full h-10 bg-navy-900 text-white text-[13px] font-bold rounded-[6px] hover:bg-navy-800 disabled:opacity-75 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
+                                <span x-show="!isSubmittingLeave">Gửi đơn</span>
+                                <span x-show="isSubmittingLeave" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full block"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                @if($leaveRequests->isEmpty())
+                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                    <x-ui-icon name="document-text" class="w-10 h-10 text-blue-100 mx-auto mb-3" />
+                    <p class="text-sm text-text-muted font-medium">Bạn chưa có đơn xin nghỉ phép nào cho lớp này.</p>
+                </div>
+                @else
+                <div class="border-[0.5px] border-border-clean rounded-[8px] bg-white overflow-hidden">
+                    <ul class="divide-y divide-border-clean/70">
+                        @foreach($leaveRequests as $req)
+                        <li class="p-4 hover:bg-surface-0 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1.5">
+                                    <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded-[4px] border 
+                                        {{ $req->status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ($req->status === 'approved' ? 'bg-teal-50 text-teal-700 border-teal-200' : 'bg-red-50 text-red-700 border-red-200') }}">
+                                        {{ match($req->status) { 'pending' => 'Chờ duyệt', 'approved' => 'Đã duyệt', 'rejected' => 'Từ chối', default => $req->status } }}
+                                    </span>
+                                    <span class="text-[11px] font-mono text-text-muted">Gửi lúc {{ $req->created_at->format('H:i d/m/') }}</span>
+                                </div>
+                                <h4 class="text-[13px] font-bold text-navy-900">Xin nghỉ ngày: {{ $req->date->format('d/m/Y') }}</h4>
+                                <p class="text-[12px] text-text-muted mt-0.5">Lý do: {{ $req->reason }}</p>
+                            </div>
+                        </li>
+                        @endforeach
+                    </ul>
                 </div>
                 @endif
             </div>
@@ -263,7 +476,11 @@
                         </div>
                         <div class="flex justify-between text-[12px]">
                             <span class="text-text-muted font-medium">Điểm hiện tại:</span>
-                            <span class="font-bold text-red-500" x-text="complaintCurrentScore">—</span>
+                            <span class="font-bold text-navy-900" x-text="complaintCurrentScore + '/10'">—</span>
+                        </div>
+                        <div class="flex justify-between text-[12px]">
+                            <span class="text-text-muted font-medium">Số câu đúng:</span>
+                            <span class="font-bold text-navy-900" x-text="complaintCorrectCount + '/' + complaintTotalQuestions">—</span>
                         </div>
                     </div>
 
@@ -291,6 +508,8 @@
                 complaintExamTitle: '',
                 complaintCurrentScore: '',
                 complaintAttemptId: '',
+                complaintCorrectCount: '',
+                complaintTotalQuestions: '',
                 complaintReason: '',
 
                 switchTab(tab) {
@@ -300,10 +519,12 @@
                     window.history.replaceState({}, '', url);
                 },
 
-                openComplaintModal(examTitle, score, attemptId) {
+                openComplaintModal(examTitle, score, attemptId, correctCount, totalQuestions) {
                     this.complaintExamTitle = examTitle;
                     this.complaintCurrentScore = score;
                     this.complaintAttemptId = attemptId;
+                    this.complaintCorrectCount = correctCount;
+                    this.complaintTotalQuestions = totalQuestions;
                     this.complaintReason = '';
                     this.$dispatch('open-modal', 'complaint-modal');
                 },

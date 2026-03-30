@@ -4,7 +4,7 @@
 
     @php
     $activeTab = request()->query('tab', 'overview');
-    if (!in_array($activeTab, ['overview', 'students', 'attendance', 'grading', 'complaints'], true)) {
+    if (!in_array($activeTab, ['overview', 'students', 'attendance', 'leaves', 'grading', 'complaints'], true)) {
     $activeTab = 'overview';
     }
 
@@ -101,6 +101,17 @@
                         :class="activeTab === 'attendance' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
                         class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
                         Điểm danh
+                    </button>
+                    <button type="button"
+                        @click="switchTab('leaves')"
+                        :class="activeTab === 'leaves' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors flex items-center gap-1.5">
+                        Xin nghỉ phép
+                        @if($section->leaveRequests->where('status', 'pending')->count() > 0)
+                            <span class="bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                                {{ $section->leaveRequests->where('status', 'pending')->count() }}
+                            </span>
+                        @endif
                     </button>
                     <button type="button"
                         @click="switchTab('grading')"
@@ -316,15 +327,199 @@
                 @endif
             </div>
 
-            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'attendance'" x-transition.opacity.duration.150ms style="display:none;">
+            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'attendance'" x-transition.opacity.duration.150ms style="display:none;" x-data="attendanceManager({{ $section->id }})">
                 <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-[18px] font-bold text-navy-900">Lưới điểm danh theo buổi</h3>
+                    <div>
+                        <h3 class="text-[18px] font-bold text-navy-900">Lưới điểm danh ({{ $section->attendanceSessions->count() }} buổi)</h3>
+                        <p class="text-[12px] text-text-muted font-medium mt-1">Bấm vào ô để thay đổi: Có mặt (Xanh) - Vắng (Đỏ) - Muộn (Vàng) - Có phép (Xám).</p>
+                    </div>
+                    @can('manage', $section)
+                    <x-button variant="primary" @click="$dispatch('open-modal', 'create-attendance-session-modal')">
+                        + Tạo buổi điểm danh
+                    </x-button>
+                    @endcan
                 </div>
 
+                @if($section->attendanceSessions->isEmpty())
                 <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
                     <x-ui-icon name="clipboard-document-check" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
-                    <p class="text-sm text-text-muted font-medium">Tính năng điểm danh đang được phát triển.</p>
+                    <p class="text-sm text-text-muted font-medium">Lớp chưa có buổi điểm danh nào.</p>
                 </div>
+                @else
+                <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-surface-1 border-b border-border-clean">
+                                <th class="sticky left-0 z-10 bg-surface-1 py-3 px-4 w-[250px] text-[12px] font-semibold text-text-muted border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">Sinh viên</th>
+                                @foreach($section->attendanceSessions->sortBy('date') as $session)
+                                <th class="py-2 px-3 text-center border-r border-border-clean min-w-[120px]">
+                                    <p class="text-[12px] font-bold text-navy-900" title="{{ $session->title }}">{{ \Illuminate\Support\Str::limit($session->title, 15) }}</p>
+                                    <p class="text-[10px] text-text-muted mt-0.5 mb-1">{{ $session->date->format('d/m/Y') }}</p>
+                                    <div class="flex flex-col items-center gap-1 mt-1" x-init="sessions[{{ $session->id }}] = { is_open: {{ $session->is_open ? 'true' : 'false' }}, code: '{{ $session->secret_code }}' }">
+                                        <button @click="toggleSessionOpen({{ $session->id }})" 
+                                            class="px-2 py-0.5 text-[9px] font-bold uppercase rounded-full border transition-colors"
+                                            :class="sessions[{{ $session->id }}]?.is_open ? 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100' : 'bg-surface-0 text-text-muted border-border-clean hover:bg-surface-1'">
+                                            <span x-text="sessions[{{ $session->id }}]?.is_open ? 'Đang mở' : 'Đã đóng'"></span>
+                                        </button>
+                                        <button x-show="sessions[{{ $session->id }}]?.is_open" 
+                                            @click="showPinCode(sessions[{{ $session->id }}]?.code)" 
+                                            class="text-[11px] font-mono font-bold text-blue-600 hover:text-blue-800 tracking-wider">
+                                            <span x-text="sessions[{{ $session->id }}]?.code"></span>
+                                        </button>
+                                    </div>
+                                </th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-clean/70">
+                            @foreach($section->students->sortBy('name') as $student)
+                            <tr class="hover:bg-surface-0 transition-colors group">
+                                <td class="sticky left-0 z-10 bg-white py-3 px-4 border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-surface-0 transition-colors">
+                                    <p class="text-[13px] font-semibold text-navy-900">{{ $student->name }}</p>
+                                    <p class="text-[11px] text-text-muted font-mono mt-0.5">{{ $student->student_code ?? '—' }}</p>
+                                </td>
+                                @foreach($section->attendanceSessions->sortBy('date') as $session)
+                                    @php
+                                        $record = $session->records->where('student_id', $student->id)->first();
+                                        $status = $record ? $record->status : 'absent';
+                                        $recordId = $record ? $record->id : 'null';
+                                    @endphp
+                                <td class="p-0 text-center border-r border-border-clean align-middle">
+                                    <button type="button" 
+                                        @if($recordId !== 'null')
+                                        class="w-full h-full min-h-[50px] px-2 py-2 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                                        :class="{
+                                            'bg-teal-50 hover:bg-teal-100': records['{{ $session->id }}_{{ $student->id }}'] === 'present',
+                                            'bg-red-50 hover:bg-red-100': records['{{ $session->id }}_{{ $student->id }}'] === 'absent',
+                                            'bg-gray-50 hover:bg-gray-100': records['{{ $session->id }}_{{ $student->id }}'] === 'excused'
+                                        }"
+                                        @click="toggleStatus({{ $session->id }}, {{ $student->id }}, {{ $recordId }})"
+                                        x-init="records['{{ $session->id }}_{{ $student->id }}'] = '{{ $status }}'"
+                                        @else
+                                        class="w-full h-full min-h-[50px] flex items-center justify-center bg-gray-50 text-gray-300"
+                                        disabled
+                                        @endif
+                                    >
+                                        @if($recordId !== 'null')
+                                        <div class="w-5 h-5 rounded-full flex items-center justify-center shadow-sm border transition-colors"
+                                            :class="{
+                                                'bg-teal-500 border-teal-600 text-white': records['{{ $session->id }}_{{ $student->id }}'] === 'present',
+                                                'bg-white border-red-300 text-red-500': records['{{ $session->id }}_{{ $student->id }}'] === 'absent',
+                                                'bg-surface-1 border-gray-300 text-gray-500': records['{{ $session->id }}_{{ $student->id }}'] === 'excused'
+                                            }">
+                                            <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'present'">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                            </template>
+                                            <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'absent'">
+                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </template>
+                                            <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'excused'">
+                                                <span class="text-[9px] font-bold uppercase">P</span>
+                                            </template>
+                                        </div>
+                                        @else
+                                            <span class="text-xs text-text-muted">N/A</span>
+                                        @endif
+                                    </button>
+                                </td>
+                                @endforeach
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
+            </div>
+
+            {{-- ═══ TAB: Xin nghỉ phép ═══ --}}
+            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'leaves'" x-transition.opacity.duration.150ms style="display:none;" x-data="{ isUpdatingLeave: false, activeRequestId: null }">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-[18px] font-bold text-navy-900">Đơn xin nghỉ phép</h3>
+                    <p class="text-[12px] text-text-muted font-medium mt-1">Duyệt hoặc từ chối các đơn xin nghỉ phép của sinh viên.</p>
+                </div>
+
+                @if($section->leaveRequests->isEmpty())
+                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                    <x-ui-icon name="document-text" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
+                    <p class="text-sm text-text-muted font-medium">Lớp chưa có đơn xin nghỉ phép nào.</p>
+                </div>
+                @else
+                <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-surface-1 border-b border-border-clean">
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Sinh viên</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Ngày xin nghỉ</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Lý do</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center pr-6">Trạng thái / Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-clean/70">
+                            @foreach($section->leaveRequests->sortByDesc('created_at') as $leaveReq)
+                            <tr class="hover:bg-surface-0 transition-colors">
+                                <td class="py-4 px-4 align-top w-[200px]">
+                                    <p class="text-[13px] font-bold text-navy-900">{{ $leaveReq->student->name }}</p>
+                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $leaveReq->student->student_code ?? '—' }}</p>
+                                    <p class="text-[10px] text-text-muted mt-2 italic">Gửi lúc: {{ $leaveReq->created_at->format('H:i d/m/y') }}</p>
+                                </td>
+                                <td class="py-4 px-4 align-top w-[150px]">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-[4px] text-[12px] font-mono font-bold bg-surface-1 text-navy-900 border border-border-clean">
+                                        {{ $leaveReq->date->format('d/m/Y') }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4 align-top">
+                                    <p class="text-[13px] text-navy-900 leading-relaxed max-w-[400px] break-words">{{ $leaveReq->reason }}</p>
+                                </td>
+                                <td class="py-4 px-4 align-top text-center w-[180px]">
+                                    @if($leaveReq->status === 'pending')
+                                        <div class="flex flex-col gap-2 relative">
+                                            <div x-show="activeRequestId === {{ $leaveReq->id }}" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center">
+                                                <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                            </div>
+                                            <button type="button" 
+                                                @click="async () => { 
+                                                    activeRequestId = {{ $leaveReq->id }};
+                                                    try {
+                                                        const res = await fetch(`/lecturer/classes/{{ $section->id }}/leave-requests/{{ $leaveReq->id }}`, {
+                                                            method: 'PATCH',
+                                                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') },
+                                                            body: JSON.stringify({status: 'approved'})
+                                                        });
+                                                        if(res.ok) window.location.reload(); 
+                                                    } finally { activeRequestId = null; }
+                                                }"
+                                                class="w-full h-8 text-[11px] font-bold uppercase text-teal-700 bg-teal-50 border border-teal-200 rounded-[6px] hover:bg-teal-100 transition-colors">
+                                                Duyệt phép
+                                            </button>
+                                            <button type="button" 
+                                                @click="async () => { 
+                                                    activeRequestId = {{ $leaveReq->id }};
+                                                    try {
+                                                        const res = await fetch(`/lecturer/classes/{{ $section->id }}/leave-requests/{{ $leaveReq->id }}`, {
+                                                            method: 'PATCH',
+                                                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') },
+                                                            body: JSON.stringify({status: 'rejected'})
+                                                        });
+                                                        if(res.ok) window.location.reload(); 
+                                                    } finally { activeRequestId = null; }
+                                                }"
+                                                class="w-full h-8 text-[11px] font-bold uppercase text-red-700 bg-red-50 border border-red-200 rounded-[6px] hover:bg-red-100 transition-colors">
+                                                Từ chối
+                                            </button>
+                                        </div>
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-[4px] text-[11px] font-bold uppercase border
+                                            {{ $leaveReq->status === 'approved' ? 'bg-teal-50 text-teal-700 border-teal-200' : 'bg-red-50 text-red-700 border-red-200' }}">
+                                            {{ $leaveReq->status === 'approved' ? 'Đã duyệt' : 'Từ chối' }}
+                                        </span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
             </div>
 
             <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'grading'" x-transition.opacity.duration.150ms style="display:none;">
@@ -560,6 +755,65 @@
             </form>
         </x-slide-over>
 
+        <x-modal name="show-pin-modal" maxWidth="md">
+            <div class="p-8 text-center bg-gradient-to-br from-indigo-900 via-navy-900 to-blue-900 relative overflow-hidden">
+                <div class="absolute top-4 right-4 z-10">
+                    <button @click="$dispatch('close-modal', 'show-pin-modal')" class="p-2 text-white/50 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors backdrop-blur-sm">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="relative z-10 w-full flex flex-col items-center">
+                    <h3 class="text-lg font-semibold text-blue-200 mb-6 uppercase tracking-[0.2em]">Mã điểm danh</h3>
+                    <div class="bg-white p-4 rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.5)] flex flex-col items-center">
+                        <div class="w-48 h-48 mb-4 border-[0.5px] border-border-clean p-2 rounded-[12px] bg-white">
+                            <img id="display-qr-code" src="" alt="QR Code" class="w-full h-full object-contain" />
+                        </div>
+                        <p id="display-pin-code" class="text-4xl font-black text-navy-900 font-mono tracking-widest break-all"></p>
+                    </div>
+                    <p class="text-sm font-medium text-white/70 mt-8 mb-2">Sinh viên quét QR để tự động checkin</p>
+                    <p class="text-xs text-blue-200/50 uppercase tracking-widest">Hoặc nhập thủ công mã chữ cái</p>
+                </div>
+                
+                <!-- Background decorations -->
+                <div class="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-teal-500/20 rounded-full blur-3xl"></div>
+            </div>
+        </x-modal>
+
+        <x-modal name="create-attendance-session-modal" maxWidth="lg">
+            <div class="p-6 md:p-8" x-data="attendanceManager({{ $section->id }})">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-[20px] font-bold text-navy-900">Tạo phiên điểm danh mới</h3>
+                    <button @click="$dispatch('close-modal', 'create-attendance-session-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form @submit.prevent="submitAttendanceSessionForm($el)" class="space-y-5">
+                    @csrf
+                    <div>
+                        <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Tên phiên điểm danh <span class="text-red-500">*</span></label>
+                        <x-text-input name="title" type="text" value="Buổi học ngày {{ now()->format('d/m/Y') }}" required placeholder="Ví dụ: Buổi 1, Bù tuần 2..." />
+                        <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="title"></p>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-medium text-navy-900 mb-1.5">Ngày thực hiện <span class="text-red-500">*</span></label>
+                        <x-text-input name="date" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}" required />
+                        <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="date"></p>
+                    </div>
+                    <div class="pt-2 flex justify-end gap-3">
+                        <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'create-attendance-session-modal')">Hủy</x-button>
+                        <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingSession">
+                            <span x-show="!isSubmittingSession">Tạo phiên</span>
+                            <span x-show="isSubmittingSession">Đang tạo...</span>
+                        </x-button>
+                    </div>
+                </form>
+            </div>
+        </x-modal>
+
         <x-modal name="create-notification-modal" maxWidth="lg">
             <div class="p-6 md:p-8">
                 <div class="flex items-center justify-between mb-6">
@@ -668,6 +922,145 @@
     </div>
 
     <script>
+        function attendanceManager(sectionId) {
+            return {
+                records: {},
+                sessions: {},
+                isSubmittingSession: false,
+                isUpdatingRecord: false,
+                isTogglingSession: false,
+                
+                showPinCode(code) {
+                    window.dispatchEvent(new CustomEvent('open-modal', { detail: 'show-pin-modal' }));
+                    document.getElementById('display-pin-code').textContent = code;
+                    const checkinUrl = `${window.location.origin}/student/classes/${sectionId}?tab=attendance&qr_code=${code}`;
+                    document.getElementById('display-qr-code').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(checkinUrl)}`;
+                },
+
+                async toggleSessionOpen(sessionId) {
+                    if (this.isTogglingSession) return;
+                    this.isTogglingSession = true;
+
+                    try {
+                        const response = await fetch(`/lecturer/classes/${sectionId}/attendance-sessions/${sessionId}/toggle-open`, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json',
+                            }
+                        });
+
+                        const result = await response.json();
+                        if (response.ok && result.success) {
+                            this.sessions[sessionId].is_open = result.is_open;
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message, type: 'success' }
+                            }));
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message || 'Lỗi trạng thái', type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                         window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Lỗi mạng', type: 'error' }
+                        }));
+                    } finally {
+                        this.isTogglingSession = false;
+                    }
+                },
+
+                async submitAttendanceSessionForm(formElement) {
+                    this.isSubmittingSession = true;
+                    formElement.querySelectorAll('[data-error]').forEach(el => {
+                        el.textContent = ''; el.classList.add('hidden');
+                    });
+
+                    const formData = new FormData(formElement);
+
+                    try {
+                        const response = await fetch(`/lecturer/classes/${sectionId}/attendance-sessions`, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                            body: formData,
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message, type: 'success' }
+                            }));
+                            setTimeout(() => window.location.reload(), 800);
+                        } else if (response.status === 422 && result.errors) {
+                            for (const [field, messages] of Object.entries(result.errors)) {
+                                const errorEl = formElement.querySelector(`[data-error="${field}"]`);
+                                if (errorEl) {
+                                    errorEl.textContent = messages[0];
+                                    errorEl.classList.remove('hidden');
+                                }
+                            }
+                        } else {
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message || 'Có lỗi xảy ra', type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Lỗi hệ thống', type: 'error' }
+                        }));
+                    } finally {
+                        this.isSubmittingSession = false;
+                    }
+                },
+
+                async toggleStatus(sessionId, studentId, recordId) {
+                    if (this.isUpdatingRecord || !recordId) return;
+
+                    const currentStatus = this.records[`${sessionId}_${studentId}`];
+                    let nextStatus = 'present';
+                    if (currentStatus === 'present') nextStatus = 'absent';
+                    else if (currentStatus === 'absent') nextStatus = 'excused';
+                    else if (currentStatus === 'excused') nextStatus = 'present';
+
+                    // Optimistic update
+                    this.records[`${sessionId}_${studentId}`] = nextStatus;
+                    this.isUpdatingRecord = true;
+
+                    try {
+                         const response = await fetch(`/lecturer/classes/${sectionId}/attendance-sessions/${sessionId}/records/${recordId}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ status: nextStatus })
+                        });
+
+                        const result = await response.json();
+                        if (!response.ok || !result.success) {
+                            // Revert on fail
+                            this.records[`${sessionId}_${studentId}`] = currentStatus;
+                            window.dispatchEvent(new CustomEvent('toast', {
+                                detail: { message: result.message || 'Không thể lưu trạng thái', type: 'error' }
+                            }));
+                        }
+                    } catch (error) {
+                         this.records[`${sessionId}_${studentId}`] = currentStatus;
+                         window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Lỗi mất kết nối mạng', type: 'error' }
+                        }));
+                    } finally {
+                        this.isUpdatingRecord = false;
+                    }
+                }
+            }
+        }
+
         function classWorkspaceManager(initialTab) {
             return {
                 activeTab: initialTab || 'overview',

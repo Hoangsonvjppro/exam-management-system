@@ -613,7 +613,6 @@ $totalQuestions = count($questions);
         }
 
         function autoSave(questionId, optionId) {
-            showToast('Đang lưu...', 'warning');
             fetch(saveUrl, {
                 method: "POST",
                 headers: {
@@ -628,9 +627,7 @@ $totalQuestions = count($questions);
             })
             .then(res => res.json())
             .then(data => {
-                if (data.success) {
-                    showToast('Đã lưu tự động', 'success');
-                } else {
+                if (!data.success) {
                     showToast('Không thể lưu!', 'error');
                 }
             })
@@ -639,10 +636,32 @@ $totalQuestions = count($questions);
 
         // Anti-cheat: Tab switch tracking
         let tabSwitchCount = 0;
+        let isForcedSubmit = false; // Flag to prevent multiple submissions
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 tabSwitchCount++;
                 console.warn(`[Anti-cheat] Tab switch #${tabSwitchCount}`);
+            } else {
+                if (tabSwitchCount === 1) {
+                    showToast('Cảnh báo: Bạn đã chuyển tab 1 lần. Vi phạm 3 lần bài thi sẽ tự động nộp.', 'error');
+                } else if (tabSwitchCount === 2) {
+                    showToast('Cảnh báo: Bạn đã chuyển tab 2 lần. Lần chuyển tab tiếp theo bài thi sẽ tự động nộp.', 'warning');
+                } else if (tabSwitchCount >= 3) {
+                    if (!isForcedSubmit) {
+                        isForcedSubmit = true;
+                        showToast('Vi phạm quy chế (chuyển tab quá 3 lần). Bài thi đang được tự động nộp.', 'error');
+                        const examForm = document.getElementById('exam-form');
+                        if (examForm) {
+                            // Tạo một thẻ input ẩn để đánh dấu nộp bài do vi phạm
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'is_forced_submit';
+                            input.value = '1';
+                            examForm.appendChild(input);
+                            examForm.submit();
+                        }
+                    }
+                }
             }
         });
 
