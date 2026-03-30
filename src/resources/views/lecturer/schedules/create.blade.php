@@ -144,6 +144,16 @@
                                 <textarea name="notes" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]" rows="3" placeholder="Lưu ý cho các ca thi...">{{ old('notes') }}</textarea>
                             </div>
 
+                            <div class="mt-4 p-4 border border-indigo-100 rounded-lg bg-indigo-50/50">
+                                <label class="flex items-start gap-3 cursor-pointer">
+                                    <input type="checkbox" name="link_grade_column" value="1" class="mt-0.5 rounded border-indigo-300 text-[#185FA5] focus:ring-[#185FA5]" checked>
+                                    <div>
+                                        <p class="text-[13px] font-bold text-[#1A3A6B]">Tự động thêm vào bảng Điểm quá trình</p>
+                                        <p class="text-[11px] text-[#6B7C99] mt-0.5">Hệ thống sẽ tạo tự động một cột Điểm Bài Thi trong bảng điểm của (các) lớp học phần được chọn.</p>
+                                    </div>
+                                </label>
+                            </div>
+
                             <div class="flex justify-end pt-2">
                                 <button type="submit" class="bg-[#1A3A6B] text-white px-6 py-2.5 rounded-lg text-[13px] font-semibold hover:bg-[#0F2A53] transition-colors">
                                     Tạo lịch thi

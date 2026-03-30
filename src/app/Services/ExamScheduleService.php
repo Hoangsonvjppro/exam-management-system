@@ -28,6 +28,18 @@ class ExamScheduleService
                 // Tự động phân sinh viên sau khi tạo
                 $this->autoAssignStudents($schedule);
                 
+                // Tự động tạo cột điểm nếu yêu cầu
+                if (!empty($data['link_grade_column'])) {
+                    $maxOrder = $schedule->courseSection->gradeColumns()->max('order') ?? 0;
+                    $schedule->courseSection->gradeColumns()->create([
+                        'name' => 'Điểm bài thi: ' . $exam->title,
+                        'weight' => 0, // GV sẽ tự chỉnh trọng số sau
+                        'is_exam_linked' => true,
+                        'exam_schedule_id' => $schedule->id,
+                        'order' => $maxOrder + 1,
+                    ]);
+                }
+                
                 $schedules->push($schedule);
             }
         });
@@ -49,6 +61,53 @@ class ExamScheduleService
     public function updateSchedule(ExamSchedule $schedule, array $data): ExamSchedule
     {
         $schedule->update($data);
+
+        if (!empty($data['link_grade_column'])) {
+            // Check if already linked
+            if (!$schedule->courseSection->gradeColumns()->where('exam_schedule_id', $schedule->id)->exists()) {
+                $maxOrder = $schedule->courseSection->gradeColumns()->max('order') ?? 0;
+                $schedule->courseSection->gradeColumns()->create([
+                    'name' => 'Điểm bài thi: ' . $schedule->exam->title,
+                    'weight' => 0,
+                    'is_exam_linked' => true,
+                    'exam_schedule_id' => $schedule->id,
+                    'order' => $maxOrder + 1,
+                ]);
+            }
+        } elseif (array_key_exists('grade_column_id', $data)) {
+            // Unlink current
+            $schedule->courseSection->gradeColumns()->where('exam_schedule_id', $schedule->id)->update([
+                'exam_schedule_id' => null,
+                'is_exam_linked' => false
+            ]);
+            
+            // Link new
+            if ($data['grade_column_id']) {
+                $schedule->courseSection->gradeColumns()->where('id', $data['grade_column_id'])->update([
+                    'exam_schedule_id' => $schedule->id,
+                    'is_exam_linked' => true
+                ]);
+            }
+        }
+
+        // Tự động đồng bộ lại điểm cho các bài thi đã nộp trước đó
+        $gradeCol = $schedule->courseSection->gradeColumns()->where('exam_schedule_id', $schedule->id)->first();
+        if ($gradeCol) {
+            $completedAttempts = $schedule->attempts()->where('status', \App\Enums\ExamAttemptStatus::Completed)->get();
+            foreach ($completedAttempts as $attempt) {
+                \App\Models\StudentGrade::updateOrCreate(
+                    [
+                        'grade_column_id' => $gradeCol->id,
+                        'student_id'      => $attempt->user_id,
+                    ],
+                    [
+                        'score' => $attempt->total_score,
+                        'note'  => 'Đồng bộ tự động (Retroactive)',
+                    ]
+                );
+            }
+        }
+
         return $schedule;
     }
 

@@ -48,7 +48,7 @@ class ExamScheduleController extends Controller
     public function create(\Illuminate\Http\Request $request): View
     {
         $exams = Exam::where('created_by', Auth::id())->with('subject')->get();
-        $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->get();
+        $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->with('gradeColumns')->get();
         
         $preSelectedSection = null;
         if ($request->query('course_section_id')) {
@@ -103,7 +103,7 @@ class ExamScheduleController extends Controller
         Gate::authorize('manageLecturer', $schedule->exam);
 
         $exams = \App\Models\Exam::where('created_by', Auth::id())->get();
-        $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->get();
+        $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->with('gradeColumns')->get();
 
         return view('lecturer.schedules.edit', compact('schedule', 'exams', 'courseSections'));
     }

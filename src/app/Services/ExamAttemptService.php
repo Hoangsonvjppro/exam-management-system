@@ -78,6 +78,24 @@ class ExamAttemptService
                 'correct_count'           => $correctCount,
                 'submitted_answers_count' => $answers->count(),
             ]);
+
+            // 5. Tự động đồng bộ điểm thi vào bảng Điểm quá trình nếu cấu hình
+            $gradeColumn = \App\Models\GradeColumn::where('exam_schedule_id', $schedule->id)
+                ->where('is_exam_linked', true)
+                ->first();
+
+            if ($gradeColumn) {
+                \App\Models\StudentGrade::updateOrCreate(
+                    [
+                        'grade_column_id' => $gradeColumn->id,
+                        'student_id'      => $attempt->user_id,
+                    ],
+                    [
+                        'score' => $totalScore,
+                        'note'  => 'Đồng bộ tự động từ hệ thống chấm điểm',
+                    ]
+                );
+            }
         });
     }
 }

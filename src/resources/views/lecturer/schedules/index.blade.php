@@ -209,6 +209,16 @@
                             <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ghi chú cho sinh viên (vị trí phòng, thiết bị...)</label>
                             <textarea name="notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" rows="3" placeholder="Nhập ghi chú..."></textarea>
                         </div>
+                        
+                        <div class="mt-4 p-4 border border-indigo-100 rounded-[8px] bg-indigo-50/50">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" name="link_grade_column" value="1" class="mt-0.5 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                                <div>
+                                    <p class="text-[13px] font-bold text-navy-900">Tự động thêm vào bảng Điểm quá trình</p>
+                                    <p class="text-[11px] text-text-muted mt-0.5">Hệ thống sẽ tạo tự động một cột Điểm Bài Thi trong bảng điểm của (các) lớp học phần được chọn.</p>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
                     {{-- Actions --}}
