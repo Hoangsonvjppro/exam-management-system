@@ -9,6 +9,9 @@ use App\Models\QuestionOption;
 use App\Models\StudentAnswer;
 use App\Enums\ExamAttemptStatus;
 use DomainException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\UniqueConstraintViolationException;
 
 class StudentExamService
 {
@@ -40,44 +43,72 @@ class StudentExamService
             }
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($schedule, $userId, $ipAddress, $userAgent, $exam) {
-            $attempt = ExamAttempt::forSchedule($schedule->id)
-                ->forUser($userId)
-                ->inProgress()
-                ->lockForUpdate()
-                ->first();
+        // [Tối ưu] Kiểm tra "Double-check" trước khi vào Transaction/Lock
+        $existingInProgress = ExamAttempt::forSchedule($schedule->id)
+            ->forUser($userId)
+            ->inProgress()
+            ->exists();
 
-            if ($attempt) {
-                return;
-            }
+        if ($existingInProgress) {
+            return;
+        }
 
-            $hasCompleted = ExamAttempt::forSchedule($schedule->id)
-                ->forUser($userId)
-                ->completed()
-                ->exists();
+        // [Atomic Lock] Ngăn chặn spam click ở tầng Cache (Redis/Database)
+        $lockKey = "start_attempt_{$schedule->id}_{$userId}";
+        $lock = Cache::lock($lockKey, 10); // Khóa trong 10 giây
 
-            if ($hasCompleted && $exam->isOfficial()) {
-                throw new DomainException('Bạn đã hoàn thành bài thi chính thức này. Không thể thi lại.');
-            }
+        if (!$lock->get()) {
+            throw new DomainException('Yêu cầu bắt đầu thi đang được xử lý, vui lòng đợi giây lát.');
+        }
 
-            $latestAttempt = ExamAttempt::forSchedule($schedule->id)
-                ->forUser($userId)
-                ->latestAttempt()
-                ->lockForUpdate()
-                ->first();
+        try {
+            DB::transaction(function () use ($schedule, $userId, $ipAddress, $userAgent, $exam) {
+                // [Lưu ý] Vẫn dùng lockForUpdate bên trong Transaction để đảm bảo tính Acid
+                $attempt = ExamAttempt::forSchedule($schedule->id)
+                    ->forUser($userId)
+                    ->inProgress()
+                    ->lockForUpdate()
+                    ->first();
 
-            $nextNumber = $latestAttempt ? $latestAttempt->attempt_number + 1 : 1;
+                if ($attempt) {
+                    return;
+                }
 
-            ExamAttempt::create([
-                'exam_schedule_id' => $schedule->id,
-                'user_id' => $userId,
-                'attempt_number' => $nextNumber,
-                'started_at' => now(),
-                'status' => ExamAttemptStatus::InProgress,
-                'ip_address' => $ipAddress,
-                'user_agent' => substr($userAgent ?? '', 0, 500),
-            ]);
-        });
+                $hasCompleted = ExamAttempt::forSchedule($schedule->id)
+                    ->forUser($userId)
+                    ->completed()
+                    ->exists();
+
+                if ($hasCompleted && $exam->isOfficial()) {
+                    throw new DomainException('Bạn đã hoàn thành bài thi chính thức này. Không thể thi lại.');
+                }
+
+                $latestAttempt = ExamAttempt::forSchedule($schedule->id)
+                    ->forUser($userId)
+                    ->latestAttempt()
+                    ->lockForUpdate()
+                    ->first();
+
+                $nextNumber = $latestAttempt ? $latestAttempt->attempt_number + 1 : 1;
+
+                try {
+                    ExamAttempt::create([
+                        'exam_schedule_id' => $schedule->id,
+                        'user_id' => $userId,
+                        'attempt_number' => $nextNumber,
+                        'started_at' => now(),
+                        'status' => ExamAttemptStatus::InProgress,
+                        'ip_address' => $ipAddress,
+                        'user_agent' => substr($userAgent ?? '', 0, 500),
+                    ]);
+                } catch (UniqueConstraintViolationException $e) {
+                    // Nếu lọt qua lock mà vẫn trùng (hi hữu), trả về gracefullly
+                    return;
+                }
+            });
+        } finally {
+            $lock->release();
+        }
     }
 
     /**
