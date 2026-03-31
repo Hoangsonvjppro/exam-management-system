@@ -54,9 +54,9 @@ class UserSeeder extends Seeder
                     'name'              => $data['name'],
                     'password'          => $password,
                     'lecturer_code'     => $data['lecturer_code'],
+                    'department_id'        => '1',
                     'phone'             => $data['phone'],
                     'date_of_birth'     => $data['date_of_birth'],
-                    'department'        => 'Khoa Công nghệ Thông tin',
                     'is_active'         => true,
                     'email_verified_at' => now(),
                 ]
@@ -90,12 +90,12 @@ class UserSeeder extends Seeder
                     'name'              => $studentNames[$i - 1],
                     'password'          => $password,
                     'student_code'      => $studentCode,
-                    'class_name'        => $classes[($i - 1) % count($classes)],
                     'date_of_birth'     => $dobString,
-                    'department'        => 'Khoa Công nghệ Thông tin',
                     'phone'             => '090200' . str_pad($i, 4, '0', STR_PAD_LEFT),
                     'is_active'         => true,
                     'email_verified_at' => now(),
+                    'department_id'     => '1',
+                    'student_class_id'  => '7',
                 ]
             );
             $student->syncRoles(['student']);
