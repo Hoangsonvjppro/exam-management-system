@@ -8,7 +8,6 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
-    # DÒNG QUAN TRỌNG NHẤT: Trỏ mọi lệnh vào thư mục src
     defaults:
       run:
         working-directory: src 
@@ -16,6 +15,10 @@ jobs:
     steps:
       - name: Lấy code mới nhất
         uses: actions/checkout@v4
+
+      # BƯỚC MỚI: Copy file .env từ thư mục gốc của bạn vào thư mục của con bot
+      - name: Sao chép cấu hình .env
+        run: cp /home/aurora/exam-management-system/src/.env .env
 
       - name: Cài đặt PHP dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
