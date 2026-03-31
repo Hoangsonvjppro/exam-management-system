@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - dev
+  # Thêm workflow_dispatch để cho phép chạy bằng tay từ giao diện GitHub
+  workflow_dispatch:
+    inputs:
+      fresh_seed:
+        description: 'Chạy migrate:fresh --seed (Xóa trắng & tạo lại DB)?'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   deploy:
@@ -25,7 +33,17 @@ jobs:
           npm install
           npm run build
 
-      - name: Cập nhật Database
+      # --- PHẦN CẬP NHẬT DATABASE ĐÃ ĐƯỢC CHIA LÀM 2 TRƯỜNG HỢP ---
+
+      - name: Cập nhật Database (Xóa trắng và Seed lại)
+        # Sẽ chạy nếu bạn tick chọn trên GitHub UI HOẶC trong commit message có tag [fresh-seed]
+        if: ${{ github.event.inputs.fresh_seed == 'true' || contains(github.event.head_commit.message, '[fresh-seed]') }}
+        working-directory: /home/aurora/exam-management-system/src
+        run: php artisan migrate:fresh --seed --force
+
+      - name: Cập nhật Database (Bình thường)
+        # Sẽ chạy nếu KHÔNG tick chọn UI VÀ commit message KHÔNG có tag [fresh-seed]
+        if: ${{ github.event.inputs.fresh_seed != 'true' && !contains(github.event.head_commit.message, '[fresh-seed]') }}
         working-directory: /home/aurora/exam-management-system/src
         run: php artisan migrate --force
 
@@ -35,4 +53,3 @@ jobs:
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
-
