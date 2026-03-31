@@ -36,11 +36,9 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,        // Khoa
             MajorSeeder::class,             // Ngành
             StudentClassSeeder::class,      // Lớp
-            UserSeeder::class,              // Tạo GV Nguyễn Thanh Sang
             DifficultySeeder::class,        // Tạo mức độ khó (Dễ, Trung bình...)
             SemesterSeeder::class,          // Tạo học kỳ
             QuestionTypeSeeder::class,      // Tạo loại câu hỏi (MCQ, T/F...)
-            SubjectSeeder::class,           // Tạo 5 môn học IT + Chương
             SettingSeeder::class,           // Cấu hình hệ thống
         ]);
 
