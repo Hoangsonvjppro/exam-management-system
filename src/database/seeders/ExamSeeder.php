@@ -149,7 +149,6 @@ class ExamSeeder extends Seeder
 
         // ─── Gắn câu hỏi vào đề ─────────────────────────────
         $questions = Question::where('subject_id', $subject->id)
-            ->where('status', 'approved')
             ->inRandomOrder()
             ->limit($questionCount)
             ->get();
@@ -241,8 +240,6 @@ class ExamSeeder extends Seeder
             'content'          => $question->content,
             'difficulty'       => $question->difficulty,
             'question_type_id' => $question->question_type_id,
-            'explanation'      => $question->explanation,
-            'answer_data'      => $question->answer_data,
             'options'          => $options,
             'snapshot_at'      => now()->toIso8601String(),
         ];

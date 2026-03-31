@@ -201,7 +201,6 @@ class ExamService
                 'id' => $question->id,
                 'content' => $question->content,
                 'difficulty' => $question->difficulty,
-                'explanation' => $question->explanation,
                 'options' => $question->options->map(fn($opt) => [
                     'id' => $opt->id,
                     'label' => $opt->label,

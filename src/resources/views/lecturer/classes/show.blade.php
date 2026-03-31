@@ -20,7 +20,7 @@
     ->orderByDesc('id')
     ->get();
 
-    $quickQuestionPool = \App\Models\Question::approved()
+    $quickQuestionPool = \App\Models\Question::query()
     ->where('subject_id', $section->subject_id)
     ->orderByDesc('updated_at')
     ->limit(120)

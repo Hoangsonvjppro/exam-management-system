@@ -38,8 +38,8 @@ class ExamController extends Controller
         $chapters = \App\Models\Chapter::whereIn('subject_id', $lecturerSubjectIds)->orderBy('order')->get();
         $difficulties = \App\Models\Difficulty::query()->orderedForQuestionBank()->get(['code', 'name']);
 
-        // Availability map: số câu hỏi approved theo chapter_id × difficulty cho tất cả subjects được phân công
-        $availabilityRaw = Question::approved()
+        // Availability map: số câu hỏi theo chapter_id × difficulty cho tất cả subjects được phân công
+        $availabilityRaw = Question::query()
             ->whereIn('subject_id', $lecturerSubjectIds)
             ->selectRaw('subject_id, COALESCE(chapter_id, 0) as ch_id, difficulty, COUNT(*) as cnt')
             ->groupBy('subject_id', 'ch_id', 'difficulty')
@@ -99,7 +99,7 @@ class ExamController extends Controller
         $allAllowedSubjectIds = $lecturerSubjectIds->push($exam->subject_id)->unique();
 
         $subjects = \App\Models\Subject::whereIn('id', $allAllowedSubjectIds)->get();
-        $questions = Question::approved()->whereIn('subject_id', $allAllowedSubjectIds)->get();
+        $questions = Question::query()->whereIn('subject_id', $allAllowedSubjectIds)->get();
         $selectedQuestionIds = $exam->questions()->pluck('question_id')->toArray();
 
         return view('lecturer.exams.edit', compact('exam', 'subjects', 'questions', 'selectedQuestionIds'));

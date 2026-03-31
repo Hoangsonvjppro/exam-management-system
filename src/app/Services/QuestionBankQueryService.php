@@ -26,6 +26,7 @@ class QuestionBankQueryService
         $subjectCode = $filters['sub-sel-ques'] ?? null;
 
         $subjects = Subject::query()
+            ->whereHas('courseSections', fn($q) => $q->where('lecturer_id', auth()->id()))
             ->orderedForQuestionBank()
             ->get();
 
@@ -58,13 +59,13 @@ class QuestionBankQueryService
      *   subjects: Collection<int, Subject>,
      *   chapters: Collection<int, Chapter>,
      *   questionTypes: Collection<int, QuestionType>,
-     *   difficulties: Collection<int, Difficulty>,
-     *   statuses: array<int, string>
+     *   difficulties: Collection<int, Difficulty>
      * }
      */
     public function getFormData(): array
     {
         $subjects = Subject::query()
+            ->whereHas('courseSections', fn($q) => $q->where('lecturer_id', auth()->id()))
             ->orderedForQuestionBank()
             ->get(['id', 'name', 'code']);
 
@@ -87,7 +88,6 @@ class QuestionBankQueryService
             'chapters' => $chapters,
             'questionTypes' => $questionTypes,
             'difficulties' => $difficulties,
-            'statuses' => ['draft', 'approved', 'hidden'],
         ];
     }
 
@@ -98,7 +98,23 @@ class QuestionBankQueryService
     {
         $payload['created_by'] = $userId;
 
-        return Question::query()->create($payload);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($payload) {
+            $question = Question::create($payload);
+
+            if (isset($payload['options']) && is_array($payload['options'])) {
+                $correctOptions = $payload['correct_options'] ?? [];
+                foreach ($payload['options'] as $index => $optionData) {
+                    $question->options()->create([
+                        'label'      => \App\Models\QuestionOption::class ? chr(65 + $index) : '', // Assuming A,B,C,D labeling logic or adjust to your need.
+                        'content'    => $optionData['content'],
+                        'is_correct' => in_array((string)$index, $correctOptions, true) || in_array((int)$index, $correctOptions, true),
+                        'order'      => $index,
+                    ]);
+                }
+            }
+
+            return $question;
+        });
     }
 
     /**
@@ -106,10 +122,27 @@ class QuestionBankQueryService
      */
     public function updateQuestion(Question $question, array $payload): Question
     {
-        $question->fill($payload);
-        $question->save();
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($question, $payload) {
+            $question->update($payload);
 
-        return $question;
+            if (isset($payload['options']) && is_array($payload['options'])) {
+                // Remove old options and recreate for simplicity, or sync.
+                $question->options()->delete();
+                $correctOptions = $payload['correct_options'] ?? [];
+                
+                // Trimming the correctOptions to flat structure just in case it's an array of strings
+                foreach ($payload['options'] as $index => $optionData) {
+                    $question->options()->create([
+                        'label'      => chr(65 + $index),
+                        'content'    => $optionData['content'],
+                        'is_correct' => in_array((string)$index, $correctOptions, true) || in_array((int)$index, $correctOptions, true),
+                        'order'      => $index,
+                    ]);
+                }
+            }
+
+            return $question;
+        });
     }
 
     public function deleteQuestion(Question $question): void
@@ -125,7 +158,6 @@ class QuestionBankQueryService
         $subjectCode = $filters['sub-sel-ques'] ?? null;
         $chapterId = $filters['chap-sel-ques'] ?? null;
         $difficultyFilter = $filters['diff-sel-ques'] ?? null;
-        $status = $filters['status-sel-ques'] ?? null;
 
         return Question::query()
             ->when($subjectCode, function (Builder $query) use ($subjectCode) {
@@ -134,7 +166,6 @@ class QuestionBankQueryService
                 });
             })
             ->when($chapterId, fn(Builder $query) => $query->where('chapter_id', $chapterId))
-            ->when($status, fn(Builder $query) => $query->where('status', $status))
             ->when($difficultyFilter, fn(Builder $query) => $query->where('difficulty', $difficultyFilter));
     }
 }

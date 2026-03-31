@@ -18,8 +18,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int    $question_type_id
  * @property int    $created_by
  * @property string $content
- * @property string $difficulty     remember|understand|apply|analyze
- * @property string $status         draft|approved|hidden
  * @property int    $version
  * @property array  $answer_data    JSON cho fill_blank, matching...
  */
@@ -35,9 +33,7 @@ class Question extends Model
         'content',
         'difficulty',
         'image_file_id',
-        'explanation',
         'answer_data',
-        'status',
         'version',
         'usage_count',
         'correct_rate',
@@ -55,14 +51,9 @@ class Question extends Model
 
     // ── Scopes ─────────────────────────────────────────────────
 
-    public function scopeApprovedForSubject(Builder $query, int $subjectId): Builder
+    public function scopeForSubject(Builder $query, int $subjectId): Builder
     {
-        return $query->where('status', 'approved')->where('subject_id', $subjectId);
-    }
-
-    public function scopeApproved(Builder $query): Builder
-    {
-        return $query->where('status', 'approved');
+        return $query->where('subject_id', $subjectId);
     }
 
     // ── Relationships ─────────────────────────────────────────

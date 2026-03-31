@@ -202,7 +202,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
                 ->name('questions.index');
             Route::get('/questions/export', [QuestionController::class, 'export'])
                 ->name('questions.export');
-            Route::get('/api/questions/add/{subject}', [QuestionController::class, 'getChaptersBySubject'])
+            Route::get('/api/questions/add/{subjectId}', [QuestionController::class, 'getChaptersBySubject'])
                 ->name('questions.api.chapters');
             Route::get('/questions/create', [QuestionController::class, 'create'])
                 ->name('questions.create');

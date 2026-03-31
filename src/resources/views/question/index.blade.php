@@ -59,15 +59,6 @@
                   @endforeach
                </select>
             </div>
-            <div class="bg-white p-4 rounded-xl flex flex-col gap-1 shadow-sm">
-               <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Trạng thái</span>
-               <select onchange="this.form.submit()" name="status-sel-ques" id="status-sel-ques" class="border-none bg-transparent p-0 font-semibold text-on-surface focus:ring-0">
-                  <option value="">Tất cả trạng thái</option>
-                  <option value="approved" {{ request()->input('status-sel-ques') === 'approved' ? ' selected' : '' }}>Đã duyệt</option>
-                  <option value="draft" {{ request()->input('status-sel-ques') === 'draft' ? ' selected' : '' }}>Chờ duyệt</option>
-                  <option value="hidden" {{ request()->input('status-sel-ques') === 'hidden' ? ' selected' : '' }}>Bản nháp</option>
-               </select>
-            </div>
          </div>
       </form>
       <!-- Questions Table Card -->

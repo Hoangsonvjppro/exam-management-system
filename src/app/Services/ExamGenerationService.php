@@ -47,7 +47,6 @@ class ExamGenerationService
         foreach ($matrixRows as $row) {
             $query = Question::with('options')
                 ->where('subject_id', $subjectId)
-                ->where('status', 'approved')
                 ->where('difficulty', $row->difficulty)
                 ->whereNotIn('id', $usedQuestionIds);
 
@@ -73,11 +72,9 @@ class ExamGenerationService
 
             foreach ($questions as $question) {
                 $snapshot = [
-                    'id' => $question->id,
-                    'content' => $question->content,
-                    'difficulty' => $question->difficulty,
-                    'explanation' => $question->explanation,
-                    'options' => $question->options->map(fn($opt) => [
+                    'difficulty'       => $question->difficulty,
+                    'question_type_id' => $question->question_type_id,
+                    'options'          => $question->options->map(fn($opt) => [
                         'id' => $opt->id,
                         'label' => $opt->label,
                         'content' => $opt->content,
@@ -117,7 +114,6 @@ class ExamGenerationService
 
         foreach ($matrixData as $row) {
             $query = Question::where('subject_id', $subjectId)
-                ->where('status', 'approved')
                 ->where('difficulty', $row['difficulty']);
 
             if (!empty($row['chapter_id'])) {

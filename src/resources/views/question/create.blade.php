@@ -31,7 +31,7 @@
 
             <form id="add-question-form" action="{{ route('lecturer.questions.store') }}" method="POST" class="space-y-8">
                 @csrf
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="space-y-2">
                         <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant ml-1">Chọn môn học</label>
                         <div class="relative">
@@ -51,6 +51,18 @@
                             <select name="chapter_id" id="add_chapter"
                                 class="w-full bg-white border border-outline-variant/30 rounded-xl px-4 py-3.5 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-sm">
                                 <option value="">Chọn chương tương ứng...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant ml-1">Loại câu hỏi</label>
+                        <div class="relative">
+                            <select name="question_type_id" id="question_type_id"
+                                class="w-full bg-white border border-outline-variant/30 rounded-xl px-4 py-3.5 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-sm">
+                                @foreach ($questionTypes as $type)
+                                    <option value="{{ $type->id }}" data-code="{{ $type->code }}" {{ old('question_type_id') == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
@@ -106,7 +118,7 @@
                 <template id="option-template">
                     <div class="flex items-start gap-4 group option-row p-4 rounded-2xl border border-outline-variant/30 bg-white shadow-sm hover:border-primary/40 hover:shadow-md transition-all">
                         <label class="cursor-pointer relative mt-2">
-                            <input class="peer sr-only correct-radio" name="correct_answer" type="radio" />
+                            <input class="peer sr-only correct-input" name="correct_options[]" type="radio" value="0" />
                             <div class="w-12 h-12 rounded-2xl bg-surface-container-high border border-outline-variant/30 flex items-center justify-center text-on-surface-variant font-bold peer-checked:bg-green-500 peer-checked:text-white peer-checked:border-green-600 transition-all shadow-sm relative overflow-visible">
                                 <span class="option-label text-lg">A</span>
                             </div>
@@ -122,7 +134,7 @@
                             </div>
 
                             <div class="option-editor-target px-4 py-4 text-on-surface min-h-[80px] outline-none prose prose-sm max-w-none focus:outline-none"></div>
-                            <input type="hidden" class="option-hidden-input" name="answers[]">
+                            <input type="hidden" class="option-hidden-input" name="options[][content]">
                         </div>
 
                         <button class="mt-4 p-2.5 text-on-surface-variant/40 hover:text-error hover:bg-error/10 rounded-xl transition-all remove-option-btn" type="button" title="Xóa phương án">
@@ -149,28 +161,6 @@
                         </label>
                         @endforeach
                     </div>
-                </div>
-
-                <div class="space-y-3">
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant ml-1">Trạng thái</label>
-                    <div class="flex flex-wrap gap-4">
-                        @foreach ($statuses as $status)
-                        <label class="relative flex items-center cursor-pointer group">
-                            <input class="peer sr-only" name="status" type="radio" value="{{ $status }}" {{ old('status', 'draft') === $status ? 'checked' : '' }} />
-                            <div class="px-6 py-2.5 rounded-full border border-outline-variant flex items-center gap-2 text-on-surface-variant font-semibold peer-checked:bg-surface-container-high peer-checked:border-primary peer-checked:text-primary transition-all hover:bg-surface-container-high text-xs uppercase">
-                                {{ $status == 'draft' ? 'Chờ duyệt' : ($status == 'approved' ? 'Đã duyệt' : 'Ẩn') }}
-                            </div>
-                        </label>
-                        @endforeach
-                    </div>
-                </div>
-
-                <!-- Explanation -->
-                <div class="space-y-2">
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant ml-1">Giải thích (Tùy chọn)</label>
-                    <textarea name="explanation" rows="3" 
-                        class="w-full bg-white border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 shadow-sm"
-                        placeholder="Giải thích đáp án đúng...">{{ old('explanation') }}</textarea>
                 </div>
 
                 <!-- Actions -->

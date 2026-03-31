@@ -16,9 +16,16 @@ use App\Models\Subject;
 
 class QuestionController extends Controller
 {
-    public function getChaptersBySubject(Subject $subject): JsonResponse
+    /**
+     * API for AJAX: Get chapters by subject ID.
+     */
+    public function getChaptersBySubject(int $subjectId): JsonResponse
     {
-        return response()->json($subject->chapters);
+        $chapters = \App\Models\Chapter::where('subject_id', $subjectId)
+            ->orderBy('order')
+            ->get(['id', 'name']);
+
+        return response()->json($chapters);
     }
 
     public function index(IndexQuestionRequest $request, QuestionBankQueryService $questionBankQueryService): View

@@ -48,8 +48,7 @@ class ExamFormApiController extends Controller
         $perPage = (int) ($request->input('per_page', 20));
 
         $query = Question::with(['chapter:id,name', 'options' => fn($q) => $q->orderBy('order')])
-            ->where('subject_id', $subjectId)
-            ->where('status', 'approved');
+            ->where('subject_id', $subjectId);
 
         if ($request->filled('chapter_id')) {
             $query->where('chapter_id', $request->input('chapter_id'));
@@ -107,7 +106,6 @@ class ExamFormApiController extends Controller
         }
 
         $counts = Question::where('subject_id', $subjectId)
-            ->where('status', 'approved')
             ->selectRaw('COALESCE(chapter_id, 0) as ch_id, difficulty, COUNT(*) as cnt')
             ->groupBy('ch_id', 'difficulty')
             ->get();
@@ -120,7 +118,6 @@ class ExamFormApiController extends Controller
 
         // Also provide totals per difficulty (all chapters)
         $totals = Question::where('subject_id', $subjectId)
-            ->where('status', 'approved')
             ->selectRaw('difficulty, COUNT(*) as cnt')
             ->groupBy('difficulty')
             ->pluck('cnt', 'difficulty')
@@ -145,8 +142,10 @@ class ExamFormApiController extends Controller
             'question_type_id' => 'required|integer|exists:question_types,id',
             'content'          => 'required|string|min:5',
             'difficulty'       => 'required|string|in:remember,understand,apply,analyze',
-            'status'           => 'required|string|in:draft,approved,hidden',
-            'explanation'      => 'nullable|string',
+            'options'          => 'required|array|min:2',
+            'options.*.content'=> 'required|string',
+            'correct_options'  => 'required|array|min:1',
+            'correct_options.*'=> 'integer|min:0',
         ]);
 
         // Verify subject is assigned to this lecturer
@@ -157,7 +156,20 @@ class ExamFormApiController extends Controller
 
         $validated['created_by'] = Auth::id();
 
-        $question = Question::create($validated);
+        $question = \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
+            $createdQuestion = Question::create($validated);
+            
+            $correctOptions = $validated['correct_options'] ?? [];
+            foreach ($validated['options'] as $index => $optionData) {
+                $createdQuestion->options()->create([
+                    'label'      => chr(65 + $index),
+                    'content'    => $optionData['content'],
+                    'is_correct' => in_array((string)$index, $correctOptions, true) || in_array((int)$index, $correctOptions, true),
+                    'order'      => $index,
+                ]);
+            }
+            return $createdQuestion;
+        });
 
         return response()->json([
             'id'         => $question->id,

@@ -15,10 +15,6 @@ use Illuminate\Support\Facades\DB;
  * ============================================================
  * QuestionSeeder — Tạo 150 câu hỏi (30 câu/môn × 5 môn)
  * ============================================================
- * Đa dạng loại câu hỏi: MCQ, True/False, Fill Blank.
- * Gán tags qua bảng question_tag_map.
- * Nội dung câu hỏi thực tế theo từng môn học.
- * ============================================================
  */
 class QuestionSeeder extends Seeder
 {
@@ -34,11 +30,9 @@ class QuestionSeeder extends Seeder
         }
 
         // ─── Lấy các question types ──────────────────────────
-        $mcqType   = QuestionType::where('code', 'multiple_choice')->first();
-        $tfType    = QuestionType::where('code', 'true_false')->first();
-        $fillType  = QuestionType::where('code', 'fill_blank')->first();
+        $singleType = QuestionType::where('code', 'single_choice')->first();
 
-        if (!$mcqType || !$tfType || !$fillType) {
+        if (!$singleType) {
             $this->command->error('⚠ Thiếu question types. Hãy chạy QuestionTypeSeeder trước.');
             return;
         }
@@ -49,11 +43,11 @@ class QuestionSeeder extends Seeder
 
         // ─── Định nghĩa tag mapping cho mỗi môn ─────────────
         $subjectTagMap = [
-            'IT001' => ['Lập trình', 'OOP', 'Cơ bản'],
-            'IT002' => ['Cấu trúc dữ liệu', 'Thuật toán', 'Nâng cao'],
-            'IT003' => ['Cơ sở dữ liệu', 'SQL', 'Cơ bản'],
-            'IT004' => ['Mạng máy tính', 'TCP/IP', 'Cơ bản'],
-            'IT005' => ['Lập trình Web', 'OOP', 'Nâng cao'],
+            'IT001' => ['Lập trình', 'C++'],
+            'IT002' => ['Cấu trúc dữ liệu', 'Thuật toán'],
+            'IT003' => ['Cơ sở dữ liệu', 'SQL'],
+            'IT004' => ['Mạng máy tính', 'TCP/IP'],
+            'IT005' => ['Lập trình Web', 'Laravel'],
         ];
 
         // ─── Câu hỏi mẫu thực tế cho từng môn ──────────────
@@ -65,7 +59,10 @@ class QuestionSeeder extends Seeder
 
         foreach ($subjects as $subject) {
             $chapters = $subject->chapters;
-            if ($chapters->isEmpty()) continue;
+            if ($chapters->isEmpty()) {
+                 $this->command->warn("   ⚠️ Môn {$subject->code} chưa có chương, bỏ qua.");
+                 continue;
+            }
 
             // Lấy giảng viên tạo câu hỏi (xoay vòng)
             $lecturer = $lecturers[$totalCreated % $lecturers->count()];
@@ -83,31 +80,24 @@ class QuestionSeeder extends Seeder
                 $chapter = $chapters[($i - 1) % $chapters->count()];
                 $difficulty = $difficulties[($i - 1) % count($difficulties)];
 
-                // Chọn loại câu hỏi: 20 MCQ + 6 T/F + 4 Fill
-                if ($i <= 20) {
-                    $questionType = $mcqType;
-                    $question = $this->createMCQ($subject, $chapter, $questionType, $lecturer, $difficulty, $i, $bankQuestions);
-                } elseif ($i <= 26) {
-                    $questionType = $tfType;
-                    $question = $this->createTrueFalse($subject, $chapter, $questionType, $lecturer, $difficulty, $i, $bankQuestions);
+                // Tạo câu hỏi
+                if ($i <= 22) {
+                    $question = $this->createMCQ($subject, $chapter, $singleType, $lecturer, $difficulty, $i, $bankQuestions);
                 } else {
-                    $questionType = $fillType;
-                    $question = $this->createFillBlank($subject, $chapter, $questionType, $lecturer, $difficulty, $i, $bankQuestions);
+                    $question = $this->createTrueFalse($subject, $chapter, $singleType, $lecturer, $difficulty, $i, $bankQuestions);
                 }
 
-                // ─── Gán tags qua question_tag_map ────────────
+                // ─── Gán tags ────────────
                 if ($question && $subjectTags->isNotEmpty()) {
-                    // Gán 2 tag cho mỗi câu hỏi
-                    $tagsToAttach = $subjectTags->random(min(2, $subjectTags->count()));
-                    // Thêm tag theo mục đích sử dụng
-                    $purposeTag = ($i <= 15)
-                        ? ($tagsByName['Thi giữa kỳ'] ?? null)
-                        : ($tagsByName['Thi cuối kỳ'] ?? null);
-                    if ($purposeTag) {
-                        $tagsToAttach = $tagsToAttach->push($purposeTag->id)->unique();
+                    $tagsToAttach = $subjectTags->random(min(1, $subjectTags->count()));
+                    
+                    // Thêm tag mục đích (Thi giữa kỳ / cuối kỳ)
+                    $purposeName = ($i <= 15) ? 'Thi giữa kỳ' : 'Thi cuối kỳ';
+                    if (isset($tagsByName[$purposeName])) {
+                        $tagsToAttach->push($tagsByName[$purposeName]->id);
                     }
 
-                    foreach ($tagsToAttach as $tagId) {
+                    foreach ($tagsToAttach->unique() as $tagId) {
                         DB::table('question_tag_map')->insertOrIgnore([
                             'question_id' => $question->id,
                             'tag_id'      => $tagId,
@@ -121,14 +111,12 @@ class QuestionSeeder extends Seeder
             $this->command->line("   📝 {$subject->code} — {$subject->name}: 30 câu hỏi");
         }
 
-        $this->command->info("✅ Đã tạo thành công {$totalCreated} câu hỏi (30 câu/môn × 5 môn).");
+        $this->command->info("✅ Đã tạo thành công {$totalCreated} câu hỏi.");
     }
 
-    // ─── Tạo câu MCQ ─────────────────────────────────────────
     private function createMCQ($subject, $chapter, $questionType, $lecturer, $difficulty, $index, $bank): ?Question
     {
-        $content = $bank['mcq'][$index - 1]
-            ?? "Trong môn {$subject->name}, phần \"{$chapter->name}\", phương án nào sau đây là đúng?";
+        $content = $bank['mcq'][$index - 1] ?? "Cần nắm vững nội dung chương \"{$chapter->name}\". Đâu là khái niệm chính xác nhất về chủ đề này?";
 
         $question = Question::create([
             'subject_id'       => $subject->id,
@@ -137,27 +125,15 @@ class QuestionSeeder extends Seeder
             'created_by'       => $lecturer->id,
             'difficulty'       => $difficulty,
             'content'          => $content,
-            'explanation'      => "Giải thích: Đây là câu hỏi số {$index} thuộc chương \"{$chapter->name}\" của môn {$subject->code}.",
-            'status'           => 'approved',
             'version'          => 1,
         ]);
 
-        // Tạo 4 options (A, B, C, D)
         $correctIdx = rand(0, 3);
         $labels = ['A', 'B', 'C', 'D'];
-        $optionContents = $bank['mcq_options'][$index - 1]
-            ?? null;
-
+        
         foreach ($labels as $idx => $label) {
             $isCorrect = ($idx === $correctIdx);
-
-            if ($optionContents) {
-                $optContent = $isCorrect ? $optionContents['correct'] : ($optionContents['wrong'][$idx] ?? "Phương án {$label} (sai)");
-            } else {
-                $optContent = $isCorrect
-                    ? "Đáp án đúng cho câu {$index}"
-                    : "Phương án nhiễu {$label} cho câu {$index}";
-            }
+            $optContent = $isCorrect ? "Đáp án chính xác cho câu số {$index}" : "Phương án nhiễu {$label} cho câu {$index}";
 
             QuestionOption::create([
                 'question_id' => $question->id,
@@ -171,12 +147,10 @@ class QuestionSeeder extends Seeder
         return $question;
     }
 
-    // ─── Tạo câu True/False ──────────────────────────────────
     private function createTrueFalse($subject, $chapter, $questionType, $lecturer, $difficulty, $index, $bank): ?Question
     {
-        $tfIndex = $index - 21; // 0-based cho T/F
-        $content = $bank['tf'][$tfIndex]
-            ?? "Nhận định: Trong phần \"{$chapter->name}\" của môn {$subject->name}, kiến thức cơ bản luôn là nền tảng quan trọng nhất.";
+        $tfIndex = $index - 23;
+        $content = $bank['tf'][$tfIndex] ?? "Trong môn {$subject->name}, nội dung thuộc chương \"{$chapter->name}\" là bắt buộc phải khảo sát đúng không?";
 
         $isTrue = (bool) rand(0, 1);
 
@@ -187,12 +161,9 @@ class QuestionSeeder extends Seeder
             'created_by'       => $lecturer->id,
             'difficulty'       => $difficulty,
             'content'          => $content,
-            'explanation'      => $isTrue ? 'Nhận định này là ĐÚNG.' : 'Nhận định này là SAI.',
-            'status'           => 'approved',
             'version'          => 1,
         ]);
 
-        // Tạo 2 options: Đúng / Sai
         QuestionOption::create([
             'question_id' => $question->id,
             'label'       => 'A',
@@ -211,110 +182,124 @@ class QuestionSeeder extends Seeder
         return $question;
     }
 
-    // ─── Tạo câu Fill Blank ──────────────────────────────────
-    private function createFillBlank($subject, $chapter, $questionType, $lecturer, $difficulty, $index, $bank): ?Question
-    {
-        $fbIndex = $index - 27; // 0-based cho fill blank
-        $content = $bank['fill'][$fbIndex]
-            ?? "Trong môn {$subject->name}, phần \"{$chapter->name}\", từ khóa quan trọng nhất là _____.";
-
-        $acceptedAnswers = $bank['fill_answers'][$fbIndex]
-            ?? [$chapter->name, strtolower($chapter->name)];
-
-        $question = Question::create([
-            'subject_id'       => $subject->id,
-            'chapter_id'       => $chapter->id,
-            'question_type_id' => $questionType->id,
-            'created_by'       => $lecturer->id,
-            'difficulty'       => $difficulty,
-            'content'          => $content,
-            'explanation'      => "Đáp án chấp nhận: " . implode(', ', $acceptedAnswers),
-            'answer_data'      => [
-                'accepted_answers' => $acceptedAnswers,
-                'case_sensitive'   => false,
-            ],
-            'status'           => 'approved',
-            'version'          => 1,
-        ]);
-
-        return $question;
-    }
-
-    // ─── Ngân hàng câu hỏi mẫu thực tế ─────────────────────
     private function getQuestionBank(): array
     {
         return [
             'IT001' => [
                 'mcq' => [
-                    'Trong C++, kiểu dữ liệu nào dùng để lưu số nguyên?',
-                    'Toán tử nào dùng để so sánh bằng trong C++?',
-                    'Vòng lặp nào kiểm tra điều kiện trước khi thực thi?',
-                    'Hàm main() trong C++ trả về kiểu gì?',
-                    'Đâu là cách khai báo mảng đúng trong C++?',
-                    'Toán tử ++ trong C++ có chức năng gì?',
-                    'Cấu trúc switch-case dùng để làm gì?',
-                    'Từ khóa nào dùng để khai báo hằng số trong C++?',
-                    'Đâu là comment đúng trong C++?',
-                    'Hàm trong C++ được định nghĩa bởi những thành phần nào?',
-                    'Đâu là cú pháp đúng của câu lệnh if-else?',
-                    'Toán tử && trong C++ là gì?',
-                    'Kiểu float lưu trữ bao nhiêu byte?',
-                    'Đâu là cú pháp khai báo con trỏ?',
-                    'Vòng lặp do-while khác while ở điểm nào?',
-                    'Đâu là toán tử gán trong C++?',
-                    'Header file iostream dùng để làm gì?',
-                    'Từ khóa break dùng trong ngữ cảnh nào?',
-                    'Mảng 2 chiều được khai báo như thế nào?',
-                    'Hàm void có đặc điểm gì?',
+                    'Sự khác biệt chính giữa C và C++ là gì?',
+                    'Từ khóa nào được dùng để khai báo một lớp (class) trong C++?',
+                    'Phạm vi truy cập mặc định của các thành phần trong class là gì?',
+                    'Đâu là cú pháp đúng để khai báo một hàm ảo (virtual function)?',
+                    'Template trong C++ dùng để làm gì?',
+                    'Hàm tạo (Constructor) được gọi khi nào?',
+                    'Đa kế thừa là gì?',
+                    'Toán tử scope resolution là toán tử nào?',
+                    'Từ khóa "this" trong C++ là gì?',
+                    'File header nào thường dùng cho nhập xuất cơ bản?',
+                    'Làm thế nào để giải phóng bộ nhớ của một mảng động?',
+                    'Namespace dùng để làm gì?',
+                    'Cách khai báo một phương thức tĩnh (static method)?',
+                    'Friend function có quyền truy cập vào thành phần nào của lớp?',
+                    'Hàm hủy (Destructor) bắt đầu bằng ký tự nào?',
+                    'Inline function có tác dụng gì?',
+                    'Khai báo con trỏ hằng như thế nào?',
+                    'STL là viết tắt của gì?',
+                    'Kiểu dữ liệu bool trong C++ chiếm bao nhiêu byte?',
+                    'Hằng số (const) khác gì với define?',
+                    'Ngoại lệ (Exception) được xử lý bằng khối lệnh nào?',
+                    'Toán tử NEW trả về kết quả gì?',
                 ],
                 'tf' => [
-                    'Trong C++, biến phải được khai báo trước khi sử dụng.',
-                    'C++ là ngôn ngữ lập trình hướng đối tượng.',
-                    'Mảng trong C++ có thể thay đổi kích thước sau khi khai báo.',
-                    'Vòng lặp for và while có thể thay thế cho nhau.',
-                    'Hàm trong C++ chỉ có thể trả về một giá trị.',
-                    'Toán tử = và == có cùng chức năng.',
+                    'C++ hỗ trợ lập trình hướng đối tượng tốt hơn C.',
+                    'Số lượng constructor trong một lớp là không giới hạn.',
+                    'Hàm ảo không thể là hàm tĩnh.',
+                    'Copy constructor được gọi khi gán 2 đối tượng có sẵn.',
+                    'Một lớp có thể có nhiều hàm hủy.',
+                    'Biến tĩnh được chia sẻ giữa tất cả các đối tượng của lớp.',
+                    'Toán tử gán mặc định thực hiện shallow copy.',
+                    'Con trỏ null trong C++ dùng từ khóa nullptr.',
+                ]
+            ],
+            'IT002' => [
+                'mcq' => [
+                    'Độ phức tạp thời gian của thuật toán Quicksort trung bình là?',
+                    'Cấu trúc dữ liệu nào hoạt động theo nguyên tắc LIFO?',
+                    'Hàng chờ (Queue) hoạt động theo nguyên tắc nào?',
+                    'Đâu là đặc điểm của Danh sách liên kết đơn?',
+                    'Độ cao của cây nhị phân đầy đủ có N nút là?',
+                    'Thuật toán tìm kiếm nhị phân yêu cầu mảng phải như thế nào?',
+                    'Đồ thị có hướng khác đồ thị vô hướng ở điểm nào?',
+                    'Bảng băm (Hash table) giải quyết xung đột bằng cách nào?',
+                    'Duyệt cây theo thứ tự trước (Pre-order) là?',
+                    'Giải thuật tham lam (Greedy) luôn cho kết quả tối ưu toàn cục đúng hay sai?',
                 ],
-                'fill' => [
-                    'Để xuất dữ liệu ra màn hình trong C++, ta sử dụng đối tượng _____.',
-                    'Vòng lặp _____ luôn thực hiện ít nhất 1 lần.',
-                    'Từ khóa _____ dùng để thoát khỏi vòng lặp.',
-                    'Trong C++, _____ là kiểu dữ liệu lưu ký tự.',
-                ],
-                'fill_answers' => [
-                    ['cout', 'std::cout'],
-                    ['do-while', 'do while'],
-                    ['break'],
-                    ['char'],
-                ],
+                'tf' => [
+                    'Mảng có tốc độ truy cập ngẫu nhiên nhanh nhất.',
+                    'Stack có thể dùng để khử đệ quy.',
+                    'Duyệt cây theo chiều rộng (BFS) dùng Stack.',
+                    'Thuật toán Dijkstra dùng để tìm đường đi ngắn nhất.',
+                ]
             ],
             'IT003' => [
                 'mcq' => [
-                    'Mô hình ER dùng để làm gì?',
-                    'Khóa chính (Primary Key) có đặc điểm gì?',
-                    'Câu lệnh SQL nào dùng để truy vấn dữ liệu?',
-                    'JOIN trong SQL dùng để làm gì?',
-                    'Chuẩn hóa 1NF yêu cầu gì?',
-                    'Chuẩn hóa 2NF giải quyết vấn đề gì?',
-                    'Câu lệnh nào tạo bảng mới trong SQL?',
-                    'WHERE trong SQL có chức năng gì?',
-                    'GROUP BY dùng kết hợp với gì?',
-                    'INDEX trong database có tác dụng gì?',
+                    'SQL là viết tắt của cụm từ nào?',
+                    'Khóa ngoại (Foreign Key) dùng để làm gì?',
+                    'Câu lệnh nào dùng để cập nhật dữ liệu?',
+                    'Mệnh đề nào dùng để lọc kết quả theo nhóm?',
+                    'Chuẩn hóa cơ sở dữ liệu giúp giảm thiểu điều gì?',
+                    'Hệ quản trị CSDL quan hệ phổ biến nhất là?',
+                    'Ràng buộc UNIQUE khác gì với PRIMARY KEY?',
+                    'Transaction đảm bảo tính chất nào?',
+                    'Index giúp tăng tốc độ cho thao tác nào?',
+                    'Câu lệnh DELETE khác TRUNCATE ở điểm nào?',
                 ],
                 'tf' => [
-                    'Mỗi bảng trong CSDL quan hệ phải có khóa chính.',
-                    'SQL là ngôn ngữ lập trình hướng đối tượng.',
-                    'VIEW trong SQL lưu dữ liệu vật lý.',
-                    'NULL trong SQL nghĩa là giá trị 0.',
+                    'Một bảng chỉ có duy nhất một khóa chính.',
+                    'Khóa ngoại có thể nhận giá trị NULL.',
+                    'SQL không phân biệt hoa thường trong dữ liệu chuỗi.',
+                    'Toán tử LIKE dùng để tìm kiếm gần đúng.',
+                ]
+            ],
+            'IT004' => [
+                'mcq' => [
+                    'Tầng nào trong mô hình OSI chịu trách nhiệm định tuyến?',
+                    'Giao thức TCP thuộc tầng nào?',
+                    'Địa chỉ IP v4 có bao nhiêu bit?',
+                    'HTTP mặc định chạy trên cổng nào?',
+                    'DNS dùng để làm gì?',
+                    'Thiết bị Switch hoạt động ở tầng nào?',
+                    'Mặt nạ mạng (Subnet Mask) dùng để làm gì?',
+                    'ICMP được dùng bởi lệnh nào?',
+                    'Sự khác biệt giữa TCP và UDP là gì?',
+                    'Tầng vật lý xử lý dữ liệu dưới dạng nào?',
                 ],
-                'fill' => [
-                    'Câu lệnh _____ dùng để chèn dữ liệu mới vào bảng.',
-                    'Để xóa toàn bộ dữ liệu trong bảng mà không xóa cấu trúc, dùng lệnh _____.',
+                'tf' => [
+                    'IPv6 có không gian địa chỉ lớn hơn IPv4.',
+                    'Router là thiết bị tầng 2.',
+                    'Hub gửi dữ liệu đến tất cả các cổng (Broadcast).',
+                    'Giao thức FTP dùng 2 cổng để truyền dữ liệu.',
+                ]
+            ],
+            'IT005' => [
+                'mcq' => [
+                    'Laravel là framework của ngôn ngữ nào?',
+                    'Tập tin cấu hình chính của Laravel là?',
+                    'Eloquent ORM dùng để làm gì?',
+                    'Middleware trong Laravel có tác dụng gì?',
+                    'Blade là gì trong Laravel?',
+                    'Lệnh artisan nào tạo một Controller mới?',
+                    'Migration được dùng để quản lý cái gì?',
+                    'Route nào dùng để xử lý phương thức POST?',
+                    'Composer là công cụ gì?',
+                    'Environment variable được lưu ở file nào?',
                 ],
-                'fill_answers' => [
-                    ['INSERT', 'INSERT INTO'],
-                    ['TRUNCATE', 'TRUNCATE TABLE', 'DELETE'],
-                ],
+                'tf' => [
+                    'Laravel dùng mô hình MVC.',
+                    'View trong Laravel nằm ở thư mục resources/views.',
+                    'Cột created_at và updated_at được Laravel tự động quản lý.',
+                    'Laravel hỗ trợ nhiều hệ quản trị CSDL cùng lúc.',
+                ]
             ],
         ];
     }

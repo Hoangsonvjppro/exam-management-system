@@ -6,7 +6,7 @@
     ->orderBy('name')
     ->get(['id', 'name', 'code']);
 
-    $quickQuestionPool = \App\Models\Question::approved()
+    $quickQuestionPool = \App\Models\Question::query()
     ->whereIn('subject_id', $quickSubjectIds)
     ->orderByDesc('updated_at')
     ->limit(300)
