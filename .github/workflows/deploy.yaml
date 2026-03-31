@@ -3,11 +3,15 @@ name: Tự động cập nhật khi Push
 on:
   push:
     branches:
-      - dev  # Khi bạn push code vào nhánh dev thì nó mới chạy
+      - dev
 
 jobs:
   deploy:
-    runs-on: self-hosted  # Chạy ngay trên cái Runner dưới máy bạn
+    runs-on: self-hosted
+    # DÒNG QUAN TRỌNG NHẤT: Trỏ mọi lệnh vào thư mục src
+    defaults:
+      run:
+        working-directory: src 
 
     steps:
       - name: Lấy code mới nhất
@@ -29,3 +33,4 @@ jobs:
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
+
