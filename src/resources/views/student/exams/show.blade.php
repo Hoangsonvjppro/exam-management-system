@@ -42,6 +42,19 @@
                 </div>
             </div>
 
+            {{-- Cảnh báo thiết bị & kết nối --}}
+            <div class="mb-6 px-4 py-3 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3 text-left max-w-xl mx-auto shadow-sm animate-pulse-subtle">
+                <div class="p-1.5 bg-red-100 rounded-lg text-red-600 shrink-0">
+                    <x-ui-icon name="wifi" class="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-red-900 mb-0.5">Lưu ý quan trọng</h4>
+                    <p class="text-xs text-red-800 leading-relaxed">
+                        Đảm bảo kết nối internet và tình trạng thiết bị ổn định trước khi kiểm tra. Hệ thống tính giờ theo máy chủ, mọi sự cố do đường truyền cá nhân có thể ảnh hưởng đến kết quả nộp bài của bạn.
+                    </p>
+                </div>
+            </div>
+
             {{-- Actions --}}
             <div class="flex flex-col items-center gap-3">
                 @if($inProgressAttempt)
