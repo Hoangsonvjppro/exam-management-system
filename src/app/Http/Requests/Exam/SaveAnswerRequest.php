@@ -15,7 +15,11 @@ class SaveAnswerRequest extends FormRequest
     {
         return [
             'question_id'        => 'required|integer|exists:questions,id',
-            'question_option_id' => 'required|integer|exists:question_options,id',
+            'question_option_id' => 'nullable|integer|exists:question_options,id',
+            'option_ids'         => 'nullable|array',
+            'option_ids.*'       => 'integer|exists:question_options,id',
+            'answer_text'        => 'nullable|string',
+            'tab_switch_count'   => 'nullable|integer',
         ];
     }
 

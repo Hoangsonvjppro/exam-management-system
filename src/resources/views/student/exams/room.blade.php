@@ -13,6 +13,8 @@ $totalQuestions = count($questions);
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        .answer-textarea { font-family: inherit; font-size: 14px; resize: vertical; min-height: 120px; }
+        .answer-checkbox { border-radius: 4px !important; }
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
@@ -408,18 +410,41 @@ $totalQuestions = count($questions);
                     <div class="question-text">{!! $question->content !!}</div>
 
                     <div style="display:flex; flex-direction:column; gap:8px;">
-                        @foreach($question->options as $option)
-                        @php $isChecked = isset($savedAnswers[$question->id]) && $savedAnswers[$question->id] == $option->id; @endphp
-                        <label class="option-card {{ $isChecked ? 'selected' : '' }}" data-option-index="{{ $index }}">
-                            <input type="radio"
-                                name="answers[{{ $question->id }}]"
-                                value="{{ $option->id }}"
-                                data-question-id="{{ $question->id }}"
-                                class="answer-radio custom-radio"
-                                {{ $isChecked ? 'checked' : '' }}>
-                            <span class="option-text">{!! $option->content !!}</span>
-                        </label>
-                        @endforeach
+                        @php $savedAnswer = $savedAnswers[$question->id] ?? null; @endphp
+                        
+                        @if($question->questionType->code === 'short_answer')
+                            <div class="p-2">
+                                <textarea 
+                                    name="answers[{{ $question->id }}][text]" 
+                                    data-question-id="{{ $question->id }}"
+                                    class="answer-textarea w-full p-4 border-1.5 border-[#D6E2F0] rounded-xl focus:border-[#185FA5] focus:ring-4 focus:ring-[#E6F1FB] outline-none transition-all"
+                                    rows="4" 
+                                    placeholder="Nhập câu trả lời của bạn tại đây...">{{ $savedAnswer->answer_text ?? '' }}</textarea>
+                            </div>
+                        @else
+                            @foreach($question->options as $option)
+                                @php 
+                                    $isSelected = false;
+                                    if ($savedAnswer) {
+                                        if ($question->questionType->code === 'multiple_choice') {
+                                            $isSelected = $savedAnswer->selectedOptions->contains('question_option_id', $option->id);
+                                        } else {
+                                            $isSelected = $savedAnswer->question_option_id == $option->id;
+                                        }
+                                    }
+                                @endphp
+                                <label class="option-card {{ $isSelected ? 'selected' : '' }}" data-option-index="{{ $index }}">
+                                    <input type="{{ $question->questionType->code === 'multiple_choice' ? 'checkbox' : 'radio' }}"
+                                        name="answers[{{ $question->id }}]{{ $question->questionType->code === 'multiple_choice' ? '[]' : '' }}"
+                                        value="{{ $option->id }}"
+                                        data-question-id="{{ $question->id }}"
+                                        class="{{ $question->questionType->code === 'multiple_choice' ? 'answer-checkbox' : 'answer-radio' }} custom-radio"
+                                        {{ $isSelected ? 'checked' : '' }}
+                                        {{ $question->questionType->code === 'multiple_choice' ? 'style=border-radius:4px' : '' }}>
+                                    <span class="option-text">{!! $option->content !!}</span>
+                                </label>
+                            @endforeach
+                        @endif
                     </div>
                 </div>
                 @endforeach
@@ -565,14 +590,50 @@ $totalQuestions = count($questions);
                 }
             }, 1000);
 
-            // Answer change → auto-save
-            document.querySelectorAll('.answer-radio').forEach(radio => {
-                radio.addEventListener('change', function() {
+            // Answer change → auto-save (Radio/Checkbox)
+            document.querySelectorAll('.answer-radio, .answer-checkbox').forEach(input => {
+                input.addEventListener('change', function() {
                     const questionIdx = this.closest('.question-container').id.split('-')[1];
                     const btn = document.getElementById(`nav-btn-${questionIdx}`);
-                    btn.classList.add('answered');
+                    
+                    const isCheckedByQuestion = Array.from(this.closest('.question-container').querySelectorAll('input:checked')).length > 0;
+                    if(isCheckedByQuestion) btn.classList.add('answered');
+                    else btn.classList.remove('answered');
+
                     updateAnsweredCount();
-                    autoSave(this.getAttribute('data-question-id'), this.value);
+                    
+                    // Collect all checked values if multi-choice
+                    let payload = { question_id: this.getAttribute('data-question-id'), tab_switch_count: tabSwitchCount };
+                    if (this.type === 'checkbox') {
+                        const checked = Array.from(this.closest('.question-container').querySelectorAll('input:checked')).map(el => el.value);
+                        payload.option_ids = checked;
+                    } else {
+                        payload.question_option_id = this.value;
+                    }
+                    autoSave(payload);
+                });
+            });
+
+            // Textarea change → auto-save (debounced)
+            let debounceTimer;
+            document.querySelectorAll('.answer-textarea').forEach(textarea => {
+                textarea.addEventListener('input', function() {
+                    const questionIdx = this.closest('.question-container').id.split('-')[1];
+                    const btn = document.getElementById(`nav-btn-${questionIdx}`);
+                    
+                    if(this.value.trim().length > 0) btn.classList.add('answered');
+                    else btn.classList.remove('answered');
+                    
+                    updateAnsweredCount();
+
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        autoSave({
+                            question_id: this.getAttribute('data-question-id'),
+                            answer_text: this.value,
+                            tab_switch_count: tabSwitchCount
+                        });
+                    }, 1000);
                 });
             });
 
@@ -612,18 +673,14 @@ $totalQuestions = count($questions);
             toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
         }
 
-        function autoSave(questionId, optionId) {
+        function autoSave(payload) {
             fetch(saveUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": csrfToken
                 },
-                body: JSON.stringify({
-                    question_id: questionId,
-                    question_option_id: optionId,
-                    tab_switch_count: tabSwitchCount
-                })
+                body: JSON.stringify(payload)
             })
             .then(res => res.json())
             .then(data => {

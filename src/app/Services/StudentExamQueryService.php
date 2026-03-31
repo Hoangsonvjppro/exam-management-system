@@ -69,15 +69,15 @@ class StudentExamQueryService
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function getRoomData(ExamSchedule $schedule, ExamAttempt $attempt): array
     {
         $exam = $schedule->exam;
         return [
-            'questions' => $exam->questions()->with('options')->get(),
-            'savedAnswers' => $attempt->answers()->pluck('question_option_id', 'question_id')->toArray(),
+            'questions' => $exam->questions()->with(['options', 'questionType'])->get(),
+            'savedAnswers' => $attempt->answers()
+                ->with('selectedOptions')
+                ->get()
+                ->keyBy('question_id'),
         ];
     }
 

@@ -116,7 +116,6 @@ class StudentExamService
      */
     public function saveAnswer(ExamSchedule $schedule, int $userId, array $validated, ?int $tabSwitchCount = null): array
     {
-        $exam = $schedule->exam;
         $attempt = ExamAttempt::forSchedule($schedule->id)
             ->forUser($userId)
             ->inProgress()
@@ -131,38 +130,66 @@ class StudentExamService
             return ['http_code' => 403, 'message' => 'Đã hết thời gian làm bài.'];
         }
 
-        $questionBelongsToExam = $exam->questions()
-            ->where('questions.id', $validated['question_id'])
-            ->exists();
+        // Use transaction for database-level atomicity
+        return DB::transaction(function () use ($schedule, $attempt, $validated, $tabSwitchCount) {
+            try {
+                $question = \App\Models\Question::with('questionType')
+                    ->where('id', $validated['question_id'])
+                    ->first();
 
-        if (! $questionBelongsToExam) {
-            return ['http_code' => 422, 'message' => 'Câu hỏi không thuộc đề thi này.'];
-        }
+                if (! $question) {
+                    return ['http_code' => 422, 'message' => 'Câu hỏi không tồn tại.'];
+                }
 
-        $optionBelongsToQuestion = QuestionOption::where('id', $validated['question_option_id'])
-            ->where('question_id', $validated['question_id'])
-            ->exists();
+                // Verify if question belongs to the exam
+                $questionBelongsToExam = $schedule->exam->questions()
+                    ->where('questions.id', $question->id)
+                    ->exists();
 
-        if (! $optionBelongsToQuestion) {
-            return ['http_code' => 422, 'message' => 'Đáp án không thuộc câu hỏi này.'];
-        }
+                if (! $questionBelongsToExam) {
+                    return ['http_code' => 422, 'message' => 'Câu hỏi không thuộc đề thi này.'];
+                }
 
-        StudentAnswer::updateOrCreate(
-            [
-                'exam_attempt_id' => $attempt->id,
-                'question_id' => $validated['question_id'],
-            ],
-            [
-                'question_option_id' => $validated['question_option_id'],
-            ]
-        );
+                // 1. Update main StudentAnswer (Atomic Upsert)
+                $studentAnswer = StudentAnswer::updateOrCreate(
+                    [
+                        'exam_attempt_id' => $attempt->id,
+                        'question_id' => $question->id,
+                    ],
+                    [
+                        'question_option_id' => $validated['question_option_id'] ?? null,
+                        'answer_text' => $validated['answer_text'] ?? null,
+                    ]
+                );
 
-        if ($tabSwitchCount !== null) {
-            $attempt->update([
-                'tab_switch_count' => $tabSwitchCount,
-            ]);
-        }
+                // 2. Specialized handling based on question type
+                $typeCode = $question->questionType->code;
 
-        return ['http_code' => 200, 'message' => ''];
+                if ($typeCode === 'multiple_choice' && isset($validated['option_ids'])) {
+                    // Sync options for multi-choice: delete old, insert new
+                    $studentAnswer->selectedOptions()->delete();
+                    $options = array_map(function ($optionId) {
+                        return ['question_option_id' => $optionId];
+                    }, $validated['option_ids']);
+                    
+                    if (!empty($options)) {
+                        $studentAnswer->selectedOptions()->createMany($options);
+                    }
+                }
+
+                // 3. Update behavior tracking if provided
+                if ($tabSwitchCount !== null) {
+                    $attempt->update(['tab_switch_count' => $tabSwitchCount]);
+                }
+
+                return ['http_code' => 200, 'message' => ''];
+
+            } catch (UniqueConstraintViolationException $e) {
+                // If a concurrent request already inserted the record, we treat it as success
+                return ['http_code' => 200, 'message' => ''];
+            } catch (\Exception $e) {
+                return ['http_code' => 500, 'message' => 'Lỗi hệ thống khi lưu đáp án.'];
+            }
+        });
     }
 }
