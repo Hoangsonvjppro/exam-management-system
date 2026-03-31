@@ -33,10 +33,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleAndPermissionSeeder::class, // Phân quyền (bắt buộc đầu tiên)
             AdminRootSeeder::class,         // Tạo Admin Root
-            DifficultySeeder::class,        // 4 mức độ khó (Bloom's Taxonomy)
+            DepartmentSeeder::class,        // Khoa
+            MajorSeeder::class,             // Ngành
+            StudentClassSeeder::class,      // Lớp
+            DifficultySeeder::class,        // Tạo mức độ khó (Dễ, Trung bình...)
+            SemesterSeeder::class,          // Tạo học kỳ
+            QuestionTypeSeeder::class,      // Tạo loại câu hỏi (MCQ, T/F...)
             SettingSeeder::class,           // Cấu hình hệ thống
-            SemesterSeeder::class,          // 3 học kỳ (HK1, HK2, Hè)
-            QuestionTypeSeeder::class,      // 6 loại câu hỏi
         ]);
 
         // ─── Bước 2: Users + Subjects ────────────────────────

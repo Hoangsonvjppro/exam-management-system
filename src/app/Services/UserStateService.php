@@ -32,7 +32,7 @@ class UserStateService
         $this->syncStudentRole($user);
 
         if ($user->hasRole('lecturer')) {
-            return 'lecturer.dashboard';
+            return 'lecturer.classes.index';
         }
 
         if ($user->hasRole('student')) {
