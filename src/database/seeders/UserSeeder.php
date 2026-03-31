@@ -54,6 +54,7 @@ class UserSeeder extends Seeder
                     'name'              => $data['name'],
                     'password'          => $password,
                     'lecturer_code'     => $data['lecturer_code'],
+                    'department_id'        => '1',
                     'phone'             => $data['phone'],
                     'date_of_birth'     => $data['date_of_birth'],
                     'department'        => 'Khoa Công nghệ Thông tin',
@@ -96,6 +97,9 @@ class UserSeeder extends Seeder
                     'phone'             => '090200' . str_pad($i, 4, '0', STR_PAD_LEFT),
                     'is_active'         => true,
                     'email_verified_at' => now(),
+                    'department_id'     => '1',
+                    'student_class_id'  => '7',
+                    'date_of_birth'     => '10-10-2005'
                 ]
             );
             $student->syncRoles(['student']);
