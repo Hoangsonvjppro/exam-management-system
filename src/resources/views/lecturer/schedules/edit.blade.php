@@ -55,7 +55,33 @@
                             <textarea name="notes" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]" rows="3">{{ old('notes', $schedule->notes) }}</textarea>
                         </div>
 
-                        <div class="flex justify-end gap-3 pt-2">
+                        @php
+                            $currentLinkedColumnId = $schedule->courseSection->gradeColumns->where('exam_schedule_id', $schedule->id)->first()?->id;
+                        @endphp
+                        <div class="mt-4 p-4 border border-indigo-100 rounded-[8px] bg-indigo-50/30">
+                            <label class="block text-[13px] font-bold text-[#1A3A6B] mb-1">Cột điểm đồng bộ</label>
+                            <p class="text-[11px] text-[#6B7C99] mb-3 leading-relaxed">Kết quả bài thi sẽ được hệ thống tự động đổ vào cột điểm này khi sinh viên nộp bài.</p>
+                            
+                            <select name="grade_column_id" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5]">
+                                <option value="">-- Không đồng bộ điểm / Xóa đồng bộ --</option>
+                                @foreach($schedule->courseSection->gradeColumns as $col)
+                                    <option value="{{ $col->id }}" {{ $currentLinkedColumnId === $col->id ? 'selected' : '' }}>
+                                        {{ $col->name }} ({{ floatval($col->weight) }}%)
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            @if(!$currentLinkedColumnId)
+                            <div class="mt-3">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" name="link_grade_column" value="1" class="rounded border-indigo-300 text-[#185FA5] focus:ring-[#185FA5]">
+                                    <span class="text-[12px] text-[#1A3A6B]">Hoặc đánh dấu để <strong>Tự động tạo cột mới</strong> (Trọng số 0%)</span>
+                                </label>
+                            </div>
+                            @endif
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t border-[#D6E2F0]">
                             <a href="{{ route('lecturer.schedules.index') }}" class="border border-[#D6E2F0] text-[#1A3A6B] px-5 py-2.5 rounded-lg text-[13px] font-semibold hover:bg-[#F4F7FC] transition-colors">Hủy</a>
                             <button type="submit" class="bg-[#1A3A6B] text-white px-6 py-2.5 rounded-lg text-[13px] font-semibold hover:bg-[#0F2A53] transition-colors">
                                 Cập nhật

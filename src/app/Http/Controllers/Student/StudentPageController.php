@@ -11,7 +11,10 @@ use Illuminate\Support\Facades\Auth;
 
 class StudentPageController extends Controller
 {
-    public function __construct(private readonly StudentDashboardService $studentDashboardService) {}
+    public function __construct(
+        private readonly StudentDashboardService $studentDashboardService,
+        private readonly \App\Services\StudentResultService $studentResultService
+    ) {}
 
     public function classes(): View
     {
@@ -38,9 +41,15 @@ class StudentPageController extends Controller
         return view('student.classes.show', $data);
     }
 
-    public function results(): View
+    public function results(\Illuminate\Http\Request $request): View
     {
-        return view('student.results.index-placeholder');
+        /** @var User $user */
+        $user = Auth::user();
+        $semesterId = $request->input('semester_id');
+
+        $data = $this->studentResultService->getResultsData($user, $semesterId ? (int) $semesterId : null);
+
+        return view('student.results.index', $data);
     }
 
     public function attendance(): View

@@ -45,7 +45,6 @@ class StoreExamRequest extends FormRequest
             $rules['matrix.*.difficulty']        = 'required|in:remember,understand,apply,analyze';
             $rules['matrix.*.question_type_id']  = 'nullable|exists:question_types,id';
             $rules['matrix.*.question_count']    = 'required|integer|min:1';
-            $rules['matrix.*.points_each']       = 'nullable|numeric|min:0.01';
         } else {
             $rules['question_ids']   = 'required|array';
             $rules['question_ids.*'] = 'exists:questions,id';

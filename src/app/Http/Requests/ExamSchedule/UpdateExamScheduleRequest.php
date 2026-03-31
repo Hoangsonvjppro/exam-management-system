@@ -92,6 +92,8 @@ class UpdateExamScheduleRequest extends FormRequest
             'max_students'  => 'nullable|integer|min:1',
             'notes'         => 'nullable|string|max:1000',
             'status'        => 'sometimes|in:scheduled,in_progress,completed,cancelled',
+            'link_grade_column' => 'nullable|boolean',
+            'grade_column_id'   => 'nullable|integer',
         ];
     }
 

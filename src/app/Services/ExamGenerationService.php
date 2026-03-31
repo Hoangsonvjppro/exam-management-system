@@ -89,7 +89,7 @@ class ExamGenerationService
                 ExamQuestion::create([
                     'exam_id' => $exam->id,
                     'question_id' => $question->id,
-                    'points' => $row->points_each,
+                    'points' => 1.00,
                     'order_index' => $orderIndex++,
                     'question_snapshot' => $snapshot,
                 ]);
