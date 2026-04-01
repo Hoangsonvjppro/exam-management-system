@@ -191,14 +191,19 @@ class StudentExamService
                 $typeCode = $question->questionType->code;
 
                 if ($typeCode === 'multiple_choice' && isset($validated['option_ids'])) {
-                    // Sync options for multi-choice: delete old, insert new
-                    $studentAnswer->selectedOptions()->delete();
-                    $options = array_map(function ($optionId) {
-                        return ['question_option_id' => $optionId];
-                    }, $validated['option_ids']);
+                    $newOptionIds = array_map('intval', $validated['option_ids']);
                     
-                    if (!empty($options)) {
-                        $studentAnswer->selectedOptions()->createMany($options);
+                    // Atomic Sync: Delete options not in the new set, then insert missing ones
+                    // Using a transaction (already active) to ensure consistency
+                    $studentAnswer->selectedOptions()
+                        ->whereNotIn('question_option_id', $newOptionIds)
+                        ->delete();
+
+                    foreach ($newOptionIds as $optionId) {
+                        // Use firstOrCreate to prevent UniqueConstraintViolation if another request just inserted it
+                        $studentAnswer->selectedOptions()->firstOrCreate([
+                            'question_option_id' => $optionId
+                        ]);
                     }
                 }
 
