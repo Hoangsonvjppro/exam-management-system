@@ -103,16 +103,20 @@ class GradeManagerController extends Controller
             return response()->json(['error' => 'Sinh viên không thuộc lớp này'], 403);
         }
 
+        $updateData = ['updated_by' => auth()->id()];
+        if (array_key_exists('score', $validated)) {
+            $updateData['score'] = $validated['score'];
+        }
+        if (array_key_exists('note', $validated)) {
+            $updateData['note'] = $validated['note'];
+        }
+
         $grade = StudentGrade::updateOrCreate(
             [
                 'grade_column_id' => $column->id,
                 'student_id' => $validated['student_id']
             ],
-            [
-                'score' => $validated['score'],
-                'note' => $validated['note'],
-                'updated_by' => auth()->id()
-            ]
+            $updateData
         );
 
         return response()->json([
