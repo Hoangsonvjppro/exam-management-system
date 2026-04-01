@@ -112,6 +112,17 @@ class CourseSection extends Model
         return $this->hasMany(GradeColumn::class);
     }
 
+    // ── Import helpers ─────────────────────────────────────────
+
+    public static function findByCode(string $code): ?static
+    {
+        return static::where('code', trim($code))->first();
+    }
+
+    public static function findOrNewByCode(string $code): static
+    {
+        return static::firstOrNew(['code' => trim($code)]);
+    }
     // ── Code Generation ────────────────────────────────────────
 
     public static function generateCode(int|string|null $subjectId, int|string|null $semesterId): ?string

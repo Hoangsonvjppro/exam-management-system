@@ -52,79 +52,79 @@ class CourseSectionResource extends Resource
     {
         return [
             Grid::make(2)->schema([
-            TextInput::make('code')
-                ->label('Mã lớp')
-                ->readOnly()
-                ->dehydrated()
-                ->unique(ignoreRecord: true)
-                ->helperText('Tự sinh theo môn học, nhóm, học kỳ và năm học'),
+                TextInput::make('code')
+                    ->label('Mã lớp')
+                    ->readOnly()
+                    ->dehydrated()
+                    ->unique(ignoreRecord: true)
+                    ->helperText('Tự sinh theo môn học, nhóm, học kỳ và năm học'),
 
-            TextInput::make('name')
-                ->label('Tên lớp học phần')
-                ->maxLength(255),
+                TextInput::make('name')
+                    ->label('Tên lớp học phần')
+                    ->maxLength(255),
 
-            Select::make('subject_id')
-                ->label('Môn học')
-                ->relationship('subject', 'name')
-                ->searchable()
-                ->preload()
-                ->live()
-                ->required()
-                ->afterStateUpdated(function (Get $get, Set $set): void {
-                    $set('code', static::generateCourseSectionCode(
-                        $get('subject_id'),
-                        $get('semester_id'),
-                    ));
-                }),
+                Select::make('subject_id')
+                    ->label('Môn học')
+                    ->relationship('subject', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->required()
+                    ->afterStateUpdated(function (Get $get, Set $set): void {
+                        $set('code', static::generateCourseSectionCode(
+                            $get('subject_id'),
+                            $get('semester_id'),
+                        ));
+                    }),
 
-            Select::make('semester_id')
-                ->label('Học kỳ')
-                ->relationship('semester', 'name')
-                ->searchable()
-                ->preload()
-                ->live()
-                ->required()
-                ->afterStateUpdated(function (Get $get, Set $set): void {
-                    $set('code', static::generateCourseSectionCode(
-                        $get('subject_id'),
-                        $get('semester_id'),
-                    ));
-                }),
+                Select::make('semester_id')
+                    ->label('Học kỳ')
+                    ->relationship('semester', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->live()
+                    ->required()
+                    ->afterStateUpdated(function (Get $get, Set $set): void {
+                        $set('code', static::generateCourseSectionCode(
+                            $get('subject_id'),
+                            $get('semester_id'),
+                        ));
+                    }),
 
-            Select::make('lecturer_id')
-                ->label('Giảng viên')
-                ->relationship(
-                    name: 'lecturer',
-                    titleAttribute: 'name',
-                    modifyQueryUsing: fn(Builder $query): Builder => $query->role('lecturer')
-                )
-                ->searchable()
-                ->preload()
-                ->required(),
+                Select::make('lecturer_id')
+                    ->label('Giảng viên')
+                    ->relationship(
+                        name: 'lecturer',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn(Builder $query): Builder => $query->role('lecturer')
+                    )
+                    ->searchable()
+                    ->preload()
+                    ->required(),
 
-            TextInput::make('max_students')
-                ->label('Sĩ số tối đa')
-                ->numeric()
-                ->default(100)
-                ->minValue(1)
-                ->maxValue(999)
-                ->required(),
+                TextInput::make('max_students')
+                    ->label('Sĩ số tối đa')
+                    ->numeric()
+                    ->default(100)
+                    ->minValue(1)
+                    ->maxValue(999)
+                    ->required(),
 
-            Select::make('status')
-                ->label('Trạng thái')
-                ->options([
-                    'active' => 'Đang mở',
-                    'archived' => 'Lưu trữ',
-                    'cancelled' => 'Hủy',
-                ])
-                ->default('active')
-                ->required(),
+                Select::make('status')
+                    ->label('Trạng thái')
+                    ->options([
+                        'active' => 'Đang mở',
+                        'archived' => 'Lưu trữ',
+                        'cancelled' => 'Hủy',
+                    ])
+                    ->default('active')
+                    ->required(),
 
-            // TextInput::make('invite_code')
-            //     ->label('Mã mời vào lớp')
-            //     ->maxLength(20)
-            //     ->helperText('Để trống để hệ thống tự sinh')
-            //     ->dehydrateStateUsing(fn(?string $state): ?string => filled($state) ? strtoupper($state) : null),
+                // TextInput::make('invite_code')
+                //     ->label('Mã mời vào lớp')
+                //     ->maxLength(20)
+                //     ->helperText('Để trống để hệ thống tự sinh')
+                //     ->dehydrateStateUsing(fn(?string $state): ?string => filled($state) ? strtoupper($state) : null),
             ]),
         ];
     }
@@ -136,7 +136,9 @@ class CourseSectionResource extends Resource
                 TextColumn::make('code')
                     ->label('Mã lớp')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->copyable()
+                    ->badge(),
 
                 TextColumn::make('name')
                     ->label('Tên lớp')
@@ -156,9 +158,18 @@ class CourseSectionResource extends Resource
                     ->label('Giảng viên')
                     ->searchable(),
 
-                TextColumn::make('max_students')
+                // TextColumn::make('max_students')
+                //     ->label('Sĩ số')
+                //     ->sortable(),
+                TextColumn::make('enrolled_count')
                     ->label('Sĩ số')
-                    ->sortable(),
+                    ->getStateUsing(
+                        fn(CourseSection $r) =>
+                        "{$r->enrolled_count} / {$r->max_students}"
+                    )
+                    ->badge()
+                    ->color('info')
+                    ->alignCenter(),
 
                 TextColumn::make('status')
                     ->label('Trạng thái')
@@ -168,7 +179,13 @@ class CourseSectionResource extends Resource
                         'archived' => 'gray',
                         'cancelled' => 'danger',
                         default => 'gray',
-                    }),
+                    })
+                    ->formatStateUsing(fn(string $state) => match ($state) {
+                        'active'    => 'Đang mở',
+                        'archived'  => 'Đã lưu trữ',
+                        'cancelled' => 'Đã hủy',
+                    })
+                    ->alignCenter(),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -199,14 +216,14 @@ class CourseSectionResource extends Resource
                     EditAction::make()->label('Sửa')->schema(static::getFormComponents()),
                     DeleteAction::make()->label('Xóa'),
                 ])
-                ->icon('heroicon-m-ellipsis-vertical'),
+                    ->icon('heroicon-m-ellipsis-vertical'),
                 // ->label(''),
             ]);
-            // ->toolbarActions([
-            //     BulkActionGroup::make([
-            //         DeleteBulkAction::make(),
-            //     ]),
-            // ]);
+        // ->toolbarActions([
+        //     BulkActionGroup::make([
+        //         DeleteBulkAction::make(),
+        //     ]),
+        // ]);
     }
 
     public static function getPages(): array

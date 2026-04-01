@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\CourseSections\Pages;
 
+use App\Filament\Imports\CourseSectionStudentImporter;
 use App\Filament\Resources\CourseSections\CourseSectionResource;
 use App\Models\CourseSection;
 use App\Services\AttendanceGradeService;
 use Filament\Actions\Action;
+use Filament\Actions\ImportAction;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Str;
 
@@ -35,6 +37,14 @@ class ListCourseSections extends ListRecords
                     app(AttendanceGradeService::class)->ensureColumn($section);
                 })
                 ->successNotificationTitle('Đã thêm lớp học phần'),
+
+            // Import đăng ký sinh viên hàng loạt
+            ImportAction::make('import_enrollments')
+                ->importer(CourseSectionStudentImporter::class)
+                ->label('Import sinh viên đăng ký')
+                ->icon('heroicon-o-user-plus')
+                ->color('info')
+                ->modalHeading('Import sinh viên đăng ký từ CSV')
         ];
     }
 }

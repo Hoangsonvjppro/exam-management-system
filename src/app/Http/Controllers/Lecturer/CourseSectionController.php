@@ -8,6 +8,7 @@ use App\Http\Requests\CourseSection\UpdateCourseSectionRequest;
 use App\Models\CourseSection;
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\UserNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -91,7 +92,7 @@ class CourseSectionController extends Controller
         $announcementFeed = collect();
         if ($studentIds->isNotEmpty()) {
             // Reconstruct lecturer-sent class announcements from delivered student notifications.
-            $announcementFeed = Notification::query()
+            $announcementFeed = UserNotification::query()
                 ->whereIn('user_id', $studentIds)
                 ->where('data->course_section_id', $section->id)
                 ->where('type', 'course_announcement')

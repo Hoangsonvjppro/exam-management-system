@@ -141,9 +141,9 @@ class User extends Authenticatable
     /**
      * Các thông báo nhận được.
      */
-    public function notifications(): HasMany
+    public function userNotifications(): HasMany
     {
-        return $this->hasMany(Notification::class);
+        return $this->hasMany(UserNotification::class);
     }
 
     /**
@@ -303,5 +303,10 @@ class User extends Authenticatable
             ->selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
+    }
+    
+    public static function findByStudentCode(string $code): ?static
+    {
+        return static::where('student_code', trim($code))->first();
     }
 }

@@ -12,6 +12,7 @@ use App\Models\Question;
 use App\Models\QuestionType;
 use App\Models\Tag;
 use App\Models\User;
+use App\Models\UserNotification;
 use App\Policies\AdminPolicy;
 use App\Policies\CourseSectionPolicy;
 use App\Policies\DifficultyPolicy;
@@ -56,7 +57,7 @@ class AppServiceProvider extends ServiceProvider
             $unreadNotificationCount = 0;
 
             if ($user) {
-                $unreadNotificationCount = Notification::where('user_id', $user->id)
+                $unreadNotificationCount = UserNotification::where('user_id', $user->id)
                     ->whereNull('read_at')
                     ->count();
             }
