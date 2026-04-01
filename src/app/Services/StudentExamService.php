@@ -43,6 +43,31 @@ class StudentExamService
             }
         }
 
+        // // Logic check vắng mặt có phép (Leave Request / Excused)
+        // if ($schedule->course_section_id) {
+        //     $hasApprovedLeave = \App\Models\LeaveRequest::where('course_section_id', $schedule->course_section_id)
+        //         ->where('student_id', $userId)
+        //         ->whereDate('date', $schedule->exam_date)
+        //         ->where('status', 'approved')
+        //         ->exists();
+
+        //     if ($hasApprovedLeave) {
+        //         throw new DomainException('Bạn đã được duyệt nghỉ phép vào ngày thi này nên không thể tham gia thi.');
+        //     }
+
+        //     $isExcused = \App\Models\AttendanceRecord::where('student_id', $userId)
+        //         ->where('status', 'excused')
+        //         ->whereHas('session', function ($query) use ($schedule) {
+        //             $query->where('course_section_id', $schedule->course_section_id)
+        //                   ->whereDate('date', $schedule->exam_date);
+        //         })
+        //         ->exists();
+
+        //     if ($isExcused) {
+        //         throw new DomainException('Bạn đã được đánh dấu vắng mặt có phép trong buổi học này nên không thể tham gia thi.');
+        //     }
+        // }
+
         // [Tối ưu] Kiểm tra "Double-check" trước khi vào Transaction/Lock
         $existingInProgress = ExamAttempt::forSchedule($schedule->id)
             ->forUser($userId)
