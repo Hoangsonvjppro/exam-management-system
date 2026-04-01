@@ -8,11 +8,6 @@
     $activeTab = 'overview';
     }
 
-    $classSchedules = $section->classSchedules()
-    ->orderBy('day_of_week')
-    ->orderBy('start_period')
-    ->get();
-
     $ownedExamsForSection = \App\Models\Exam::query()
     ->where('created_by', auth()->id())
     ->where('subject_id', $section->subject_id)
@@ -25,16 +20,6 @@
     ->orderByDesc('updated_at')
     ->limit(120)
     ->get(['id', 'content']);
-
-    $dayMap = [
-    2 => 'Thứ Hai',
-    3 => 'Thứ Ba',
-    4 => 'Thứ Tư',
-    5 => 'Thứ Năm',
-    6 => 'Thứ Sáu',
-    7 => 'Thứ Bảy',
-    8 => 'Chủ Nhật',
-    ];
     @endphp
 
     <div class="space-y-6" x-data="classWorkspaceManager('{{ $activeTab }}')">
@@ -160,34 +145,32 @@
 
                 <x-card padding="true">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-[16px] font-bold text-navy-900">Thời khóa biểu lớp học phần</h3>
-                        <span class="text-[12px] text-text-muted">{{ $classSchedules->count() }} buổi đã cấu hình</span>
+                        <h3 class="text-[16px] font-bold text-navy-900">Bảng tin lớp học phần</h3>
+                        <span class="text-[12px] text-text-muted">{{ $sectionFeedItems->count() }} mục gần nhất</span>
                     </div>
 
-                    @if($classSchedules->isEmpty())
+                    @if($sectionFeedItems->isEmpty())
                     <div class="text-center py-10 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
-                        <p class="text-[13px] text-text-muted">Chưa có dữ liệu thời khóa biểu cho lớp học phần này.</p>
+                        <x-ui-icon name="bell-slash" class="w-10 h-10 text-blue-100 mx-auto mb-3" />
+                        <p class="text-[13px] text-text-muted">Chưa có thông báo nào bạn đã gửi cho lớp này.</p>
                     </div>
                     @else
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="border-b-[1.5px] border-border-clean">
-                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Thứ</th>
-                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Tiết học</th>
-                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Phòng học</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-border-clean/70">
-                                @foreach($classSchedules as $item)
-                                <tr>
-                                    <td class="py-3 px-3 text-[13px] font-semibold text-navy-900">{{ $dayMap[$item->day_of_week] ?? 'N/A' }}</td>
-                                    <td class="py-3 px-3 text-[13px] text-text-muted">Tiết {{ $item->start_period }} - {{ $item->end_period }}</td>
-                                    <td class="py-3 px-3 text-[13px] text-text-muted">{{ $item->room ?: 'Chưa cập nhật' }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    <div class="space-y-3">
+                        @foreach($sectionFeedItems as $feed)
+                        <div class="border-[0.5px] border-border-clean rounded-[8px] p-4 bg-white hover:bg-surface-0 transition-colors">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                                    {{ $feed->created_at?->format('H:i — d/m/Y') ?? 'N/A' }}
+                                </span>
+                                <span class="inline-flex items-center text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-[4px] border
+                                    {{ ($feed->source ?? '') === 'exam_schedule' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-teal-50 text-teal-700 border-teal-200' }}">
+                                    {{ ($feed->source ?? '') === 'exam_schedule' ? 'Lịch thi' : 'Thông báo' }}
+                                </span>
+                            </div>
+                            <h4 class="text-sm font-bold text-navy-900 mb-1">{{ $feed->title }}</h4>
+                            <p class="text-xs text-text-muted leading-relaxed whitespace-pre-wrap">{{ $feed->message }}</p>
+                        </div>
+                        @endforeach
                     </div>
                     @endif
                 </x-card>
