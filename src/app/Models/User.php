@@ -141,9 +141,9 @@ class User extends Authenticatable
     /**
      * Các thông báo nhận được.
      */
-    public function notifications(): HasMany
+    public function userNotifications(): HasMany
     {
-        return $this->hasMany(Notification::class);
+        return $this->hasMany(UserNotification::class);
     }
 
     /**

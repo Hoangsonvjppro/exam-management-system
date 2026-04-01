@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use App\Models\ExamAttempt;
-use App\Models\Notification;
+use App\Models\UserNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -71,7 +71,7 @@ class ComplaintController extends Controller
             // Notify Lecturer
             $lecturer = $attempt->schedule->courseSection->lecturer;
             if ($lecturer) {
-                Notification::create([
+                UserNotification::create([
                     'user_id' => $lecturer->id,
                     'type'    => 'complaint_created',
                     'title'   => 'Có khiếu nại điểm mới',

@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Notification extends Model
+class UserNotification extends Model
 {
     use HasUuids;
 
+    protected $table = 'user_notifications';
     protected $fillable = [
         'id',
         'user_id',
