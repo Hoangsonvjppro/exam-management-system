@@ -62,14 +62,6 @@ class CourseSection extends Model
             ->withTimestamps();
     }
 
-    /**
-     * Lịch học chi tiết.
-     */
-    public function classSchedules(): HasMany
-    {
-        return $this->hasMany(ClassSchedule::class);
-    }
-
     // ── Scopes ─────────────────────────────────────────────────
 
     public function scopeActive(Builder $query): Builder

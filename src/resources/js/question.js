@@ -84,18 +84,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateInputTypes() {
         if (!questionTypeSelect) return;
-        const selectedOption = questionTypeSelect.options[questionTypeSelect.selectedIndex];
-        const typeCode = selectedOption ? selectedOption.getAttribute('data-code') : 'single_choice';
         
-        const isMultiple = typeCode === 'multiple_choice';
+        // Lấy data-code của option đang được chọn một cách an toàn hơn
+        const selectedOption = questionTypeSelect.options[questionTypeSelect.selectedIndex];
+        let typeCode = 'single_choice';
+        if (selectedOption) {
+            typeCode = selectedOption.getAttribute('data-code') || 'single_choice';
+        } else if (questionTypeSelect.value) {
+            // Fallback: Tìm option có value khớp
+            const activeOpt = Array.from(questionTypeSelect.options).find(opt => opt.value == questionTypeSelect.value);
+            if (activeOpt) typeCode = activeOpt.getAttribute('data-code');
+        }
+
+        const isMultiple = (typeCode === 'multiple_choice');
         const rows = container.querySelectorAll('.option-row');
+        
         rows.forEach(row => {
             const input = row.querySelector('.correct-input');
             if (input) {
-                const wasChecked = input.checked;
-                input.type = isMultiple ? 'checkbox' : 'radio';
-                input.name = isMultiple ? 'option_selector[]' : 'option_selector';
-                input.checked = wasChecked;
+                const targetType = isMultiple ? 'checkbox' : 'radio';
+                const targetName = isMultiple ? 'option_selector[]' : 'option_selector';
+                
+                // Chỉ thay thế nếu type hoặc name bị sai
+                if (input.type !== targetType || input.name !== targetName) {
+                    const wasChecked = input.checked;
+                    const newInput = document.createElement('input');
+                    
+                    // Copy toàn bộ class và attributes quan trọng
+                    newInput.className = input.className;
+                    newInput.value = input.value;
+                    newInput.type = targetType;
+                    newInput.name = targetName;
+                    newInput.checked = wasChecked;
+                    
+                    // Thay thế trong DOM
+                    input.parentNode.replaceChild(newInput, input);
+                    
+                    // Trigger lại event để các hệ thống khác (nếu có) nhận biết
+                    newInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
             }
         });
     }
@@ -156,9 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
             optionEditor.destroy();
             row.remove();
             updateLabels();
+            updateInputTypes();
         });
 
         container.appendChild(row);
+        updateInputTypes();
     }
 
     if (addBtn) {

@@ -131,7 +131,7 @@
                                         @endif
                                     </td>
                                     <td class="px-5 py-4 align-middle text-center">
-                                        <span class="font-bold text-text-muted">{{ number_format($section->final_score_4, 1) }}</span>
+                                        <span class="font-bold text-text-muted">{{ number_format($section->final_score_4, 2) }}</span>
                                     </td>
                                     <td class="px-5 py-4 align-middle text-center">
                                         <span class="inline-flex items-center justify-center w-8 h-8 rounded-[8px] font-black text-sm

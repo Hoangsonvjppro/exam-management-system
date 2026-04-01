@@ -241,7 +241,7 @@
                             @if($hasAnyProcessScore && $totalWeight > 0)
                             <tfoot class="bg-indigo-50/30 border-t-2 border-indigo-100">
                                 <tr>
-                                    <td colspan="2" class="py-3 px-4 text-right border-r border-border-clean">
+                                    <td colspan="2" class="py-3 px-4 text-left border-r border-border-clean">
                                         <p class="text-[13px] font-bold text-indigo-800">Điểm quá trình (Tạm tính)</p>
                                     </td>
                                     <td class="py-3 px-4 text-center">
@@ -453,21 +453,30 @@
             <div class="p-4 sm:p-6 space-y-4" x-show="activeTab === 'leaves'" x-transition.opacity.duration.150ms style="display:none;" x-data="{
                 formDate: '{{ now()->format('Y-m-d') }}',
                 formReason: '',
+                formProofImage: null,
                 isSubmittingLeave: false,
                 async submitLeaveRequest() {
                     this.isSubmittingLeave = true;
                     try {
+                        const formData = new FormData();
+                        formData.append('date', this.formDate);
+                        formData.append('reason', this.formReason);
+                        if (this.formProofImage) {
+                            formData.append('proof_image', this.formProofImage);
+                        }
+
                         const res = await fetch(`/student/classes/{{ $section->id }}/leave-requests`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') },
-                            body: JSON.stringify({ date: this.formDate, reason: this.formReason })
+                            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').getAttribute('content') },
+                            body: formData
                         });
                         const result = await res.json();
                         if(res.ok && result.success) {
                             window.dispatchEvent(new CustomEvent('toast', { detail: { message: result.message, type: 'success' }}));
                             setTimeout(() => window.location.reload(), 1000);
                         } else {
-                            window.dispatchEvent(new CustomEvent('toast', { detail: { message: result.message || 'Lỗi gửi đơn', type: 'error' }}));
+                            const validationMessage = result.errors ? Object.values(result.errors)?.[0]?.[0] : null;
+                            window.dispatchEvent(new CustomEvent('toast', { detail: { message: validationMessage || result.message || 'Lỗi gửi đơn', type: 'error' }}));
                         }
                     } catch(e) { window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Lỗi mạng', type: 'error' }})); }
                     finally { this.isSubmittingLeave = false; }
@@ -484,10 +493,17 @@
                             <input type="date" x-model="formDate" required min="{{ now()->format('Y-m-d') }}"
                                    class="w-full h-10 px-3 bg-white border border-border-clean rounded-[6px] text-[13px] text-navy-900 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all outline-none" />
                         </div>
-                        <div class="md:col-span-7">
+                        <div class="md:col-span-5">
                             <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Lý do nghỉ <span class="text-red-500">*</span></label>
                             <input type="text" x-model="formReason" required placeholder="Nhập lý do vắng mặt..." minlength="5" maxlength="1000"
                                    class="w-full h-10 px-3 bg-white border border-border-clean rounded-[6px] text-[13px] text-navy-900 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all outline-none" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Ảnh minh chứng</label>
+                            <input type="file"
+                                   accept=".jpg,.jpeg,.png,.webp,image/*"
+                                   @change="formProofImage = $event.target.files[0] ?? null"
+                                   class="w-full h-10 px-2.5 py-1 bg-white border border-border-clean rounded-[6px] text-[11px] text-text-muted file:mr-2 file:px-2 file:py-1 file:border-0 file:rounded file:bg-surface-1 file:text-navy-900 file:text-[11px] file:font-semibold focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all outline-none" />
                         </div>
                         <div class="md:col-span-2">
                             <button type="submit" :disabled="isSubmittingLeave"
@@ -496,6 +512,7 @@
                                 <span x-show="isSubmittingLeave" class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full block"></span>
                             </button>
                         </div>
+                        <p class="md:col-span-12 text-[11px] text-text-muted">Tùy chọn: tải ảnh JPG/PNG/WEBP tối đa 4MB để làm minh chứng.</p>
                     </form>
                 </div>
 
@@ -519,6 +536,17 @@
                                 </div>
                                 <h4 class="text-[13px] font-bold text-navy-900">Xin nghỉ ngày: {{ $req->date->format('d/m/Y') }}</h4>
                                 <p class="text-[12px] text-text-muted mt-0.5">Lý do: {{ $req->reason }}</p>
+                                @if($req->proof_image_path)
+                                <div class="mt-2 flex flex-col gap-2">
+                                    <a href="{{ asset('storage/' . $req->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold text-blue-700 hover:text-blue-900">
+                                        <x-ui-icon name="eye" class="w-4 h-4" />
+                                        Xem ảnh minh chứng
+                                    </a>
+                                    <a href="{{ asset('storage/' . $req->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="w-fit">
+                                        <img src="{{ asset('storage/' . $req->proof_image_path) }}" alt="Ảnh minh chứng xin nghỉ" class="w-24 h-24 rounded-[8px] border border-border-clean object-cover" loading="lazy">
+                                    </a>
+                                </div>
+                                @endif
                             </div>
                         </li>
                         @endforeach

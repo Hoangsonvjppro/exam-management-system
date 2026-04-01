@@ -36,8 +36,8 @@ class StudentResultService
         }
 
         // Chọn học kỳ
-        $currentSemester = $semesterId 
-            ? $semesters->firstWhere('id', $semesterId) 
+        $currentSemester = $semesterId
+            ? $semesters->firstWhere('id', $semesterId)
             : ($semesters->firstWhere('is_current', true) ?? $semesters->first());
 
         if (!$currentSemester) {
@@ -84,7 +84,7 @@ class StudentResultService
             // Điểm tổng hệ 10
             $sectionFinal10 = round($sectionTotal10, 2);
             $conversion = $this->convertGradeTo4AndLetter($sectionFinal10);
-            
+
             $section->final_score_10 = $sectionFinal10;
             $section->final_score_4 = $conversion['gpa4'];
             $section->letter_grade = $conversion['letter'];
@@ -122,22 +122,36 @@ class StudentResultService
      */
     public function convertGradeTo4AndLetter(float $score10): array
     {
+        // 1. Kiểm tra tính hợp lệ
+        // if ($score10 < 0.0 || $score10 > 10.0) {
+        //     throw new InvalidArgumentException('Điểm hệ 10 phải nằm trong khoảng từ 0.0 đến 10.0');
+        // }
+
+        // 2. Tính điểm hệ 4 linh hoạt và làm tròn 2 chữ số thập phân (Ví dụ: 8.2 -> 3.28)
+        $gpa4 = round($score10 * 0.4, 2);
+
+        // 3. Xác định điểm chữ tương ứng
         if ($score10 >= 8.5) {
-            return ['gpa4' => 4.0, 'letter' => 'A'];
+            $letter = 'A';
         } elseif ($score10 >= 8.0) {
-            return ['gpa4' => 3.5, 'letter' => 'B+'];
+            $letter = 'B+';
         } elseif ($score10 >= 7.0) {
-            return ['gpa4' => 3.0, 'letter' => 'B'];
+            $letter = 'B';
         } elseif ($score10 >= 6.5) {
-            return ['gpa4' => 2.5, 'letter' => 'C+'];
+            $letter = 'C+';
         } elseif ($score10 >= 5.5) {
-            return ['gpa4' => 2.0, 'letter' => 'C'];
+            $letter = 'C';
         } elseif ($score10 >= 5.0) {
-            return ['gpa4' => 1.5, 'letter' => 'D+'];
+            $letter = 'D+';
         } elseif ($score10 >= 4.0) {
-            return ['gpa4' => 1.0, 'letter' => 'D'];
+            $letter = 'D';
+        } else {
+            $letter = 'F';
         }
 
-        return ['gpa4' => 0.0, 'letter' => 'F'];
+        return [
+            'gpa4' => $gpa4,
+            'letter' => $letter
+        ];
     }
 }

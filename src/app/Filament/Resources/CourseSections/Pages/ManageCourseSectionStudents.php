@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CourseSections\Pages;
 use App\Filament\Resources\CourseSections\CourseSectionResource;
 use App\Filament\Resources\CourseSections\Students\StudentTable;
 use App\Models\User;
+use App\Services\AttendanceGradeService;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Pages\ManageRelatedRecords;
@@ -62,13 +63,17 @@ class ManageCourseSectionStudents extends ManageRelatedRecords
                 ])
                 ->using(function (array $data): User {
                     $student = User::findOrFail($data['student_id']);
+                    $section = $this->getRecord();
 
-                    $this->getRecord()->students()->syncWithoutDetaching([
+                    $section->students()->syncWithoutDetaching([
                         $student->id => [
                             'status' => 'enrolled',
                             'enrolled_at' => now(),
                         ],
                     ]);
+
+                    app(AttendanceGradeService::class)
+                        ->ensureScoreForStudent($section, $student->id, auth()->id());
 
                     return $student;
                 }),

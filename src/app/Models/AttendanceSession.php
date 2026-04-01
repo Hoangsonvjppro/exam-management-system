@@ -16,12 +16,14 @@ class AttendanceSession extends Model
         'title',
         'date',
         'secret_code',
-        'is_open'
+        'is_open',
+        'penalty_applied_at',
     ];
 
     protected $casts = [
         'date' => 'datetime',
         'is_open' => 'boolean',
+        'penalty_applied_at' => 'datetime',
     ];
 
     public function courseSection(): BelongsTo

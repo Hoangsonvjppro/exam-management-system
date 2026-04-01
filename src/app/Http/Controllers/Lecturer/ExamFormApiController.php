@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Lecturer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Chapter;
+use App\Models\Exam;
 use App\Models\Question;
-use App\Models\Subject;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 /**
  * API Controller phục vụ AJAX cho form tạo đề thi.
@@ -37,11 +37,9 @@ class ExamFormApiController extends Controller
             'per_page'   => 'nullable|integer|min:5|max:50',
         ]);
 
-        // Verify subject is assigned to this lecturer
-        $lecturerSubjectIds = Auth::user()->courseSections()->pluck('subject_id')->unique()->toArray();
         $subjectId = (int) $request->input('subject_id');
 
-        if (!in_array($subjectId, $lecturerSubjectIds)) {
+        if (! $this->canAccessSubject($subjectId)) {
             return response()->json(['error' => 'Bạn không có quyền truy cập môn học này.'], 403);
         }
 
@@ -98,10 +96,9 @@ class ExamFormApiController extends Controller
             'subject_id' => 'required|integer|exists:subjects,id',
         ]);
 
-        $lecturerSubjectIds = Auth::user()->courseSections()->pluck('subject_id')->unique()->toArray();
         $subjectId = (int) $request->input('subject_id');
 
-        if (!in_array($subjectId, $lecturerSubjectIds)) {
+        if (! $this->canAccessSubject($subjectId)) {
             return response()->json(['error' => 'Bạn không có quyền truy cập môn học này.'], 403);
         }
 
@@ -138,19 +135,25 @@ class ExamFormApiController extends Controller
     {
         $validated = $request->validate([
             'subject_id'       => 'required|integer|exists:subjects,id',
-            'chapter_id'       => 'nullable|integer|exists:chapters,id',
+            'chapter_id'       => [
+                'nullable',
+                'integer',
+                Rule::exists('chapters', 'id')->where(function ($query) use ($request): void {
+                    if ($request->input('subject_id')) {
+                        $query->where('subject_id', (int) $request->input('subject_id'));
+                    }
+                }),
+            ],
             'question_type_id' => 'required|integer|exists:question_types,id',
             'content'          => 'required|string|min:5',
             'difficulty'       => 'required|string|in:remember,understand,apply,analyze',
             'options'          => 'required|array|min:2',
-            'options.*.content'=> 'required|string',
+            'options.*.content' => 'required|string',
             'correct_options'  => 'required|array|min:1',
-            'correct_options.*'=> 'integer|min:0',
+            'correct_options.*' => 'integer|min:0',
         ]);
 
-        // Verify subject is assigned to this lecturer
-        $lecturerSubjectIds = Auth::user()->courseSections()->pluck('subject_id')->unique()->toArray();
-        if (!in_array((int) $validated['subject_id'], $lecturerSubjectIds)) {
+        if (! $this->canAccessSubject((int) $validated['subject_id'])) {
             return response()->json(['error' => 'Bạn không có quyền tạo câu hỏi cho môn học này.'], 403);
         }
 
@@ -158,7 +161,7 @@ class ExamFormApiController extends Controller
 
         $question = \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
             $createdQuestion = Question::create($validated);
-            
+
             $correctOptions = $validated['correct_options'] ?? [];
             foreach ($validated['options'] as $index => $optionData) {
                 $createdQuestion->options()->create([
@@ -178,5 +181,21 @@ class ExamFormApiController extends Controller
             'subject_id' => $question->subject_id,
             'chapter_id' => $question->chapter_id,
         ], 201);
+    }
+
+    /**
+     * Giữ quyền truy cập cho subject đang được phân công hoặc subject thuộc đề thi giảng viên đang quản lý.
+     */
+    private function canAccessSubject(int $subjectId): bool
+    {
+        $lecturerSubjectIds = Auth::user()->courseSections()->pluck('subject_id')->unique()->map(fn($id) => (int) $id)->toArray();
+        if (in_array($subjectId, $lecturerSubjectIds, true)) {
+            return true;
+        }
+
+        return Exam::query()
+            ->where('created_by', (int) Auth::id())
+            ->where('subject_id', $subjectId)
+            ->exists();
     }
 }
