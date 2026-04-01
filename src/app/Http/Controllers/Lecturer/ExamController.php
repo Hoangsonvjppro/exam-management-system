@@ -99,10 +99,52 @@ class ExamController extends Controller
         $allAllowedSubjectIds = $lecturerSubjectIds->push($exam->subject_id)->unique();
 
         $subjects = \App\Models\Subject::whereIn('id', $allAllowedSubjectIds)->get();
+        $chapters = \App\Models\Chapter::whereIn('subject_id', $allAllowedSubjectIds)->orderBy('order')->get();
+        $difficulties = \App\Models\Difficulty::query()->orderedForQuestionBank()->get(['code', 'name']);
+        $quickQuestionTypes = \App\Models\QuestionType::query()
+            ->active()
+            ->orderedForQuestionBank()
+            ->get(['id', 'name', 'code']);
+
+        $availabilityRaw = Question::query()
+            ->whereIn('subject_id', $allAllowedSubjectIds)
+            ->selectRaw('subject_id, COALESCE(chapter_id, 0) as ch_id, difficulty, COUNT(*) as cnt')
+            ->groupBy('subject_id', 'ch_id', 'difficulty')
+            ->get();
+
+        $availabilityMap = [];
+        foreach ($availabilityRaw as $row) {
+            $key = $row->subject_id . '|' . ($row->ch_id == 0 ? 'null' : $row->ch_id) . '|' . $row->difficulty;
+            $availabilityMap[$key] = (int) $row->cnt;
+        }
+
         $questions = Question::query()->whereIn('subject_id', $allAllowedSubjectIds)->get();
         $selectedQuestionIds = $exam->questions()->pluck('question_id')->toArray();
+        $matrixRows = $exam->matrices()
+            ->get(['chapter_id', 'difficulty', 'question_type_id', 'question_count'])
+            ->map(fn($row) => [
+                'chapter_id' => $row->chapter_id,
+                'difficulty' => $row->difficulty,
+                'question_type_id' => $row->question_type_id,
+                'question_count' => $row->question_count,
+            ])
+            ->values()
+            ->toArray();
 
-        return view('lecturer.exams.edit', compact('exam', 'subjects', 'questions', 'selectedQuestionIds'));
+        $initialCreationMode = count($matrixRows) > 0 ? 'matrix' : 'manual';
+
+        return view('lecturer.exams.edit', compact(
+            'exam',
+            'subjects',
+            'chapters',
+            'difficulties',
+            'quickQuestionTypes',
+            'availabilityMap',
+            'questions',
+            'selectedQuestionIds',
+            'matrixRows',
+            'initialCreationMode'
+        ));
     }
 
     // Cập nhật đề thi
@@ -110,7 +152,11 @@ class ExamController extends Controller
     {
         Gate::authorize('manageLecturer', $exam);
 
-        $this->examService->updateExam($exam, $request->validated());
+        try {
+            $this->examService->updateExam($exam, $request->validated());
+        } catch (\RuntimeException | \LogicException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         return redirect()->route('lecturer.exams.show', $exam->id)
             ->with('success', 'Đề thi đã được cập nhật.');

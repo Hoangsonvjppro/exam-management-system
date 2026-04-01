@@ -6,7 +6,18 @@
     const difficulties = JSON.parse(document.getElementById('difficulties-data')?.textContent || '[]');
     const availabilityMap = JSON.parse(document.getElementById('availability-data')?.textContent || '{}');
 
-    const selectedQuestionIds = new Set();
+    const formContextEl = document.getElementById('exam-form-context-data');
+    const FORM_CONTEXT = formContextEl ? JSON.parse(formContextEl.textContent || '{}') : (window.EXAM_FORM_CONTEXT || {});
+    const initialSelectedQuestionIds = Array.isArray(FORM_CONTEXT.selectedQuestionIds) ?
+        FORM_CONTEXT.selectedQuestionIds
+        .map(id => parseInt(id, 10))
+        .filter(id => Number.isInteger(id) && id > 0) : [];
+    const initialMatrixRows = Array.isArray(FORM_CONTEXT.initialMatrixRows) ? FORM_CONTEXT.initialMatrixRows : [];
+    const initialCreationMode = FORM_CONTEXT.initialMode === 'matrix' ? 'matrix' :
+        (FORM_CONTEXT.initialMode === 'manual' ? 'manual' :
+            (document.getElementById('creation_mode')?.value === 'matrix' ? 'matrix' : 'manual'));
+
+    const selectedQuestionIds = new Set(initialSelectedQuestionIds);
     let matrixRowIndex = 0;
     let currentPage = 1;
     let lastPage = 1;
@@ -18,9 +29,11 @@
     const DIFFICULTY_LABELS = {};
     difficulties.forEach(d => DIFFICULTY_LABELS[d.code] = d.name);
 
-    const API_QUESTIONS_URL = @json(route('lecturer.api.exam-form.questions'));
-    const API_QUICK_QUESTION_URL = @json(route('lecturer.api.exam-form.quick-question'));
-    const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+    const endpointEl = document.getElementById('exam-form-endpoints-data');
+    const endpointPayload = endpointEl ? JSON.parse(endpointEl.textContent || '{}') : {};
+    const API_QUESTIONS_URL = endpointPayload.questionsUrl || '';
+    const API_QUICK_QUESTION_URL = endpointPayload.quickQuestionUrl || '';
+    const CSRF_TOKEN = endpointPayload.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '';
 
     // ═══════════════════════════════════════════════════════════════
     // TAB SWITCHING
@@ -315,7 +328,7 @@
         row.innerHTML = `
         <td><select name="matrix[${i}][chapter_id]" class="ca-select" style="min-width:140px" onchange="updateRowAvailability(this.closest('tr'))"><option value="">Tất cả</option>${chapterOpts}</select></td>
         <td><select name="matrix[${i}][difficulty]" class="ca-select" required style="min-width:120px" onchange="updateRowAvailability(this.closest('tr'))">${diffOpts}</select></td>
-        <td><input type="number" name="matrix[${i}][question_count]" class="ca-input matrix-count" value="${prefill?.count || 5}" min="1" required style="width:70px" oninput="updateMatrixSummary();updateRowAvailability(this.closest('tr'))"></td>
+        <td><input type="number" name="matrix[${i}][question_count]" class="ca-input matrix-count" value="${prefill?.question_count ?? prefill?.count ?? 5}" min="1" required style="width:70px" oninput="updateMatrixSummary();updateRowAvailability(this.closest('tr'))"></td>
         <td class="text-center"><span class="availability-hint" data-avail>—</span></td>
         <td class="text-center"><button type="button" onclick="this.closest('tr').remove();updateMatrixSummary();checkMatrixAvailability()" class="text-[#DC2626] hover:text-[#991B1B] text-[14px] font-bold">&times;</button></td>
     `;
@@ -331,6 +344,24 @@
         document.querySelectorAll('.preset-btn[data-preset]').forEach(b => b.classList.remove('active'));
         updateMatrixSummary();
         document.getElementById('matrix-availability-warning').style.display = 'none';
+    }
+
+    function hydrateInitialMatrixRows() {
+        clearMatrix();
+
+        if (initialMatrixRows.length === 0) {
+            addMatrixRow();
+            return;
+        }
+
+        initialMatrixRows.forEach(row => {
+            addMatrixRow({
+                chapter_id: row.chapter_id ?? null,
+                difficulty: row.difficulty ?? (difficulties[0]?.code || 'remember'),
+                question_count: row.question_count ?? row.count ?? 1,
+                count: row.count ?? row.question_count ?? 1,
+            });
+        });
     }
 
     function applyPreset(type) {
@@ -766,20 +797,25 @@
     // INIT
     // ═══════════════════════════════════════════════════════════════
     document.addEventListener('DOMContentLoaded', function() {
-        const savedMode = document.getElementById('creation_mode').value;
-        if (savedMode === 'matrix') switchCreationMode('matrix');
+        const creationModeInput = document.getElementById('creation_mode');
+        if (creationModeInput) {
+            creationModeInput.value = initialCreationMode;
+        }
+        switchCreationMode(initialCreationMode);
 
         initializeQuickQuestionForm();
+        updateSelectedDisplay();
 
         const subjectId = document.getElementById('subject_id')?.value;
         if (subjectId) {
             lastSubjectId = subjectId;
+            syncQuickQuestionSubjectAndChapters(subjectId);
             updateChapterFilters(subjectId);
+            hydrateInitialMatrixRows();
             searchQuestions(1);
-            addMatrixRow();
         } else {
             showEmptyState('Vui lòng chọn môn học để xem danh sách câu hỏi.');
-            addMatrixRow();
+            hydrateInitialMatrixRows();
         }
     });
 </script>

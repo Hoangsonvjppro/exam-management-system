@@ -498,6 +498,26 @@
                 @json($availabilityMap)
             </script>
 
+            @php
+            $createFormContext = [
+            'selectedQuestionIds' => array_values(array_map('intval', old('question_ids', []))),
+            'initialMode' => old('creation_mode', 'manual'),
+            'initialMatrixRows' => old('matrix', []),
+            ];
+
+            $examFormEndpoints = [
+            'questionsUrl' => route('lecturer.api.exam-form.questions'),
+            'quickQuestionUrl' => route('lecturer.api.exam-form.quick-question'),
+            'csrfToken' => csrf_token(),
+            ];
+            @endphp
+            <script id="exam-form-endpoints-data" type="application/json">
+                @json($examFormEndpoints)
+            </script>
+            <script id="exam-form-context-data" type="application/json">
+                @json($createFormContext)
+            </script>
+
             {{-- Core JS --}}
             @include('lecturer.exams._partials.create-scripts')
         </div>

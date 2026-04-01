@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Lecturer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Chapter;
+use App\Models\Exam;
 use App\Models\Question;
-use App\Models\Subject;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -38,11 +37,9 @@ class ExamFormApiController extends Controller
             'per_page'   => 'nullable|integer|min:5|max:50',
         ]);
 
-        // Verify subject is assigned to this lecturer
-        $lecturerSubjectIds = Auth::user()->courseSections()->pluck('subject_id')->unique()->toArray();
         $subjectId = (int) $request->input('subject_id');
 
-        if (!in_array($subjectId, $lecturerSubjectIds)) {
+        if (! $this->canAccessSubject($subjectId)) {
             return response()->json(['error' => 'Bạn không có quyền truy cập môn học này.'], 403);
         }
 
@@ -99,10 +96,9 @@ class ExamFormApiController extends Controller
             'subject_id' => 'required|integer|exists:subjects,id',
         ]);
 
-        $lecturerSubjectIds = Auth::user()->courseSections()->pluck('subject_id')->unique()->toArray();
         $subjectId = (int) $request->input('subject_id');
 
-        if (!in_array($subjectId, $lecturerSubjectIds)) {
+        if (! $this->canAccessSubject($subjectId)) {
             return response()->json(['error' => 'Bạn không có quyền truy cập môn học này.'], 403);
         }
 
@@ -157,9 +153,7 @@ class ExamFormApiController extends Controller
             'correct_options.*' => 'integer|min:0',
         ]);
 
-        // Verify subject is assigned to this lecturer
-        $lecturerSubjectIds = Auth::user()->courseSections()->pluck('subject_id')->unique()->toArray();
-        if (!in_array((int) $validated['subject_id'], $lecturerSubjectIds)) {
+        if (! $this->canAccessSubject((int) $validated['subject_id'])) {
             return response()->json(['error' => 'Bạn không có quyền tạo câu hỏi cho môn học này.'], 403);
         }
 
@@ -187,5 +181,21 @@ class ExamFormApiController extends Controller
             'subject_id' => $question->subject_id,
             'chapter_id' => $question->chapter_id,
         ], 201);
+    }
+
+    /**
+     * Giữ quyền truy cập cho subject đang được phân công hoặc subject thuộc đề thi giảng viên đang quản lý.
+     */
+    private function canAccessSubject(int $subjectId): bool
+    {
+        $lecturerSubjectIds = Auth::user()->courseSections()->pluck('subject_id')->unique()->map(fn($id) => (int) $id)->toArray();
+        if (in_array($subjectId, $lecturerSubjectIds, true)) {
+            return true;
+        }
+
+        return Exam::query()
+            ->where('created_by', (int) Auth::id())
+            ->where('subject_id', $subjectId)
+            ->exists();
     }
 }

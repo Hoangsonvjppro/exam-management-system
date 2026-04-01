@@ -17,17 +17,20 @@ class ExamGenerationService
      *
      * @param Exam $exam
      * @param Collection $matrixRows Collection of ExamMatrix rows
+     * @param bool $enforceDraftStatus True khi cần bắt buộc đề đang ở draft (flow tạo mới)
      * @throws \RuntimeException Khi ngân hàng không đủ câu hỏi
      */
-    public function generateFromMatrix(Exam $exam, Collection $matrixRows): void
+    public function generateFromMatrix(Exam $exam, Collection $matrixRows, bool $enforceDraftStatus = true): void
     {
         // 1. GUARD CLAUSE: Chặn đứng mọi hành vi đụng chạm cấu trúc nếu không hợp lệ
-        $currentStatus = $exam->status instanceof \App\Enums\ExamStatus 
-            ? $exam->status 
-            : \App\Enums\ExamStatus::tryFrom($exam->status ?? 'draft');
+        if ($enforceDraftStatus) {
+            $currentStatus = $exam->status instanceof \App\Enums\ExamStatus
+                ? $exam->status
+                : \App\Enums\ExamStatus::tryFrom($exam->status ?? 'draft');
 
-        if ($currentStatus !== \App\Enums\ExamStatus::Draft) {
-            throw new \LogicException('Chỉ có thể tạo hoặc thay đổi cấu trúc đề thi khi đang ở trạng thái Nháp (Draft).');
+            if ($currentStatus !== \App\Enums\ExamStatus::Draft) {
+                throw new \LogicException('Chỉ có thể tạo hoặc thay đổi cấu trúc đề thi khi đang ở trạng thái Nháp (Draft).');
+            }
         }
 
         if (!$exam->canEditStructure()) {
@@ -66,7 +69,7 @@ class ExamGenerationService
                 $chapterName = $row->chapter?->name ?? 'Tất cả chương';
                 throw new \RuntimeException(
                     "Không đủ câu hỏi cho: {$chapterName} - {$row->difficulty}. " .
-                    "Cần {$row->question_count}, có {$questions->count()}."
+                        "Cần {$row->question_count}, có {$questions->count()}."
                 );
             }
 
