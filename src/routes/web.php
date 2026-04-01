@@ -235,6 +235,8 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             // CRUD & Lifecycle cho Exams
             Route::get('/exams/{exam}', [ExamController::class, 'show'])->name('exams.show');
             Route::get('/exams/{exam}/edit', [ExamController::class, 'edit'])->name('exams.edit');
+            Route::get('/exams/{exam}/quick-preview', [ExamController::class, 'quickPreview'])->name('exams.quick-preview');
+            Route::patch('/exams/{exam}/quick-update', [ExamController::class, 'quickUpdate'])->name('exams.quick-update');
             Route::put('/exams/{exam}', [ExamController::class, 'update'])->name('exams.update');
             Route::delete('/exams/{exam}', [ExamController::class, 'destroy'])->name('exams.destroy');
             Route::patch('/exams/{exam}/publish', [ExamController::class, 'publish'])->name('exams.publish');

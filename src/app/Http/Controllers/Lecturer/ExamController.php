@@ -11,8 +11,11 @@ use App\Models\Exam;
 use App\Models\Question;
 use App\Services\ExamService;
 use App\Services\LecturerExamQueryService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ExamController extends Controller
@@ -145,6 +148,108 @@ class ExamController extends Controller
             'matrixRows',
             'initialCreationMode'
         ));
+    }
+
+    // Dữ liệu tóm tắt đề thi phục vụ popup xem nhanh trong form tạo lịch thi
+    public function quickPreview(Exam $exam): JsonResponse
+    {
+        Gate::authorize('manageLecturer', $exam);
+
+        $exam->load([
+            'subject:id,code,name',
+            'examQuestions' => fn($query) => $query
+                ->with('question:id,content,difficulty')
+                ->orderBy('order_index'),
+        ]);
+
+        $canEditStructure = $exam->canEditStructure();
+
+        $questionsPreview = $exam->examQuestions
+            ->take(8)
+            ->map(function ($examQuestion) {
+                $snapshot = $examQuestion->question_snapshot ?? [];
+                $rawContent = $snapshot['content'] ?? $examQuestion->question?->content ?? '';
+                $cleanContent = preg_replace('/\s+/', ' ', strip_tags((string) $rawContent));
+
+                return [
+                    'order' => (int) ($examQuestion->order_index ?? 0),
+                    'content' => Str::limit(trim((string) $cleanContent), 180),
+                    'difficulty' => (string) ($snapshot['difficulty'] ?? $examQuestion->question?->difficulty ?? ''),
+                    'points' => (float) ($examQuestion->points ?? 1),
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'id' => $exam->id,
+            'title' => $exam->title,
+            'description' => $exam->description,
+            'duration_minutes' => (int) $exam->duration_minutes,
+            'status' => $exam->status?->value,
+            'exam_type' => $exam->exam_type?->value,
+            'question_count' => $exam->examQuestions->count(),
+            'total_points' => (float) ($exam->total_points ?? 0),
+            'attempt_count' => $exam->attempts()->count(),
+            'schedule_count' => $exam->schedules()->count(),
+            'can_edit_structure' => $canEditStructure,
+            'show_score_after_submit' => (bool) $exam->show_score_after_submit,
+            'show_answers_after_submit' => (bool) $exam->show_answers_after_submit,
+            'subject' => [
+                'id' => $exam->subject?->id,
+                'code' => $exam->subject?->code,
+                'name' => $exam->subject?->name,
+            ],
+            'questions_preview' => $questionsPreview,
+            'full_edit_url' => route('lecturer.exams.edit', $exam),
+        ]);
+    }
+
+    // Cập nhật nhanh metadata đề thi từ popup trong form tạo lịch thi
+    public function quickUpdate(Request $request, Exam $exam): JsonResponse
+    {
+        Gate::authorize('manageLecturer', $exam);
+
+        $canEditStructure = $exam->canEditStructure();
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'duration_minutes' => $canEditStructure
+                ? 'required|integer|min:1'
+                : 'nullable|integer|min:1',
+        ], [
+            'title.required' => 'Tên đề thi là bắt buộc.',
+            'duration_minutes.required' => 'Thời lượng làm bài là bắt buộc.',
+            'duration_minutes.min' => 'Thời lượng làm bài phải lớn hơn 0.',
+        ]);
+
+        $updateData = [
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+        ];
+
+        if ($canEditStructure && array_key_exists('duration_minutes', $validated)) {
+            $updateData['duration_minutes'] = (int) $validated['duration_minutes'];
+        }
+
+        $exam->update($updateData);
+        $exam->loadMissing('subject:id,code,name');
+
+        return response()->json([
+            'message' => 'Đã cập nhật đề thi.',
+            'warning' => $canEditStructure
+                ? null
+                : 'Đề thi đã có sinh viên làm bài, chỉ cập nhật được tên và mô tả.',
+            'exam' => [
+                'id' => $exam->id,
+                'title' => $exam->title,
+                'description' => $exam->description,
+                'duration_minutes' => (int) $exam->duration_minutes,
+                'subject_id' => $exam->subject_id,
+                'subject_code' => $exam->subject?->code,
+                'can_edit_structure' => $canEditStructure,
+            ],
+        ]);
     }
 
     // Cập nhật đề thi

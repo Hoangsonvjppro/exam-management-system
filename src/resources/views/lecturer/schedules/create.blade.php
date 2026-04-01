@@ -66,7 +66,7 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-4 border border-[#D6E2F0] rounded-lg bg-[#F9FBFF]" id="sections-list">
                                 @foreach($courseSections as $cs)
-                                <div class="section-item flex items-start gap-3 p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-[#D6E2F0]" 
+                                <div class="section-item flex items-start gap-3 p-2 hover:bg-white rounded transition-colors border border-transparent hover:border-[#D6E2F0]"
                                     data-subject-id="{{ $cs->subject_id }}"
                                     x-show="'{{ $cs->subject_id }}' == selectedSubjectId">
                                     <input type="checkbox"
@@ -87,8 +87,8 @@
                             @error('course_section_ids') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                         </div>
                         @else
-                            {{-- Trạng thái đã chọn lớp từ trước (ví dụ từ trang chi tiết lớp) --}}
-                            <div x-init="hasSelectedSection = true; selectedSubjectId = '{{ $preSelectedSubjectId }}'"></div>
+                        {{-- Trạng thái đã chọn lớp từ trước (ví dụ từ trang chi tiết lớp) --}}
+                        <div x-init="hasSelectedSection = true; selectedSubjectId = '{{ $preSelectedSubjectId }}'"></div>
                         @endif
 
                         <div x-show="selectedSubjectId && hasSelectedSection" x-transition>
@@ -101,7 +101,11 @@
                             <select name="exam_id" id="exam_id" x-model="selectedExamId" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
                                 <option value="">-- Chọn đề thi môn hiện tại --</option>
                                 @foreach($exams as $ex)
-                                <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}" 
+                                <option value="{{ $ex->id }}"
+                                    data-subject-id="{{ $ex->subject_id }}"
+                                    data-preview-url="{{ route('lecturer.exams.quick-preview', $ex) }}"
+                                    data-quick-update-url="{{ route('lecturer.exams.quick-update', $ex) }}"
+                                    data-edit-url="{{ route('lecturer.exams.edit', $ex) }}"
                                     x-show="'{{ $ex->subject_id }}' == selectedSubjectId"
                                     {{ old('exam_id') == $ex->id ? 'selected' : '' }}>
                                     [{{ $ex->subject->code }}] {{ $ex->title }}
@@ -109,11 +113,33 @@
                                 @endforeach
                             </select>
                             <p class="text-[11px] text-[#6B7C99] mt-1">Danh sách được lọc theo môn học bạn đã chọn.</p>
+                            <div class="mt-2 flex flex-wrap items-center gap-2">
+                                <button
+                                    type="button"
+                                    @click="openExamPreviewModal()"
+                                    :disabled="!selectedExamId"
+                                    class="px-3 py-1.5 rounded-lg text-[12px] font-semibold border border-[#BFD4EA] text-[#1A3A6B] hover:bg-[#F3F8FD] disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Xem chi tiết đề
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="openExamEditModal()"
+                                    :disabled="!selectedExamId"
+                                    class="px-3 py-1.5 rounded-lg text-[12px] font-semibold border border-[#185FA5] text-[#185FA5] hover:bg-[#EAF4FD] disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Sửa nhanh đề
+                                </button>
+                                <a
+                                    x-show="selectedExamId"
+                                    :href="selectedExamEditUrl()"
+                                    class="text-[12px] font-semibold text-[#185FA5] hover:underline">
+                                    Mở trang sửa đầy đủ
+                                </a>
+                            </div>
                             @error('exam_id') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                         </div>
 
                         <div id="main-form-fields" x-show="selectedSubjectId && hasSelectedSection && selectedExamId" x-transition class="space-y-4 transition-all duration-300">
-                             <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1 uppercase tracking-wider">Bước {{ $preSelectedSection ? '3' : '4' }}: Chi tiết ca thi</label>
+                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1 uppercase tracking-wider">Bước {{ $preSelectedSection ? '3' : '4' }}: Chi tiết ca thi</label>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày thi <span class="text-[#DC2626]">*</span></label>
@@ -251,6 +277,145 @@
                 </form>
             </div>
         </x-modal>
+
+        <x-modal name="exam-preview-modal" maxWidth="3xl">
+            <div class="px-6 py-4 border-b border-border-clean flex items-center justify-between bg-surface-0">
+                <h3 class="text-[17px] font-bold text-navy-900">Chi tiết đề thi</h3>
+                <button @click="$dispatch('close-modal', 'exam-preview-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto max-h-[80vh] space-y-4">
+                <div x-show="isLoadingExamPreview" class="py-10 text-center text-[13px] text-[#6B7C99]">
+                    Đang tải thông tin đề thi...
+                </div>
+
+                <div x-show="!isLoadingExamPreview && examPreviewError" class="p-4 rounded-lg border border-[#FECACA] bg-[#FEF2F2] text-[13px] text-[#991B1B]" x-text="examPreviewError"></div>
+
+                <div x-show="!isLoadingExamPreview && examPreviewData" class="space-y-4">
+                    <div>
+                        <h4 class="text-[18px] font-bold text-[#1A3A6B]" x-text="examPreviewData?.title || ''"></h4>
+                        <p class="text-[12px] text-[#6B7C99] mt-1" x-text="(examPreviewData?.subject?.code || '') + ' - ' + (examPreviewData?.subject?.name || '')"></p>
+                        <p class="text-[13px] text-[#334155] mt-2" x-show="examPreviewData?.description" x-text="examPreviewData?.description"></p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="p-3 rounded-lg border border-[#D6E2F0] bg-[#F8FAFD]">
+                            <p class="text-[11px] text-[#6B7C99]">Thời lượng</p>
+                            <p class="text-[16px] font-bold text-[#1A3A6B]" x-text="(examPreviewData?.duration_minutes || 0) + ' phút'"></p>
+                        </div>
+                        <div class="p-3 rounded-lg border border-[#D6E2F0] bg-[#F8FAFD]">
+                            <p class="text-[11px] text-[#6B7C99]">Số câu hỏi</p>
+                            <p class="text-[16px] font-bold text-[#1A3A6B]" x-text="examPreviewData?.question_count || 0"></p>
+                        </div>
+                        <div class="p-3 rounded-lg border border-[#D6E2F0] bg-[#F8FAFD]">
+                            <p class="text-[11px] text-[#6B7C99]">Đã gán lịch</p>
+                            <p class="text-[16px] font-bold text-[#1A3A6B]" x-text="examPreviewData?.schedule_count || 0"></p>
+                        </div>
+                        <div class="p-3 rounded-lg border border-[#D6E2F0] bg-[#F8FAFD]">
+                            <p class="text-[11px] text-[#6B7C99]">Lượt làm bài</p>
+                            <p class="text-[16px] font-bold text-[#1A3A6B]" x-text="examPreviewData?.attempt_count || 0"></p>
+                        </div>
+                    </div>
+
+                    <div x-show="examPreviewData && !examPreviewData.can_edit_structure" class="p-3 rounded-lg border border-amber-300 bg-amber-50 text-[12px] text-amber-800">
+                        Đề thi đã có sinh viên làm bài, bạn chỉ có thể chỉnh sửa tên và mô tả.
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-[12px] font-semibold text-[#1A3A6B] uppercase tracking-wider">Câu hỏi trong đề</p>
+                            <p class="text-[11px] text-[#6B7C99]">Hiển thị tối đa 8 câu đầu</p>
+                        </div>
+
+                        <div class="space-y-2" x-show="examPreviewData?.questions_preview?.length">
+                            <template x-for="question in (examPreviewData?.questions_preview || [])" :key="question.order">
+                                <div class="p-3 rounded-lg border border-[#E2E8F0] bg-white">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <p class="text-[12px] font-semibold text-[#1A3A6B]" x-text="'Câu ' + question.order"></p>
+                                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-[#EAF4FD] text-[#185FA5]" x-show="question.difficulty" x-text="difficultyLabel(question.difficulty)"></span>
+                                    </div>
+                                    <p class="text-[12px] text-[#334155]" x-text="question.content"></p>
+                                </div>
+                            </template>
+                        </div>
+
+                        <p x-show="!(examPreviewData?.questions_preview?.length)" class="text-[12px] text-[#6B7C99] italic py-2">
+                            Chưa có dữ liệu câu hỏi cho đề này.
+                        </p>
+
+                        <p x-show="(examPreviewData?.question_count || 0) > (examPreviewData?.questions_preview?.length || 0)" class="text-[11px] text-[#6B7C99] mt-2">
+                            Còn <span x-text="(examPreviewData?.question_count || 0) - (examPreviewData?.questions_preview?.length || 0)"></span> câu chưa hiển thị trong preview.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-border-clean flex items-center justify-end gap-2 bg-surface-0">
+                <button type="button" class="px-3 py-1.5 rounded-lg border border-[#D6E2F0] text-[12px] font-semibold text-[#1A3A6B] hover:bg-[#F8FAFD]" @click="$dispatch('close-modal', 'exam-preview-modal')">
+                    Đóng
+                </button>
+                <button type="button" class="px-3 py-1.5 rounded-lg border border-[#185FA5] text-[12px] font-semibold text-[#185FA5] hover:bg-[#EAF4FD]" @click="$dispatch('close-modal', 'exam-preview-modal'); openExamEditModal()" :disabled="!selectedExamId">
+                    Sửa nhanh
+                </button>
+                <a :href="selectedExamEditUrl()" x-show="selectedExamId" class="px-3 py-1.5 rounded-lg bg-[#1A3A6B] text-white text-[12px] font-semibold hover:bg-[#0F2A53]">
+                    Mở trang sửa đầy đủ
+                </a>
+            </div>
+        </x-modal>
+
+        <x-modal name="quick-edit-exam-modal" maxWidth="2xl">
+            <div class="px-6 py-4 border-b border-border-clean flex items-center justify-between bg-surface-0">
+                <h3 class="text-[17px] font-bold text-navy-900">Sửa nhanh đề thi</h3>
+                <button @click="$dispatch('close-modal', 'quick-edit-exam-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form class="p-6 space-y-4" @submit.prevent="submitQuickExamEdit()">
+                <div x-show="isLoadingExamPreview" class="py-6 text-center text-[13px] text-[#6B7C99]">
+                    Đang tải dữ liệu đề thi...
+                </div>
+
+                <div x-show="!isLoadingExamPreview" class="space-y-4">
+                    <div x-show="quickExamEditWarning" class="p-3 rounded-lg border border-amber-300 bg-amber-50 text-[12px] text-amber-800" x-text="quickExamEditWarning"></div>
+                    <div x-show="quickExamEditError" class="p-3 rounded-lg border border-[#FECACA] bg-[#FEF2F2] text-[12px] text-[#991B1B]" x-text="quickExamEditError"></div>
+
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Tên đề thi <span class="text-red-500">*</span></label>
+                        <input type="text" x-model="quickExamEditForm.title" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" maxlength="255">
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Mô tả</label>
+                        <textarea x-model="quickExamEditForm.description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Ghi chú ngắn cho đề thi"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Thời lượng (phút) <span class="text-red-500">*</span></label>
+                        <input type="number" min="1" x-model.number="quickExamEditForm.duration_minutes" :disabled="examPreviewData && !examPreviewData.can_edit_structure" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] disabled:bg-gray-100 disabled:text-gray-500">
+                        <p x-show="examPreviewData && !examPreviewData.can_edit_structure" class="text-[11px] text-amber-700 mt-1">
+                            Đề đã có sinh viên làm bài nên không thể sửa thời lượng.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-border-clean flex items-center justify-end gap-2">
+                    <button type="button" class="px-3 py-1.5 rounded-lg border border-[#D6E2F0] text-[12px] font-semibold text-[#1A3A6B] hover:bg-[#F8FAFD]" @click="$dispatch('close-modal', 'quick-edit-exam-modal')">
+                        Huỷ
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 rounded-lg bg-[#1A3A6B] text-white text-[12px] font-semibold hover:bg-[#0F2A53] disabled:opacity-50 disabled:cursor-not-allowed" :disabled="isSavingQuickExamEdit || !selectedExamId">
+                        <span x-show="!isSavingQuickExamEdit">Lưu thay đổi</span>
+                        <span x-show="isSavingQuickExamEdit">Đang lưu...</span>
+                    </button>
+                </div>
+            </form>
+        </x-modal>
     </div>
 
     <script>
@@ -261,10 +426,84 @@
                 hasSelectedSection: false,
                 quickSubjectId: initialSubjectId || '',
                 isSubmittingQuickExam: false,
+                isLoadingExamPreview: false,
+                examPreviewError: '',
+                examPreviewData: null,
+                isSavingQuickExamEdit: false,
+                quickExamEditError: '',
+                quickExamEditWarning: '',
+                quickExamEditForm: {
+                    title: '',
+                    description: '',
+                    duration_minutes: 45,
+                },
+                quickPreviewUrlTemplate: "{{ route('lecturer.exams.quick-preview', ['exam' => '__EXAM_ID__']) }}",
+                quickUpdateUrlTemplate: "{{ route('lecturer.exams.quick-update', ['exam' => '__EXAM_ID__']) }}",
+                examEditUrlTemplate: "{{ route('lecturer.exams.edit', ['exam' => '__EXAM_ID__']) }}",
+                csrfToken: "{{ csrf_token() }}",
+
+                buildExamUrl(template, examId) {
+                    if (!template || !examId) {
+                        return '';
+                    }
+
+                    return template.replace('__EXAM_ID__', String(examId));
+                },
+
+                selectedExamOption() {
+                    const examSelect = document.getElementById('exam_id');
+                    if (!examSelect || examSelect.selectedIndex < 0) {
+                        return null;
+                    }
+
+                    return examSelect.options[examSelect.selectedIndex] || null;
+                },
+
+                selectedExamRoutes() {
+                    const selectedOption = this.selectedExamOption();
+                    const examId = this.selectedExamId || selectedOption?.value || '';
+
+                    if (!examId) {
+                        return {
+                            previewUrl: '',
+                            updateUrl: '',
+                            editUrl: '',
+                        };
+                    }
+
+                    return {
+                        previewUrl: selectedOption?.getAttribute('data-preview-url') || this.buildExamUrl(this.quickPreviewUrlTemplate, examId),
+                        updateUrl: selectedOption?.getAttribute('data-quick-update-url') || this.buildExamUrl(this.quickUpdateUrlTemplate, examId),
+                        editUrl: selectedOption?.getAttribute('data-edit-url') || this.buildExamUrl(this.examEditUrlTemplate, examId),
+                    };
+                },
+
+                selectedExamEditUrl() {
+                    return this.selectedExamRoutes().editUrl || '#';
+                },
+
+                difficultyLabel(level) {
+                    const labels = {
+                        remember: 'Nhận biết',
+                        understand: 'Thông hiểu',
+                        apply: 'Vận dụng',
+                        analyze: 'Phân tích',
+                    };
+
+                    return labels[level] || level || '';
+                },
+
+                resetExamMetaState() {
+                    this.examPreviewError = '';
+                    this.quickExamEditError = '';
+                    this.quickExamEditWarning = '';
+                },
 
                 onSubjectChange() {
                     this.hasSelectedSection = false;
                     this.selectedExamId = '';
+                    this.examPreviewData = null;
+                    this.resetExamMetaState();
                     document.querySelectorAll('input[name="course_section_ids[]"]').forEach(cb => cb.checked = false);
                     this.quickSubjectId = this.selectedSubjectId;
                     this.onQuickSubjectChange();
@@ -285,6 +524,169 @@
                             checkbox.checked = false;
                         }
                     });
+                },
+
+                async loadExamPreview() {
+                    const {
+                        previewUrl
+                    } = this.selectedExamRoutes();
+                    if (!previewUrl) {
+                        this.examPreviewError = 'Vui lòng chọn đề thi trước khi xem chi tiết.';
+                        this.examPreviewData = null;
+                        return;
+                    }
+
+                    this.isLoadingExamPreview = true;
+                    this.examPreviewError = '';
+                    this.quickExamEditError = '';
+
+                    try {
+                        const response = await fetch(previewUrl, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                        });
+
+                        let responseData = null;
+                        try {
+                            responseData = await response.json();
+                        } catch (_) {
+                            responseData = null;
+                        }
+
+                        if (!response.ok) {
+                            throw new Error(responseData?.message || 'Không thể tải dữ liệu đề thi.');
+                        }
+
+                        this.examPreviewData = responseData;
+                        this.quickExamEditForm = {
+                            title: responseData?.title || '',
+                            description: responseData?.description || '',
+                            duration_minutes: responseData?.duration_minutes || 45,
+                        };
+
+                        this.quickExamEditWarning = responseData?.can_edit_structure ?
+                            '' :
+                            'Đề thi đã có sinh viên làm bài, chỉ chỉnh sửa được tên và mô tả.';
+                    } catch (error) {
+                        this.examPreviewData = null;
+                        this.examPreviewError = error?.message || 'Không thể tải dữ liệu đề thi.';
+                    } finally {
+                        this.isLoadingExamPreview = false;
+                    }
+                },
+
+                async openExamPreviewModal() {
+                    if (!this.selectedExamId) {
+                        return;
+                    }
+
+                    this.$dispatch('open-modal', 'exam-preview-modal');
+                    await this.loadExamPreview();
+                },
+
+                async openExamEditModal() {
+                    if (!this.selectedExamId) {
+                        return;
+                    }
+
+                    this.$dispatch('open-modal', 'quick-edit-exam-modal');
+                    await this.loadExamPreview();
+                },
+
+                async submitQuickExamEdit() {
+                    if (!this.selectedExamId) {
+                        this.quickExamEditError = 'Vui lòng chọn đề thi cần chỉnh sửa.';
+                        return;
+                    }
+
+                    const {
+                        updateUrl
+                    } = this.selectedExamRoutes();
+                    if (!updateUrl) {
+                        this.quickExamEditError = 'Không xác định được đường dẫn cập nhật đề thi.';
+                        return;
+                    }
+
+                    this.isSavingQuickExamEdit = true;
+                    this.quickExamEditError = '';
+
+                    const payload = {
+                        title: this.quickExamEditForm.title,
+                        description: this.quickExamEditForm.description,
+                    };
+
+                    if (this.examPreviewData?.can_edit_structure !== false) {
+                        payload.duration_minutes = this.quickExamEditForm.duration_minutes;
+                    }
+
+                    try {
+                        const response = await fetch(updateUrl, {
+                            method: 'PATCH',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': this.csrfToken,
+                            },
+                            body: JSON.stringify(payload),
+                        });
+
+                        let responseData = null;
+                        try {
+                            responseData = await response.json();
+                        } catch (_) {
+                            responseData = null;
+                        }
+
+                        if (response.status === 422) {
+                            const firstError = Object.values(responseData?.errors || {})[0];
+                            this.quickExamEditError = Array.isArray(firstError) ?
+                                firstError[0] :
+                                'Dữ liệu cập nhật chưa hợp lệ.';
+                            return;
+                        }
+
+                        if (!response.ok) {
+                            throw new Error(responseData?.message || 'Không thể cập nhật đề thi.');
+                        }
+
+                        const updatedExam = responseData?.exam || null;
+                        const selectedOption = this.selectedExamOption();
+
+                        if (selectedOption && updatedExam) {
+                            const subjectCode = updatedExam.subject_code || 'SUB';
+                            selectedOption.textContent = `[${subjectCode}] ${updatedExam.title}`;
+                            selectedOption.setAttribute('data-preview-url', this.buildExamUrl(this.quickPreviewUrlTemplate, updatedExam.id));
+                            selectedOption.setAttribute('data-quick-update-url', this.buildExamUrl(this.quickUpdateUrlTemplate, updatedExam.id));
+                            selectedOption.setAttribute('data-edit-url', this.buildExamUrl(this.examEditUrlTemplate, updatedExam.id));
+                        }
+
+                        if (this.examPreviewData && updatedExam) {
+                            this.examPreviewData.title = updatedExam.title;
+                            this.examPreviewData.description = updatedExam.description;
+                            this.examPreviewData.duration_minutes = updatedExam.duration_minutes;
+                            this.examPreviewData.can_edit_structure = updatedExam.can_edit_structure;
+                            this.examPreviewData.subject = this.examPreviewData.subject || {};
+                            this.examPreviewData.subject.code = this.examPreviewData.subject.code || updatedExam.subject_code;
+                        }
+
+                        this.quickExamEditWarning = responseData?.warning || '';
+                        this.$dispatch('close-modal', 'quick-edit-exam-modal');
+
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: {
+                                message: responseData?.message || 'Đã cập nhật đề thi thành công.',
+                                type: 'success'
+                            }
+                        }));
+                    } catch (error) {
+                        this.quickExamEditError = error?.message || 'Không thể cập nhật đề thi.';
+                    } finally {
+                        this.isSavingQuickExamEdit = false;
+                    }
                 },
 
                 async submitQuickExamForm(formElement) {
@@ -332,6 +734,9 @@
                                 const option = document.createElement('option');
                                 option.value = examId;
                                 option.setAttribute('data-subject-id', subjectId);
+                                option.setAttribute('data-preview-url', this.buildExamUrl(this.quickPreviewUrlTemplate, examId));
+                                option.setAttribute('data-quick-update-url', this.buildExamUrl(this.quickUpdateUrlTemplate, examId));
+                                option.setAttribute('data-edit-url', this.buildExamUrl(this.examEditUrlTemplate, examId));
                                 option.textContent = `[${subjectCode}] ${title}`;
                                 examSelect.appendChild(option);
                             }
