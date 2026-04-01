@@ -64,7 +64,7 @@ class ExamSchedule extends Model
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'exam_schedule_students', 'exam_schedule_id', 'student_id')
-            ->withPivot('seat_number', 'attendance_status')
+            ->withPivot('attendance_status')
             ->withTimestamps();
     }
 
@@ -86,6 +86,31 @@ class ExamSchedule extends Model
     public function getAssignedCountAttribute(): int
     {
         return $this->scheduleStudents()->count();
+    }
+
+    /**
+     * Trạng thái runtime theo thời gian thực tế của ca thi.
+     */
+    public function getRuntimeStatusAttribute(): string
+    {
+        if (in_array($this->status, ['cancelled', 'completed'], true)) {
+            return $this->status;
+        }
+
+        if ($this->is_not_started) {
+            return 'scheduled';
+        }
+
+        if (! $this->is_over) {
+            return 'in_progress';
+        }
+
+        return 'completed';
+    }
+
+    public function getCanEditAttribute(): bool
+    {
+        return $this->runtime_status === 'scheduled';
     }
 
     /**
@@ -114,12 +139,20 @@ class ExamSchedule extends Model
 
     public function getStartDatetimeAttribute(): Carbon
     {
-        return Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->start_time);
+        $examDate = $this->exam_date instanceof Carbon
+            ? $this->exam_date->format('Y-m-d')
+            : (string) $this->exam_date;
+
+        return Carbon::parse($examDate . ' ' . $this->start_time);
     }
 
     public function getEndDatetimeAttribute(): Carbon
     {
-        return Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->end_time);
+        $examDate = $this->exam_date instanceof Carbon
+            ? $this->exam_date->format('Y-m-d')
+            : (string) $this->exam_date;
+
+        return Carbon::parse($examDate . ' ' . $this->end_time);
     }
 
     public function getIsNotStartedAttribute(): bool
