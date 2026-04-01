@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\ExamSchedule;
 use App\Models\Exam;
+use App\Models\ExamAttempt;
+use App\Enums\ExamAttemptStatus;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -24,10 +26,10 @@ class ExamScheduleService
                 $scheduleData['course_section_id'] = $sectionId;
 
                 $schedule = $exam->schedules()->create($scheduleData);
-                
+
                 // Tự động phân sinh viên sau khi tạo
                 $this->autoAssignStudents($schedule);
-                
+
                 // Tự động tạo cột điểm nếu yêu cầu
                 if (!empty($data['link_grade_column'])) {
                     $maxOrder = $schedule->courseSection->gradeColumns()->max('order') ?? 0;
@@ -39,7 +41,7 @@ class ExamScheduleService
                         'order' => $maxOrder + 1,
                     ]);
                 }
-                
+
                 $schedules->push($schedule);
             }
         });
@@ -80,7 +82,7 @@ class ExamScheduleService
                 'exam_schedule_id' => null,
                 'is_exam_linked' => false
             ]);
-            
+
             // Link new
             if ($data['grade_column_id']) {
                 $schedule->courseSection->gradeColumns()->where('id', $data['grade_column_id'])->update([
@@ -113,7 +115,20 @@ class ExamScheduleService
 
     public function deleteSchedule(ExamSchedule $schedule): void
     {
+        if (! $schedule->can_edit) {
+            throw new \DomainException('Không thể xóa ca thi đã bắt đầu hoặc đã kết thúc.');
+        }
+
         $schedule->delete();
+    }
+
+    public function cancelSchedule(ExamSchedule $schedule): ExamSchedule
+    {
+        return DB::transaction(function () use ($schedule) {
+            $schedule->update(['status' => 'cancelled']);
+
+            return $schedule->fresh();
+        });
     }
 
     /**
@@ -244,11 +259,122 @@ class ExamScheduleService
     {
         return ExamSchedule::whereHas('courseSection.students', function ($q) use ($studentId) {
             $q->where('users.id', $studentId)
-              ->where('course_section_students.status', 'enrolled');
+                ->where('course_section_students.status', 'enrolled');
         })
-        ->with(['exam.subject', 'courseSection'])
-        ->orderBy('exam_date', 'desc')
-        ->orderBy('start_time')
-        ->get();
+            ->with(['exam.subject', 'courseSection'])
+            ->orderBy('exam_date', 'desc')
+            ->orderBy('start_time')
+            ->get();
+    }
+
+    /**
+     * Dữ liệu giám sát ca thi cho giảng viên.
+     *
+     * @return array<string, mixed>
+     */
+    public function getMonitoringData(ExamSchedule $schedule): array
+    {
+        $assignedStudents = $schedule->students()
+            ->orderBy('users.name')
+            ->get(['users.id', 'users.name', 'users.email', 'users.student_code']);
+
+        $latestAttemptsByUser = ExamAttempt::query()
+            ->where('exam_schedule_id', $schedule->id)
+            ->whereIn('user_id', $assignedStudents->pluck('id'))
+            ->orderByDesc('attempt_number')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('user_id')
+            ->keyBy('user_id');
+
+        $notStarted = collect();
+        $inProgress = collect();
+        $submitted = collect();
+
+        foreach ($assignedStudents as $student) {
+            $attempt = $latestAttemptsByUser->get($student->id);
+
+            $studentBase = [
+                'student_id' => (int) $student->id,
+                'name' => $student->name,
+                'email' => $student->email,
+                'student_code' => $student->student_code,
+            ];
+
+            if (! $attempt) {
+                $notStarted->push($studentBase);
+                continue;
+            }
+
+            if ($attempt->status === ExamAttemptStatus::InProgress) {
+                $inProgress->push(array_merge($studentBase, [
+                    'attempt_id' => (int) $attempt->id,
+                    'attempt_number' => (int) $attempt->attempt_number,
+                    'started_at' => $attempt->started_at,
+                    'submitted_answers_count' => (int) ($attempt->submitted_answers_count ?? 0),
+                    'tab_switch_count' => (int) ($attempt->tab_switch_count ?? 0),
+                ]));
+                continue;
+            }
+
+            if ($attempt->status === ExamAttemptStatus::Completed) {
+                $submitted->push(array_merge($studentBase, [
+                    'attempt_id' => (int) $attempt->id,
+                    'attempt_number' => (int) $attempt->attempt_number,
+                    'started_at' => $attempt->started_at,
+                    'completed_at' => $attempt->completed_at,
+                    'total_score' => $attempt->total_score,
+                    'submitted_answers_count' => (int) ($attempt->submitted_answers_count ?? 0),
+                    'tab_switch_count' => (int) ($attempt->tab_switch_count ?? 0),
+                ]));
+                continue;
+            }
+
+            // Fallback cho trạng thái hiếm gặp (vd: abandoned).
+            $notStarted->push($studentBase);
+        }
+
+        $warnings = $inProgress
+            ->map(fn(array $row) => array_merge($row, ['attempt_status' => 'in_progress']))
+            ->merge($submitted->map(fn(array $row) => array_merge($row, ['attempt_status' => 'completed'])))
+            ->filter(fn(array $row) => $row['tab_switch_count'] > 0)
+            ->sortByDesc('tab_switch_count')
+            ->values()
+            ->map(function (array $row): array {
+                $tabSwitchCount = $row['tab_switch_count'];
+
+                if ($tabSwitchCount >= 3) {
+                    $row['warning_level'] = 'high';
+                    $row['warning_message'] = 'Chuyển tab từ 3 lần trở lên';
+                    return $row;
+                }
+
+                if ($tabSwitchCount === 2) {
+                    $row['warning_level'] = 'medium';
+                    $row['warning_message'] = 'Chuyển tab 2 lần';
+                    return $row;
+                }
+
+                $row['warning_level'] = 'low';
+                $row['warning_message'] = 'Chuyển tab 1 lần';
+                return $row;
+            });
+
+        $assignedCount = $assignedStudents->count();
+        $submittedCount = $submitted->count();
+
+        return [
+            'assignedCount' => $assignedCount,
+            'notStartedCount' => $notStarted->count(),
+            'inProgressCount' => $inProgress->count(),
+            'submittedCount' => $submittedCount,
+            'completionRate' => $assignedCount > 0
+                ? round(($submittedCount / $assignedCount) * 100, 1)
+                : 0,
+            'notStartedStudents' => $notStarted->values(),
+            'inProgressStudents' => $inProgress->values(),
+            'submittedStudents' => $submitted->values(),
+            'warnings' => $warnings,
+        ];
     }
 }

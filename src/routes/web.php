@@ -247,10 +247,12 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
 
             // ── Lịch thi (Exam Schedules) ─────────────────────────
             Route::get('/schedules', [ExamScheduleController::class, 'index'])->name('schedules.index');
+            Route::get('/schedules/{schedule}/monitor', [ExamScheduleController::class, 'monitor'])->name('schedules.monitor');
             Route::get('/schedules/create', [ExamScheduleController::class, 'create'])->name('schedules.create');
             Route::post('/schedules', [ExamScheduleController::class, 'store'])->name('schedules.store');
             Route::get('/schedules/{schedule}/edit', [ExamScheduleController::class, 'edit'])->name('schedules.edit');
             Route::put('/schedules/{schedule}', [ExamScheduleController::class, 'update'])->name('schedules.update');
+            Route::patch('/schedules/{schedule}/cancel', [ExamScheduleController::class, 'cancel'])->name('schedules.cancel');
             Route::delete('/schedules/{schedule}', [ExamScheduleController::class, 'destroy'])->name('schedules.destroy');
             Route::post('/schedules/{schedule}/assign-students', [ExamScheduleController::class, 'assignStudents'])->name('schedules.assign-students');
             Route::get('/schedules/{schedule}/students', [ExamScheduleController::class, 'getStudents'])->name('schedules.students');
