@@ -21,7 +21,8 @@ class NotificationController extends Controller
         /** @var User $user */
         $user = request()->user();
 
-        $notifications = $user->notifications()->latest()->paginate(10);
+        // $notifications = $user->notifications()->latest()->paginate(10);
+        $notifications = $user->userNotifications()->latest()->paginate(10);
 
         // Đánh dấu tất cả thông báo chưa đọc thành đã đọc khi họ truy cập trang?
         // Hoặc chờ đã, yêu cầu nói là "khi ấn vào nút chi tiết mới hiện toàn bộ thông báo"
@@ -29,7 +30,9 @@ class NotificationController extends Controller
         // Hoặc đánh dấu đã đọc qua một endpoint riêng. Hãy đánh dấu đã đọc tại hàm index cho đơn giản,
         // hoặc cứ để chúng ở trạng thái chưa đọc cho đến khi có hành động cụ thể nếu cần.
         // Nếu chúng ta muốn dấu chấm đỏ biến mất khi họ truy cập trang:
-        $user->notifications()->unread()->update(['read_at' => now()]);
+
+        // $user->notifications()->unread()->update(['read_at' => now()]);
+        $user->userNotifications()->unread()->update(['read_at' => now()]);
 
         return view('student.notifications.index', compact('notifications'));
     }

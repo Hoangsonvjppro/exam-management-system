@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use App\Models\Notification;
 use App\Models\ExamAttempt;
+use App\Models\UserNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -93,7 +94,7 @@ class ComplaintController extends Controller
                 ? "Giảng viên đã chấp nhận khiếu nại cho bài thi '{$complaint->schedule->exam->title}' và cập nhật điểm của bạn."
                 : "Giảng viên đã từ chối khiếu nại cho bài thi '{$complaint->schedule->exam->title}'.";
 
-            Notification::create([
+            UserNotification::create([
                 'user_id' => $complaint->student_id,
                 'type'    => 'complaint_updated',
                 'title'   => 'Kết quả khiếu nại điểm thi',

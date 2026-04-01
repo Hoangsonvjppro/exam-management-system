@@ -10,6 +10,7 @@ use App\Models\Notification;
 use App\Models\Semester;
 use App\Models\Subject;
 use App\Models\User;
+use App\Models\UserNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -122,7 +123,7 @@ class BladeSynchronizationTest extends TestCase
         $student = User::factory()->create();
         $student->assignRole('student');
 
-        Notification::create([
+        UserNotification::create([
             'user_id' => $student->id,
             'type' => 'class_notification',
             'title' => 'Thong bao moi',

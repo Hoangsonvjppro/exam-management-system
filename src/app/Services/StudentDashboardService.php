@@ -6,6 +6,7 @@ use App\Models\CourseSection;
 use App\Models\ExamSchedule;
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\UserNotification;
 use Carbon\Carbon;
 
 class StudentDashboardService
@@ -45,7 +46,7 @@ class StudentDashboardService
             ->get();
 
         // Recent notifications for this user
-        $recentNotifications = Notification::where('user_id', $user->id)
+        $recentNotifications = UserNotification::where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
@@ -81,7 +82,7 @@ class StudentDashboardService
     public function getClassShowData(User $user, CourseSection $section): array
     {
         // Notifications/Feed for this section (for this student)
-        $notifications = Notification::where('user_id', $user->id)
+        $notifications = UserNotification::where('user_id', $user->id)
             ->where('data->course_section_id', $section->id)
             ->orderByDesc('created_at')
             ->limit(20)
