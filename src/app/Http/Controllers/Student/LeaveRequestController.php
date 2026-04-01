@@ -17,6 +17,7 @@ class LeaveRequestController extends Controller
         $validated = $request->validate([
             'date' => 'required|date|after_or_equal:today',
             'reason' => 'required|string|min:5|max:1000',
+            'proof_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
         $user = request()->user();
@@ -39,10 +40,16 @@ class LeaveRequestController extends Controller
             ], 422);
         }
 
+        $proofImagePath = null;
+        if ($request->hasFile('proof_image')) {
+            $proofImagePath = $request->file('proof_image')->store('leave-proofs', 'public');
+        }
+
         $section->leaveRequests()->create([
             'student_id' => $user->id,
             'date' => $validated['date'],
             'reason' => $validated['reason'],
+            'proof_image_path' => $proofImagePath,
             'status' => 'pending'
         ]);
 
