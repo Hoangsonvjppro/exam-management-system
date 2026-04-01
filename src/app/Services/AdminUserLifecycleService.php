@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\User;
 use DomainException;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class AdminUserLifecycleService
@@ -27,8 +29,16 @@ class AdminUserLifecycleService
 
     public function resetLecturerPassword(User $user, ?int $actorAdminId = null): string
     {
-        if (! $user->hasRole('lecturer')) {
-            throw new DomainException('Only lecturer accounts can be reset by this workflow.');
+        if (! Schema::hasTable('roles') || ! Schema::hasTable('model_has_roles')) {
+            throw new DomainException('Role tables are not ready.');
+        }
+
+        try {
+            if (! $user->hasRole('lecturer')) {
+                throw new DomainException('Only lecturer accounts can be reset by this workflow.');
+            }
+        } catch (QueryException) {
+            throw new DomainException('Role tables are not ready.');
         }
 
         $temporaryPassword = Str::password(length: 10);

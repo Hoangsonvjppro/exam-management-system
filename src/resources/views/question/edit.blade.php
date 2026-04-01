@@ -16,17 +16,17 @@
 
         <div class="add-content">
             @if ($errors->any())
-                <div class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl mb-6 shadow-sm">
-                    <div class="flex items-center gap-2 mb-2 font-bold uppercase text-xs tracking-wider">
-                        <span class="material-symbols-outlined text-[20px]">error</span>
-                        Có lỗi xảy ra:
-                    </div>
-                    <ul class="list-disc list-inside space-y-1 text-sm opacity-90">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+            <div class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl mb-6 shadow-sm">
+                <div class="flex items-center gap-2 mb-2 font-bold uppercase text-xs tracking-wider">
+                    <span class="material-symbols-outlined text-[20px]">error</span>
+                    Có lỗi xảy ra:
                 </div>
+                <ul class="list-disc list-inside space-y-1 text-sm opacity-90">
+                    @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
             @endif
 
             <form id="add-question-form" action="{{ route('lecturer.questions.update', $question) }}" method="POST" class="space-y-8">
@@ -40,7 +40,7 @@
                                 class="w-full bg-white border border-outline-variant/30 rounded-xl px-4 py-3.5 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-sm">
                                 <option value="">Chọn môn học từ danh sách...</option>
                                 @foreach ($subjects as $subject)
-                                    <option value="{{ $subject->id }}" {{ old('subject_id', $question->subject_id) == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
+                                <option value="{{ $subject->id }}" {{ old('subject_id', $question->subject_id) == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -62,7 +62,7 @@
                             <select name="question_type_id" id="question_type_id"
                                 class="w-full bg-white border border-outline-variant/30 rounded-xl px-4 py-3.5 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 cursor-pointer shadow-sm">
                                 @foreach ($questionTypes as $type)
-                                    <option value="{{ $type->id }}" data-code="{{ $type->code }}" {{ old('question_type_id', $question->question_type_id) == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
+                                <option value="{{ $type->id }}" data-code="{{ $type->code }}" {{ old('question_type_id', $question->question_type_id) == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -182,11 +182,16 @@
     </div>
 
     @push('scripts')
-        <script>
-            window.INITIAL_QUESTION_CONTENT = {!! json_encode(old('content', $question->content)) !!};
-            window.INITIAL_OPTIONS = {!! json_encode($question->options) !!};
-            window.INITIAL_SUBJECT_ID = {{ old('subject_id', $question->subject_id) ?: 'null' }};
-        </script>
-        @vite(['resources/js/question.js'])
+    @php
+    $questionEditorConfig = [
+    'initialQuestionContent' => old('content', $question->content),
+    'initialOptions' => $question->options,
+    'initialSubjectId' => old('subject_id', $question->subject_id),
+    ];
+    @endphp
+    <script id="question-editor-config" type="application/json">
+        @json($questionEditorConfig)
+    </script>
+    @vite(['resources/js/question.js'])
     @endpush
 </x-app-layout>

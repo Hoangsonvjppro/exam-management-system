@@ -2,7 +2,7 @@
     @section('title', 'Dashboard - Giảng viên')
     @section('page-title', 'Tổng quan giảng dạy')
 
-    <div class="space-y-6" x-data="{ searchQuery: '' }">
+    <div class="space-y-6" x-data="searchFilterState()">
 
 
         <x-card padding="true" variant="featured">

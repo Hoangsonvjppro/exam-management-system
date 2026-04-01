@@ -3,7 +3,7 @@
     $selectedSubjectId = (string) request()->query('subject_id', '');
     @endphp
     <div class="py-8 bg-[#F8FAFD] min-h-screen">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8" x-data="{ subjectFilter: '{{ $selectedSubjectId }}' }">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8" x-data="subjectFilterState(@js($selectedSubjectId))">
             <div class="mb-6 flex items-center justify-between">
                 <div>
                     <h2 class="text-2xl font-bold text-[#1A3A6B] mb-1">Quản lý Đề Thi</h2>

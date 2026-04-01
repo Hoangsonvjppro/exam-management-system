@@ -19,6 +19,7 @@ jobs:
       - name: Cài đặt JS và Build giao diện
         run: |
           npm install
+          npm run check:alpine-state
           npm run build
 
       - name: Cập nhật Database

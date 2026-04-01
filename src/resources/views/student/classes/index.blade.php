@@ -2,7 +2,7 @@
     @section('title', 'Học phần của tôi — EMS')
     @section('page-title', 'Học phần của tôi')
 
-    <div class="space-y-6" x-data="{ searchQuery: '' }">
+    <div class="space-y-6" x-data="searchFilterState()">
 
         {{-- Header --}}
         <div class="flex items-center justify-between">
@@ -34,8 +34,8 @@
             $searchableText = strtolower(($section->name ?? '') . ' ' . $section->code);
             @endphp
             <a href="{{ route('student.classes.show', $section) }}"
-               class="block group"
-               x-show="searchQuery === '' || '{{ $searchableText }}'.includes(searchQuery.toLowerCase())">
+                class="block group"
+                x-show="searchQuery === '' || '{{ $searchableText }}'.includes(searchQuery.toLowerCase())">
                 <x-card class="flex flex-col h-full overflow-hidden hover:border-blue-400 hover:shadow-md transition-all">
                     {{-- Card Top --}}
                     <div class="px-5 py-4 border-b-[0.5px] border-border-clean bg-surface-1">

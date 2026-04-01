@@ -14,28 +14,7 @@
     @endphp
 
     <div class="space-y-6"
-        x-data="{
-            autoRefresh: true,
-            secondsLeft: 20,
-            timer: null,
-            startTimer() {
-                this.timer = setInterval(() => {
-                    if (!this.autoRefresh) {
-                        return;
-                    }
-
-                    if (this.secondsLeft <= 1) {
-                        window.location.reload();
-                        return;
-                    }
-
-                    this.secondsLeft -= 1;
-                }, 1000);
-            },
-            refreshNow() {
-                window.location.reload();
-            }
-        }"
+        x-data="scheduleMonitorState()"
         x-init="startTimer()">
 
         <x-card padding="true" variant="featured">

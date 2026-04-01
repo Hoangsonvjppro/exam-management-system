@@ -7,7 +7,6 @@ use App\Models\CourseSection;
 use App\Models\Exam;
 use App\Models\File;
 use App\Models\Difficulty;
-use App\Models\Notification;
 use App\Models\Question;
 use App\Models\QuestionType;
 use App\Models\Tag;
@@ -23,7 +22,9 @@ use App\Policies\QuestionTypePolicy;
 use App\Policies\TagPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -56,10 +57,14 @@ class AppServiceProvider extends ServiceProvider
             $user = Auth::user();
             $unreadNotificationCount = 0;
 
-            if ($user) {
-                $unreadNotificationCount = UserNotification::where('user_id', $user->id)
-                    ->whereNull('read_at')
-                    ->count();
+            if ($user && Schema::hasTable('user_notifications')) {
+                try {
+                    $unreadNotificationCount = UserNotification::where('user_id', $user->id)
+                        ->whereNull('read_at')
+                        ->count();
+                } catch (QueryException) {
+                    $unreadNotificationCount = 0;
+                }
             }
 
             $view->with('unreadNotificationCount', $unreadNotificationCount);

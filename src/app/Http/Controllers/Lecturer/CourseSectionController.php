@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CourseSection\StoreCourseSectionRequest;
 use App\Http\Requests\CourseSection\UpdateCourseSectionRequest;
 use App\Models\CourseSection;
-use App\Models\Notification;
 use App\Models\User;
 use App\Models\UserNotification;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -20,8 +21,7 @@ class CourseSectionController extends Controller
 {
     public function __construct(
         private readonly \App\Services\CourseSectionService $courseSectionService
-    ) {
-    }
+    ) {}
 
     public function index(): View
     {
@@ -90,24 +90,28 @@ class CourseSectionController extends Controller
         $studentIds = $section->students->pluck('id');
 
         $announcementFeed = collect();
-        if ($studentIds->isNotEmpty()) {
+        if ($studentIds->isNotEmpty() && Schema::hasTable('user_notifications')) {
             // Reconstruct lecturer-sent class announcements from delivered student notifications.
-            $announcementFeed = UserNotification::query()
-                ->whereIn('user_id', $studentIds)
-                ->where('data->course_section_id', $section->id)
-                ->where('type', 'course_announcement')
-                ->where('title', '!=', 'Lịch thi mới')
-                ->orderByDesc('created_at')
-                ->limit(300)
-                ->get()
-                ->unique(fn($item) => $item->title . '|' . $item->message . '|' . optional($item->created_at)->format('Y-m-d H:i:s'))
-                ->map(fn($item) => (object) [
-                    'created_at' => $item->created_at,
-                    'title' => $item->title,
-                    'message' => $item->message,
-                    'source' => 'announcement',
-                ])
-                ->values();
+            try {
+                $announcementFeed = UserNotification::query()
+                    ->whereIn('user_id', $studentIds)
+                    ->where('data->course_section_id', $section->id)
+                    ->where('type', 'course_announcement')
+                    ->where('title', '!=', 'Lịch thi mới')
+                    ->orderByDesc('created_at')
+                    ->limit(300)
+                    ->get()
+                    ->unique(fn($item) => $item->title . '|' . $item->message . '|' . optional($item->created_at)->format('Y-m-d H:i:s'))
+                    ->map(fn($item) => (object) [
+                        'created_at' => $item->created_at,
+                        'title' => $item->title,
+                        'message' => $item->message,
+                        'source' => 'announcement',
+                    ])
+                    ->values();
+            } catch (QueryException) {
+                $announcementFeed = collect();
+            }
         }
 
         $subjectName = $section->subject->name ?? 'Không xác định';

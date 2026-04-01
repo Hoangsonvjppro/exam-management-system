@@ -27,32 +27,7 @@ $statusMap = [
     <td class="px-5 py-5 text-center align-top">
         <div
             class="relative inline-block text-left"
-            x-data="{
-                open: false,
-                confirmingDelete: false,
-                confirmingCancel: false,
-                menuTop: 0,
-                menuLeft: 0,
-                menuWidth: 256,
-                placeMenu() {
-                    const rect = this.$refs.menuBtn.getBoundingClientRect();
-                    this.menuTop = rect.bottom + 8;
-                    this.menuLeft = Math.max(12, rect.right - this.menuWidth);
-                },
-                toggleMenu() {
-                    this.open = !this.open;
-                    this.confirmingDelete = false;
-                    this.confirmingCancel = false;
-                    if (this.open) {
-                        this.$nextTick(() => this.placeMenu());
-                    }
-                },
-                closeMenu() {
-                    this.open = false;
-                    this.confirmingDelete = false;
-                    this.confirmingCancel = false;
-                }
-            }"
+            x-data="scheduleRowMenuState()"
             @keydown.escape.window="closeMenu()"
             @resize.window="if(open){ placeMenu(); }"
             @scroll.window="if(open){ placeMenu(); }">

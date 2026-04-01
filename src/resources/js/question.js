@@ -5,6 +5,12 @@ import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 
 document.addEventListener('DOMContentLoaded', () => {
+    const configEl = document.getElementById('question-editor-config');
+    const config = configEl ? JSON.parse(configEl.textContent || '{}') : {};
+    const initialQuestionContent = config.initialQuestionContent || '';
+    const initialOptions = Array.isArray(config.initialOptions) ? config.initialOptions : [];
+    const initialSubjectId = config.initialSubjectId || null;
+
     // 1. Khởi tạo Tiptap cho câu hỏi chính
     const editorElement = document.querySelector('#tiptap-editor');
     if (editorElement) {
@@ -16,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 Image.configure({ HTMLAttributes: { class: 'max-w-full h-auto rounded-lg mx-auto shadow-sm my-4' } }),
                 Placeholder.configure({ placeholder: 'Nhập nội dung câu hỏi chi tiết tại đây...' }),
             ],
-            content: window.INITIAL_QUESTION_CONTENT || '',
+            content: initialQuestionContent,
             onUpdate: ({ editor }) => {
                 const contentInput = document.getElementById('question_content_input');
                 if (contentInput) {
@@ -24,11 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
         });
-        
+
         // Set initial hidden input value if editing
         const contentInput = document.getElementById('question_content_input');
-        if (contentInput && window.INITIAL_QUESTION_CONTENT) {
-            contentInput.value = window.INITIAL_QUESTION_CONTENT;
+        if (contentInput && initialQuestionContent) {
+            contentInput.value = initialQuestionContent;
         }
 
         // Toolbar chính
@@ -84,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateInputTypes() {
         if (!questionTypeSelect) return;
-        
+
         // Lấy data-code của option đang được chọn một cách an toàn hơn
         const selectedOption = questionTypeSelect.options[questionTypeSelect.selectedIndex];
         let typeCode = 'single_choice';
@@ -98,28 +104,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const isMultiple = (typeCode === 'multiple_choice');
         const rows = container.querySelectorAll('.option-row');
-        
+
         rows.forEach(row => {
             const input = row.querySelector('.correct-input');
             if (input) {
                 const targetType = isMultiple ? 'checkbox' : 'radio';
                 const targetName = isMultiple ? 'option_selector[]' : 'option_selector';
-                
+
                 // Chỉ thay thế nếu type hoặc name bị sai
                 if (input.type !== targetType || input.name !== targetName) {
                     const wasChecked = input.checked;
                     const newInput = document.createElement('input');
-                    
+
                     // Copy toàn bộ class và attributes quan trọng
                     newInput.className = input.className;
                     newInput.value = input.value;
                     newInput.type = targetType;
                     newInput.name = targetName;
                     newInput.checked = wasChecked;
-                    
+
                     // Thay thế trong DOM
                     input.parentNode.replaceChild(newInput, input);
-                    
+
                     // Trigger lại event để các hệ thống khác (nếu có) nhận biết
                     newInput.dispatchEvent(new Event('change', { bubbles: true }));
                 }
@@ -133,25 +139,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addOption(initialContent = '', isCorrect = false) {
         if (!container || !template) return;
-        
+
         const currentCount = container.querySelectorAll('.option-row').length;
         if (currentCount >= labels.length) return;
 
         const label = labels[currentCount];
         const clone = template.content.cloneNode(true);
         const row = clone.querySelector('.option-row');
-        
+
         row.querySelector('.option-label').textContent = label;
         const correctInput = row.querySelector('.correct-input');
         correctInput.value = currentCount;
         correctInput.checked = isCorrect;
-        
+
         row.querySelector('.option-hidden-input').name = `options[${currentCount}][content]`;
 
         const editorTarget = row.querySelector('.option-editor-target');
         const hiddenInput = row.querySelector('.option-hidden-input');
         hiddenInput.value = initialContent;
-        
+
         // Khởi tạo Editor riêng cho phương án này
         const optionEditor = new Editor({
             element: editorTarget,
@@ -195,16 +201,16 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             addOption();
         });
-        
-        if (window.INITIAL_OPTIONS && window.INITIAL_OPTIONS.length > 0) {
-            window.INITIAL_OPTIONS.forEach(opt => {
+
+        if (initialOptions.length > 0) {
+            initialOptions.forEach(opt => {
                 addOption(opt.content, opt.is_correct);
             });
         } else {
             // Thêm sẵn 4 phương án mặc định A, B, C, D
-            for(let i=0; i<4; i++) addOption();
+            for (let i = 0; i < 4; i++) addOption();
         }
-        
+
         updateInputTypes(); // init input types
     }
 
@@ -213,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Build explicit correct_options[] payload
             // Remove existing hidden correct_options inputs
             form.querySelectorAll('.hidden-correct-option').forEach(el => el.remove());
-            
+
             const checkedInputs = container.querySelectorAll('.correct-input:checked');
             if (checkedInputs.length === 0) {
                 e.preventDefault();
@@ -231,45 +237,45 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
-    
+
     // 3. Logic lấy Chapter qua API
     let idSuject = document.getElementById('add_subject');
-    
+
     function loadChapters(subjectId, initialChapterId = null) {
         let chapterSelect = document.getElementById('add_chapter');
         if (!chapterSelect || !subjectId) return;
-        
+
         chapterSelect.innerHTML = '<option>⌛ Đang lấy dữ liệu...</option>';
         fetch(`/lecturer/api/questions/add/${subjectId}`)
-        .then(response => response.json())
-        .then(data => {
-            chapterSelect.innerHTML = '<option value="">Chọn chương tương ứng...</option>';
-            data.forEach(chapter => {
-                let option = document.createElement('option');
-                option.value = chapter.id;
-                option.textContent = chapter.name;
-                if (initialChapterId && parseInt(initialChapterId) === parseInt(chapter.id)) {
-                    option.selected = true;
-                }
-                chapterSelect.appendChild(option);
+            .then(response => response.json())
+            .then(data => {
+                chapterSelect.innerHTML = '<option value="">Chọn chương tương ứng...</option>';
+                data.forEach(chapter => {
+                    let option = document.createElement('option');
+                    option.value = chapter.id;
+                    option.textContent = chapter.name;
+                    if (initialChapterId && parseInt(initialChapterId) === parseInt(chapter.id)) {
+                        option.selected = true;
+                    }
+                    chapterSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching chapters:', error);
+                chapterSelect.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
             });
-        })
-        .catch(error => {
-            console.error('Error fetching chapters:', error);
-            chapterSelect.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
-        });
     }
 
     if (idSuject) {
-        idSuject.addEventListener('change', function() {
+        idSuject.addEventListener('change', function () {
             loadChapters(this.value);
         });
-        
+
         // Initial load for edit page
-        if (window.INITIAL_SUBJECT_ID) {
+        if (initialSubjectId) {
             const addChapterEl = document.getElementById('add_chapter');
             const initialChapterId = addChapterEl ? addChapterEl.getAttribute('data-initial') : null;
-            loadChapters(window.INITIAL_SUBJECT_ID, initialChapterId);
+            loadChapters(initialSubjectId, initialChapterId);
         }
     }
 });

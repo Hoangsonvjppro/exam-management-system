@@ -13,7 +13,7 @@
             </button>
         </div>
 
-        <form id="quick-question-form" onsubmit="submitQuickQuestionForm(event)" class="space-y-4">
+        <form id="quick-question-form" class="space-y-4">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -65,7 +65,7 @@
             <div class="rounded-lg border border-[#D6E2F0] bg-[#F8FAFD] p-3">
                 <div class="flex items-center justify-between mb-2">
                     <label class="text-[12px] font-semibold text-[#1A3A6B]">Phương án trả lời <span class="text-[#DC2626]">*</span></label>
-                    <button type="button" class="btn btn-ghost btn-sm" onclick="addQuickQuestionOption()">+ Thêm phương án</button>
+                    <button type="button" class="btn btn-ghost btn-sm" data-action="add-quick-question-option">+ Thêm phương án</button>
                 </div>
                 <p class="text-[11px] text-[#6B7C99] mb-3">Tối thiểu 2 phương án. Chọn đáp án đúng ở cột bên trái.</p>
 
@@ -79,7 +79,7 @@
                         <span class="quick-option-label text-[12px] font-bold text-[#1A3A6B]">A.</span>
                     </label>
                     <textarea rows="2" class="ca-input quick-option-content" placeholder="Nội dung phương án..." required></textarea>
-                    <button type="button" class="text-[#DC2626] hover:text-[#991B1B] text-[18px] leading-none px-1 py-2" title="Xóa phương án" onclick="removeQuickQuestionOption(this)">&times;</button>
+                    <button type="button" class="text-[#DC2626] hover:text-[#991B1B] text-[18px] leading-none px-1 py-2" title="Xóa phương án" data-action="remove-quick-question-option">&times;</button>
                 </div>
             </template>
 

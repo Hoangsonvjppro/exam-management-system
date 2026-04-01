@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use App\Models\ExamAttempt;
 use App\Models\UserNotification;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ComplaintController extends Controller
 {
@@ -57,34 +59,40 @@ class ComplaintController extends Controller
         }
 
         // Create complaint and send notification within a transaction
-        $complaint = DB::transaction(function () use ($attempt, $studentId, $validated, $request) {
-            $complaint = Complaint::create([
-                'student_id'        => $studentId,
-                'exam_attempt_id'   => $attempt->id,
-                'exam_schedule_id'  => $attempt->exam_schedule_id,
-                'course_section_id' => $attempt->schedule->course_section_id,
-                'reason'            => $validated['reason'],
-                'current_score'     => $attempt->total_score,
-                'status'            => 'pending',
-            ]);
-
-            // Notify Lecturer
-            $lecturer = $attempt->schedule->courseSection->lecturer;
-            if ($lecturer) {
-                UserNotification::create([
-                    'user_id' => $lecturer->id,
-                    'type'    => 'complaint_created',
-                    'title'   => 'Có khiếu nại điểm mới',
-                    'message' => "Sinh viên {$request->user()->name} vừa gửi khiếu nại cho bài thi '{$attempt->schedule->exam->title}' thuộc lớp {$attempt->schedule->courseSection->code}.",
-                    'data'    => [
-                        'complaint_id' => $complaint->id,
-                        'url'          => route('lecturer.complaints.index')
-                    ]
+        try {
+            $complaint = DB::transaction(function () use ($attempt, $studentId, $validated, $request) {
+                $complaint = Complaint::create([
+                    'student_id'        => $studentId,
+                    'exam_attempt_id'   => $attempt->id,
+                    'exam_schedule_id'  => $attempt->exam_schedule_id,
+                    'course_section_id' => $attempt->schedule->course_section_id,
+                    'reason'            => $validated['reason'],
+                    'current_score'     => $attempt->total_score,
+                    'status'            => 'pending',
                 ]);
-            }
 
-            return $complaint;
-        });
+                // Notify Lecturer
+                $lecturer = $attempt->schedule->courseSection->lecturer;
+                if ($lecturer && Schema::hasTable('user_notifications')) {
+                    UserNotification::create([
+                        'user_id' => $lecturer->id,
+                        'type'    => 'complaint_created',
+                        'title'   => 'Có khiếu nại điểm mới',
+                        'message' => "Sinh viên {$request->user()->name} vừa gửi khiếu nại cho bài thi '{$attempt->schedule->exam->title}' thuộc lớp {$attempt->schedule->courseSection->code}.",
+                        'data'    => [
+                            'complaint_id' => $complaint->id,
+                            'url'          => route('lecturer.complaints.index')
+                        ]
+                    ]);
+                }
+
+                return $complaint;
+            });
+        } catch (QueryException) {
+            return response()->json([
+                'message' => 'He thong du lieu chua san sang. Vui long thu lai sau.'
+            ], 503);
+        }
 
         return response()->json([
             'message'   => 'Đã gửi khiếu nại thành công.',

@@ -414,7 +414,7 @@
                                         <input type="hidden" name="allow_late_entrance" value="0">
                                         <input type="checkbox" name="allow_late_entrance" id="allow_late_entrance" value="1"
                                             class="mt-0.5 rounded border-[#D6E2F0] text-[#185FA5] shadow-sm focus:ring-[#E6F1FB] w-4 h-4 transition-colors group-hover:border-[#185FA5]"
-                                            {{ old('allow_late_entrance', $exam->allow_late_entrance ?? true) ? 'checked' : '' }} onchange="toggleLateSettings()">
+                                            {{ old('allow_late_entrance', $exam->allow_late_entrance ?? true) ? 'checked' : '' }} data-action="toggle-late-settings">
                                         <div><span class="block text-[13px] font-semibold text-[#1A3A6B]">Cho phép vào thi muộn</span></div>
                                     </label>
                                 </div>
@@ -473,10 +473,10 @@
                     @if($exam->canEditStructure())
                     <div class="lg:col-span-8 flex flex-col">
                         <div class="flex mb-4 border-b border-[#D6E2F0]">
-                            <button type="button" id="tab-manual" onclick="switchCreationMode('manual')" class="px-5 py-2.5 text-[13px] font-semibold border-b-2 transition-colors border-[#1A3A6B] text-[#1A3A6B]">
+                            <button type="button" id="tab-manual" data-action="switch-creation-mode" data-mode="manual" class="px-5 py-2.5 text-[13px] font-semibold border-b-2 transition-colors border-[#1A3A6B] text-[#1A3A6B]">
                                 Chọn thủ công
                             </button>
-                            <button type="button" id="tab-matrix" onclick="switchCreationMode('matrix')" class="px-5 py-2.5 text-[13px] font-semibold border-b-2 transition-colors border-transparent text-[#6B7C99] hover:text-[#1A3A6B]">
+                            <button type="button" id="tab-matrix" data-action="switch-creation-mode" data-mode="matrix" class="px-5 py-2.5 text-[13px] font-semibold border-b-2 transition-colors border-transparent text-[#6B7C99] hover:text-[#1A3A6B]">
                                 Sinh từ ma trận
                             </button>
                         </div>
@@ -566,15 +566,9 @@
 
             @include('lecturer.exams._partials.create-scripts')
             @else
-            <script>
-                function toggleLateSettings() {
-                    const cb = document.getElementById('allow_late_entrance');
-                    const settings = document.getElementById('late_settings');
-                    if (cb && settings) {
-                        settings.style.display = cb.checked ? 'block' : 'none';
-                    }
-                }
-            </script>
+            @push('scripts')
+            @vite(['resources/js/pages/lecturer/exams-toggle-late.js'])
+            @endpush
             @endif
         </div>
     </div>

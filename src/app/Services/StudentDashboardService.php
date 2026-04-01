@@ -4,10 +4,11 @@ namespace App\Services;
 
 use App\Models\CourseSection;
 use App\Models\ExamSchedule;
-use App\Models\Notification;
 use App\Models\User;
 use App\Models\UserNotification;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Schema;
 
 class StudentDashboardService
 {
@@ -23,7 +24,7 @@ class StudentDashboardService
 
         // All schedules (backward compat)
         $schedules = ExamSchedule::whereIn('course_section_id', $sectionIds)
-            ->whereHas('exam', fn ($q) => $q->published())
+            ->whereHas('exam', fn($q) => $q->published())
             ->with(['exam.subject', 'courseSection'])
             ->orderByDesc('exam_date')
             ->orderByDesc('start_time')
@@ -31,7 +32,7 @@ class StudentDashboardService
 
         // Upcoming exams — not yet ended, ordered by nearest first, max 6
         $upcomingExams = ExamSchedule::whereIn('course_section_id', $sectionIds)
-            ->whereHas('exam', fn ($q) => $q->published())
+            ->whereHas('exam', fn($q) => $q->published())
             ->where(function ($q) {
                 $q->where('exam_date', '>', now()->toDateString())
                     ->orWhere(function ($q2) {
@@ -46,10 +47,17 @@ class StudentDashboardService
             ->get();
 
         // Recent notifications for this user
-        $recentNotifications = UserNotification::where('user_id', $user->id)
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
+        $recentNotifications = collect();
+        if (Schema::hasTable('user_notifications')) {
+            try {
+                $recentNotifications = UserNotification::where('user_id', $user->id)
+                    ->orderByDesc('created_at')
+                    ->limit(5)
+                    ->get();
+            } catch (QueryException) {
+                $recentNotifications = collect();
+            }
+        }
 
         return [
             'enrolledSections'     => $enrolledSections,
@@ -82,24 +90,31 @@ class StudentDashboardService
     public function getClassShowData(User $user, CourseSection $section): array
     {
         // Notifications/Feed for this section (for this student)
-        $notifications = UserNotification::where('user_id', $user->id)
-            ->where('data->course_section_id', $section->id)
-            ->orderByDesc('created_at')
-            ->limit(20)
-            ->get();
+        $notifications = collect();
+        if (Schema::hasTable('user_notifications')) {
+            try {
+                $notifications = UserNotification::where('user_id', $user->id)
+                    ->where('data->course_section_id', $section->id)
+                    ->orderByDesc('created_at')
+                    ->limit(20)
+                    ->get();
+            } catch (QueryException) {
+                $notifications = collect();
+            }
+        }
 
         // Exam schedules for this section
         $examSchedules = ExamSchedule::where('course_section_id', $section->id)
-            ->whereHas('exam', fn ($q) => $q->published())
+            ->whereHas('exam', fn($q) => $q->published())
             ->with(['exam.subject'])
             ->orderByDesc('exam_date')
             ->orderByDesc('start_time')
             ->get();
 
         // Determine status for each schedule for this student
-        $examSchedules->each(function ($schedule) use ($user) {
+        $examSchedules->each(function (ExamSchedule $schedule) use ($user) {
             $now = now();
-            $examDate = $schedule->exam_date->format('Y-m-d');
+            $examDate = Carbon::parse((string) $schedule->exam_date)->format('Y-m-d');
             $startDt = Carbon::parse($examDate . ' ' . $schedule->start_time);
             $endDt = Carbon::parse($examDate . ' ' . $schedule->end_time);
 
@@ -133,7 +148,7 @@ class StudentDashboardService
 
         // Grades — completed attempts for this student in this section's exams
         $completedAttempts = \App\Models\ExamAttempt::where('user_id', $user->id)
-            ->whereHas('schedule', fn ($q) => $q->where('course_section_id', $section->id))
+            ->whereHas('schedule', fn($q) => $q->where('course_section_id', $section->id))
             ->where('status', 'completed')
             ->with(['schedule.exam', 'complaint'])
             ->orderByDesc('completed_at')
@@ -141,7 +156,7 @@ class StudentDashboardService
 
         // Attendance
         $attendanceSessions = \App\Models\AttendanceSession::where('course_section_id', $section->id)
-            ->with(['records' => function($q) use ($user) {
+            ->with(['records' => function ($q) use ($user) {
                 $q->where('student_id', $user->id);
             }])
             ->orderByDesc('date')

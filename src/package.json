@@ -3,6 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
+        "check:alpine-state": "bash scripts/check-no-inline-alpine.sh",
         "build": "vite build",
         "dev": "vite"
     },

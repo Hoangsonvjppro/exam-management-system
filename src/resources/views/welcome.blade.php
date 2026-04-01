@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="EMS - Hệ thống quản lý học tập toàn diện cho cơ sở giáo dục hiện đại. Cập nhật thông báo, lịch học và kỳ thi nhanh chóng.">
     <title>{{ config('app.name', 'EMS') }} — Hệ thống Quản lý Học tập</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pages/common/welcome.js'])
 </head>
 
-<body class="bg-background-light font-display text-navy-900">
+<body class="bg-background-light font-display text-navy-900" data-open-join-class-modal="{{ ($errors->has('invite_code') || session('error')) ? '1' : '0' }}">
     <div class="min-h-screen flex flex-col">
 
         {{-- ===== HEADER ===== --}}
@@ -28,7 +28,7 @@
             </nav>
 
             @auth
-            <div class="relative" x-data="{ open: false }">
+            <div class="relative" x-data="dropdownState()">
                 <button @click="open = !open" class="flex items-center gap-2 focus:outline-none">
                     <img src="{{ auth()->user()->avatar_url }}"
                         alt="{{ auth()->user()->name }}"
@@ -86,7 +86,7 @@
                     </a>
                     @else
                     {{-- Student logged in but no class yet: show join class CTA --}}
-                    <button onclick="document.getElementById('join-class-modal').classList.remove('hidden')"
+                    <button data-open-target="#join-class-modal"
                         class="bg-navy-900 text-white px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
                         Tham gia lớp học
                     </button>
@@ -226,7 +226,7 @@
             <div class="bg-white brutal-border brutal-shadow-lg w-full max-w-md p-8">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-2xl font-black uppercase">Tham gia lớp học</h3>
-                    <button onclick="document.getElementById('join-class-modal').classList.add('hidden')"
+                    <button type="button" data-close-target="#join-class-modal"
                         class="font-black text-2xl leading-none hover:text-navy-600">&times;</button>
                 </div>
 
@@ -257,11 +257,6 @@
                 @endif
             </div>
         </div>
-        @if($errors->has('invite_code') || session('error'))
-        <script>
-            document.getElementById('join-class-modal').classList.remove('hidden');
-        </script>
-        @endif
         @endif
         @endauth
 

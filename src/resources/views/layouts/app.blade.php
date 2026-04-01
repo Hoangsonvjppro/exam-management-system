@@ -43,12 +43,7 @@ $studentSidebarSections = auth()->user()->enrolledSections()
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
-<script>
-    // Prevent FOUC: apply dark mode before rendering
-    if (localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-    }
-</script>
+<script src="{{ asset('js/theme-init.js') }}"></script>
 
 <head>
     <meta charset="utf-8">
@@ -71,32 +66,8 @@ $studentSidebarSections = auth()->user()->enrolledSections()
 <body class="font-sans antialiased bg-surface-0 text-navy-900">
 
     <div class="flex h-screen overflow-hidden"
-        x-data="{
-            isSidebarPinned: false,
-            isSidebarHovered: false,
-            openClassMenu: true,
-            openQuestionBank: true,
-            openExamBank: false,
-            get isExpanded() {
-                return (this.isSidebarPinned || this.isSidebarHovered) || (window.innerWidth < 1024 && this.isSidebarPinned);
-            },
-            togglePin() {
-                this.isSidebarPinned = !this.isSidebarPinned;
-                localStorage.setItem('ems_sidebar_pinned', this.isSidebarPinned);
-                if (!this.isSidebarPinned) {
-                    this.isSidebarHovered = false;
-                }
-            },
-            init() {
-                const stored = localStorage.getItem('ems_sidebar_pinned');
-                if (stored !== null) {
-                    this.isSidebarPinned = stored === 'true';
-                } else {
-                    this.isSidebarPinned = window.innerWidth >= 1024;
-                }
-            }
-         }"
-        @resize.window="if (window.innerWidth < 1024) isSidebarPinned = false">
+        x-data="appLayoutSidebarState()"
+        @resize.window="onWindowResize()">
 
         {{-- ─── SIDEBAR ─────────────────────────────────────────── --}}
         <!-- Overlay (mobile only) -->
@@ -389,8 +360,8 @@ $studentSidebarSections = auth()->user()->enrolledSections()
 
                     <div class="flex items-center gap-2 sm:gap-3">
                         {{-- Dark Mode Toggle --}}
-                        <button x-data="{ dark: document.documentElement.classList.contains('dark') }"
-                            x-on:click="dark = !dark; document.documentElement.classList.toggle('dark'); localStorage.setItem('darkMode', dark)"
+                        <button x-data="darkModeToggleState()"
+                            x-on:click="toggle()"
                             class="p-1.5 rounded-[5px] text-blue-200 hover:text-white transition-colors"
                             title="Chuyển đổi sáng/tối">
                             {{-- Sun icon (visible in dark mode) --}}
@@ -415,7 +386,7 @@ $studentSidebarSections = auth()->user()->enrolledSections()
                         </a>
                         @endrole
 
-                        <div class="relative" x-data="{ open: false }">
+                        <div class="relative" x-data="dropdownState()">
                             <button class="flex items-center gap-2" x-on:click="open = !open">
                                 <div class="bg-white/10 rounded-[5px] px-2.5 py-1 hidden sm:flex items-center gap-1.5">
                                     <div class="w-1.5 h-1.5 rounded-full bg-teal-300"></div>
