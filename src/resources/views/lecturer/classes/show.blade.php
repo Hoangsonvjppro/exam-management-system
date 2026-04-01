@@ -1502,7 +1502,9 @@
                     @foreach($section - > gradeColumns as $col)
                     '{{ $col->id }}': {
                         {
-                            (float) $col - > weight
+                            {
+                                (float) $col - > weight
+                            }
                         }
                     },
                     @endforeach
