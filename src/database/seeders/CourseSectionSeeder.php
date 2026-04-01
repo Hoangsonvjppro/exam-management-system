@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\ClassSchedule;
 use App\Models\CourseSection;
 use App\Models\Semester;
 use App\Models\Subject;
@@ -12,11 +11,11 @@ use Illuminate\Support\Str;
 
 /**
  * ============================================================
- * CourseSectionSeeder — Tạo 5 lớp HP + lịch học + gán SV
+ * CourseSectionSeeder — Tạo 5 lớp HP + gán SV
  * ============================================================
  * Dùng đúng mã môn IT001-IT005 từ SubjectSeeder.
  * Chia đều 3 giảng viên, mỗi lớp 8-12 SV từ pool 20 SV.
- * Mỗi lớp có invite_code, lịch học 2 buổi/tuần.
+ * Mỗi lớp có invite_code.
  * ============================================================
  */
 class CourseSectionSeeder extends Seeder
@@ -161,26 +160,11 @@ class CourseSectionSeeder extends Seeder
                 }
             }
 
-            // ─── Tạo lịch học (2 buổi/tuần) ──────────────────
-            foreach ($sectionData['schedule'] as $scheduleData) {
-                ClassSchedule::updateOrCreate(
-                    [
-                        'course_section_id' => $section->id,
-                        'day_of_week'       => $scheduleData['day'],
-                    ],
-                    [
-                        'start_period' => $scheduleData['start'],
-                        'end_period'   => $scheduleData['end'],
-                        'room'         => $scheduleData['room'],
-                    ]
-                );
-            }
-
             $enrolledCount = $section->students()->wherePivot('status', 'enrolled')->count();
             $this->command->line("   📚 {$code} | GV: {$lecturer->name} | SV: {$enrolledCount}");
             $createdCount++;
         }
 
-        $this->command->info("✅ Đã tạo {$createdCount} lớp học phần với lịch học và sinh viên đăng ký.");
+        $this->command->info("✅ Đã tạo {$createdCount} lớp học phần và sinh viên đăng ký.");
     }
 }
