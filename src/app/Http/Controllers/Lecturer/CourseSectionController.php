@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CourseSection\StoreCourseSectionRequest;
 use App\Http\Requests\CourseSection\UpdateCourseSectionRequest;
 use App\Models\CourseSection;
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -85,7 +86,47 @@ class CourseSectionController extends Controller
             'gradeColumns.studentGrades',
         ]);
 
-        return view('lecturer.classes.show', compact('section'));
+        $studentIds = $section->students->pluck('id');
+
+        $announcementFeed = collect();
+        if ($studentIds->isNotEmpty()) {
+            // Reconstruct lecturer-sent class announcements from delivered student notifications.
+            $announcementFeed = Notification::query()
+                ->whereIn('user_id', $studentIds)
+                ->where('data->course_section_id', $section->id)
+                ->where('type', 'course_announcement')
+                ->where('title', '!=', 'Lịch thi mới')
+                ->orderByDesc('created_at')
+                ->limit(300)
+                ->get()
+                ->unique(fn($item) => $item->title . '|' . $item->message . '|' . optional($item->created_at)->format('Y-m-d H:i:s'))
+                ->map(fn($item) => (object) [
+                    'created_at' => $item->created_at,
+                    'title' => $item->title,
+                    'message' => $item->message,
+                    'source' => 'announcement',
+                ])
+                ->values();
+        }
+
+        $subjectName = $section->subject->name ?? 'Không xác định';
+        $examScheduleFeed = $section->examSchedules
+            ->sortByDesc('created_at')
+            ->map(fn($schedule) => (object) [
+                'created_at' => $schedule->created_at,
+                'title' => 'Lịch thi mới',
+                'message' => 'Bạn đã tạo một lịch thi mới cho môn học ' . $subjectName . '. Ngày thi: ' . $schedule->exam_date->format('d/m/Y'),
+                'source' => 'exam_schedule',
+            ])
+            ->values();
+
+        $sectionFeedItems = $announcementFeed
+            ->concat($examScheduleFeed)
+            ->sortByDesc(fn($item) => optional($item->created_at)->timestamp ?? 0)
+            ->take(30)
+            ->values();
+
+        return view('lecturer.classes.show', compact('section', 'sectionFeedItems'));
     }
 
     public function edit(CourseSection $section): View

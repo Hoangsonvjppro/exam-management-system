@@ -8,11 +8,6 @@
     $activeTab = 'overview';
     }
 
-    $classSchedules = $section->classSchedules()
-    ->orderBy('day_of_week')
-    ->orderBy('start_period')
-    ->get();
-
     $ownedExamsForSection = \App\Models\Exam::query()
     ->where('created_by', auth()->id())
     ->where('subject_id', $section->subject_id)
@@ -25,16 +20,6 @@
     ->orderByDesc('updated_at')
     ->limit(120)
     ->get(['id', 'content']);
-
-    $dayMap = [
-    2 => 'Thứ Hai',
-    3 => 'Thứ Ba',
-    4 => 'Thứ Tư',
-    5 => 'Thứ Năm',
-    6 => 'Thứ Sáu',
-    7 => 'Thứ Bảy',
-    8 => 'Chủ Nhật',
-    ];
     @endphp
 
     <div class="space-y-6" x-data="classWorkspaceManager('{{ $activeTab }}')">
@@ -160,34 +145,32 @@
 
                 <x-card padding="true">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-[16px] font-bold text-navy-900">Thời khóa biểu lớp học phần</h3>
-                        <span class="text-[12px] text-text-muted">{{ $classSchedules->count() }} buổi đã cấu hình</span>
+                        <h3 class="text-[16px] font-bold text-navy-900">Bảng tin lớp học phần</h3>
+                        <span class="text-[12px] text-text-muted">{{ $sectionFeedItems->count() }} mục gần nhất</span>
                     </div>
 
-                    @if($classSchedules->isEmpty())
+                    @if($sectionFeedItems->isEmpty())
                     <div class="text-center py-10 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
-                        <p class="text-[13px] text-text-muted">Chưa có dữ liệu thời khóa biểu cho lớp học phần này.</p>
+                        <x-ui-icon name="bell-slash" class="w-10 h-10 text-blue-100 mx-auto mb-3" />
+                        <p class="text-[13px] text-text-muted">Chưa có thông báo nào bạn đã gửi cho lớp này.</p>
                     </div>
                     @else
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="border-b-[1.5px] border-border-clean">
-                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Thứ</th>
-                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Tiết học</th>
-                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Phòng học</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-border-clean/70">
-                                @foreach($classSchedules as $item)
-                                <tr>
-                                    <td class="py-3 px-3 text-[13px] font-semibold text-navy-900">{{ $dayMap[$item->day_of_week] ?? 'N/A' }}</td>
-                                    <td class="py-3 px-3 text-[13px] text-text-muted">Tiết {{ $item->start_period }} - {{ $item->end_period }}</td>
-                                    <td class="py-3 px-3 text-[13px] text-text-muted">{{ $item->room ?: 'Chưa cập nhật' }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    <div class="space-y-3">
+                        @foreach($sectionFeedItems as $feed)
+                        <div class="border-[0.5px] border-border-clean rounded-[8px] p-4 bg-white hover:bg-surface-0 transition-colors">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                                    {{ $feed->created_at?->format('H:i — d/m/Y') ?? 'N/A' }}
+                                </span>
+                                <span class="inline-flex items-center text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-[4px] border
+                                    {{ ($feed->source ?? '') === 'exam_schedule' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-teal-50 text-teal-700 border-teal-200' }}">
+                                    {{ ($feed->source ?? '') === 'exam_schedule' ? 'Lịch thi' : 'Thông báo' }}
+                                </span>
+                            </div>
+                            <h4 class="text-sm font-bold text-navy-900 mb-1">{{ $feed->title }}</h4>
+                            <p class="text-xs text-text-muted leading-relaxed whitespace-pre-wrap">{{ $feed->message }}</p>
+                        </div>
+                        @endforeach
                     </div>
                     @endif
                 </x-card>
@@ -352,19 +335,23 @@
                             <tr class="bg-surface-1 border-b border-border-clean">
                                 <th class="sticky left-0 z-10 bg-surface-1 py-3 px-4 w-[250px] text-[12px] font-semibold text-text-muted border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">Sinh viên</th>
                                 @foreach($section->attendanceSessions->sortBy('date') as $session)
-                                <th class="py-2 px-3 text-center border-r border-border-clean min-w-[120px]">
-                                    <p class="text-[12px] font-bold text-navy-900" title="{{ $session->title }}">{{ \Illuminate\Support\Str::limit($session->title, 15) }}</p>
-                                    <p class="text-[10px] text-text-muted mt-0.5 mb-1">{{ $session->date->format('d/m/Y') }}</p>
-                                    <div class="flex flex-col items-center gap-1 mt-1" x-init="sessions[{{ $session->id }}] = { is_open: {{ $session->is_open ? 'true' : 'false' }}, code: '{{ $session->secret_code }}' }">
-                                        <button @click="toggleSessionOpen({{ $session->id }})" 
-                                            class="px-2 py-0.5 text-[9px] font-bold uppercase rounded-full border transition-colors"
+                                <th class="py-2 px-3 text-center border-r border-border-clean min-w-[220px] align-top">
+                                    <p class="text-[12px] font-bold text-navy-900 leading-tight whitespace-normal break-words" title="{{ $session->title }}">{{ $session->title }}</p>
+                                    <p class="text-[10px] text-text-muted mt-1 mb-2">{{ $session->date->format('d/m/Y') }}</p>
+                                    <div class="grid grid-cols-2 gap-2 mt-1" x-init="sessions[{{ $session->id }}] = { is_open: {{ $session->is_open ? 'true' : 'false' }}, code: '{{ $session->secret_code }}' }">
+                                        <button @click="toggleSessionOpen({{ $session->id }})"
+                                            :disabled="isTogglingSession"
+                                            class="w-full min-h-[42px] px-2 py-2 text-[10px] font-bold uppercase rounded-[8px] border transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                             :class="sessions[{{ $session->id }}]?.is_open ? 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100' : 'bg-surface-0 text-text-muted border-border-clean hover:bg-surface-1'">
-                                            <span x-text="sessions[{{ $session->id }}]?.is_open ? 'Đang mở' : 'Đã đóng'"></span>
+                                            <span x-text="sessions[{{ $session->id }}]?.is_open ? 'Đang mở điểm danh' : 'Đã đóng điểm danh'"></span>
                                         </button>
-                                        <button x-show="sessions[{{ $session->id }}]?.is_open" 
-                                            @click="showPinCode(sessions[{{ $session->id }}]?.code)" 
-                                            class="text-[11px] font-mono font-bold text-blue-600 hover:text-blue-800 tracking-wider">
-                                            <span x-text="sessions[{{ $session->id }}]?.code"></span>
+                                        <button
+                                            @click="sessions[{{ $session->id }}]?.is_open ? showPinCode(sessions[{{ $session->id }}]?.code) : null"
+                                            :disabled="!sessions[{{ $session->id }}]?.is_open"
+                                            class="w-full min-h-[42px] px-2 py-2 rounded-[8px] border transition-colors flex flex-col items-center justify-center gap-0.5"
+                                            :class="sessions[{{ $session->id }}]?.is_open ? 'border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700' : 'border-border-clean bg-surface-0 text-text-muted cursor-not-allowed opacity-70'">
+                                            <span class="text-[10px] font-bold uppercase tracking-wide">Hiện QR và mã</span>
+                                            <span class="text-[11px] font-mono font-black tracking-[0.16em]" x-text="sessions[{{ $session->id }}]?.is_open ? sessions[{{ $session->id }}]?.code : '-----'"></span>
                                         </button>
                                     </div>
                                 </th>
@@ -450,7 +437,7 @@
                             <tr class="bg-surface-1 border-b border-border-clean">
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Sinh viên</th>
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Ngày xin nghỉ</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Lý do</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Lý do / Minh chứng</th>
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center pr-6">Trạng thái / Thao tác</th>
                             </tr>
                         </thead>
@@ -469,6 +456,17 @@
                                 </td>
                                 <td class="py-4 px-4 align-top">
                                     <p class="text-[13px] text-navy-900 leading-relaxed max-w-[400px] break-words">{{ $leaveReq->reason }}</p>
+                                    @if($leaveReq->proof_image_path)
+                                    <div class="mt-2 flex flex-col gap-2">
+                                        <a href="{{ asset('storage/' . $leaveReq->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold text-blue-700 hover:text-blue-900">
+                                            <x-ui-icon name="eye" class="w-4 h-4" />
+                                            Xem ảnh minh chứng
+                                        </a>
+                                        <a href="{{ asset('storage/' . $leaveReq->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="w-fit">
+                                            <img src="{{ asset('storage/' . $leaveReq->proof_image_path) }}" alt="Ảnh minh chứng nghỉ phép" class="w-28 h-28 rounded-[8px] border border-border-clean object-cover" loading="lazy">
+                                        </a>
+                                    </div>
+                                    @endif
                                 </td>
                                 <td class="py-4 px-4 align-top text-center w-[180px]">
                                     @if($leaveReq->status === 'pending')
@@ -879,23 +877,23 @@
             </form>
         </x-slide-over>
 
-        <x-modal name="show-pin-modal" maxWidth="md">
-            <div class="p-8 text-center bg-gradient-to-br from-indigo-900 via-navy-900 to-blue-900 relative overflow-hidden">
-                <div class="absolute top-4 right-4 z-10">
-                    <button @click="$dispatch('close-modal', 'show-pin-modal')" class="p-2 text-white/50 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors backdrop-blur-sm">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <x-modal name="show-pin-modal" maxWidth="2xl">
+            <div class="p-5 sm:p-7 lg:p-10 text-center bg-gradient-to-br from-indigo-900 via-navy-900 to-blue-900 relative overflow-hidden">
+                <div class="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+                    <button @click="$dispatch('close-modal', 'show-pin-modal')" class="p-3 sm:p-3.5 text-white/60 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors backdrop-blur-sm">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
                 <div class="relative z-10 w-full flex flex-col items-center">
-                    <h3 class="text-lg font-semibold text-blue-200 mb-6 uppercase tracking-[0.2em]">Mã điểm danh</h3>
-                    <div class="bg-white p-4 rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.5)] flex flex-col items-center">
-                        <div class="w-48 h-48 mb-4 border-[0.5px] border-border-clean p-2 rounded-[12px] bg-white">
+                    <h3 class="text-base sm:text-xl font-semibold text-blue-200 mb-5 sm:mb-7 uppercase tracking-[0.2em]">Mã điểm danh</h3>
+                    <div class="bg-white p-4 sm:p-6 lg:p-7 rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.5)] flex flex-col items-center w-full max-w-[560px]">
+                        <div class="w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] lg:w-[420px] lg:h-[420px] mb-5 border-[0.5px] border-border-clean p-3 rounded-[14px] bg-white">
                             <img id="display-qr-code" src="" alt="QR Code" class="w-full h-full object-contain" />
                         </div>
-                        <p id="display-pin-code" class="text-4xl font-black text-navy-900 font-mono tracking-widest break-all"></p>
+                        <p id="display-pin-code" class="text-[44px] sm:text-[60px] lg:text-[76px] leading-none font-black text-navy-900 font-mono tracking-[0.22em] pl-[0.22em]"></p>
                     </div>
-                    <p class="text-sm font-medium text-white/70 mt-8 mb-2">Sinh viên quét QR để tự động checkin</p>
-                    <p class="text-xs text-blue-200/50 uppercase tracking-widest">Hoặc nhập thủ công mã chữ cái</p>
+                    <p class="text-base sm:text-lg font-semibold text-white/80 mt-6 sm:mt-8 mb-2">Sinh viên quét QR để tự động check-in</p>
+                    <p class="text-sm sm:text-base text-blue-100/70 uppercase tracking-[0.18em]">Hoặc nhập thủ công mã chữ cái</p>
                 </div>
                 
                 <!-- Background decorations -->
@@ -1055,10 +1053,18 @@
                 isTogglingSession: false,
                 
                 showPinCode(code) {
+                    if (!code) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: { message: 'Không tìm thấy mã điểm danh', type: 'error' }
+                        }));
+                        return;
+                    }
+
                     window.dispatchEvent(new CustomEvent('open-modal', { detail: 'show-pin-modal' }));
                     document.getElementById('display-pin-code').textContent = code;
+                    const qrSize = window.innerWidth >= 1024 ? 420 : (window.innerWidth >= 640 ? 360 : 300);
                     const checkinUrl = `${window.location.origin}/student/classes/${sectionId}?tab=attendance&qr_code=${code}`;
-                    document.getElementById('display-qr-code').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(checkinUrl)}`;
+                    document.getElementById('display-qr-code').src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&margin=2&format=png&data=${encodeURIComponent(checkinUrl)}`;
                 },
 
                 async toggleSessionOpen(sessionId) {

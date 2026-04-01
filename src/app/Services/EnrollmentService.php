@@ -11,7 +11,10 @@ class EnrollmentService
     public const PIVOT_ENROLLED = 'enrolled';
     public const PIVOT_DROPPED = 'dropped';
 
-    public function __construct(private readonly UserStateService $userStateService) {}
+    public function __construct(
+        private readonly UserStateService $userStateService,
+        private readonly AttendanceGradeService $attendanceGradeService
+    ) {}
 
     /**
      * @return array{type:string,message:string}
@@ -67,6 +70,8 @@ class EnrollmentService
                     'status' => self::PIVOT_ENROLLED,
                     'enrolled_at' => now(),
                 ]);
+
+                $this->attendanceGradeService->ensureScoreForStudent($section, $user->id, $section->lecturer_id);
                 $this->userStateService->syncStudentRole($user);
 
                 return [
@@ -85,6 +90,8 @@ class EnrollmentService
             'status' => self::PIVOT_ENROLLED,
             'enrolled_at' => now(),
         ]);
+
+        $this->attendanceGradeService->ensureScoreForStudent($section, $user->id, $section->lecturer_id);
 
         $this->userStateService->syncStudentRole($user);
 

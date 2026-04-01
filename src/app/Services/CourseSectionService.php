@@ -8,6 +8,10 @@ use Illuminate\Support\Str;
 
 class CourseSectionService
 {
+    public function __construct(
+        private readonly AttendanceGradeService $attendanceGradeService
+    ) {}
+
     /**
      * Tạo lớp học phần mới.
      *
@@ -19,7 +23,7 @@ class CourseSectionService
     {
         $code = CourseSection::generateCode($data['subject_id'], $data['semester_id']);
 
-        return CourseSection::create([
+        $section = CourseSection::create([
             'name'         => $data['name'],
             'code'         => $code,
             'subject_id'   => $data['subject_id'],
@@ -29,6 +33,10 @@ class CourseSectionService
             'max_students' => $data['max_students'] ?? 100,
             'status'       => 'active',
         ]);
+
+        $this->attendanceGradeService->ensureColumn($section);
+
+        return $section;
     }
 
     /**
