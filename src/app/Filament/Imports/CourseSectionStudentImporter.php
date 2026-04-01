@@ -17,19 +17,19 @@ class CourseSectionStudentImporter extends Importer
     public static function getColumns(): array
     {
         return [
-            ImportColumn::make('section_code')
+            ImportColumn::make('ma_lop_hoc_phan')
                 ->label('Mã lớp học phần')
-                ->example('IT001-01-HK1-2526')
+                ->example('IT001-01-HK2-2526')
                 ->requiredMapping()
                 ->rules(['required', 'string']),
 
-            ImportColumn::make('student_code')
+            ImportColumn::make('ma_sinh_vien')
                 ->label('Mã sinh viên')
-                ->example('SV2023001')
+                ->example('SV2026001')
                 ->requiredMapping()
                 ->rules(['required', 'string']),
 
-            ImportColumn::make('status')
+            ImportColumn::make('trang_thai')
                 ->label('Trạng thái')
                 ->example('enrolled')
                 ->rules(['nullable', 'in:enrolled,dropped,completed']),
@@ -38,31 +38,42 @@ class CourseSectionStudentImporter extends Importer
 
     public function resolveRecord(): ?CourseSectionStudent
     {
-        $section = CourseSection::findByCode($this->data['section_code']);
-        $student = User::findByStudentCode($this->data['student_code']);
+        logger()->info('resolveRecord hit', $this->data);
 
-        if (! $section) {
-            throw new RowImportFailedException("Lớp học phần '{$this->data['section_code']}' không tồn tại.");
-            return null;
-        }
-        if (! $student) {
-            throw new RowImportFailedException("Sinh viên '{$this->data['student_code']}' không tồn tại.");
-            return null;
+        static $sections = null;
+        static $students = null;
+
+        $sections ??= CourseSection::query()->pluck('id', 'code')->all();
+        $students ??= User::query()->pluck('id', 'student_code')->all();
+
+        $sectionCode = $this->data['ma_lop_hoc_phan'] ?? null;
+        $studentCode = $this->data['ma_sinh_vien'] ?? null;
+
+        $sectionId = $sections[$sectionCode] ?? null;
+        $studentId = $students[$studentCode] ?? null;
+
+        if (! $sectionId) {
+            throw new RowImportFailedException("Lớp học phần '{$sectionCode}' không tồn tại.");
         }
 
-        $enrollment = CourseSectionStudent::findOrNewByEnrollment(
-            $section->id,
-            $student->id,
+        if (! $studentId) {
+            throw new RowImportFailedException("Sinh viên '{$studentCode}' không tồn tại.");
+        }
+
+        $this->data['course_section_id'] = $sectionId;
+        $this->data['student_id'] = $studentId;
+        return CourseSectionStudent::findOrNewByEnrollment(
+            $sectionId,
+            $studentId,
         );
-
-        return $enrollment;
     }
 
-    protected function beforeSave(): void
+    protected function beforeFill(): void
     {
-        // Remove virtual columns, set defaults
-        unset($this->data['section_code'], $this->data['student_code']);
-        $this->data['status'] ??= 'enrolled';
+        logger()->info('beforeFill', $this->data);
+        $this->data['status'] = $this->data['trang_thai'] ?? 'enrolled';
+        unset($this->data['ma_lop_hoc_phan'], $this->data['ma_sinh_vien'], $this->data['trang_thai']);
+        logger()->info('After unset', $this->data);
     }
 
     public static function getCompletedNotificationBody(Import $import): string

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CourseSection;
 use App\Models\Notification;
+use App\Models\UserNotification;
 use Illuminate\Support\Str;
 
 class NotificationService
@@ -44,6 +45,6 @@ class NotificationService
         }
 
         // Bulk insert for performance
-        Notification::insert($notificationsToInsert);
+        UserNotification::insert($notificationsToInsert);
     }
 }

@@ -161,21 +161,7 @@ class CourseSectionSeeder extends Seeder
                 }
             }
 
-            // ─── Tạo lịch học (2 buổi/tuần) ──────────────────
-            foreach ($sectionData['schedule'] as $scheduleData) {
-                ClassSchedule::updateOrCreate(
-                    [
-                        'course_section_id' => $section->id,
-                        'day_of_week'       => $scheduleData['day'],
-                    ],
-                    [
-                        'start_period' => $scheduleData['start'],
-                        'end_period'   => $scheduleData['end'],
-                        'room'         => $scheduleData['room'],
-                    ]
-                );
-            }
-
+            
             $enrolledCount = $section->students()->wherePivot('status', 'enrolled')->count();
             $this->command->line("   📚 {$code} | GV: {$lecturer->name} | SV: {$enrolledCount}");
             $createdCount++;
