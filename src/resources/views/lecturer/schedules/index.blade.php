@@ -67,7 +67,7 @@
         </form>
 
         {{-- Table --}}
-        <div class="bg-white rounded-[10px] border border-border-clean overflow-hidden shadow-sm">
+        <div class="bg-white rounded-[10px] border border-border-clean overflow-visible shadow-sm">
             @if($schedules->isEmpty())
             <div class="text-center py-16">
                 <div class="w-16 h-16 bg-surface-1 rounded-full flex items-center justify-center mx-auto mb-4 border border-border-clean">
@@ -80,24 +80,26 @@
                 </x-button>
             </div>
             @else
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="bg-surface-1 text-navy-900">
-                        <th class="px-5 py-3 text-left font-semibold">Đề thi</th>
-                        <th class="px-5 py-3 text-left font-semibold">Lớp</th>
-                        <th class="px-5 py-3 text-center font-semibold">Ngày</th>
-                        <th class="px-5 py-3 text-center font-semibold">Giờ</th>
-                        <th class="px-5 py-3 text-center font-semibold">SV</th>
-                        <th class="px-5 py-3 text-center font-semibold">Trạng thái</th>
-                        <th class="px-5 py-3 text-center font-semibold">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody id="schedule-table-body">
-                    @foreach($schedules as $schedule)
-                    @include('lecturer.schedules.partials._schedule_row', ['schedule' => $schedule])
-                    @endforeach
-                </tbody>
-            </table>
+            <div class="overflow-x-auto overflow-y-visible relative">
+                <table class="w-full text-[14px] lg:text-[15px]">
+                    <thead>
+                        <tr class="bg-surface-1 text-navy-900">
+                            <th class="px-5 py-4 text-left font-semibold">Đề thi</th>
+                            <th class="px-5 py-4 text-left font-semibold">Lớp</th>
+                            <th class="px-5 py-4 text-center font-semibold">Ngày</th>
+                            <th class="px-5 py-4 text-center font-semibold">Giờ</th>
+                            <th class="px-5 py-4 text-center font-semibold">SV</th>
+                            <th class="px-5 py-4 text-center font-semibold">Trạng thái</th>
+                            <th class="px-5 py-4 text-center font-semibold">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-table-body">
+                        @foreach($schedules as $schedule)
+                        @include('lecturer.schedules.partials._schedule_row', ['schedule' => $schedule])
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
             @endif
         </div>
 

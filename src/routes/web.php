@@ -247,6 +247,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
 
             // ── Lịch thi (Exam Schedules) ─────────────────────────
             Route::get('/schedules', [ExamScheduleController::class, 'index'])->name('schedules.index');
+            Route::get('/schedules/{schedule}/monitor', [ExamScheduleController::class, 'monitor'])->name('schedules.monitor');
             Route::get('/schedules/create', [ExamScheduleController::class, 'create'])->name('schedules.create');
             Route::post('/schedules', [ExamScheduleController::class, 'store'])->name('schedules.store');
             Route::get('/schedules/{schedule}/edit', [ExamScheduleController::class, 'edit'])->name('schedules.edit');

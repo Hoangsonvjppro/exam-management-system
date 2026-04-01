@@ -43,13 +43,28 @@ class ExamScheduleController extends Controller
     }
 
     /**
+     * Trang giám sát ca thi.
+     */
+    public function monitor(ExamSchedule $schedule): View
+    {
+        Gate::authorize('manageLecturer', $schedule->exam);
+
+        $schedule->load(['exam.subject', 'courseSection']);
+        $monitorData = $this->scheduleService->getMonitoringData($schedule);
+
+        return view('lecturer.schedules.monitor', array_merge([
+            'schedule' => $schedule,
+        ], $monitorData));
+    }
+
+    /**
      * Form tạo lịch thi.
      */
     public function create(\Illuminate\Http\Request $request): View
     {
         $exams = Exam::where('created_by', Auth::id())->with('subject')->get();
         $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->with('gradeColumns')->get();
-        
+
         $preSelectedSection = null;
         if ($request->query('course_section_id')) {
             $preSelectedSection = \App\Models\CourseSection::find($request->query('course_section_id'));
@@ -98,9 +113,14 @@ class ExamScheduleController extends Controller
     /**
      * Form sửa lịch thi.
      */
-    public function edit(ExamSchedule $schedule): View
+    public function edit(ExamSchedule $schedule): View|RedirectResponse
     {
         Gate::authorize('manageLecturer', $schedule->exam);
+
+        if (! $schedule->can_edit) {
+            return redirect()->route('lecturer.schedules.index')
+                ->with('error', 'Không thể sửa ca thi khi ca đã bắt đầu hoặc đã kết thúc.');
+        }
 
         $exams = \App\Models\Exam::where('created_by', Auth::id())->get();
         $courseSections = \App\Models\CourseSection::where('lecturer_id', Auth::id())->with('gradeColumns')->get();
@@ -114,6 +134,11 @@ class ExamScheduleController extends Controller
     public function update(UpdateExamScheduleRequest $request, ExamSchedule $schedule): RedirectResponse
     {
         Gate::authorize('manageLecturer', $schedule->exam);
+
+        if (! $schedule->can_edit) {
+            return redirect()->route('lecturer.schedules.index')
+                ->with('error', 'Không thể cập nhật ca thi khi ca đã bắt đầu hoặc đã kết thúc.');
+        }
 
         $this->scheduleService->updateSchedule($schedule, $request->validated());
 
