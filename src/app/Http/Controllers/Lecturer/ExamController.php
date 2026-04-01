@@ -58,7 +58,7 @@ class ExamController extends Controller
     }
 
     // Tạo 1 đề thi mới: phân luồng manual vs matrix
-    public function store(StoreExamRequest $request): RedirectResponse
+    public function store(StoreExamRequest $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validated();
         $validated['created_by'] = \Illuminate\Support\Facades\Auth::id();
@@ -73,7 +73,33 @@ class ExamController extends Controller
                 $exam = $this->examService->createExam($validated);
             }
         } catch (\RuntimeException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
             return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        if ($request->wantsJson()) {
+            $exam->loadMissing('subject:id,code,name');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đề thi đã được tạo thành công.',
+                'exam' => [
+                    'id' => $exam->id,
+                    'title' => $exam->title,
+                    'subject_id' => (int) $exam->subject_id,
+                    'subject_code' => $exam->subject?->code,
+                    'show_url' => route('lecturer.exams.show', $exam),
+                    'preview_url' => route('lecturer.exams.quick-preview', $exam),
+                    'quick_update_url' => route('lecturer.exams.quick-update', $exam),
+                    'edit_url' => route('lecturer.exams.edit', $exam),
+                ],
+            ], 201);
         }
 
         return redirect()->route('lecturer.exams.show', $exam->id)

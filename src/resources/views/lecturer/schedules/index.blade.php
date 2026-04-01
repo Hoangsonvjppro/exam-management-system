@@ -6,11 +6,38 @@
     ->orderBy('name')
     ->get(['id', 'name', 'code']);
 
-    $quickQuestionPool = \App\Models\Question::query()
+    $quickChaptersBySubject = \App\Models\Chapter::query()
     ->whereIn('subject_id', $quickSubjectIds)
-    ->orderByDesc('updated_at')
-    ->limit(300)
-    ->get(['id', 'subject_id', 'content']);
+    ->orderBy('order')
+    ->get(['id', 'subject_id', 'name'])
+    ->groupBy('subject_id')
+    ->map(fn($items) => $items->map(fn($chapter) => [
+    'id' => (int) $chapter->id,
+    'name' => $chapter->name,
+    ])->values())
+    ->toArray();
+
+    $quickDifficulties = \App\Models\Difficulty::query()
+    ->orderedForQuestionBank()
+    ->get(['code', 'name'])
+    ->map(fn($difficulty) => [
+    'code' => $difficulty->code,
+    'name' => $difficulty->name,
+    ])
+    ->values()
+    ->toArray();
+
+    $quickQuestionTypes = \App\Models\QuestionType::query()
+    ->active()
+    ->orderedForQuestionBank()
+    ->get(['id', 'name', 'code'])
+    ->map(fn($type) => [
+    'id' => (int) $type->id,
+    'name' => $type->name,
+    'code' => $type->code,
+    ])
+    ->values()
+    ->toArray();
     @endphp
     @section('title', 'Quản lý Lịch Thi — EMS')
     @section('page-title', 'Lịch thi')
@@ -290,6 +317,8 @@
                     <input type="hidden" name="min_duration_before_submit" value="0">
                     <input type="hidden" name="show_score_after_submit" value="1">
                     <input type="hidden" name="show_answers_after_submit" value="0">
+                    <input type="hidden" name="multiple_choice_scoring_method" value="all_or_nothing">
+                    <div id="quick-selected-questions-container"></div>
 
                     <div>
                         <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Tên đề thi <span class="text-red-500">*</span></label>
@@ -320,28 +349,93 @@
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
                             <label class="text-[12px] font-semibold text-navy-900">Chọn câu hỏi <span class="text-red-500">*</span></label>
-                            <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">Mở trình tạo đầy đủ</a>
+                            <div class="flex items-center gap-3">
+                                <button type="button" class="text-[12px] font-semibold text-emerald-700 hover:text-emerald-800" @click="openQuickQuestionCreateModal()">+ Tạo câu hỏi nhanh</button>
+                                <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">Mở trình tạo đầy đủ</a>
+                            </div>
                         </div>
 
-                        @if($quickQuestionPool->isEmpty())
-                        <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800">
-                            Chưa có câu hỏi đã duyệt để tạo đề nhanh. Vui lòng tạo câu hỏi trước trong Ngân hàng câu hỏi.
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                            <input type="text" x-model="quickQuestionKeyword" @input="debouncedQuickQuestionSearch()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] md:col-span-2" placeholder="Tìm theo nội dung câu hỏi...">
+                            <select x-model="quickQuestionChapterId" @change="loadQuickQuestions({ page: 1 })" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <option value="">Tất cả chương</option>
+                                <template x-for="chapter in quickChapterOptions()" :key="chapter.id">
+                                    <option :value="String(chapter.id)" x-text="chapter.name"></option>
+                                </template>
+                            </select>
                         </div>
-                        @else
-                        <div class="max-h-[280px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70 px-2 mt-1">
-                            @foreach($quickQuestionPool as $question)
-                            <label class="quick-question-item flex items-start gap-3 p-3 hover:bg-white cursor-pointer rounded-md transition-colors" data-subject-id="{{ $question->subject_id }}">
-                                <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
-                                <span class="text-[12px] text-navy-900 leading-relaxed">{{ \Illuminate\Support\Str::limit(trim(strip_tags($question->content)), 180) }}</span>
-                            </label>
-                            @endforeach
+
+                        <div class="flex items-center justify-between mb-2 gap-3">
+                            <select x-model="quickQuestionDifficulty" @change="loadQuickQuestions({ page: 1 })" class="w-full md:w-[220px] border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <option value="">Tất cả độ khó</option>
+                                <template x-for="difficulty in quickDifficultyOptions" :key="difficulty.code">
+                                    <option :value="difficulty.code" x-text="difficulty.name"></option>
+                                </template>
+                            </select>
+                            <p class="text-[11px] text-text-muted whitespace-nowrap" x-text="`Đã chọn ${quickQuestionSelectedIds.length} câu`"></p>
                         </div>
-                        @endif
+
+                        <div class="max-h-[320px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70 px-2 mt-1">
+                            <div x-show="quickQuestionLoading" class="p-5 text-center text-[12px] text-text-muted">Đang tải câu hỏi...</div>
+
+                            <template x-if="!quickQuestionLoading && !quickSubjectId">
+                                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-[12px] text-blue-800 m-2">
+                                    Chọn môn học trước để tải câu hỏi phù hợp.
+                                </div>
+                            </template>
+
+                            <template x-if="!quickQuestionLoading && quickSubjectId && quickQuestions.length === 0">
+                                <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800 m-2">
+                                    Không có câu hỏi phù hợp với bộ lọc hiện tại.
+                                </div>
+                            </template>
+
+                            <template x-for="question in quickQuestions" :key="question.id">
+                                <div class="p-3 rounded-md transition-colors" :class="isQuickQuestionSelected(question.id) ? 'bg-blue-50/60' : 'hover:bg-white'">
+                                    <div class="flex items-start gap-3">
+                                        <input type="checkbox" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500" :checked="isQuickQuestionSelected(question.id)" @change="toggleQuickQuestionSelection(question.id, $event.target.checked)">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700" x-show="question.chapter" x-text="question.chapter?.name || ''"></span>
+                                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700" x-text="difficultyLabel(question.difficulty)"></span>
+                                                <span class="text-[10px] text-text-muted" x-text="`ID: ${question.id}`"></span>
+                                            </div>
+                                            <p class="text-[12px] text-navy-900 leading-relaxed" x-text="stripHtml(question.content)"></p>
+                                            <button type="button" class="mt-2 text-[11px] font-semibold text-blue-700 hover:text-blue-800" @click="toggleQuickQuestionPreview(question.id)">
+                                                <span x-text="isQuickQuestionPreviewOpen(question.id) ? 'Ẩn đáp án chi tiết' : 'Xem đáp án chi tiết'"></span>
+                                            </button>
+
+                                            <div class="mt-2 space-y-1" x-show="isQuickQuestionPreviewOpen(question.id)">
+                                                <template x-if="(question.options || []).length === 0">
+                                                    <p class="text-[11px] text-text-muted italic">Câu hỏi chưa có phương án trả lời.</p>
+                                                </template>
+                                                <template x-for="option in (question.options || [])" :key="`${question.id}-${option.label}`">
+                                                    <div class="text-[11px] rounded-md border px-2 py-1 flex items-start gap-2" :class="option.is_correct ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-slate-50 text-slate-700'">
+                                                        <span class="font-semibold" x-text="`${option.label}.`"></span>
+                                                        <span class="flex-1" x-text="option.content"></span>
+                                                        <span x-show="option.is_correct" class="font-semibold text-[10px]">Đúng</span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div class="p-2" x-show="quickQuestionHasMore()">
+                                <button type="button" class="w-full text-[12px] font-semibold text-blue-700 border border-blue-200 rounded-md py-2 hover:bg-blue-50" :disabled="quickQuestionLoading" @click="loadQuickQuestions({ page: quickQuestionPage + 1, append: true })">
+                                    Tải thêm câu hỏi
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-[11px] text-text-muted" x-show="quickQuestionTotal > 0" x-text="`Hiển thị ${quickQuestions.length}/${quickQuestionTotal} câu hỏi`"></div>
+                        <div class="mt-2 text-[11px] text-red-600" x-show="quickQuestionFormError" x-text="quickQuestionFormError"></div>
                     </div>
 
                     <div class="flex justify-end gap-3 pt-4 border-t border-border-clean">
                         <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'quick-create-exam-modal')">Huỷ</x-button>
-                        <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingQuickExam || {{ $quickQuestionPool->isEmpty() ? 'true' : 'false' }}">
+                        <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingQuickExam || quickQuestionSelectedIds.length === 0">
                             <span x-show="!isSubmittingQuickExam">Tạo đề và tự chọn</span>
                             <span x-show="isSubmittingQuickExam" class="flex items-center gap-2">
                                 <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -353,6 +447,96 @@
                         </x-button>
                     </div>
                 </form>
+            </div>
+        </x-modal>
+
+        <x-modal name="quick-question-modal" maxWidth="xl">
+            <div class="p-6 md:p-7 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-[17px] font-bold text-navy-900">Tạo câu hỏi nhanh</h3>
+                        <p class="text-[12px] text-text-muted mt-1">Câu hỏi mới sẽ tự động xuất hiện trong danh sách chọn.</p>
+                    </div>
+                    <button type="button" class="text-text-muted hover:text-navy-900" @click="$dispatch('close-modal', 'quick-question-modal')">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Môn học</label>
+                        <select x-model="quickQuestionCreator.subject_id" @change="syncQuickQuestionCreatorChapterOptions()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" required>
+                            <option value="">-- Chọn môn học --</option>
+                            @foreach($quickSubjects as $subject)
+                            <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Chương</label>
+                        <select x-model="quickQuestionCreator.chapter_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                            <option value="">-- Tất cả chương --</option>
+                            <template x-for="chapter in quickQuestionCreatorChapterOptions" :key="chapter.id">
+                                <option :value="String(chapter.id)" x-text="chapter.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Độ khó</label>
+                        <select x-model="quickQuestionCreator.difficulty" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" required>
+                            <template x-for="difficulty in quickDifficultyOptions" :key="difficulty.code">
+                                <option :value="difficulty.code" x-text="difficulty.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-semibold text-navy-900 mb-1">Loại câu hỏi</label>
+                    <select x-model="quickQuestionCreator.question_type_id" @change="onQuickQuestionTypeChanged()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" required>
+                        <option value="">-- Chọn loại câu hỏi --</option>
+                        <template x-for="questionType in quickQuestionTypes" :key="questionType.id">
+                            <option :value="String(questionType.id)" x-text="questionType.name"></option>
+                        </template>
+                    </select>
+                    <p class="mt-1 text-[11px] text-text-muted" x-text="quickQuestionCorrectHint()"></p>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-semibold text-navy-900 mb-1">Nội dung câu hỏi</label>
+                    <textarea x-model="quickQuestionCreator.content" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Nhập nội dung câu hỏi..."></textarea>
+                </div>
+
+                <div class="space-y-2 border border-border-clean rounded-lg p-3 bg-surface-0">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[12px] font-semibold text-navy-900">Phương án trả lời</label>
+                        <button type="button" class="text-[12px] font-semibold text-blue-700 hover:text-blue-800" @click="addQuickQuestionCreatorOption()">+ Thêm phương án</button>
+                    </div>
+                    <template x-for="(option, index) in quickQuestionCreator.options" :key="index">
+                        <div class="flex items-start gap-2">
+                            <input
+                                :type="quickQuestionCreatorUsesCheckbox() ? 'checkbox' : 'radio'"
+                                :name="quickQuestionCreatorUsesCheckbox() ? `quick-correct-${index}` : 'quick-correct-one'"
+                                class="mt-2 rounded border-gray-300 text-navy-900 focus:ring-indigo-500"
+                                :checked="quickQuestionCreator.correct_options.includes(index)"
+                                @change="toggleQuickQuestionCreatorCorrect(index, $event.target.checked)">
+                            <input type="text" x-model="quickQuestionCreator.options[index]" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-[13px]" :placeholder="`Phương án ${String.fromCharCode(65 + index)}`">
+                            <button type="button" class="text-red-600 text-[18px] leading-none px-2 py-1" @click="removeQuickQuestionCreatorOption(index)">&times;</button>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="text-[12px] text-red-600" x-show="quickQuestionCreatorError" x-text="quickQuestionCreatorError"></div>
+
+                <div class="flex justify-end gap-3 pt-3 border-t border-border-clean">
+                    <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'quick-question-modal')">Huỷ</x-button>
+                    <x-button type="button" variant="primary" x-bind:disabled="isSubmittingQuickQuestion" @click="submitQuickQuestionCreator()">
+                        <span x-show="!isSubmittingQuickQuestion">Lưu và thêm vào danh sách</span>
+                        <span x-show="isSubmittingQuickQuestion">Đang lưu...</span>
+                    </x-button>
+                </div>
             </div>
         </x-modal>
 
@@ -616,7 +800,20 @@
 
     </div>
 
+    @php
+    $quickExamConfig = [
+    'chaptersBySubject' => $quickChaptersBySubject,
+    'difficulties' => $quickDifficulties,
+    'questionTypes' => $quickQuestionTypes,
+    ];
+    @endphp
+    <script id="quick-exam-config-data" type="application/json">
+        @json($quickExamConfig)
+    </script>
+
     <script>
+        const quickExamConfig = JSON.parse(document.getElementById('quick-exam-config-data')?.textContent || '{}');
+
         function scheduleManager() {
             return {
                 isSubmitting: false,
@@ -624,6 +821,35 @@
                 selectedSubjectId: '',
                 hasSelectedSection: false,
                 quickSubjectId: '',
+                quickQuestionApiUrl: "{{ route('lecturer.api.exam-form.questions') }}",
+                quickQuestionCreateUrl: "{{ route('lecturer.api.exam-form.quick-question') }}",
+                quickChaptersBySubject: quickExamConfig.chaptersBySubject || {},
+                quickDifficultyOptions: quickExamConfig.difficulties || [],
+                quickQuestionTypes: quickExamConfig.questionTypes || [],
+                quickQuestions: [],
+                quickQuestionLoading: false,
+                quickQuestionPage: 1,
+                quickQuestionLastPage: 1,
+                quickQuestionTotal: 0,
+                quickQuestionKeyword: '',
+                quickQuestionChapterId: '',
+                quickQuestionDifficulty: '',
+                quickQuestionSelectedIds: [],
+                quickQuestionExpandedIds: [],
+                quickQuestionSearchDebounce: null,
+                quickQuestionFormError: '',
+                quickQuestionCreatorChapterOptions: [],
+                quickQuestionCreatorError: '',
+                isSubmittingQuickQuestion: false,
+                quickQuestionCreator: {
+                    subject_id: '',
+                    chapter_id: '',
+                    difficulty: (quickExamConfig.difficulties || [])[0]?.code || 'remember',
+                    question_type_id: '',
+                    content: '',
+                    options: ['', '', '', ''],
+                    correct_options: [0],
+                },
                 isSubmittingQuickExam: false,
                 isLoadingExamPreview: false,
                 examPreviewError: '',
@@ -848,15 +1074,421 @@
                 },
 
                 onQuickSubjectChange() {
-                    document.querySelectorAll('.quick-question-item').forEach(item => {
-                        const itemSubjectId = item.getAttribute('data-subject-id');
-                        const checkbox = item.querySelector('input[type="checkbox"]');
-                        const visible = !this.quickSubjectId || String(itemSubjectId) === String(this.quickSubjectId);
-                        item.classList.toggle('hidden', !visible);
-                        if (!visible && checkbox) {
-                            checkbox.checked = false;
-                        }
+                    this.quickQuestionFormError = '';
+                    this.quickQuestionKeyword = '';
+                    this.quickQuestionChapterId = '';
+                    this.quickQuestionDifficulty = '';
+                    this.quickQuestions = [];
+                    this.quickQuestionPage = 1;
+                    this.quickQuestionLastPage = 1;
+                    this.quickQuestionTotal = 0;
+                    this.quickQuestionSelectedIds = [];
+                    this.quickQuestionExpandedIds = [];
+                    this.syncQuickQuestionHiddenInputs();
+
+                    this.quickQuestionCreator.subject_id = this.quickSubjectId ? String(this.quickSubjectId) : '';
+                    this.syncQuickQuestionCreatorChapterOptions();
+
+                    if (this.quickSubjectId) {
+                        this.loadQuickQuestions({
+                            page: 1
+                        });
+                    }
+                },
+
+                quickChapterOptions() {
+                    if (!this.quickSubjectId) {
+                        return [];
+                    }
+
+                    return this.quickChaptersBySubject[String(this.quickSubjectId)] || [];
+                },
+
+                stripHtml(input) {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = String(input || '');
+                    return (temp.textContent || temp.innerText || '').trim();
+                },
+
+                debouncedQuickQuestionSearch() {
+                    clearTimeout(this.quickQuestionSearchDebounce);
+                    this.quickQuestionSearchDebounce = setTimeout(() => {
+                        this.loadQuickQuestions({
+                            page: 1
+                        });
+                    }, 300);
+                },
+
+                quickQuestionHasMore() {
+                    return this.quickQuestionPage < this.quickQuestionLastPage;
+                },
+
+                isQuickQuestionSelected(questionId) {
+                    return this.quickQuestionSelectedIds.includes(Number(questionId));
+                },
+
+                toggleQuickQuestionSelection(questionId, checked) {
+                    const numericId = Number(questionId);
+                    const nextIds = new Set(this.quickQuestionSelectedIds);
+
+                    if (checked) {
+                        nextIds.add(numericId);
+                    } else {
+                        nextIds.delete(numericId);
+                    }
+
+                    this.quickQuestionSelectedIds = Array.from(nextIds);
+                    this.quickQuestionFormError = '';
+                    this.syncQuickQuestionHiddenInputs();
+                },
+
+                toggleQuickQuestionPreview(questionId) {
+                    const numericId = Number(questionId);
+                    const next = new Set(this.quickQuestionExpandedIds);
+
+                    if (next.has(numericId)) {
+                        next.delete(numericId);
+                    } else {
+                        next.add(numericId);
+                    }
+
+                    this.quickQuestionExpandedIds = Array.from(next);
+                },
+
+                isQuickQuestionPreviewOpen(questionId) {
+                    return this.quickQuestionExpandedIds.includes(Number(questionId));
+                },
+
+                syncQuickQuestionHiddenInputs() {
+                    const container = document.getElementById('quick-selected-questions-container');
+                    if (!container) {
+                        return;
+                    }
+
+                    container.innerHTML = '';
+                    this.quickQuestionSelectedIds.forEach((questionId) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'question_ids[]';
+                        input.value = String(questionId);
+                        container.appendChild(input);
                     });
+                },
+
+                async loadQuickQuestions({
+                    page = 1,
+                    append = false
+                } = {}) {
+                    if (!this.quickSubjectId) {
+                        return;
+                    }
+
+                    this.quickQuestionLoading = true;
+
+                    if (!append) {
+                        this.quickQuestions = [];
+                        this.quickQuestionExpandedIds = [];
+                    }
+
+                    const params = new URLSearchParams({
+                        subject_id: String(this.quickSubjectId),
+                        page: String(page),
+                        per_page: '20',
+                    });
+
+                    if (this.quickQuestionChapterId) {
+                        params.append('chapter_id', this.quickQuestionChapterId);
+                    }
+
+                    if (this.quickQuestionDifficulty) {
+                        params.append('difficulty', this.quickQuestionDifficulty);
+                    }
+
+                    const keyword = this.quickQuestionKeyword.trim();
+                    if (keyword) {
+                        params.append('keyword', keyword);
+                    }
+
+                    try {
+                        const response = await fetch(`${this.quickQuestionApiUrl}?${params.toString()}`, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                        });
+
+                        if (!response.ok) {
+                            throw new Error('Không thể tải danh sách câu hỏi.');
+                        }
+
+                        const payload = await response.json();
+                        const incomingItems = Array.isArray(payload?.data) ? payload.data : [];
+
+                        this.quickQuestionPage = Number(payload?.current_page || page);
+                        this.quickQuestionLastPage = Number(payload?.last_page || page);
+                        this.quickQuestionTotal = Number(payload?.total || incomingItems.length);
+
+                        if (append) {
+                            this.quickQuestions = [...this.quickQuestions, ...incomingItems];
+                        } else {
+                            this.quickQuestions = incomingItems;
+                        }
+                    } catch (error) {
+                        this.quickQuestions = [];
+                        this.quickQuestionPage = 1;
+                        this.quickQuestionLastPage = 1;
+                        this.quickQuestionTotal = 0;
+
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: {
+                                message: error?.message || 'Không thể tải danh sách câu hỏi.',
+                                type: 'error'
+                            }
+                        }));
+                    } finally {
+                        this.quickQuestionLoading = false;
+                    }
+                },
+
+                quickQuestionTypeCodeById(typeId) {
+                    const numericId = Number(typeId);
+                    const found = this.quickQuestionTypes.find((type) => Number(type.id) === numericId);
+                    return found?.code || '';
+                },
+
+                quickQuestionCreatorUsesCheckbox() {
+                    return this.quickQuestionTypeCodeById(this.quickQuestionCreator.question_type_id) === 'multiple_choice';
+                },
+
+                quickQuestionCorrectHint() {
+                    return this.quickQuestionCreatorUsesCheckbox() ?
+                        'Loại nhiều đáp án: có thể chọn nhiều phương án đúng.' :
+                        'Loại một đáp án: chỉ được chọn 1 phương án đúng.';
+                },
+
+                syncQuickQuestionCreatorChapterOptions() {
+                    const subjectId = String(this.quickQuestionCreator.subject_id || '');
+                    this.quickQuestionCreatorChapterOptions = this.quickChaptersBySubject[subjectId] || [];
+
+                    if (
+                        this.quickQuestionCreator.chapter_id &&
+                        !this.quickQuestionCreatorChapterOptions.some((chapter) => String(chapter.id) === String(this.quickQuestionCreator.chapter_id))
+                    ) {
+                        this.quickQuestionCreator.chapter_id = '';
+                    }
+                },
+
+                onQuickQuestionTypeChanged() {
+                    if (this.quickQuestionCreatorUsesCheckbox()) {
+                        if (!Array.isArray(this.quickQuestionCreator.correct_options) || this.quickQuestionCreator.correct_options.length === 0) {
+                            this.quickQuestionCreator.correct_options = [0];
+                        }
+                        return;
+                    }
+
+                    const firstSelected = Array.isArray(this.quickQuestionCreator.correct_options) && this.quickQuestionCreator.correct_options.length > 0 ?
+                        this.quickQuestionCreator.correct_options[0] :
+                        0;
+                    this.quickQuestionCreator.correct_options = [Number(firstSelected)];
+                },
+
+                openQuickQuestionCreateModal() {
+                    if (!this.quickSubjectId) {
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: {
+                                message: 'Hãy chọn môn học trước khi tạo câu hỏi nhanh.',
+                                type: 'error'
+                            }
+                        }));
+                        return;
+                    }
+
+                    this.resetQuickQuestionCreatorForm();
+                    this.quickQuestionCreator.subject_id = String(this.quickSubjectId);
+                    this.syncQuickQuestionCreatorChapterOptions();
+                    this.quickQuestionCreatorError = '';
+                    this.$dispatch('open-modal', 'quick-question-modal');
+                },
+
+                addQuickQuestionCreatorOption() {
+                    if (this.quickQuestionCreator.options.length >= 12) {
+                        return;
+                    }
+
+                    this.quickQuestionCreator.options.push('');
+                },
+
+                removeQuickQuestionCreatorOption(index) {
+                    if (this.quickQuestionCreator.options.length <= 2) {
+                        return;
+                    }
+
+                    this.quickQuestionCreator.options.splice(index, 1);
+                    this.quickQuestionCreator.correct_options = this.quickQuestionCreator.correct_options
+                        .filter((selectedIndex) => selectedIndex !== index)
+                        .map((selectedIndex) => selectedIndex > index ? selectedIndex - 1 : selectedIndex);
+
+                    if (this.quickQuestionCreator.correct_options.length === 0) {
+                        this.quickQuestionCreator.correct_options = [0];
+                    }
+                },
+
+                toggleQuickQuestionCreatorCorrect(index, checked) {
+                    const numericIndex = Number(index);
+
+                    if (this.quickQuestionCreatorUsesCheckbox()) {
+                        const next = new Set(this.quickQuestionCreator.correct_options);
+                        if (checked) {
+                            next.add(numericIndex);
+                        } else {
+                            next.delete(numericIndex);
+                        }
+                        this.quickQuestionCreator.correct_options = Array.from(next);
+                        return;
+                    }
+
+                    this.quickQuestionCreator.correct_options = [numericIndex];
+                },
+
+                resetQuickQuestionCreatorForm() {
+                    this.quickQuestionCreator = {
+                        subject_id: this.quickSubjectId ? String(this.quickSubjectId) : '',
+                        chapter_id: '',
+                        difficulty: this.quickDifficultyOptions[0]?.code || 'remember',
+                        question_type_id: '',
+                        content: '',
+                        options: ['', '', '', ''],
+                        correct_options: [0],
+                    };
+                    this.quickQuestionCreatorError = '';
+                    this.syncQuickQuestionCreatorChapterOptions();
+                },
+
+                validateQuickQuestionCreator() {
+                    if (!this.quickQuestionCreator.subject_id) {
+                        return 'Môn học là bắt buộc.';
+                    }
+
+                    if (!this.quickQuestionCreator.question_type_id) {
+                        return 'Loại câu hỏi là bắt buộc.';
+                    }
+
+                    if (!String(this.quickQuestionCreator.content || '').trim()) {
+                        return 'Nội dung câu hỏi là bắt buộc.';
+                    }
+
+                    const normalizedOptions = this.quickQuestionCreator.options
+                        .map((value) => String(value || '').trim())
+                        .filter((value) => value.length > 0);
+
+                    if (normalizedOptions.length < 2) {
+                        return 'Cần ít nhất 2 phương án trả lời có nội dung.';
+                    }
+
+                    if (!Array.isArray(this.quickQuestionCreator.correct_options) || this.quickQuestionCreator.correct_options.length === 0) {
+                        return 'Vui lòng chọn ít nhất một đáp án đúng.';
+                    }
+
+                    const hasValidCorrectOption = this.quickQuestionCreator.correct_options.some((optionIndex) => {
+                        const optionValue = this.quickQuestionCreator.options[Number(optionIndex)];
+                        return String(optionValue || '').trim().length > 0;
+                    });
+
+                    if (!hasValidCorrectOption) {
+                        return 'Vui lòng chọn đáp án đúng hợp lệ (không để trống).';
+                    }
+
+                    return '';
+                },
+
+                async submitQuickQuestionCreator() {
+                    this.quickQuestionCreatorError = '';
+                    const validationMessage = this.validateQuickQuestionCreator();
+                    if (validationMessage) {
+                        this.quickQuestionCreatorError = validationMessage;
+                        return;
+                    }
+
+                    const payload = new FormData();
+                    payload.append('subject_id', String(this.quickQuestionCreator.subject_id));
+                    payload.append('chapter_id', this.quickQuestionCreator.chapter_id ? String(this.quickQuestionCreator.chapter_id) : '');
+                    payload.append('question_type_id', String(this.quickQuestionCreator.question_type_id));
+                    payload.append('difficulty', String(this.quickQuestionCreator.difficulty || 'remember'));
+                    payload.append('content', String(this.quickQuestionCreator.content || '').trim());
+
+                    const normalizedOptions = this.quickQuestionCreator.options
+                        .map((value, index) => ({
+                            originalIndex: index,
+                            content: String(value || '').trim(),
+                        }))
+                        .filter((option) => option.content.length > 0);
+
+                    normalizedOptions.forEach((option, index) => {
+                        payload.append(`options[${index}][content]`, option.content);
+                    });
+
+                    const normalizedIndexMap = new Map(
+                        normalizedOptions.map((option, normalizedIndex) => [option.originalIndex, normalizedIndex])
+                    );
+                    const normalizedCorrectOptions = Array.from(new Set(
+                        this.quickQuestionCreator.correct_options
+                        .map((optionIndex) => normalizedIndexMap.get(Number(optionIndex)))
+                        .filter((optionIndex) => Number.isInteger(optionIndex))
+                    ));
+
+                    if (normalizedCorrectOptions.length === 0) {
+                        this.quickQuestionCreatorError = 'Vui lòng chọn đáp án đúng hợp lệ (không để trống).';
+                        return;
+                    }
+
+                    normalizedCorrectOptions.forEach((optionIndex) => {
+                        payload.append('correct_options[]', String(optionIndex));
+                    });
+
+                    this.isSubmittingQuickQuestion = true;
+                    try {
+                        const response = await fetch(this.quickQuestionCreateUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': this.csrfToken,
+                            },
+                            body: payload,
+                        });
+
+                        const responseData = await response.json();
+                        if (!response.ok) {
+                            const firstError = Object.values(responseData?.errors || {})[0];
+                            this.quickQuestionCreatorError = Array.isArray(firstError) ?
+                                firstError[0] :
+                                (responseData?.error || responseData?.message || 'Không thể tạo câu hỏi nhanh.');
+                            return;
+                        }
+
+                        const newQuestionId = Number(responseData?.id || 0);
+                        if (newQuestionId > 0 && !this.quickQuestionSelectedIds.includes(newQuestionId)) {
+                            this.quickQuestionSelectedIds = [...this.quickQuestionSelectedIds, newQuestionId];
+                            this.syncQuickQuestionHiddenInputs();
+                        }
+
+                        this.$dispatch('close-modal', 'quick-question-modal');
+                        this.resetQuickQuestionCreatorForm();
+                        await this.loadQuickQuestions({
+                            page: 1
+                        });
+
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: {
+                                message: 'Đã tạo câu hỏi mới và thêm vào đề nhanh.',
+                                type: 'success'
+                            }
+                        }));
+                    } catch (error) {
+                        this.quickQuestionCreatorError = error?.message || 'Không thể tạo câu hỏi nhanh.';
+                    } finally {
+                        this.isSubmittingQuickQuestion = false;
+                    }
                 },
 
                 async loadExamPreview() {
@@ -1101,6 +1733,21 @@
 
                 async submitQuickExamForm(formElement) {
                     this.isSubmittingQuickExam = true;
+                    this.quickQuestionFormError = '';
+                    this.syncQuickQuestionHiddenInputs();
+
+                    if (this.quickQuestionSelectedIds.length === 0) {
+                        this.isSubmittingQuickExam = false;
+                        this.quickQuestionFormError = 'Vui lòng chọn ít nhất một câu hỏi để tạo đề nhanh.';
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: {
+                                message: this.quickQuestionFormError,
+                                type: 'error'
+                            }
+                        }));
+                        return;
+                    }
+
                     const formData = new FormData(formElement);
 
                     try {
@@ -1108,34 +1755,37 @@
                             method: 'POST',
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'text/html',
+                                'Accept': 'application/json',
                             },
                             body: formData,
-                            redirect: 'follow',
                         });
 
-                        if (!response.ok) {
-                            throw new Error('Failed to create exam');
+                        let responseData = null;
+                        try {
+                            responseData = await response.json();
+                        } catch (_) {
+                            responseData = null;
                         }
 
-                        const createdUrl = response.url || '';
-                        const match = createdUrl.match(/\/lecturer\/exams\/(\d+)/);
-                        const examId = match ? match[1] : null;
-
-                        if (!examId) {
-                            window.dispatchEvent(new CustomEvent('toast', {
-                                detail: {
-                                    message: 'Không thể tạo đề nhanh. Vui lòng dùng trình tạo đầy đủ.',
-                                    type: 'error'
-                                }
-                            }));
-                            return;
+                        if (response.status === 422) {
+                            const firstError = Object.values(responseData?.errors || {})[0];
+                            const message = Array.isArray(firstError) ?
+                                firstError[0] :
+                                (responseData?.message || 'Không thể tạo đề thi nhanh. Hãy kiểm tra dữ liệu đầu vào.');
+                            throw new Error(message);
                         }
+
+                        if (!response.ok || !responseData?.success || !responseData?.exam?.id) {
+                            throw new Error(responseData?.message || 'Không thể tạo đề thi nhanh. Vui lòng dùng trình tạo đầy đủ.');
+                        }
+
+                        const examData = responseData.exam;
+                        const examId = examData.id;
 
                         const selectedSubject = formElement.querySelector('select[name="subject_id"] option:checked');
-                        const subjectId = selectedSubject ? selectedSubject.value : '';
-                        const subjectCode = selectedSubject ? selectedSubject.textContent.split(' - ')[0] : 'SUB';
-                        const title = String(formData.get('title') || 'Đề thi mới');
+                        const subjectId = examData.subject_id || (selectedSubject ? selectedSubject.value : '');
+                        const subjectCode = examData.subject_code || (selectedSubject ? selectedSubject.textContent.split(' - ')[0] : 'SUB');
+                        const title = examData.title || String(formData.get('title') || 'Đề thi mới');
 
                         const examSelect = document.getElementById('schedule-modal-exam-id');
                         if (examSelect) {
@@ -1144,9 +1794,9 @@
                                 const option = document.createElement('option');
                                 option.value = examId;
                                 option.setAttribute('data-subject-id', subjectId);
-                                option.setAttribute('data-preview-url', this.buildExamUrl(this.quickPreviewUrlTemplate, examId));
-                                option.setAttribute('data-quick-update-url', this.buildExamUrl(this.quickUpdateUrlTemplate, examId));
-                                option.setAttribute('data-edit-url', this.buildExamUrl(this.examEditUrlTemplate, examId));
+                                option.setAttribute('data-preview-url', examData.preview_url || this.buildExamUrl(this.quickPreviewUrlTemplate, examId));
+                                option.setAttribute('data-quick-update-url', examData.quick_update_url || this.buildExamUrl(this.quickUpdateUrlTemplate, examId));
+                                option.setAttribute('data-edit-url', examData.edit_url || this.buildExamUrl(this.examEditUrlTemplate, examId));
                                 option.textContent = `[${subjectCode}] ${title}`;
                                 examSelect.appendChild(option);
                             }
@@ -1158,6 +1808,7 @@
                         formElement.reset();
                         this.quickSubjectId = '';
                         this.onQuickSubjectChange();
+                        this.resetQuickQuestionCreatorForm();
 
                         window.dispatchEvent(new CustomEvent('toast', {
                             detail: {
@@ -1168,7 +1819,7 @@
                     } catch (error) {
                         window.dispatchEvent(new CustomEvent('toast', {
                             detail: {
-                                message: 'Không thể tạo đề thi nhanh. Hãy kiểm tra dữ liệu đầu vào.',
+                                message: error?.message || 'Không thể tạo đề thi nhanh. Hãy kiểm tra dữ liệu đầu vào.',
                                 type: 'error'
                             }
                         }));
