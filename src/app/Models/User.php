@@ -304,4 +304,9 @@ class User extends Authenticatable
             ->groupBy('status')
             ->pluck('total', 'status');
     }
+    
+    public static function findByStudentCode(string $code): ?static
+    {
+        return static::where('student_code', trim($code))->first();
+    }
 }
