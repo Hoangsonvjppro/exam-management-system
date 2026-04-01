@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int    $id
  * @property int    $exam_schedule_id
  * @property int    $student_id
- * @property int    $seat_number
  * @property string $attendance_status  pending|present|absent
  */
 class ExamScheduleStudent extends Model
@@ -21,8 +20,6 @@ class ExamScheduleStudent extends Model
         'student_id',
         'attendance_status',
     ];
-
-    // remove casts entirely since seat_number was the only one
 
     public function schedule(): BelongsTo
     {
