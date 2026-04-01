@@ -30,6 +30,7 @@ $statusMap = [
             x-data="{
                 open: false,
                 confirmingDelete: false,
+                confirmingCancel: false,
                 menuTop: 0,
                 menuLeft: 0,
                 menuWidth: 256,
@@ -41,6 +42,7 @@ $statusMap = [
                 toggleMenu() {
                     this.open = !this.open;
                     this.confirmingDelete = false;
+                    this.confirmingCancel = false;
                     if (this.open) {
                         this.$nextTick(() => this.placeMenu());
                     }
@@ -48,6 +50,7 @@ $statusMap = [
                 closeMenu() {
                     this.open = false;
                     this.confirmingDelete = false;
+                    this.confirmingCancel = false;
                 }
             }"
             @keydown.escape.window="closeMenu()"
@@ -101,12 +104,13 @@ $statusMap = [
                     @else
                     <div class="px-3 py-3 text-[12px] font-semibold text-[#94A3B8] bg-[#F8FAFD] cursor-not-allowed text-left">
                         Sửa lịch thi
-                        <p class="mt-0.5 text-[10px] font-medium">Ca thi đang diễn ra hoặc đã kết thúc.</p>
+                        <p class="mt-0.5 text-[10px] font-medium">Ca thi đã bắt đầu, kết thúc hoặc bị hủy.</p>
                     </div>
                     @endif
 
                     <div class="border-t border-[#EEF2F7]"></div>
 
+                    @if($canEdit)
                     <template x-if="!confirmingDelete">
                         <button
                             type="button"
@@ -127,6 +131,28 @@ $statusMap = [
                             <button type="button" @click="confirmingDelete = false" class="text-[10px] font-medium text-[#6B7C99] hover:underline">Hủy</button>
                         </div>
                     </div>
+                    @elseif($runtimeStatus !== 'cancelled')
+                    <template x-if="!confirmingCancel">
+                        <button
+                            type="button"
+                            @click="confirmingCancel = true"
+                            class="block w-full text-left px-3 py-3 text-[12px] font-semibold text-[#B45309] hover:bg-[#FFFBEB] transition-colors">
+                            Hủy ca thi
+                        </button>
+                    </template>
+
+                    <div x-show="confirmingCancel" x-cloak class="px-3 py-2.5 bg-amber-50 border-t border-amber-100">
+                        <p class="text-[10px] font-semibold text-amber-700">Ca thi đã bắt đầu hoặc kết thúc chỉ có thể hủy. Xác nhận hủy?</p>
+                        <div class="mt-1.5 flex items-center gap-3">
+                            <form method="POST" action="{{ route('lecturer.schedules.cancel', $schedule->id) }}">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="text-[10px] font-bold text-amber-700 hover:underline">Có, hủy ca</button>
+                            </form>
+                            <button type="button" @click="confirmingCancel = false" class="text-[10px] font-medium text-[#6B7C99] hover:underline">Đóng</button>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </template>
         </div>

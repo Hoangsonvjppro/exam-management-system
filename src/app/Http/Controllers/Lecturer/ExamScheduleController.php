@@ -153,10 +153,33 @@ class ExamScheduleController extends Controller
     {
         Gate::authorize('manageLecturer', $schedule->exam);
 
+        if (! $schedule->can_edit) {
+            return redirect()->route('lecturer.schedules.index')
+                ->with('error', 'Không thể xoá ca thi đã bắt đầu hoặc đã kết thúc. Vui lòng hủy ca thi thay vì xóa cứng.');
+        }
+
         $this->scheduleService->deleteSchedule($schedule);
 
         return redirect()->route('lecturer.schedules.index')
             ->with('success', 'Lịch thi đã được xoá.');
+    }
+
+    /**
+     * Hủy lịch thi.
+     */
+    public function cancel(ExamSchedule $schedule): RedirectResponse
+    {
+        Gate::authorize('manageLecturer', $schedule->exam);
+
+        if ($schedule->status === 'cancelled') {
+            return redirect()->route('lecturer.schedules.index')
+                ->with('info', 'Ca thi này đã ở trạng thái hủy.');
+        }
+
+        $this->scheduleService->cancelSchedule($schedule);
+
+        return redirect()->route('lecturer.schedules.index')
+            ->with('success', 'Ca thi đã được hủy.');
     }
 
     /**

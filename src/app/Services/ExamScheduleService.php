@@ -115,7 +115,20 @@ class ExamScheduleService
 
     public function deleteSchedule(ExamSchedule $schedule): void
     {
+        if (! $schedule->can_edit) {
+            throw new \DomainException('Không thể xóa ca thi đã bắt đầu hoặc đã kết thúc.');
+        }
+
         $schedule->delete();
+    }
+
+    public function cancelSchedule(ExamSchedule $schedule): ExamSchedule
+    {
+        return DB::transaction(function () use ($schedule) {
+            $schedule->update(['status' => 'cancelled']);
+
+            return $schedule->fresh();
+        });
     }
 
     /**

@@ -203,6 +203,10 @@
                             </thead>
                             <tbody class="divide-y divide-border-clean/70">
                                 @foreach($section->examSchedules->sortByDesc('created_at') as $schedule)
+                                @php
+                                $runtimeStatus = $schedule->runtime_status;
+                                $canEdit = $schedule->can_edit;
+                                @endphp
                                 <tr>
                                     <td class="py-3 px-3">
                                         <p class="text-[13px] font-semibold text-navy-900">{{ $schedule->exam->title }}</p>
@@ -216,11 +220,11 @@
                                     </td>
                                     <td class="py-3 px-3">
                                         <span class="inline-flex items-center uppercase text-[10px] font-bold px-2 py-1 rounded-[4px]
-                                                    @if($schedule->status === 'in_progress') bg-teal-50 text-teal-800 border border-teal-200
-                                                    @elseif($schedule->status === 'scheduled') bg-blue-50 text-blue-700 border border-blue-200
-                                                    @elseif($schedule->status === 'completed') bg-gray-50 text-gray-700 border border-gray-200
+                                                @if($runtimeStatus === 'in_progress') bg-teal-50 text-teal-800 border border-teal-200
+                                                @elseif($runtimeStatus === 'scheduled') bg-blue-50 text-blue-700 border border-blue-200
+                                                @elseif($runtimeStatus === 'completed') bg-gray-50 text-gray-700 border border-gray-200
                                                     @else bg-surface-1 text-text-muted border border-border-clean @endif">
-                                            {{ match($schedule->status) {
+                                            {{ match($runtimeStatus) {
                                                         'in_progress' => 'Đang thi',
                                                         'scheduled'   => 'Đã lên lịch',
                                                         'completed'   => 'Đã hoàn thành',
@@ -231,6 +235,7 @@
                                     <td class="py-3 px-3">
                                         @can('manageLecturer', $schedule->exam)
                                         <div class="flex items-center gap-3">
+                                            @if($canEdit)
                                             <a href="{{ route('lecturer.schedules.edit', $schedule) }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">Sửa</a>
                                             <form method="POST" action="{{ route('lecturer.schedules.destroy', $schedule) }}">
                                                 @csrf
@@ -240,6 +245,18 @@
                                                     Xoá
                                                 </button>
                                             </form>
+                                            @elseif($runtimeStatus !== 'cancelled')
+                                            <form method="POST" action="{{ route('lecturer.schedules.cancel', $schedule) }}">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="text-[12px] font-semibold text-amber-700 hover:text-amber-800"
+                                                    onclick="return confirm('Ca thi đã bắt đầu hoặc đã kết thúc, chỉ có thể hủy. Xác nhận hủy ca thi này?')">
+                                                    Hủy ca
+                                                </button>
+                                            </form>
+                                            @else
+                                            <span class="text-[12px] font-semibold text-text-muted">Đã hủy</span>
+                                            @endif
                                         </div>
                                         @endcan
                                     </td>
@@ -1486,7 +1503,11 @@
                 isSubmittingColumn: false,
                 isEditingColumn: false,
                 editingColumnId: null,
-                totalWeight: {{ $section->gradeColumns->sum('weight') }},
+                totalWeight: {
+                    {
+                        $section - > gradeColumns - > sum('weight')
+                    }
+                },
                 columnData: {
                     name: '',
                     weight: 10
@@ -1495,8 +1516,12 @@
                 initialScores: {},
                 saved: {},
                 weights: {
-                    @foreach($section->gradeColumns as $col)
-                    '{{ $col->id }}': {{ (float) $col->weight }},
+                    @foreach($section - > gradeColumns as $col)
+                    '{{ $col->id }}': {
+                        {
+                            (float) $col - > weight
+                        }
+                    },
                     @endforeach
                 },
 
