@@ -196,11 +196,11 @@ class ExamService
             $question = $questions->get($questionId);
             if (!$question) continue;
 
-            // Tạo snapshot JSON chứa nội dung câu hỏi + options
             $snapshot = [
                 'id' => $question->id,
                 'content' => $question->content,
                 'difficulty' => $question->difficulty,
+                'question_type_code' => $question->questionType?->code,
                 'options' => $question->options->map(fn($opt) => [
                     'id' => $opt->id,
                     'label' => $opt->label,

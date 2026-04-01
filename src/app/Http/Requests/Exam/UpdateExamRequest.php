@@ -40,6 +40,7 @@ class UpdateExamRequest extends FormRequest
             'late_entrance_limit_minutes' => 'nullable|integer|min:1',
             'late_entrance_behavior'      => 'required|in:fixed_end,flexible_duration',
             'min_duration_before_submit'  => 'required|integer|min:0',
+            'multiple_choice_scoring_method' => ['required', 'string', Rule::in(['all_or_nothing', 'partial_credit'])],
             'question_ids'                => 'nullable|array',
             'question_ids.*'              => 'exists:questions,id',
         ];

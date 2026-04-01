@@ -74,6 +74,7 @@ class ExamGenerationService
                 $snapshot = [
                     'difficulty'       => $question->difficulty,
                     'question_type_id' => $question->question_type_id,
+                    'question_type_code' => $question->questionType?->code,
                     'options'          => $question->options->map(fn($opt) => [
                         'id' => $opt->id,
                         'label' => $opt->label,

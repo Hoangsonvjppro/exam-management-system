@@ -231,6 +231,18 @@
                                         @error('exam_type') <span class="text-error">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
+
+                                <div class="grid grid-cols-1 gap-4 mt-4 {{ $exam->canEditStructure() ? '' : 'opacity-50 pointer-events-none' }}">
+                                    <div>
+                                        <label for="multiple_choice_scoring_method" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Chấm điểm Chọn nhiều <span class="text-[#DC2626]">*</span></label>
+                                        @php $selectedScoringMethod = old('multiple_choice_scoring_method', $exam->multiple_choice_scoring_method); @endphp
+                                        <select id="multiple_choice_scoring_method" name="multiple_choice_scoring_method" class="ca-select @error('multiple_choice_scoring_method') error @enderror" required>
+                                            <option value="all_or_nothing" {{ $selectedScoringMethod === 'all_or_nothing' ? 'selected' : '' }}>Tuyệt đối (All or Nothing - Khuyên dùng)</option>
+                                            <option value="partial_credit" {{ $selectedScoringMethod === 'partial_credit' ? 'selected' : '' }}>Theo phần (Partial Credit)</option>
+                                        </select>
+                                        @error('multiple_choice_scoring_method') <span class="text-error">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

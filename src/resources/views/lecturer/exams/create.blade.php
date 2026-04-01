@@ -117,6 +117,16 @@
                                         @error('exam_type') <span class="text-error">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
+                                <div class="grid grid-cols-1 gap-4 mt-4">
+                                    <div>
+                                        <label for="multiple_choice_scoring_method" class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Chấm điểm Chọn nhiều (Multiple Choice) <span class="text-[#DC2626]">*</span></label>
+                                        <select id="multiple_choice_scoring_method" name="multiple_choice_scoring_method" class="ca-select @error('multiple_choice_scoring_method') error @enderror" required>
+                                            <option value="all_or_nothing" {{ old('multiple_choice_scoring_method', 'all_or_nothing') === 'all_or_nothing' ? 'selected' : '' }}>Tuyệt đối (All or Nothing - Khuyên dùng)</option>
+                                            <option value="partial_credit" {{ old('multiple_choice_scoring_method') === 'partial_credit' ? 'selected' : '' }}>Theo phần (Partial Credit)</option>
+                                        </select>
+                                        @error('multiple_choice_scoring_method') <span class="text-error">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

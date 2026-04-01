@@ -35,6 +35,7 @@ class Exam extends Model
         'status',
         'exam_type',
         'reopen_reason',
+        'multiple_choice_scoring_method',
         'total_points',
         'pass_points',
         'show_score_after_submit',
