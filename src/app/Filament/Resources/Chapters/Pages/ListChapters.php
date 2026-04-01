@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Chapters\Pages;
 use App\Filament\Resources\Chapters\ChapterResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Support\Enums\Width;
 
 class ListChapters extends ListRecords
 {
@@ -13,7 +14,11 @@ class ListChapters extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()->label('Thêm chương mới')
+                ->icon('heroicon-m-plus')
+                ->successNotificationTitle('Đã thêm chương mới thành công')
+                ->modalHeading('Thêm chương mới')
+                ->modalWidth(Width::Medium),
         ];
     }
 }

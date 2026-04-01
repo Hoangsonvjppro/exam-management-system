@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\Chapters;
 
-use App\Filament\Resources\Chapters\Pages\CreateChapter;
-use App\Filament\Resources\Chapters\Pages\EditChapter;
 use App\Filament\Resources\Chapters\Pages\ListChapters;
 use App\Models\Chapter;
 use Filament\Actions\BulkActionGroup;
@@ -14,10 +12,14 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Validation\Rules\Unique;
 
 class ChapterResource extends Resource
 {
@@ -43,7 +45,11 @@ class ChapterResource extends Resource
                 ->relationship('subject', 'name')
                 ->searchable()
                 ->preload()
-                ->required(),
+                ->required()
+                ->columnSpanFull()
+                ->validationMessages([
+                    'required' => ':Attribute là bắt buộc'
+                ]),
 
             TextInput::make('name')
                 ->label('Tên chương')
@@ -52,11 +58,24 @@ class ChapterResource extends Resource
                 ->columnSpanFull(),
 
             TextInput::make('order')
-                ->label('Thứ tự')
+                ->label('Thứ tự chương')
                 ->numeric()
+                ->integer()
                 ->default(1)
                 ->minValue(1)
-                ->required(),
+                ->required()
+                ->columnSpanFull()
+                ->unique(
+                    table: Chapter::class,
+                    column: 'order',
+                    ignoreRecord: true,
+                    modifyRuleUsing: function (Unique $rule, Get $get) {
+                        return $rule->where('subject_id', $get('subject_id'));
+                    }
+                )
+                ->validationMessages([
+                    'unique' => 'Chương đã tồn tại'
+                ]),
 
             Textarea::make('description')
                 ->label('Mô tả')
@@ -81,20 +100,32 @@ class ChapterResource extends Resource
                 TextColumn::make('name')
                     ->label('Tên chương')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(
+                        fn($state, $record) =>
+                        "Chương {$record->order}: {$state}"
+                    ),
 
                 TextColumn::make('order')
-                    ->label('Thứ tự')
+                    ->label('Thứ tự chương')
                     ->sortable(),
             ])
+            ->defaultKeySort(false)
+            ->groups([
+                Group::make('subject.name')
+                    ->label('Môn học')
+                    ->collapsible(),
+            ])
+            ->defaultGroup('subject.name')
+            ->groupingDirectionSettingHidden()
             ->filters([
                 SelectFilter::make('subject_id')
                     ->label('Môn học')
                     ->relationship('subject', 'name'),
             ])
-            ->defaultSort('subject_id')
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                ->modalWidth(Width::Medium),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
@@ -108,8 +139,6 @@ class ChapterResource extends Resource
     {
         return [
             'index' => ListChapters::route('/'),
-            'create' => CreateChapter::route('/create'),
-            'edit' => EditChapter::route('/{record}/edit'),
         ];
     }
 }
