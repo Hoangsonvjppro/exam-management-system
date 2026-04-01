@@ -338,19 +338,20 @@
                                 <th class="py-2 px-3 text-center border-r border-border-clean min-w-[220px] align-top">
                                     <p class="text-[12px] font-bold text-navy-900 leading-tight whitespace-normal break-words" title="{{ $session->title }}">{{ $session->title }}</p>
                                     <p class="text-[10px] text-text-muted mt-1 mb-2">{{ $session->date->format('d/m/Y') }}</p>
-                                    <div class="flex flex-col items-stretch gap-2 mt-1" x-init="sessions[{{ $session->id }}] = { is_open: {{ $session->is_open ? 'true' : 'false' }}, code: '{{ $session->secret_code }}' }">
+                                    <div class="grid grid-cols-2 gap-2 mt-1" x-init="sessions[{{ $session->id }}] = { is_open: {{ $session->is_open ? 'true' : 'false' }}, code: '{{ $session->secret_code }}' }">
                                         <button @click="toggleSessionOpen({{ $session->id }})"
                                             :disabled="isTogglingSession"
-                                            class="w-full min-h-[38px] px-3 py-2 text-[11px] font-bold uppercase rounded-[10px] border transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                            class="w-full min-h-[42px] px-2 py-2 text-[10px] font-bold uppercase rounded-[8px] border transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                             :class="sessions[{{ $session->id }}]?.is_open ? 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100' : 'bg-surface-0 text-text-muted border-border-clean hover:bg-surface-1'">
                                             <span x-text="sessions[{{ $session->id }}]?.is_open ? 'Đang mở điểm danh' : 'Đã đóng điểm danh'"></span>
                                         </button>
-                                        <button x-show="sessions[{{ $session->id }}]?.is_open"
-                                            x-transition.opacity.duration.150ms
-                                            @click="showPinCode(sessions[{{ $session->id }}]?.code)"
-                                            class="w-full min-h-[40px] px-3 py-2 rounded-[10px] border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors flex items-center justify-center gap-2">
-                                            <span class="text-[11px] font-bold uppercase tracking-wide">Hiện QR và mã</span>
-                                            <span class="text-[13px] font-mono font-black tracking-[0.18em]" x-text="sessions[{{ $session->id }}]?.code"></span>
+                                        <button
+                                            @click="sessions[{{ $session->id }}]?.is_open ? showPinCode(sessions[{{ $session->id }}]?.code) : null"
+                                            :disabled="!sessions[{{ $session->id }}]?.is_open"
+                                            class="w-full min-h-[42px] px-2 py-2 rounded-[8px] border transition-colors flex flex-col items-center justify-center gap-0.5"
+                                            :class="sessions[{{ $session->id }}]?.is_open ? 'border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700' : 'border-border-clean bg-surface-0 text-text-muted cursor-not-allowed opacity-70'">
+                                            <span class="text-[10px] font-bold uppercase tracking-wide">Hiện QR và mã</span>
+                                            <span class="text-[11px] font-mono font-black tracking-[0.16em]" x-text="sessions[{{ $session->id }}]?.is_open ? sessions[{{ $session->id }}]?.code : '-----'"></span>
                                         </button>
                                     </div>
                                 </th>
