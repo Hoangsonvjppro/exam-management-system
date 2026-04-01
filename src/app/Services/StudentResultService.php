@@ -123,9 +123,9 @@ class StudentResultService
     public function convertGradeTo4AndLetter(float $score10): array
     {
         // 1. Kiểm tra tính hợp lệ
-        if ($score10 < 0.0 || $score10 > 10.0) {
-            throw new InvalidArgumentException('Điểm hệ 10 phải nằm trong khoảng từ 0.0 đến 10.0');
-        }
+        // if ($score10 < 0.0 || $score10 > 10.0) {
+        //     throw new InvalidArgumentException('Điểm hệ 10 phải nằm trong khoảng từ 0.0 đến 10.0');
+        // }
 
         // 2. Tính điểm hệ 4 linh hoạt và làm tròn 2 chữ số thập phân (Ví dụ: 8.2 -> 3.28)
         $gpa4 = round($score10 * 0.4, 2);

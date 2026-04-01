@@ -40,7 +40,7 @@ class QuestionBankQueryService
             ->get(['code', 'name']);
 
         $questions = $this->getFilteredQuestionsQuery($filters)
-            ->with(['subject:id,name', 'chapter:id,name', 'questionType:id,name', 'difficultyLevel:code,name'])
+            ->with(['subject:id,name', 'chapter:id,name', 'questionType:id,name,code', 'difficultyLevel:code,name'])
             ->latest('updated_at')
             ->latest('id')
             ->paginate(10)
@@ -77,7 +77,7 @@ class QuestionBankQueryService
         $questionTypes = QuestionType::query()
             ->active()
             ->orderedForQuestionBank()
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'code']);
 
         $difficulties = Difficulty::query()
             ->orderedForQuestionBank()

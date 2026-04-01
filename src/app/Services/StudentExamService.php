@@ -43,6 +43,31 @@ class StudentExamService
             }
         }
 
+        // // Logic check vắng mặt có phép (Leave Request / Excused)
+        // if ($schedule->course_section_id) {
+        //     $hasApprovedLeave = \App\Models\LeaveRequest::where('course_section_id', $schedule->course_section_id)
+        //         ->where('student_id', $userId)
+        //         ->whereDate('date', $schedule->exam_date)
+        //         ->where('status', 'approved')
+        //         ->exists();
+
+        //     if ($hasApprovedLeave) {
+        //         throw new DomainException('Bạn đã được duyệt nghỉ phép vào ngày thi này nên không thể tham gia thi.');
+        //     }
+
+        //     $isExcused = \App\Models\AttendanceRecord::where('student_id', $userId)
+        //         ->where('status', 'excused')
+        //         ->whereHas('session', function ($query) use ($schedule) {
+        //             $query->where('course_section_id', $schedule->course_section_id)
+        //                   ->whereDate('date', $schedule->exam_date);
+        //         })
+        //         ->exists();
+
+        //     if ($isExcused) {
+        //         throw new DomainException('Bạn đã được đánh dấu vắng mặt có phép trong buổi học này nên không thể tham gia thi.');
+        //     }
+        // }
+
         // [Tối ưu] Kiểm tra "Double-check" trước khi vào Transaction/Lock
         $existingInProgress = ExamAttempt::forSchedule($schedule->id)
             ->forUser($userId)
@@ -166,14 +191,19 @@ class StudentExamService
                 $typeCode = $question->questionType->code;
 
                 if ($typeCode === 'multiple_choice' && isset($validated['option_ids'])) {
-                    // Sync options for multi-choice: delete old, insert new
-                    $studentAnswer->selectedOptions()->delete();
-                    $options = array_map(function ($optionId) {
-                        return ['question_option_id' => $optionId];
-                    }, $validated['option_ids']);
+                    $newOptionIds = array_map('intval', $validated['option_ids']);
                     
-                    if (!empty($options)) {
-                        $studentAnswer->selectedOptions()->createMany($options);
+                    // Atomic Sync: Delete options not in the new set, then insert missing ones
+                    // Using a transaction (already active) to ensure consistency
+                    $studentAnswer->selectedOptions()
+                        ->whereNotIn('question_option_id', $newOptionIds)
+                        ->delete();
+
+                    foreach ($newOptionIds as $optionId) {
+                        // Use firstOrCreate to prevent UniqueConstraintViolation if another request just inserted it
+                        $studentAnswer->selectedOptions()->firstOrCreate([
+                            'question_option_id' => $optionId
+                        ]);
                     }
                 }
 

@@ -39,9 +39,12 @@ class ExamAttemptService
                 ->keyBy('question_id');
             
             // 2. Chấm điểm toàn bộ answers dựa trên snapshot
-            $answers = $attempt->answers()->get();
+            $answers = $attempt->answers()->with('selectedOptions')->get();
             $correctCount = 0;
+            $totalCorrectPoints = 0;
             $totalQuestions = $examQuestions->count();
+            
+            $scoringMethod = $exam->multiple_choice_scoring_method ?? 'all_or_nothing';
 
             foreach ($answers as $answer) {
                 $examQuestion = $examQuestions->get($answer->question_id);
@@ -51,13 +54,42 @@ class ExamAttemptService
 
                 $snapshot = $examQuestion->question_snapshot;
                 $options = collect($snapshot['options'] ?? []);
+                $typeCode = $snapshot['question_type_code'] ?? null;
                 
-                // Kiểm tra đáp án sinh viên chọn có đúng theo snapshot không
-                $selectedOption = $options->firstWhere('id', $answer->question_option_id);
-                $isCorrect = $selectedOption['is_correct'] ?? false;
+                if ($typeCode === 'multiple_choice') {
+                    $selectedIds = $answer->selectedOptions->pluck('question_option_id')->toArray();
+                    $correctOptionIds = $options->where('is_correct', true)->pluck('id')->toArray();
+                    
+                    if ($scoringMethod === 'all_or_nothing') {
+                        $isCorrect = count($selectedIds) === count($correctOptionIds) && 
+                                     empty(array_diff($selectedIds, $correctOptionIds)) && 
+                                     empty(array_diff($correctOptionIds, $selectedIds));
+                        $awardedPoint = $isCorrect ? 1 : 0;
+                    } else { // partial_credit
+                        $correctPicks = 0;
+                        $incorrectPicks = 0;
+                        foreach ($selectedIds as $selectedId) {
+                            if (in_array($selectedId, $correctOptionIds)) {
+                                $correctPicks++;
+                            } else {
+                                $incorrectPicks++;
+                            }
+                        }
+                        $totalCorrectOptions = count($correctOptionIds);
+                        $awardedPoint = $totalCorrectOptions > 0 
+                            ? max(0, ($correctPicks - $incorrectPicks) / $totalCorrectOptions) 
+                            : 0;
+                        $isCorrect = $awardedPoint > 0;
+                    }
+                } else {
+                    // Kiểm tra đáp án sinh viên chọn có đúng theo snapshot không
+                    $selectedOption = $options->firstWhere('id', $answer->question_option_id);
+                    $isCorrect = $selectedOption['is_correct'] ?? false;
+                    $awardedPoint = $isCorrect ? 1 : 0;
+                }
 
-                $awardedPoint = $isCorrect ? 1 : 0;
-                if ($isCorrect) {
+                $totalCorrectPoints += $awardedPoint;
+                if ($awardedPoint == 1) {
                     $correctCount++;
                 }
 
@@ -67,9 +99,9 @@ class ExamAttemptService
                 ]);
             }
 
-            // 3. Tính điểm hệ 10: (số câu đúng / tổng câu) × 10, làm tròn 1 số thập phân
+            // 3. Tính điểm hệ 10: (tổng điểm thành phần / tổng câu) × 10, làm tròn 1 số thập phân
             $totalScore = $totalQuestions > 0
-                ? round(($correctCount / $totalQuestions) * 10, 1)
+                ? round(($totalCorrectPoints / $totalQuestions) * 10, 1)
                 : 0;
 
             // 4. Cập nhật trạng thái attempt
