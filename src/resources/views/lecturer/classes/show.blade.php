@@ -1486,11 +1486,7 @@
                 isSubmittingColumn: false,
                 isEditingColumn: false,
                 editingColumnId: null,
-                totalWeight: {
-                    {
-                        $section - > gradeColumns - > sum('weight')
-                    }
-                },
+                totalWeight: {{ $section->gradeColumns->sum('weight') }},
                 columnData: {
                     name: '',
                     weight: 10
@@ -1499,12 +1495,8 @@
                 initialScores: {},
                 saved: {},
                 weights: {
-                    @foreach($section - > gradeColumns as $col)
-                    '{{$col->id}}': {
-                        {
-                            (float) $col - > weight
-                        }
-                    },
+                    @foreach($section->gradeColumns as $col)
+                    '{{ $col->id }}': {{ (float) $col->weight }},
                     @endforeach
                 },
 
