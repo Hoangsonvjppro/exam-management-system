@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -22,6 +23,20 @@ class Subject extends Model
         'description',
     ];
 
+    /**
+     * Các lecturer dạy môn này
+     * qua pivot table assignments
+     */
+    public function lecturers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'assignments',
+            'subject_id',
+            'lecturer_id'
+        )->withTimestamps();
+    }
+    
     public function scopeOrderedForQuestionBank(Builder $query): Builder
     {
         return $query->orderBy('name');
