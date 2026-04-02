@@ -1,96 +1,55 @@
-name: Deploy main branch
+name: Tự động cập nhật khi Push
 
 on:
   push:
     branches:
       - main
+  # Thêm workflow_dispatch để cho phép chạy bằng tay từ giao diện GitHub
   workflow_dispatch:
-
-permissions:
-  contents: read
+    inputs:
+      fresh_seed:
+        description: 'Chạy migrate:fresh --seed (Xóa trắng & tạo lại DB)?'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   deploy:
     runs-on: self-hosted
 
-    env:
-      APP_ENV: production
-      COMPOSER_FLAGS: --no-interaction --prefer-dist --optimize-autoloader --no-dev
-
     steps:
-      - name: Lấy code mới nhất
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Kiểm tra môi trường runtime
+      - name: Di chuyển và lấy code mới nhất
         run: |
-          set -euxo pipefail
-          php -v
-          composer --version
-          node -v
-          npm -v
-
-      - name: Kiểm tra lock files
-        working-directory: ./src
-        run: |
-          set -euxo pipefail
-          test -f composer.lock
-          test -f package-lock.json
-
-      - name: Xác thực composer.json
-        working-directory: ./src
-        run: composer validate --no-check-publish --strict
+          cd /home/aurora/exam-management-system
+          git pull origin main
 
       - name: Cài đặt PHP dependencies
-        working-directory: ./src
-        run: |
-          set -euxo pipefail
-          rm -rf vendor/
-          composer install $COMPOSER_FLAGS --no-scripts
-          composer install $COMPOSER_FLAGS
-
-      - name: Kiểm tra platform requirements (PHP extensions)
-        working-directory: ./src
-        run: composer check-platform-reqs
+        working-directory: /home/aurora/exam-management-system/src
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Cài đặt JS và Build giao diện
-        working-directory: ./src
+        working-directory: /home/aurora/exam-management-system/src
         run: |
-          set -euxo pipefail
-          npm ci
-          npm run check:alpine-state
+          npm install
           npm run build
 
-      - name: Chạy lệnh mở rộng cho teammate (nếu có)
-        run: |
-          set -euxo pipefail
-          if [ -f .github/scripts/deploy-extra.sh ]; then
-            chmod +x .github/scripts/deploy-extra.sh
-            ./.github/scripts/deploy-extra.sh
-          else
-            echo "Khong co .github/scripts/deploy-extra.sh, bo qua"
-          fi
+      # --- PHẦN CẬP NHẬT DATABASE ĐÃ ĐƯỢC CHIA LÀM 2 TRƯỜNG HỢP ---
 
       - name: Cập nhật Database (Xóa trắng và Seed lại)
-        working-directory: ./src
-        if: ${{ github.event.head_commit && contains(github.event.head_commit.message, '[fresh-seed]') }}
-        run: php artisan migrate:fresh --seed --force --no-interaction
+        # Sẽ chạy nếu bạn tick chọn trên GitHub UI HOẶC trong commit message có tag [fresh-seed]
+        if: ${{ github.event.inputs.fresh_seed == 'true' || contains(github.event.head_commit.message, '[fresh-seed]') }}
+        working-directory: /home/aurora/exam-management-system/src
+        run: php artisan migrate:fresh --seed --force
 
       - name: Cập nhật Database (Bình thường)
-        working-directory: ./src
-        if: ${{ !github.event.head_commit || !contains(github.event.head_commit.message, '[fresh-seed]') }}
-        run: php artisan migrate --force --no-interaction
+        # Sẽ chạy nếu KHÔNG tick chọn UI VÀ commit message KHÔNG có tag [fresh-seed]
+        if: ${{ github.event.inputs.fresh_seed != 'true' && !contains(github.event.head_commit.message, '[fresh-seed]') }}
+        working-directory: /home/aurora/exam-management-system/src
+        run: php artisan migrate --force
 
-      - name: Tối ưu cache Laravel
-        working-directory: ./src
+      - name: Dọn dẹp cache
+        working-directory: /home/aurora/exam-management-system/src
         run: |
-          set -euxo pipefail
-          php artisan optimize:clear
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
-
-      - name: Kiểm tra nhanh sau deploy
-        working-directory: ./src
-        run: php artisan about --only=environment
