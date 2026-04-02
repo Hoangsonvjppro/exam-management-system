@@ -13,10 +13,13 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\TextSize;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -47,7 +50,12 @@ class SubjectResource extends Resource
                 ->label('Mã môn học')
                 ->required()
                 ->maxLength(20)
-                ->unique(ignoreRecord: true),
+                ->columnSpanFull()
+                ->unique(ignoreRecord: true)
+                ->validationMessages([
+                    'unique' => ':Attribute đã tồn tại'
+                ])
+                ->disabledOn('edit'),
 
             TextInput::make('name')
                 ->label('Tên môn học')
@@ -62,9 +70,20 @@ class SubjectResource extends Resource
                 ->maxValue(10)
                 ->required(),
 
-            TextInput::make('department')
+            Select::make('department_id')
                 ->label('Khoa phụ trách')
-                ->maxLength(255),
+                ->relationship('department', 'name')
+                ->searchable(['name', 'code'])
+                ->getOptionLabelFromRecordUsing(
+                    fn($record) =>
+                    "{$record->code} - {$record->name}"
+                )
+                ->preload()
+                ->required()
+                ->native(false)
+                ->validationMessages([
+                    'required' => ':Attribute là bắt buộc'
+                ]),
 
             Textarea::make('description')
                 ->label('Mô tả môn học')
@@ -80,7 +99,10 @@ class SubjectResource extends Resource
                 TextColumn::make('code')
                     ->label('Mã môn học')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->badge()
+                    ->copyable()
+                    ->size(TextSize::Large),
 
                 TextColumn::make('name')
                     ->label('Tên môn học')
@@ -91,7 +113,7 @@ class SubjectResource extends Resource
                     ->label('Số tín chỉ')
                     ->sortable(),
 
-                TextColumn::make('department')
+                TextColumn::make('department.name')
                     ->label('Khoa')
                     ->toggleable(),
 
@@ -102,18 +124,21 @@ class SubjectResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('credits')
+                    ->native(false)
                     ->label('Số tín chỉ')
-                    ->options(fn (): array => Subject::query()
+                    ->options(fn(): array => Subject::query()
                         ->select('credits')
                         ->distinct()
                         ->orderBy('credits')
                         ->pluck('credits', 'credits')
                         ->toArray()),
 
-                TrashedFilter::make(),
+                TrashedFilter::make()
+                    ->native(false),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->modalWidth(Width::TwoExtraLarge),
                 DeleteAction::make(),
                 RestoreAction::make(),
             ])
@@ -130,8 +155,6 @@ class SubjectResource extends Resource
     {
         return [
             'index' => ListSubjects::route('/'),
-            'create' => CreateSubject::route('/create'),
-            'edit' => EditSubject::route('/{record}/edit'),
         ];
     }
 
