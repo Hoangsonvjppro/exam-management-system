@@ -18,7 +18,7 @@
                                 — Lớp: <span class="font-semibold text-[#1A3A6B]">{{ auth()->user()->studentClass->name }}</span>
                             @endif
                         @else
-                            Bạn chưa cập nhật thông tin sinh viên.
+                            Bạn chưa hoàn tất hồ sơ sinh viên (MSSV + Họ tên).
                             <a href="{{ route('onboarding.show') }}" class="text-[#185FA5] font-medium hover:underline ml-1">Hoàn tất hồ sơ ngay →</a>
                         @endif
                     </p>

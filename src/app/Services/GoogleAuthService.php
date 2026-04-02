@@ -43,8 +43,15 @@ class GoogleAuthService
         }
 
         $user->google_id = $user->google_id ?: $googleId;
-        $user->name = $googleUser->getName() ?: $user->name;
         $user->google_avatar = $googleUser->getAvatar();
+
+        // Nếu user chưa hoàn tất onboarding (chưa có MSSV),
+        // cho phép cập nhật tên từ Google. Ngược lại giữ nguyên
+        // tên đã chuẩn hóa trong hồ sơ học vụ.
+        if (! $user->student_code) {
+            $user->name = $googleUser->getName() ?: $user->name;
+        }
+
         $user->save();
 
         return $user;

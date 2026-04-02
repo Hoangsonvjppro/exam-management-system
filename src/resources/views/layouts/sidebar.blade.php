@@ -32,7 +32,11 @@
         {{-- MENU CHÍNH --}}
         <div class="sidebar-section-title">{{ __('MENU CHÍNH') }}</div>
 
+        @if(auth()->user()?->hasRole('lecturer'))
+        <x-sidebar-link :href="route('lecturer.classes.index')" :active="request()->routeIs('lecturer.classes.index')">
+        @else
         <x-sidebar-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+        @endif
             <x-slot name="icon">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />

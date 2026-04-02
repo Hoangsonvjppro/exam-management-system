@@ -47,6 +47,15 @@
             @endif
         </div>
 
+        @if($user->hasRole('student'))
+        <div>
+            <x-input-label for="student_code" :value="__('Mã số sinh viên (MSSV)')" />
+            <x-text-input id="student_code" name="student_code" type="text" class="mt-1 block w-full" :value="old('student_code', $user->student_code)" autocomplete="off" placeholder="VD: 22123456" />
+            <x-input-error class="mt-2" :messages="$errors->get('student_code')" />
+            <p class="mt-1 text-xs text-gray-500">Họ tên và MSSV phải khớp với hồ sơ học vụ chính thức.</p>
+        </div>
+        @endif
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 
