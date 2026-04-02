@@ -26,6 +26,7 @@ class ExamAttempt extends Model
         'submitted_answers_count',
         'tab_switch_count',
         'focus_lost_at',
+        'current_question_id',
     ];
 
     protected $casts = [
@@ -74,6 +75,11 @@ class ExamAttempt extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function currentQuestion(): BelongsTo
+    {
+        return $this->belongsTo(Question::class, 'current_question_id');
     }
 
     public function answers(): HasMany

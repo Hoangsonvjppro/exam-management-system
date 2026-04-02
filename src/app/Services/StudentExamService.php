@@ -158,6 +158,8 @@ class StudentExamService
         // Use transaction for database-level atomicity
         return DB::transaction(function () use ($schedule, $attempt, $validated, $tabSwitchCount) {
             try {
+                $isNavigationPing = (bool) ($validated['is_navigation_ping'] ?? false);
+
                 $question = \App\Models\Question::with('questionType')
                     ->where('id', $validated['question_id'])
                     ->first();
@@ -173,6 +175,20 @@ class StudentExamService
 
                 if (! $questionBelongsToExam) {
                     return ['http_code' => 422, 'message' => 'Câu hỏi không thuộc đề thi này.'];
+                }
+
+                $attemptUpdates = [
+                    'current_question_id' => $question->id,
+                ];
+
+                if ($tabSwitchCount !== null) {
+                    $attemptUpdates['tab_switch_count'] = $tabSwitchCount;
+                }
+
+                $attempt->update($attemptUpdates);
+
+                if ($isNavigationPing) {
+                    return ['http_code' => 200, 'message' => ''];
                 }
 
                 // 1. Update main StudentAnswer (Atomic Upsert)
@@ -205,11 +221,6 @@ class StudentExamService
                             'question_option_id' => $optionId
                         ]);
                     }
-                }
-
-                // 3. Update behavior tracking if provided
-                if ($tabSwitchCount !== null) {
-                    $attempt->update(['tab_switch_count' => $tabSwitchCount]);
                 }
 
                 return ['http_code' => 200, 'message' => ''];

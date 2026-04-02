@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Models\Chapter;
 use App\Models\Difficulty;
+use App\Models\ExamAttempt;
 use App\Models\Question;
 use App\Models\QuestionType;
 use App\Models\Subject;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 
 class QuestionBankQueryService
 {
@@ -122,6 +124,8 @@ class QuestionBankQueryService
      */
     public function updateQuestion(Question $question, array $payload): Question
     {
+        $this->assertQuestionCanBeUpdated($question);
+
         return \Illuminate\Support\Facades\DB::transaction(function () use ($question, $payload) {
             $question->update($payload);
 
@@ -129,7 +133,7 @@ class QuestionBankQueryService
                 // Remove old options and recreate for simplicity, or sync.
                 $question->options()->delete();
                 $correctOptions = $payload['correct_options'] ?? [];
-                
+
                 // Trimming the correctOptions to flat structure just in case it's an array of strings
                 foreach ($payload['options'] as $index => $optionData) {
                     $question->options()->create([
@@ -143,6 +147,20 @@ class QuestionBankQueryService
 
             return $question;
         });
+    }
+
+    private function assertQuestionCanBeUpdated(Question $question): void
+    {
+        $isBeingAttempted = ExamAttempt::query()
+            ->inProgress()
+            ->where('current_question_id', $question->id)
+            ->exists();
+
+        if ($isBeingAttempted) {
+            throw ValidationException::withMessages([
+                'question' => 'Khong the cap nhat cau hoi nay vi co sinh vien dang lam den cau nay.',
+            ]);
+        }
     }
 
     public function deleteQuestion(Question $question): void

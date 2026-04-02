@@ -16,6 +16,7 @@ const toastMsg = document.getElementById('toast-msg');
 document.addEventListener("DOMContentLoaded", function () {
     updateNavigationButtons();
     updateAnsweredCount();
+    trackCurrentQuestion(currentQuestionIndex);
 
     let timeLeft = parseInt(configEl?.dataset.timeLeft || '0', 10);
     const timerDisplay = document.getElementById('countdown-timer');
@@ -154,7 +155,9 @@ function showToast(message, type = 'success') {
     toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
 
-function autoSave(payload) {
+function autoSave(payload, options = {}) {
+    const { silentFail = false } = options;
+
     fetch(saveUrl, {
         method: "POST",
         headers: {
@@ -165,11 +168,43 @@ function autoSave(payload) {
     })
         .then(res => res.json())
         .then(data => {
-            if (!data.success) {
+            if (!data.success && !silentFail) {
                 showToast('Không thể lưu!', 'error');
             }
         })
-        .catch(() => showToast('Lỗi kết nối!', 'error'));
+        .catch(() => {
+            if (!silentFail) {
+                showToast('Lỗi kết nối!', 'error');
+            }
+        });
+}
+
+function getQuestionIdByIndex(index) {
+    const container = document.getElementById(`question-${index}`);
+    if (!container) return null;
+
+    const questionId = parseInt(container.dataset.questionId || '0', 10);
+    if (Number.isNaN(questionId) || questionId <= 0) {
+        return null;
+    }
+
+    return questionId;
+}
+
+function trackCurrentQuestion(index) {
+    const questionId = getQuestionIdByIndex(index);
+    if (!questionId) {
+        return;
+    }
+
+    autoSave(
+        {
+            question_id: questionId,
+            tab_switch_count: tabSwitchCount,
+            is_navigation_ping: true,
+        },
+        { silentFail: true }
+    );
 }
 
 // Anti-cheat: Tab switch tracking
@@ -211,6 +246,7 @@ function goToQuestion(index) {
     document.getElementById(`question-${currentQuestionIndex}`).classList.add('active');
     document.getElementById(`nav-btn-${currentQuestionIndex}`).classList.add('current');
     updateNavigationButtons();
+    trackCurrentQuestion(currentQuestionIndex);
     // Scroll question nav button into view
     document.getElementById(`nav-btn-${currentQuestionIndex}`).scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }

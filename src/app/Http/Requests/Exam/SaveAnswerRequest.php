@@ -20,6 +20,7 @@ class SaveAnswerRequest extends FormRequest
             'option_ids.*'       => 'integer|exists:question_options,id',
             'answer_text'        => 'nullable|string',
             'tab_switch_count'   => 'nullable|integer',
+            'is_navigation_ping' => 'nullable|boolean',
         ];
     }
 

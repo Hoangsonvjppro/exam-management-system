@@ -638,7 +638,7 @@ $totalQuestions = count($questions);
                 @csrf
 
                 @foreach($questions as $index => $question)
-                <div class="question-container {{ $index === 0 ? 'active' : '' }}" id="question-{{ $index }}">
+                <div class="question-container {{ $index === 0 ? 'active' : '' }}" id="question-{{ $index }}" data-question-id="{{ $question->id }}">
 
                     <div class="question-header">
                         <div style="display:flex; align-items:center; gap:12px;">
