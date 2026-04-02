@@ -15,8 +15,8 @@ $statusMap = [
 <tr class="border-t border-[#EBF2FA] hover:bg-[#F8FAFD] transition-colors {{ $runtimeStatus === 'in_progress' ? 'bg-[#FFFBEB]/35' : '' }}">
     <td class="px-5 py-5 font-semibold text-[#1A3A6B] leading-relaxed">{{ $schedule->exam->title }}</td>
     <td class="px-5 py-5 text-[#6B7C99] leading-relaxed">{{ $schedule->courseSection->name ?? '—' }}</td>
-    <td class="px-5 py-5 text-center text-[#374151] font-medium">{{ $schedule->exam_date->format('d/m/Y') }}</td>
-    <td class="px-5 py-5 text-center text-[#374151] font-medium">{{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} – {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}</td>
+    <td class="px-5 py-5 text-center text-[#374151] font-medium">{{ $schedule->date_range_text }}</td>
+    <td class="px-5 py-5 text-center text-[#374151] font-medium">{{ $schedule->time_range_text }}</td>
     <td class="px-5 py-5 text-center text-[#374151] font-semibold">{{ $schedule->assigned_count ?? 0 }}</td>
     <td class="px-5 py-5 text-center">
         <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full {{ $badgeClass }}">

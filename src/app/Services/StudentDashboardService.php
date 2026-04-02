@@ -6,7 +6,6 @@ use App\Models\CourseSection;
 use App\Models\ExamSchedule;
 use App\Models\User;
 use App\Models\UserNotification;
-use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
 
@@ -26,23 +25,15 @@ class StudentDashboardService
         $schedules = ExamSchedule::whereIn('course_section_id', $sectionIds)
             ->whereHas('exam', fn($q) => $q->published())
             ->with(['exam.subject', 'courseSection'])
-            ->orderByDesc('exam_date')
-            ->orderByDesc('start_time')
+            ->orderByRaw('TIMESTAMP(exam_date, start_time) DESC')
             ->get();
 
         // Upcoming exams — not yet ended, ordered by nearest first, max 6
         $upcomingExams = ExamSchedule::whereIn('course_section_id', $sectionIds)
             ->whereHas('exam', fn($q) => $q->published())
-            ->where(function ($q) {
-                $q->where('exam_date', '>', now()->toDateString())
-                    ->orWhere(function ($q2) {
-                        $q2->where('exam_date', now()->toDateString())
-                            ->where('end_time', '>=', now()->toTimeString());
-                    });
-            })
+            ->whereRaw('TIMESTAMP(COALESCE(end_date, exam_date), end_time) >= ?', [now()->toDateTimeString()])
             ->with(['exam.subject', 'courseSection'])
-            ->orderBy('exam_date')
-            ->orderBy('start_time')
+            ->orderByRaw('TIMESTAMP(exam_date, start_time)')
             ->limit(6)
             ->get();
 
@@ -107,16 +98,14 @@ class StudentDashboardService
         $examSchedules = ExamSchedule::where('course_section_id', $section->id)
             ->whereHas('exam', fn($q) => $q->published())
             ->with(['exam.subject'])
-            ->orderByDesc('exam_date')
-            ->orderByDesc('start_time')
+            ->orderByRaw('TIMESTAMP(exam_date, start_time) DESC')
             ->get();
 
         // Determine status for each schedule for this student
         $examSchedules->each(function (ExamSchedule $schedule) use ($user) {
             $now = now();
-            $examDate = Carbon::parse((string) $schedule->exam_date)->format('Y-m-d');
-            $startDt = Carbon::parse($examDate . ' ' . $schedule->start_time);
-            $endDt = Carbon::parse($examDate . ' ' . $schedule->end_time);
+            $startDt = $schedule->start_datetime;
+            $endDt = $schedule->end_datetime;
 
             if ($schedule->status === 'cancelled') {
                 $schedule->student_status = 'cancelled';

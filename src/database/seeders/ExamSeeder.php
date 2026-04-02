@@ -178,6 +178,7 @@ class ExamSeeder extends Seeder
                     ['exam_id' => $exam->id, 'course_section_id' => $section->id],
                     [
                         'exam_date'    => $examDate,
+                        'end_date'     => $examDate,
                         'start_time'   => $startTime,
                         'end_time'     => $endTime,
                         'max_students' => $section->max_students,

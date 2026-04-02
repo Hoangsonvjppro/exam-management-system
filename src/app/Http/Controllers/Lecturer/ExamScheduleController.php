@@ -87,7 +87,7 @@ class ExamScheduleController extends Controller
             if ($schedule->courseSection) {
                 $this->notificationService->sendToSection($schedule->courseSection, [
                     'title' => 'Lịch thi mới',
-                    'message' => 'Bạn có một lịch thi mới cho môn học ' . ($schedule->exam->subject->name ?? 'Không xác định') . '. Ngày thi: ' . $schedule->exam_date->format('d/m/Y'),
+                    'message' => 'Bạn có một lịch thi mới cho môn học ' . ($schedule->exam->subject->name ?? 'Không xác định') . '. Thời gian: ' . $schedule->start_datetime->format('H:i d/m/Y') . ' - ' . $schedule->end_datetime->format('H:i d/m/Y'),
                 ]);
             }
         }

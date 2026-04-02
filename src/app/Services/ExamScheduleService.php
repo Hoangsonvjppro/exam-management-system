@@ -155,13 +155,6 @@ class ExamScheduleService
 
         $toAssign = $enrolledStudentIds->diff($alreadyAssignedIds);
 
-        // Giới hạn theo max_students nếu có
-        if ($schedule->max_students) {
-            $currentCount = $schedule->scheduleStudents()->count();
-            $remaining = max(0, $schedule->max_students - $currentCount);
-            $toAssign = $toAssign->take($remaining);
-        }
-
         DB::transaction(function () use ($schedule, $toAssign) {
             foreach ($toAssign as $studentId) {
                 $schedule->scheduleStudents()->create([
@@ -249,7 +242,7 @@ class ExamScheduleService
             });
         }
 
-        return $query->orderBy('exam_date')->orderBy('start_time')->get();
+        return $query->orderByRaw('TIMESTAMP(exam_date, start_time)')->get();
     }
 
     /**
@@ -262,8 +255,7 @@ class ExamScheduleService
                 ->where('course_section_students.status', 'enrolled');
         })
             ->with(['exam.subject', 'courseSection'])
-            ->orderBy('exam_date', 'desc')
-            ->orderBy('start_time')
+            ->orderByRaw('TIMESTAMP(exam_date, start_time) DESC')
             ->get();
     }
 

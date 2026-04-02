@@ -239,25 +239,26 @@
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ngày thi <span class="text-red-500">*</span></label>
+                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ngày bắt đầu <span class="text-red-500">*</span></label>
                                 <input type="date" name="exam_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
                                 <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="exam_date"></p>
                             </div>
                             <div>
-                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Số SV tối đa</label>
-                                <input type="number" name="max_students" min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Không giới hạn">
+                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ngày kết thúc <span class="text-red-500">*</span></label>
+                                <input type="date" name="end_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
+                                <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_date"></p>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Giờ bắt đầu <span class="text-red-500">*</span></label>
-                                <input type="time" name="start_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <input type="text" name="start_time" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" title="Nhập giờ theo định dạng 24h, ví dụ 08:30">
                                 <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="start_time"></p>
                             </div>
                             <div>
                                 <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Giờ kết thúc <span class="text-red-500">*</span></label>
-                                <input type="time" name="end_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <input type="text" name="end_time" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" title="Nhập giờ theo định dạng 24h, ví dụ 17:45">
                                 <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_time"></p>
                             </div>
                         </div>

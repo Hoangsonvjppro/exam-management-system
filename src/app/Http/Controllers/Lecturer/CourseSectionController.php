@@ -120,7 +120,7 @@ class CourseSectionController extends Controller
             ->map(fn($schedule) => (object) [
                 'created_at' => $schedule->created_at,
                 'title' => 'Lịch thi mới',
-                'message' => 'Bạn đã tạo một lịch thi mới cho môn học ' . $subjectName . '. Ngày thi: ' . $schedule->exam_date->format('d/m/Y'),
+                'message' => 'Bạn đã tạo một lịch thi mới cho môn học ' . $subjectName . '. Thời gian: ' . $schedule->start_datetime->format('H:i d/m/Y') . ' - ' . $schedule->end_datetime->format('H:i d/m/Y'),
                 'source' => 'exam_schedule',
             ])
             ->values();

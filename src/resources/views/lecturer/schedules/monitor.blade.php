@@ -23,8 +23,8 @@
                     <h2 class="text-2xl font-bold text-navy-900">{{ $schedule->exam->title }}</h2>
                     <p class="mt-1 text-sm text-text-muted">
                         {{ $schedule->courseSection->name ?? 'Không xác định lớp' }}
-                        · {{ $schedule->exam_date->format('d/m/Y') }}
-                        · {{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}
+                        · {{ $schedule->date_range_text }}
+                        · {{ $schedule->time_range_text }}
                     </p>
                     <p class="mt-1 text-sm text-text-muted">Môn: {{ $schedule->exam->subject->name ?? 'Không xác định' }}</p>
                 </div>
