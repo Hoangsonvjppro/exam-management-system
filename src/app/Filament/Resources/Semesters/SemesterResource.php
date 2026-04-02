@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Semesters;
 use App\Filament\Resources\Semesters\Pages\CreateSemester;
 use App\Filament\Resources\Semesters\Pages\EditSemester;
 use App\Filament\Resources\Semesters\Pages\ListSemesters;
+use App\Filament\Support\HasAdminCrudPermissions;
 use App\Models\Semester;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -23,6 +24,13 @@ use Filament\Tables\Table;
 
 class SemesterResource extends Resource
 {
+    use HasAdminCrudPermissions;
+
+    protected static function getAdminPermissionModule(): string
+    {
+        return 'semesters';
+    }
+
     protected static ?string $model = Semester::class;
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
@@ -95,7 +103,7 @@ class SemesterResource extends Resource
                 TextColumn::make('term')
                     ->label('Học kỳ')
                     ->badge()
-                    ->formatStateUsing(fn (int $state): string => match ($state) {
+                    ->formatStateUsing(fn(int $state): string => match ($state) {
                         1 => 'HK1',
                         2 => 'HK2',
                         3 => 'HK He',

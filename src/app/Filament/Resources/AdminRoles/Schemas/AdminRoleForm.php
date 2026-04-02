@@ -44,8 +44,17 @@ class AdminRoleForm
     {
         $moduleLabels = [
             'users' => 'Người dùng',
+            'students' => 'Sinh viên',
             'admins' => 'Quản trị viên',
             'roles' => 'Nhóm quyền',
+            'announcements' => 'Thông báo',
+            'student-classes' => 'Lớp sinh viên',
+            'course-sections' => 'Lớp học phần',
+            'semesters' => 'Học kỳ',
+            'departments' => 'Khoa',
+            'majors' => 'Ngành học',
+            'subjects' => 'Môn học',
+            'chapters' => 'Chương',
             'settings' => 'Cấu hình hệ thống',
             'reports' => 'Báo cáo',
         ];

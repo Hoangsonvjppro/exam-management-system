@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Students;
 
 use App\Filament\Resources\Students\Pages\ManageStudents as PagesManageStudents;
+use App\Filament\Support\HasAdminCrudPermissions;
 use App\Filament\Tables\StudentClassesTable;
 use App\Models\Major;
 use App\Models\StudentClass;
@@ -32,6 +33,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class StudentsResource extends Resource
 {
+    use HasAdminCrudPermissions;
+
+    protected static function getAdminPermissionModule(): string
+    {
+        return 'students';
+    }
+
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
@@ -92,7 +100,7 @@ class StudentsResource extends Resource
                 ->searchable()
                 ->preload()
                 ->required()
-                ->options(fn () => Major::activeWithDepartment()->orderBy('name')->pluck('name', 'id')->toArray())
+                ->options(fn() => Major::activeWithDepartment()->orderBy('name')->pluck('name', 'id')->toArray())
                 ->getOptionLabelFromRecordUsing(
                     fn($record) => "{$record->code} - {$record->name}"
                 )
@@ -275,10 +283,14 @@ class StudentsResource extends Resource
                         : 'heroicon-o-lock-open')
                     ->color(fn(User $r) => $r->is_active ? 'warning' : 'success')
                     ->requiresConfirmation()
+                    ->visible(fn(): bool => static::canForAction('update'))
                     ->modalHeading(fn(User $r) => $r->is_active
                         ? "Khóa tài khoản {$r->name}?"
                         : "Mở khóa tài khoản {$r->name}?")
-                    ->action(fn(User $r) => $r->update(['is_active' => ! $r->is_active])),
+                    ->action(function (User $r): void {
+                        abort_unless(static::canForAction('update'), 403);
+                        $r->update(['is_active' => ! $r->is_active]);
+                    }),
                 EditAction::make(),
             ])
             ->defaultSort('student_code');

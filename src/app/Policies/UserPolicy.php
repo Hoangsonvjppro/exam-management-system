@@ -29,7 +29,7 @@ class UserPolicy
 
     public function delete(Admin $admin, User $user): bool
     {
-        return false;
+        return $admin->is_active && $admin->checkPermissionTo('admin.users.delete', 'admin');
     }
 
     public function restore(Admin $admin, User $user): bool

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Majors;
 
 use App\Filament\Resources\Majors\Pages\ManageMajors;
+use App\Filament\Support\HasAdminCrudPermissions;
 use App\Models\Major;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -23,6 +24,13 @@ use Filament\Tables\Table;
 
 class MajorResource extends Resource
 {
+    use HasAdminCrudPermissions;
+
+    protected static function getAdminPermissionModule(): string
+    {
+        return 'majors';
+    }
+
     protected static ?string $model = Major::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
@@ -134,10 +142,14 @@ class MajorResource extends Resource
                         : 'heroicon-o-lock-open')
                     ->color(fn(Major $r) => $r->is_active ? 'warning' : 'success')
                     ->requiresConfirmation()
+                    ->visible(fn(): bool => static::canForAction('update'))
                     ->modalHeading(fn(Major $r) => $r->is_active
                         ? "Khóa ngành {$r->name}?"
                         : "Mở khóa ngành {$r->name}?")
-                    ->action(fn(Major $r) => $r->toggleActive()),
+                    ->action(function (Major $r): void {
+                        abort_unless(static::canForAction('update'), 403);
+                        $r->toggleActive();
+                    }),
                 EditAction::make(),
             ])
             ->defaultSort('name')

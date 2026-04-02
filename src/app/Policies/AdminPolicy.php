@@ -44,7 +44,19 @@ class AdminPolicy
 
     public function delete(Admin $admin, Admin $target): bool
     {
-        return false;
+        if (! ($admin->is_active && $admin->checkPermissionTo('admin.admins.delete', 'admin'))) {
+            return false;
+        }
+
+        if ($target->id === $admin->id) {
+            return false;
+        }
+
+        if ($target->is_super_admin && ! $admin->is_super_admin) {
+            return false;
+        }
+
+        return true;
     }
 
     public function restore(Admin $admin, Admin $target): bool

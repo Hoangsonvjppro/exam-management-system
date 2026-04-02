@@ -96,4 +96,9 @@ class AdminRoleResource extends Resource
 
         return $record->name !== 'root_admin';
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
 }

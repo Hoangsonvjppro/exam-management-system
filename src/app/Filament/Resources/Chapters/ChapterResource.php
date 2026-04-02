@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Chapters;
 
 use App\Filament\Resources\Chapters\Pages\ListChapters;
+use App\Filament\Support\HasAdminCrudPermissions;
 use App\Models\Chapter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -23,6 +24,13 @@ use Illuminate\Validation\Rules\Unique;
 
 class ChapterResource extends Resource
 {
+    use HasAdminCrudPermissions;
+
+    protected static function getAdminPermissionModule(): string
+    {
+        return 'chapters';
+    }
+
     protected static ?string $model = Chapter::class;
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-book-open';
@@ -121,7 +129,7 @@ class ChapterResource extends Resource
             ])
             ->recordActions([
                 EditAction::make()
-                ->modalWidth(Width::Medium),
+                    ->modalWidth(Width::Medium),
                 DeleteAction::make(),
             ])
             ->toolbarActions([

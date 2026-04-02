@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Announcements;
 use App\Filament\Resources\Announcements\Pages\CreateAnnouncement;
 use App\Filament\Resources\Announcements\Pages\EditAnnouncement;
 use App\Filament\Resources\Announcements\Pages\ListAnnouncements;
+use App\Filament\Support\HasAdminCrudPermissions;
 use App\Models\Announcement;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -23,6 +24,13 @@ use Filament\Tables\Table;
 
 class AnnouncementResource extends Resource
 {
+    use HasAdminCrudPermissions;
+
+    protected static function getAdminPermissionModule(): string
+    {
+        return 'announcements';
+    }
+
     protected static ?string $model = Announcement::class;
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-megaphone';
     protected static ?string $navigationLabel = 'Thông báo';

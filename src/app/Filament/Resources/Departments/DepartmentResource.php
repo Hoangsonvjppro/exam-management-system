@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Departments;
 
 use App\Filament\Resources\Departments\Pages\ManageDepartments;
+use App\Filament\Support\HasAdminCrudPermissions;
 use App\Models\Department;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -25,6 +26,13 @@ use Filament\Tables\Table;
 
 class DepartmentResource extends Resource
 {
+    use HasAdminCrudPermissions;
+
+    protected static function getAdminPermissionModule(): string
+    {
+        return 'departments';
+    }
+
     protected static ?string $model = Department::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingLibrary;
@@ -52,7 +60,7 @@ class DepartmentResource extends Resource
                     ->unique(ignoreRecord: true)
                     ->disabledOn('edit')
                     ->maxLength(50)
-                    ->dehydrateStateUsing(fn ($state) => strtoupper($state))
+                    ->dehydrateStateUsing(fn($state) => strtoupper($state))
                     ->columnSpanFull()
                     ->placeholder('VD: CT')
                     ->validationMessages(([
@@ -114,24 +122,32 @@ class DepartmentResource extends Resource
             ])
             ->recordActions([
                 Action::make('toggle_active')
-                    ->label(fn(Department $record) =>
+                    ->label(
+                        fn(Department $record) =>
                         $record->is_active ? 'Khóa' : 'Mở khóa'
                     )
-                    ->icon(fn(Department $record) =>
+                    ->icon(
+                        fn(Department $record) =>
                         $record->is_active
                             ? 'heroicon-o-lock-closed'
                             : 'heroicon-o-lock-open'
                     )
-                    ->color(fn(Department $record) =>
+                    ->color(
+                        fn(Department $record) =>
                         $record->is_active ? 'warning' : 'success'
                     )
                     ->requiresConfirmation()
-                    ->modalHeading(fn(Department $record) =>
+                    ->visible(fn(): bool => static::canForAction('update'))
+                    ->modalHeading(
+                        fn(Department $record) =>
                         $record->is_active
                             ? 'Khóa khoa ' . $record->name . '?'
                             : 'Mở khóa khoa ' . $record->name . '?'
                     )
-                    ->action(fn(Department $record) => $record->toggleActive()),
+                    ->action(function (Department $record): void {
+                        abort_unless(static::canForAction('update'), 403);
+                        $record->toggleActive();
+                    }),
                 EditAction::make()
                     ->modalWidth(Width::Medium),
             ])

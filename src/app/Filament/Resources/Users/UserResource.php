@@ -83,4 +83,16 @@ class UserResource extends Resource
 
         return $admin ? Gate::forUser($admin)->allows('admin.users.update') : false;
     }
+
+    public static function canDelete($record): bool
+    {
+        $admin = auth('admin')->user();
+
+        return $admin ? Gate::forUser($admin)->allows('admin.users.delete') : false;
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
 }

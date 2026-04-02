@@ -77,4 +77,16 @@ class AdminResource extends Resource
 
         return $admin ? Gate::forUser($admin)->allows('update', $record) : false;
     }
+
+    public static function canDelete($record): bool
+    {
+        $admin = auth('admin')->user();
+
+        return $admin ? Gate::forUser($admin)->allows('delete', $record) : false;
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
 }

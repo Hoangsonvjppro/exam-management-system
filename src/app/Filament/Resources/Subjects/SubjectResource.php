@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Subjects;
 use App\Filament\Resources\Subjects\Pages\CreateSubject;
 use App\Filament\Resources\Subjects\Pages\EditSubject;
 use App\Filament\Resources\Subjects\Pages\ListSubjects;
+use App\Filament\Support\HasAdminCrudPermissions;
 use App\Models\Subject;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -29,6 +30,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SubjectResource extends Resource
 {
+    use HasAdminCrudPermissions;
+
+    protected static function getAdminPermissionModule(): string
+    {
+        return 'subjects';
+    }
+
     protected static ?string $model = Subject::class;
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-academic-cap';

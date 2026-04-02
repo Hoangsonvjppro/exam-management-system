@@ -6,6 +6,7 @@ use App\Filament\Resources\CourseSections\Pages\CreateCourseSection;
 use App\Filament\Resources\CourseSections\Pages\EditCourseSection;
 use App\Filament\Resources\CourseSections\Pages\ListCourseSections;
 use App\Filament\Resources\CourseSections\Pages\ManageCourseSectionStudents;
+use App\Filament\Support\HasAdminCrudPermissions;
 use App\Models\CourseSection;
 use App\Models\Semester;
 use App\Models\Subject;
@@ -29,6 +30,13 @@ use Filament\Schemas\Components\Grid as Grid;
 
 class CourseSectionResource extends Resource
 {
+    use HasAdminCrudPermissions;
+
+    protected static function getAdminPermissionModule(): string
+    {
+        return 'course-sections';
+    }
+
     protected static ?string $model = CourseSection::class;
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';

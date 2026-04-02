@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\StudentClasses;
 
 use App\Filament\Resources\StudentClasses\Pages\ManageStudentClasses;
+use App\Filament\Support\HasAdminCrudPermissions;
 use App\Models\Major;
 use App\Models\StudentClass;
 use BackedEnum;
@@ -30,6 +31,13 @@ use Illuminate\Validation\Rules\Unique;
 
 class StudentClassResource extends Resource
 {
+    use HasAdminCrudPermissions;
+
+    protected static function getAdminPermissionModule(): string
+    {
+        return 'student-classes';
+    }
+
     protected static ?string $model = StudentClass::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUser;
@@ -234,10 +242,14 @@ class StudentClassResource extends Resource
                         : 'heroicon-o-lock-open')
                     ->color(fn(StudentClass $r) => $r->is_active ? 'warning' : 'success')
                     ->requiresConfirmation()
+                    ->visible(fn(): bool => static::canForAction('update'))
                     ->modalHeading(fn(StudentClass $r) => $r->is_active
                         ? "Khóa lớp {$r->name}?"
                         : "Mở khóa lớp {$r->name}?")
-                    ->action(fn(StudentClass $r) => $r->toggleActive()),
+                    ->action(function (StudentClass $r): void {
+                        abort_unless(static::canForAction('update'), 403);
+                        $r->toggleActive();
+                    }),
                 EditAction::make()
                     ->modalWidth(Width::ThreeExtraLarge),
             ])
