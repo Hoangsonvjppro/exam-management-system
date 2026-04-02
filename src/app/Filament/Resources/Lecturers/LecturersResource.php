@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Lecturers;
 
 use App\Filament\Resources\Lecturers\Pages\ManageLecturers;
 use App\Filament\Resources\Lecturers\Pages\ManageLecturerSubjects;
+use App\Filament\Resources\Lecturers\Subjects\SubjectTable;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -15,7 +16,9 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\ModalTableSelect;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
@@ -123,7 +126,7 @@ class LecturersResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('lecturer_code')
-                    ->label('Mã GV')
+                    ->label('Mã giảng viên')
                     ->searchable()
                     ->sortable(),
 
@@ -171,9 +174,36 @@ class LecturersResource extends Resource
                 RestoreAction::make(),
                 Action::make('assign')
                     ->label('Phân công')
-                    ->url(fn(User $record): string => static::getUrl('subjects', [
-                        'record' => $record,
-                    ])),
+                    ->schema([
+                        // ModalTableSelect::make('subjects')
+                        //     ->label('Các môn học đã phân công')
+                        //     ->relationship('subjects', 'name')
+                        //     ->multiple()
+                        //     ->tableConfiguration(SubjectTable::class)
+                        //     ->saveRelationshipsUsing(function ($recode, $state)) {
+                        //         $recode->subjects()->sync('hahaha');
+                        //     }
+                        CheckboxList::make('subjects')
+                            ->label('Môn học')
+                            ->relationship('subjects', 'name')
+                            ->searchable()
+                            ->columns(2)
+                            ->bulkToggleable()
+                    ])
+                    ->fillForm(function ($record) {
+                        return [
+                            'subjects' => $record->subjects->pluck('id')->toArray()
+                        ];
+                    })
+                    ->action(function (array $data, $livewire) {
+                        $lecturerId = $livewire->data['lecturers'] ?? null;
+
+                        if ($lecturerId) {
+                            $lecturer = User::find($lecturerId);
+
+                            $lecturer->subjects()->sync($data['subjects'] ?? []);
+                        }
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
