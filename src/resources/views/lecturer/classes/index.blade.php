@@ -15,8 +15,17 @@
                     <h2 class="text-2xl md:text-[28px] font-bold text-navy-900 leading-tight">Không gian lớp học phần được phân công</h2>
                     <p class="text-sm text-text-muted mt-2">Bấm trực tiếp vào từng lớp để mở Class Workspace dạng tab. Sidebar bên trái luôn giữ nguyên để bạn chuyển lớp nhanh mà không mất bối cảnh làm việc.</p>
                 </div>
-                <div class="px-4 py-3 rounded-[8px] bg-white border border-blue-200 text-[12px] text-navy-900 font-medium">
-                    Tổng lớp đang dạy: <span class="font-bold">{{ $sections->total() }}</span>
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <a href="{{ route('lecturer.classes.create') }}"
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-[8px] bg-primary-500 hover:bg-primary-600 text-white text-[13px] font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Tạo Lớp Học Mới
+                    </a>
+                    <div class="px-4 py-3 rounded-[8px] bg-white border border-blue-200 text-[12px] text-navy-900 font-medium">
+                        Tổng lớp đang dạy: <span class="font-bold">{{ $sections->total() }}</span>
+                    </div>
                 </div>
             </div>
         </x-card>

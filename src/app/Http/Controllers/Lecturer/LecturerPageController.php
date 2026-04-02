@@ -6,18 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\LecturerDashboardService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 
 class LecturerPageController extends Controller
 {
     public function __construct(private readonly LecturerDashboardService $lecturerDashboardService) {}
 
-    public function dashboard(): View
+    public function dashboard(): RedirectResponse
     {
-        /** @var User $lecturer */
-        $lecturer = Auth::user();
-
-        return view('lecturer.dashboard', $this->lecturerDashboardService->getDashboardData($lecturer));
+        return redirect()->route('lecturer.classes.index');
     }
 
     public function questions(): View
