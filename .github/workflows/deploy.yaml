@@ -3,7 +3,7 @@ name: Tự động cập nhật khi Push
 on:
   push:
     branches:
-      - dev
+      - main
   # Thêm workflow_dispatch để cho phép chạy bằng tay từ giao diện GitHub
   workflow_dispatch:
     inputs:
@@ -21,7 +21,7 @@ jobs:
       - name: Di chuyển và lấy code mới nhất
         run: |
           cd /home/aurora/exam-management-system
-          git pull origin dev
+          git pull origin main
 
       - name: Cài đặt PHP dependencies
         working-directory: /home/aurora/exam-management-system/src
