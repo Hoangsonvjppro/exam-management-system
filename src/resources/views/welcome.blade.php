@@ -4,263 +4,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="EMS - Hệ thống quản lý học tập toàn diện cho cơ sở giáo dục hiện đại. Cập nhật thông báo, lịch học và kỳ thi nhanh chóng.">
-    <title>{{ config('app.name', 'EMS') }} — Hệ thống Quản lý Học tập</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/pages/common/welcome.js'])
+    <meta name="description" content="EMS - Hệ thống đánh giá và quản lý học vụ trực tuyến. Cổng dành cho sinh viên và giảng viên.">
+    <title>{{ config('app.name', 'EMS') }} — Cổng Thông Tin</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        .gateway-bg {
+            background-image: url('/img/SGU.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .gateway-overlay {
+            background: linear-gradient(
+                135deg,
+                rgba(11, 35, 71, 0.88) 0%,
+                rgba(26, 58, 107, 0.82) 40%,
+                rgba(24, 95, 165, 0.78) 100%
+            );
+            backdrop-filter: blur(4px);
+        }
+
+        .gateway-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .gateway-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .gateway-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .gateway-logo-pulse {
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        .gateway-slogan {
+            animation: sloganFadeIn 1s ease-out forwards;
+            opacity: 0;
+        }
+
+        .gateway-buttons {
+            animation: buttonsFadeUp 1s ease-out 0.3s forwards;
+            opacity: 0;
+        }
+
+        @keyframes sloganFadeIn {
+            to { opacity: 1; }
+        }
+
+        @keyframes buttonsFadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .floating-particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            animation: floatUp 12s ease-in-out infinite;
+        }
+
+        .floating-particle:nth-child(2) {
+            animation-delay: 2s;
+            animation-duration: 16s;
+        }
+
+        .floating-particle:nth-child(3) {
+            animation-delay: 5s;
+            animation-duration: 14s;
+        }
+
+        @keyframes floatUp {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.06; }
+            50% { transform: translateY(-60px) scale(1.1); opacity: 0.12; }
+        }
+    </style>
 </head>
 
-<body class="bg-background-light font-display text-navy-900" data-open-join-class-modal="{{ ($errors->has('invite_code') || session('error')) ? '1' : '0' }}">
-    <div class="min-h-screen flex flex-col">
+<body class="font-sans text-white">
+    <div class="gateway-bg min-h-screen relative">
+        <div class="gateway-overlay absolute inset-0"></div>
 
-        {{-- ===== HEADER ===== --}}
-        <header class="sticky top-0 z-50 bg-background-light border-b-4 border-black px-6 md:px-20 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="bg-navy-900 p-2 brutal-border">
-                    <span class="material-symbols-outlined text-white font-bold">menu_book</span>
+        {{-- Floating decorative particles --}}
+        <div class="floating-particle" style="width:200px;height:200px;top:10%;left:5%;"></div>
+        <div class="floating-particle" style="width:300px;height:300px;bottom:10%;right:5%;"></div>
+        <div class="floating-particle" style="width:150px;height:150px;top:50%;left:60%;"></div>
+
+        <div class="relative z-10 min-h-screen flex flex-col">
+
+            {{-- ===== HEADER ===== --}}
+            <header class="px-6 md:px-16 py-5 flex items-center justify-between">
+                <div class="flex items-center gap-3 gateway-logo-pulse">
+                    <div class="w-10 h-10 bg-white/10 rounded-[8px] flex items-center justify-center backdrop-blur-md border-[0.5px] border-white/20">
+                        <span class="material-symbols-outlined text-white text-xl font-bold">school</span>
+                    </div>
+                    <span class="text-[17px] font-semibold tracking-wider uppercase text-white/90">EMS</span>
                 </div>
-                <h1 class="text-2xl font-black tracking-tighter uppercase">EMS</h1>
-            </div>
 
-            <nav class="hidden md:flex items-center gap-8 font-bold uppercase text-sm">
-                <a class="hover:underline decoration-4 underline-offset-4" href="#">Trang chủ</a>
-                <a class="hover:underline decoration-4 underline-offset-4" href="#notifications">Thông báo</a>
-                <a class="hover:underline decoration-4 underline-offset-4" href="#footer">Hỗ trợ</a>
-            </nav>
-
-            @auth
-            <div class="relative" x-data="dropdownState()">
-                <button @click="open = !open" class="flex items-center gap-2 focus:outline-none">
-                    <img src="{{ auth()->user()->avatar_url }}"
-                        alt="{{ auth()->user()->name }}"
-                        class="w-10 h-10 rounded-full brutal-border object-cover"
-                        referrerpolicy="no-referrer">
-                    <span class="hidden md:inline font-bold text-sm">{{ auth()->user()->name }}</span>
-                </button>
-                <div x-show="open"
-                    x-transition:enter="transition ease-out duration-100"
-                    x-transition:enter-start="opacity-0 scale-95"
-                    x-transition:enter-end="opacity-100 scale-100"
-                    x-transition:leave="transition ease-in duration-75"
-                    x-transition:leave-start="opacity-100 scale-100"
-                    x-transition:leave-end="opacity-0 scale-95"
-                    @click.away="open = false"
-                    class="absolute right-0 mt-2 w-48 bg-white brutal-border brutal-shadow z-50">
+                @auth
+                <div class="flex items-center gap-3">
                     <a href="{{ route('dashboard') }}"
-                        class="block px-4 py-3 font-bold text-sm hover:bg-background-light border-b-2 border-black">
+                       class="text-[13px] font-medium text-white/70 hover:text-white transition-colors">
                         Dashboard
                     </a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit"
-                            class="w-full text-left px-4 py-3 font-bold text-sm text-red-600 hover:bg-red-50">
-                            Đăng xuất
-                        </button>
-                    </form>
+                    <img src="{{ auth()->user()->avatar_url }}"
+                         alt="{{ auth()->user()->name }}"
+                         class="w-9 h-9 rounded-full border-[1.5px] border-white/30 object-cover"
+                         referrerpolicy="no-referrer">
                 </div>
-            </div>
-            @endauth
-            @guest
-            <a href="{{ route('login') }}"
-                class="bg-navy-900 text-white px-6 py-2 brutal-border brutal-shadow font-black uppercase tracking-wider brutal-btn inline-block">
-                Đăng nhập
-            </a>
-            @endguest
-        </header>
+                @endauth
+            </header>
 
-        {{-- ===== HERO SECTION ===== --}}
-        <section class="px-6 md:px-20 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center border-b-4 border-black">
-            <div class="flex flex-col gap-8">
-                <h2 class="text-6xl md:text-7xl font-black leading-none uppercase tracking-tighter">
-                    Hệ thống <br> quản lý <br>
-                    <span class="text-navy-600 bg-white px-2 brutal-border">học tập</span> EMS
-                </h2>
-                <p class="text-xl font-bold max-w-md border-l-8 border-navy-900 pl-4">
-                    Cập nhật thông báo, lịch học và kỳ thi nhanh chóng. Hệ thống tối ưu cho sinh viên và giảng viên.
-                </p>
-                <div class="flex flex-wrap gap-4">
-                    @auth
-                    @if(auth()->user()->hasRole('lecturer') || auth()->user()->hasRole('student'))
-                    <a href="{{ route('dashboard') }}"
-                        class="bg-navy-900 text-white px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
-                        Vào Dashboard
-                    </a>
-                    @else
-                    {{-- Student logged in but no class yet: show join class CTA --}}
-                    <button data-open-target="#join-class-modal"
-                        class="bg-navy-900 text-white px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
-                        Tham gia lớp học
-                    </button>
-                    <a href="{{ route('profile.edit') }}"
-                        class="bg-white text-black px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
-                        Hồ sơ cá nhân
-                    </a>
-                    @endif
-                    @endauth
-                    @guest
+            {{-- ===== MAIN CONTENT ===== --}}
+            <main class="flex-grow flex flex-col items-center justify-center px-6 text-center pb-12">
+
+                {{-- Slogan --}}
+                <div class="gateway-slogan mb-16 max-w-4xl">
+                    <div class="inline-block mb-6 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border-[0.5px] border-white/20">
+                        <span class="text-[12px] font-medium tracking-widest uppercase text-blue-200">Trường Đại học Sài Gòn</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] font-bold leading-tight tracking-tight text-white">
+                        HỆ THỐNG ĐÁNH GIÁ VÀ<br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-white to-blue-200">QUẢN LÝ HỌC VỤ TRỰC TUYẾN</span>
+                    </h2>
+                    <p class="mt-6 text-[15px] text-white/60 max-w-2xl mx-auto leading-relaxed">
+                        Nền tảng quản lý giảng dạy, khảo thí và đánh giá học vụ hiện đại. Đăng nhập để bắt đầu.
+                    </p>
+                </div>
+
+                {{-- Gateway Buttons --}}
+                <div class="gateway-buttons flex flex-col sm:flex-row gap-5 sm:gap-6 w-full max-w-xl">
+
+                    {{-- Nút Sinh viên (Google) --}}
                     <a href="{{ route('login') }}"
-                        class="bg-navy-900 text-white px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
-                        Đăng nhập
-                    </a>
-                    @endguest
-                    <a href="#notifications"
-                        class="bg-white text-black px-8 py-4 brutal-border brutal-shadow-lg font-black uppercase text-lg brutal-btn inline-block">
-                        Xem thông báo
-                    </a>
-                </div>
-            </div>
-
-            <div class="relative">
-                <div class="aspect-square bg-navy-900 brutal-border brutal-shadow-lg flex items-center justify-center relative overflow-hidden">
-                    <span class="material-symbols-outlined text-[12rem] text-white opacity-20 absolute -bottom-10 -right-10">description</span>
-                    <span class="material-symbols-outlined text-[10rem] text-white">quiz</span>
-                </div>
-                <div class="absolute -top-6 -left-6 bg-yellow-400 brutal-border p-4 brutal-shadow font-black">
-                    MỚI CẬP NHẬT!
-                </div>
-            </div>
-        </section>
-
-        {{-- ===== STATS SECTION ===== --}}
-        <section class="px-6 md:px-20 py-12 grid grid-cols-2 md:grid-cols-4 gap-6 bg-white border-b-4 border-black">
-            <div class="p-6 brutal-border bg-background-light">
-                <p class="text-4xl font-black">{{ $studentCount }}</p>
-                <p class="font-bold uppercase text-xs text-navy-600">Số sinh viên</p>
-            </div>
-            <div class="p-6 brutal-border bg-background-light">
-                <p class="text-4xl font-black">{{ $lecturerCount }}</p>
-                <p class="font-bold uppercase text-xs text-navy-600">Số giảng viên</p>
-            </div>
-            <div class="p-6 brutal-border bg-background-light">
-                <p class="text-4xl font-black">{{ $subjectCount }}</p>
-                <p class="font-bold uppercase text-xs text-navy-600">Số môn học</p>
-            </div>
-            <div class="p-6 brutal-border bg-background-light">
-                <p class="text-4xl font-black">{{ $sectionCount }}</p>
-                <p class="font-bold uppercase text-xs text-navy-600">Số lớp học phần</p>
-            </div>
-        </section>
-
-        {{-- ===== NOTIFICATIONS SECTION ===== --}}
-        <section id="notifications" class="px-6 md:px-20 py-16">
-            <div class="flex items-center justify-between mb-10">
-                <h3 class="text-4xl font-black uppercase italic whitespace-nowrap">Thông báo mới nhất</h3>
-                <div class="h-2 flex-grow mx-8 bg-black hidden md:block"></div>
-            </div>
-
-            @if($announcements->isEmpty())
-            <div class="text-center py-16 brutal-border bg-white">
-                <span class="material-symbols-outlined text-6xl text-blue-200">notifications_none</span>
-                <p class="mt-4 font-bold text-text-muted uppercase">Chưa có thông báo nào</p>
-            </div>
-            @else
-            <div class="grid md:grid-cols-3 gap-8">
-                @foreach($announcements as $item)
-                @php
-                $colorMap = [
-                'urgent' => ['bg' => 'bg-red-500', 'label' => 'Khẩn cấp'],
-                'warning' => ['bg' => 'bg-yellow-500', 'label' => 'Cảnh báo'],
-                'event' => ['bg' => 'bg-green-500', 'label' => 'Sự kiện'],
-                'info' => ['bg' => 'bg-blue-500', 'label' => 'Học vụ'],
-                ];
-                $color = $colorMap[$item->type] ?? $colorMap['info'];
-                @endphp
-                <div class="bg-white brutal-border brutal-shadow-lg p-6 flex flex-col gap-4">
-                    <span class="{{ $color['bg'] }} text-white px-3 py-1 text-xs font-black uppercase brutal-border w-fit">{{ $color['label'] }}</span>
-                    <h4 class="text-xl font-black">{{ $item->title }}</h4>
-                    @if($item->body)
-                    <p class="font-medium text-text-muted">{{ Str::limit($item->body, 80) }}</p>
-                    @endif
-                    <div class="flex items-center justify-between mt-auto pt-4 border-t-2 border-dashed border-black">
-                        <span class="font-bold text-sm">{{ $item->created_at->format('d/m/Y') }}</span>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-            @endif
-        </section>
-
-        {{-- ===== FOOTER ===== --}}
-        <footer id="footer" class="mt-auto bg-black text-white px-6 md:px-20 py-12">
-            <div class="grid md:grid-cols-3 gap-12">
-                <div class="flex flex-col gap-6">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-navy-900 p-2 border-2 border-white">
-                            <span class="material-symbols-outlined text-white font-bold">menu_book</span>
+                       id="btn-gateway-student"
+                       class="gateway-btn flex-1 group relative bg-white text-navy-900 rounded-[10px] overflow-hidden border-[0.5px] border-white/80">
+                        <div class="px-6 py-8 sm:py-10 flex flex-col items-center gap-4">
+                            {{-- Google Icon --}}
+                            <div class="w-14 h-14 rounded-full bg-surface-1 flex items-center justify-center border-[0.5px] border-border-clean group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-7 h-7" viewBox="0 0 24 24">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-1">Đăng nhập bằng Google</p>
+                                <p class="text-[17px] font-bold text-navy-900">Cổng dành cho Sinh viên</p>
+                            </div>
                         </div>
-                        <h2 class="text-2xl font-black tracking-tighter uppercase">EMS</h2>
-                    </div>
-                    <p class="font-bold opacity-70">Hệ thống quản lý học tập toàn diện cho cơ sở giáo dục hiện đại. Nhanh chóng, chính xác và minh bạch.</p>
-                </div>
-                <div class="flex flex-col gap-4">
-                    <h5 class="text-xl font-black uppercase italic text-blue-200">Liên hệ</h5>
-                    <ul class="font-bold flex flex-col gap-2">
-                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">mail</span> Hoangsonle1805@gmail.com</li>
-                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">call</span> +84 934191038 </li>
-                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">location_on</span> 273 An Dương Vương, Tp.HCMl</li>
-                    </ul>
-                </div>
-                <div class="flex flex-col gap-4">
-                    <h5 class="text-xl font-black uppercase italic text-blue-200">Theo dõi</h5>
-                    <div class="flex gap-4">
-                        <a class="bg-white text-black p-3 brutal-border hover:bg-navy-900 hover:text-white transition-colors" href="#">
-                            <span class="material-symbols-outlined">public</span>
-                        </a>
-                        <a class="bg-white text-black p-3 brutal-border hover:bg-navy-900 hover:text-white transition-colors" href="#">
-                            <span class="material-symbols-outlined">share</span>
-                        </a>
-                        <a class="bg-white text-black p-3 brutal-border hover:bg-navy-900 hover:text-white transition-colors" href="#">
-                            <span class="material-symbols-outlined">groups</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-12 pt-8 border-t border-white/20 text-center font-bold opacity-50 text-sm">
-                © {{ date('Y') }} EMS Project. All Rights Reserved.
-            </div>
-        </footer>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#4285F4] via-[#34A853] to-[#EA4335] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </a>
 
-        {{-- ===== JOIN CLASS MODAL (for students without a class) ===== --}}
-        @auth
-        @if(!auth()->user()->hasRole('lecturer') && !auth()->user()->hasRole('student'))
-        <div id="join-class-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-            <div class="bg-white brutal-border brutal-shadow-lg w-full max-w-md p-8">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-black uppercase">Tham gia lớp học</h3>
-                    <button type="button" data-close-target="#join-class-modal"
-                        class="font-black text-2xl leading-none hover:text-navy-600">&times;</button>
+                    {{-- Nút Giảng viên --}}
+                    <a href="{{ route('login') }}"
+                       id="btn-gateway-lecturer"
+                       class="gateway-btn flex-1 group relative bg-white/10 backdrop-blur-md text-white rounded-[10px] overflow-hidden border-[0.5px] border-white/20 hover:bg-white/15">
+                        <div class="px-6 py-8 sm:py-10 flex flex-col items-center gap-4">
+                            {{-- App Icon --}}
+                            <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center border-[0.5px] border-white/20 group-hover:scale-110 transition-transform duration-300">
+                                <span class="material-symbols-outlined text-white text-2xl">shield_person</span>
+                            </div>
+                            <div>
+                                <p class="text-[11px] font-medium text-white/50 uppercase tracking-wider mb-1">Tài khoản nội bộ</p>
+                                <p class="text-[17px] font-bold text-white">Cổng dành cho Giảng viên</p>
+                            </div>
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-navy-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </a>
+
                 </div>
+            </main>
 
+            {{-- ===== FOOTER ===== --}}
+            <footer class="px-6 md:px-16 py-5 text-center">
+                <p class="text-[11px] font-medium text-white/30 tracking-wider">
+                    © {{ date('Y') }} EMS — Trường Đại học Sài Gòn. All Rights Reserved.
+                </p>
+            </footer>
 
-                @if(!auth()->user()->student_code)
-                <p class="mb-4 font-semibold text-text-muted">Trước tiên hãy hoàn tất hồ sơ sinh viên (nhập MSSV).</p>
-                <a href="{{ route('onboarding.show') }}"
-                    class="w-full block text-center h-12 bg-navy-900 text-white brutal-border font-black uppercase tracking-wider leading-[3rem]">
-                    Nhập thông tin sinh viên
-                </a>
-                @else
-                <form method="POST" action="{{ route('student.join-class') }}" class="space-y-4">
-                    @csrf
-                    <div>
-                        <label class="block text-sm font-black uppercase mb-2">Mã lớp học</label>
-                        <input name="invite_code" type="text" required placeholder="Nhập mã lớp (VD: ABC123)"
-                            value="{{ old('invite_code') }}"
-                            class="w-full h-12 px-4 bg-white brutal-border font-bold text-lg focus:ring-0 uppercase tracking-widest">
-                        @error('invite_code')
-                        <p class="mt-1 text-xs font-semibold text-red-700">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    <button type="submit"
-                        class="w-full h-12 bg-navy-900 text-white brutal-border font-black uppercase tracking-widest hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shadow-brutal">
-                        Tham gia
-                    </button>
-                </form>
-                @endif
-            </div>
         </div>
-        @endif
-        @endauth
-
-        <x-toast />
     </div>
 </body>
 
