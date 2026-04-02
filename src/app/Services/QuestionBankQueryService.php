@@ -176,6 +176,7 @@ class QuestionBankQueryService
         $subjectCode = $filters['sub-sel-ques'] ?? null;
         $chapterId = $filters['chap-sel-ques'] ?? null;
         $difficultyFilter = $filters['diff-sel-ques'] ?? null;
+        $keyword = trim((string) ($filters['q'] ?? ''));
 
         return Question::query()
             ->when($subjectCode, function (Builder $query) use ($subjectCode) {
@@ -184,6 +185,9 @@ class QuestionBankQueryService
                 });
             })
             ->when($chapterId, fn(Builder $query) => $query->where('chapter_id', $chapterId))
+            ->when($keyword !== '', function (Builder $query) use ($keyword) {
+                $query->where('content', 'like', "%{$keyword}%");
+            })
             ->when($difficultyFilter, fn(Builder $query) => $query->where('difficulty', $difficultyFilter));
     }
 }

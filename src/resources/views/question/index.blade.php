@@ -1,7 +1,7 @@
 <x-app-layout>
    @section('page-title', 'Câu hỏi')
    <div class="p-8 space-y-8 flex-1 bg-surface-container-low flex-1">
-      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
          <div>
             <nav class="flex text-[10px] font-bold tracking-widest text-secondary uppercase mb-2 gap-2">
 
@@ -10,23 +10,51 @@
                <a href="{{ route('lecturer.questions.index') }}" class="bg-blue-500 text-white px-1">Questions</a>
 
             </nav>
-            <h2 class="text-3xl font-extrabold text-primary font-headline tracking-tight"> Quản lý câu hỏi</h3>
-               <p class="text-on-surface-variant mt-1"> Danh sách các câu hỏi có trong hệ thống </p>
+            <h2 class="text-3xl font-extrabold text-primary font-headline tracking-tight"> Quản lý câu hỏi</h2>
+            <p class="text-on-surface-variant mt-1"> Danh sách các câu hỏi có trong hệ thống </p>
          </div>
-         <div class="flex gap-3">
+         <div class="w-full lg:ml-auto lg:max-w-fit flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+            <form action="{{ route('lecturer.questions.index') }}" method="GET" class="w-full sm:w-[22rem] lg:w-[20rem] flex items-center gap-2">
+               <input type="hidden" name="sub-sel-ques" value="{{ request()->input('sub-sel-ques') }}">
+               <input type="hidden" name="diff-sel-ques" value="{{ request()->input('diff-sel-ques') }}">
+               <input type="hidden" name="chap-sel-ques" value="{{ request()->input('chap-sel-ques') }}">
+               <input type="hidden" name="status-sel-ques" value="{{ request()->input('status-sel-ques') }}">
+
+               <div class="relative flex-1">
+                  <span class="material-symbols-outlined text-secondary absolute left-3 top-1/2 -translate-y-1/2 text-[18px]" data-icon="search">search</span>
+                  @php
+                  $clearSearchQuery = request()->except(['q', 'page']);
+                  $hasSearchKeyword = filled(request()->input('q'));
+                  @endphp
+                  <input type="text"
+                     name="q"
+                     value="{{ request()->input('q') }}"
+                     placeholder="Tìm nội dung câu hỏi..."
+                     class="w-full bg-white text-on-surface border border-surface-container-high pl-10 pr-10 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                  <a href="{{ route('lecturer.questions.index', $clearSearchQuery) }}"
+                     class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-md items-center justify-center text-secondary hover:text-primary hover:bg-surface-container-low transition-colors {{ $hasSearchKeyword ? 'flex' : 'hidden' }}"
+                     title="Xóa tìm kiếm"
+                     aria-label="Xóa tìm kiếm">
+                     <span class="material-symbols-outlined text-[16px]" data-icon="close">close</span>
+                  </a>
+               </div>
+               <button type="submit" class="shrink-0 px-3 py-2.5 rounded-lg bg-primary text-white text-xs font-semibold hover:opacity-90 transition-opacity">Tìm</button>
+            </form>
+
             <a href="{{ route('lecturer.questions.export', request()->query()) }}"
-               class="bg-white text-primary border border-surface-container-high px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover:bg-surface-bright transition-all">
+               class="bg-white text-primary border border-surface-container-high px-5 py-2.5 rounded-xl font-semibold inline-flex items-center justify-center gap-2 hover:bg-surface-bright transition-all whitespace-nowrap">
                <span class="material-symbols-outlined text-sm" data-icon="file_download">file_download</span>
                Xuất Excel
             </a>
             <a href="{{ route('lecturer.questions.create') }}"
-               class="bg-white text-primary border border-surface-container-high px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover:bg-surface-bright transition-all"><span
+               class="bg-white text-primary border border-surface-container-high px-5 py-2.5 rounded-xl font-semibold inline-flex items-center justify-center gap-2 hover:bg-surface-bright transition-all whitespace-nowrap"><span
                   class="material-symbols-outlined text-sm" data-icon="add">add</span>
                Thêm câu hỏi mới</a>
          </div>
       </div>
 
       <form action="{{ route('lecturer.questions.index') }}" method="GET">
+         <input type="hidden" name="q" value="{{ request()->input('q') }}">
          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-white p-4 rounded-xl flex flex-col gap-1 shadow-sm">
                <span class="text-[10px] font-bold text-secondary uppercase tracking-wider">Môn học</span>
