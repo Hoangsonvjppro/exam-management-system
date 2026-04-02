@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Lecturers\Pages;
 
-use App\Filament\Forms\SubjectForm;
+use App\Filament\Resources\Lecturers\Subjects\SubjectForm;
 use App\Filament\Resources\Lecturers\Subjects\SubjectTable;
 use App\Filament\Resources\Lecturers\LecturersResource;
 use App\Models\Subject;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Forms;
+namespace App\Filament\Resources\Lecturers\Subjects;
 
 use App\Models\Subject;
 use Filament\Forms\Components\Select;
