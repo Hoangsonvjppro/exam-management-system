@@ -31,6 +31,10 @@ use Illuminate\Validation\Rules\Unique;
 
 class StudentClassResource extends Resource
 {
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
     use HasAdminCrudPermissions;
 
     protected static function getAdminPermissionModule(): string

@@ -33,6 +33,10 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class StudentsResource extends Resource
 {
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
     use HasAdminCrudPermissions;
 
     protected static function getAdminPermissionModule(): string

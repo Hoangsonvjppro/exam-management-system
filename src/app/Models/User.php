@@ -109,6 +109,22 @@ class User extends Authenticatable
     {
         return $this->belongsTo(File::class, 'avatar_file_id');
     }
+
+    /**
+     * Nếu user là lecturer, lấy các subject đã được phân công
+     *
+     * Many to Many qua assignments
+     */
+    public function subjects(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Subject::class,
+            'assignments',
+            'lecturer_id', // user_id làm lecturer_id
+            'subject_id'
+        )->withTimestamps();
+    }
+    
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);

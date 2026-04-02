@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -36,6 +37,11 @@ class Semester extends Model
             'end_date' => 'date',
             'is_current' => 'boolean',
         ];
+    }
+
+    public function scopeCurrent(Builder $query): Builder
+    {
+        return $query->where('is_current', true);
     }
 
     public function courseSections(): HasMany
