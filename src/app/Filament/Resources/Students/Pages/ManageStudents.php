@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Students\Pages;
 
 use App\Filament\Imports\CourseSectionStudentImporter;
-use App\Filament\Resources\StudentResource;
+use App\Filament\Imports\StudentImporter;
 use App\Filament\Resources\Students\StudentsResource;
 use App\Models\User;
 use Carbon\Carbon;
@@ -28,13 +28,13 @@ class ManageStudents extends ManageRecords
                 ->after(function ($record) {
                     $record->assignRole('student');
                 }),
-            // Import đăng ký sinh viên hàng loạt
-            ImportAction::make('import_enrollments')
-                ->importer(CourseSectionStudentImporter::class)
-                ->label('Import sinh viên đăng ký')
-                ->icon('heroicon-o-user-plus')
-                ->color('info')
-                ->modalHeading('Import sinh viên đăng ký từ CSV'),
+            ImportAction::make('import_students')
+                ->importer(StudentImporter::class)
+                ->label('Import sinh viên')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('primary')
+                ->modalHeading('Import sinh viên từ CSV'),
+
             Action::make('bulkCreatePasswords')
                 ->label('Tạo mật khẩu hàng loạt')
                 ->icon('heroicon-o-key')
@@ -66,6 +66,7 @@ class ManageStudents extends ManageRecords
                     $success = 0;
                     $skipped = 0;
 
+                    /** @var User $student */
                     foreach ($students as $student) {
                         try {
                             $rawPassword = Carbon::parse($student->date_of_birth)->format('dmY');

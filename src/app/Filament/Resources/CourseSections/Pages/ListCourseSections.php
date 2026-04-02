@@ -37,6 +37,14 @@ class ListCourseSections extends ListRecords
                     app(AttendanceGradeService::class)->ensureColumn($section);
                 })
                 ->successNotificationTitle('Đã thêm lớp học phần'),
+            // Import đăng ký sinh viên hàng loạt
+            ImportAction::make('import_enrollments')
+                ->importer(CourseSectionStudentImporter::class)
+                ->label('Import sinh viên đăng ký')
+                ->icon('heroicon-o-user-plus')
+                ->color('info')
+                ->modalHeading('Import sinh viên đăng ký'),
+
         ];
     }
 }
