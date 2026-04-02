@@ -47,7 +47,7 @@ class EnrollmentService
         if (! $user->student_code) {
             return [
                 'type' => 'onboarding',
-                'message' => 'Vui lòng nhập MSSV và lớp trước khi tham gia lớp học phần.',
+                'message' => 'Vui lòng hoàn tất hồ sơ (MSSV + Họ tên) trước khi tham gia lớp học phần.',
             ];
         }
 
