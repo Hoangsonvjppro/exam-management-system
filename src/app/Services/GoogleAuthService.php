@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Socialite\Contracts\User as SocialiteUser;
 
 class GoogleAuthService
@@ -28,6 +29,15 @@ class GoogleAuthService
             $user->email_verified_at = Carbon::now();
             $user->is_active = true;
             $user->save();
+
+            // Gán role student ngay lập tức cho user mới đăng ký qua Google.
+            if (Schema::hasTable('roles') && Schema::hasTable('model_has_roles')) {
+                try {
+                    $user->assignRole('student');
+                } catch (\Throwable) {
+                    // Fallback: UserStateService sẽ sync role sau.
+                }
+            }
 
             return $user;
         }

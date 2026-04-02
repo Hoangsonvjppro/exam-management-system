@@ -28,14 +28,9 @@ class UserStateService
                 return;
             }
 
-            $hasEnrollment = $user->enrolledSections()->exists();
-
-            if ($hasEnrollment && ! $user->hasRole('student')) {
+            // Always ensure non-lecturers have the 'student' role.
+            if (! $user->hasRole('student')) {
                 $user->assignRole('student');
-            }
-
-            if (! $hasEnrollment && $user->hasRole('student')) {
-                $user->removeRole('student');
             }
         } catch (QueryException) {
             // Skip role-sync if schema is not ready.
@@ -52,17 +47,13 @@ class UserStateService
 
         try {
             if ($user->hasRole('lecturer')) {
-                return 'lecturer.classes.index';
+                return 'lecturer.dashboard';
             }
 
-            if ($user->hasRole('student')) {
-                return 'student.dashboard';
-            }
+            // Authenticated students (or users with no specific role) go to dashboard.
+            return 'student.dashboard';
         } catch (QueryException) {
             return 'landing';
         }
-
-        // Authenticated user without specific role stays on landing page.
-        return 'landing';
     }
 }
