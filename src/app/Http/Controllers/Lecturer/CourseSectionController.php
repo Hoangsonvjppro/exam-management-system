@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Lecturer;
 
+use App\Enums\ExamAttemptStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CourseSection\StoreCourseSectionRequest;
 use App\Http\Requests\CourseSection\UpdateCourseSectionRequest;
@@ -80,12 +81,59 @@ class CourseSectionController extends Controller
 
         $section->load([
             'students' => fn($q) => $q->orderBy('name'),
-            // Sửa 'exams' thành 'examSchedules.exam' để lấy số lượng câu hỏi thông qua đề thi của ca thi
-            'examSchedules.exam' => fn($q) => $q->withCount('questions'),
+            'examSchedules' => fn($q) => $q->with([
+                'exam' => fn($examQuery) => $examQuery->withCount('questions'),
+                'attempts' => fn($attemptQuery) => $attemptQuery
+                    ->where('status', ExamAttemptStatus::Completed)
+                    ->orderByDesc('attempt_number')
+                    ->orderByDesc('id'),
+                'students' => fn($studentQuery) => $studentQuery->select('users.id'),
+            ]),
             'complaints.student' => fn($q) => $q->latest(),
             'attendanceSessions.records',
             'gradeColumns.studentGrades',
         ]);
+
+        $examStatistics = $section->examSchedules
+            ->sortByDesc('created_at')
+            ->values()
+            ->map(function ($schedule) {
+                $latestCompletedAttempts = $schedule->attempts
+                    ->unique('user_id')
+                    ->values();
+
+                $scores = $latestCompletedAttempts
+                    ->pluck('total_score')
+                    ->filter(fn($score) => $score !== null)
+                    ->map(fn($score) => (float) $score)
+                    ->values();
+
+                $submittedCount = $scores->count();
+                $assignedCount = $schedule->students->count();
+                $passThreshold = (float) ($schedule->exam?->pass_points ?? 0);
+
+                if ($passThreshold <= 0) {
+                    $passThreshold = 5.0;
+                }
+
+                $passedCount = $scores->filter(fn(float $score) => $score >= $passThreshold)->count();
+
+                return (object) [
+                    'schedule_id' => $schedule->id,
+                    'exam_title' => $schedule->exam?->title ?? 'Đề thi',
+                    'date_range_text' => $schedule->date_range_text,
+                    'time_range_text' => $schedule->time_range_text,
+                    'status' => $schedule->status,
+                    'submitted_count' => $submittedCount,
+                    'assigned_count' => $assignedCount,
+                    'average_score' => $submittedCount > 0 ? round((float) $scores->avg(), 2) : null,
+                    'highest_score' => $submittedCount > 0 ? round((float) $scores->max(), 2) : null,
+                    'lowest_score' => $submittedCount > 0 ? round((float) $scores->min(), 2) : null,
+                    'pass_threshold' => $passThreshold,
+                    'passed_count' => $passedCount,
+                    'pass_rate' => $submittedCount > 0 ? round(($passedCount / $submittedCount) * 100, 1) : null,
+                ];
+            });
 
         $studentIds = $section->students->pluck('id');
 
@@ -131,7 +179,7 @@ class CourseSectionController extends Controller
             ->take(30)
             ->values();
 
-        return view('lecturer.classes.show', compact('section', 'sectionFeedItems'));
+        return view('lecturer.classes.show', compact('section', 'sectionFeedItems', 'examStatistics'));
     }
 
     public function edit(CourseSection $section): View

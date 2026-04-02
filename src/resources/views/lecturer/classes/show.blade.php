@@ -4,7 +4,7 @@
 
     @php
     $activeTab = request()->query('tab', 'overview');
-    if (!in_array($activeTab, ['overview', 'students', 'attendance', 'leaves', 'grading', 'complaints'], true)) {
+    if (!in_array($activeTab, ['overview', 'students', 'attendance', 'leaves', 'grading', 'statistics', 'complaints'], true)) {
     $activeTab = 'overview';
     }
 
@@ -103,6 +103,12 @@
                         :class="activeTab === 'grading' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
                         class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
                         Điểm quá trình
+                    </button>
+                    <button type="button"
+                        @click="switchTab('statistics')"
+                        :class="activeTab === 'statistics' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
+                        Thống kê
                     </button>
                     <button type="button"
                         @click="switchTab('complaints')"
@@ -650,6 +656,86 @@
                         </form>
                     </div>
                 </x-modal>
+            </div>
+
+            {{-- ═══ TAB: Thống kê ═══ --}}
+            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'statistics'" x-transition.opacity.duration.150ms style="display:none;">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-[18px] font-bold text-navy-900">Thống kê điểm bài thi</h3>
+                        <p class="text-[12px] text-text-muted font-medium mt-1">Theo từng bài thi: trung bình, cao nhất, thấp nhất và tỷ lệ đạt.</p>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-1 text-text-muted border border-border-clean">
+                        {{ $examStatistics->count() }} bài thi
+                    </span>
+                </div>
+
+                @if($examStatistics->isEmpty())
+                <div class="text-center py-12 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
+                    <p class="text-[13px] font-medium text-text-muted">Lớp này chưa có bài thi để thống kê.</p>
+                </div>
+                @else
+                <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
+                    <table class="w-full text-left border-collapse min-w-[920px]">
+                        <thead>
+                            <tr class="bg-surface-1 border-b border-border-clean">
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Bài thi</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Mốc đạt</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Đã nộp</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Trung bình</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Cao nhất</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Thấp nhất</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Tỷ lệ đạt</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-clean/70">
+                            @foreach($examStatistics as $stat)
+                            @php
+                            $statusLabel = match($stat->status) {
+                            'in_progress' => ['Đang thi', 'bg-teal-50 text-teal-800 border-teal-200'],
+                            'scheduled' => ['Đã lên lịch', 'bg-blue-50 text-blue-700 border-blue-200'],
+                            'completed' => ['Đã hoàn thành', 'bg-gray-50 text-gray-700 border-gray-200'],
+                            default => ['Đã huỷ', 'bg-red-50 text-red-700 border-red-200'],
+                            };
+                            @endphp
+                            <tr class="hover:bg-surface-0 transition-colors">
+                                <td class="py-3 px-4 align-top">
+                                    <p class="text-[13px] font-semibold text-navy-900">{{ $stat->exam_title }}</p>
+                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $stat->date_range_text }} · {{ $stat->time_range_text }}</p>
+                                    <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded-[4px] border mt-2 {{ $statusLabel[1] }}">
+                                        {{ $statusLabel[0] }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-3 text-center text-[13px] font-semibold text-navy-900">
+                                    {{ number_format($stat->pass_threshold, 2) }}
+                                </td>
+                                <td class="py-3 px-3 text-center text-[13px] font-semibold text-navy-900">
+                                    {{ $stat->submitted_count }}/{{ $stat->assigned_count }}
+                                </td>
+                                <td class="py-3 px-3 text-center text-[13px] font-bold text-navy-900">
+                                    {{ $stat->average_score !== null ? number_format($stat->average_score, 2) : '—' }}
+                                </td>
+                                <td class="py-3 px-3 text-center text-[13px] font-bold text-blue-700">
+                                    {{ $stat->highest_score !== null ? number_format($stat->highest_score, 2) : '—' }}
+                                </td>
+                                <td class="py-3 px-3 text-center text-[13px] font-bold text-amber-700">
+                                    {{ $stat->lowest_score !== null ? number_format($stat->lowest_score, 2) : '—' }}
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    @if($stat->pass_rate !== null)
+                                    <p class="text-[14px] font-black text-teal-700">{{ number_format($stat->pass_rate, 1) }}%</p>
+                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $stat->passed_count }}/{{ $stat->submitted_count }} đạt</p>
+                                    @else
+                                    <span class="text-[12px] text-text-muted">—</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-[12px] text-text-muted">Tỷ lệ đạt được tính trên số bài đã nộp của từng bài thi.</p>
+                @endif
             </div>
 
             {{-- ═══ TAB: Khiếu nại ═══ --}}

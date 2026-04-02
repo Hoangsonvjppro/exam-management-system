@@ -5,9 +5,7 @@ namespace App\Http\Requests\ExamSchedule;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Exam;
 use App\Models\CourseSection;
-use App\Models\ExamSchedule;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 class StoreExamScheduleRequest extends FormRequest
 {
@@ -34,20 +32,6 @@ class StoreExamScheduleRequest extends FormRequest
                         $section = CourseSection::find($value);
                         if ($exam && $section && $exam->subject_id !== $section->subject_id) {
                             $fail("Lớp học phần {$section->name} không thuộc môn học của đề thi này.");
-                        }
-
-                        // Kiểm tra trùng lịch thi cho cùng một lớp học phần
-                        if ($section && $window) {
-                            [$startAt, $endAt] = $window;
-
-                            $hasConflict = ExamSchedule::where('course_section_id', $value)
-                                ->whereRaw('TIMESTAMP(exam_date, start_time) < ?', [$endAt->toDateTimeString()])
-                                ->whereRaw('TIMESTAMP(COALESCE(end_date, exam_date), end_time) > ?', [$startAt->toDateTimeString()])
-                                ->exists();
-
-                            if ($hasConflict) {
-                                $fail("Lớp học phần {$section->name} đã có lịch thi khác trùng vào thời gian này.");
-                            }
                         }
                     }
                 },
@@ -99,20 +83,6 @@ class StoreExamScheduleRequest extends FormRequest
                                 }
                             } catch (\Exception $e) {
                             }
-                        }
-
-                        // Kiểm tra trùng lịch cho giảng viên (tránh 1 GV gác nhiều ca khác nhau cùng lúc)
-                        // Chỉ kiểm tra với các lịch thi ĐÃ CÓ trong DB (không trùng với mảng đang tạo)
-                        $lecturerId = Auth::id();
-                        $hasLecturerConflict = ExamSchedule::whereHas('courseSection', function ($q) use ($lecturerId) {
-                            $q->where('lecturer_id', $lecturerId);
-                        })
-                            ->whereRaw('TIMESTAMP(exam_date, start_time) < ?', [$endAt->toDateTimeString()])
-                            ->whereRaw('TIMESTAMP(COALESCE(end_date, exam_date), end_time) > ?', [$startAt->toDateTimeString()])
-                            ->exists();
-
-                        if ($hasLecturerConflict) {
-                            $fail('Bạn đã có một lịch thi khác trùng vào thời gian này.');
                         }
                     }
                 },

@@ -4,9 +4,7 @@ namespace App\Http\Requests\ExamSchedule;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Exam;
-use App\Models\ExamSchedule;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 class UpdateExamScheduleRequest extends FormRequest
 {
@@ -67,31 +65,6 @@ class UpdateExamScheduleRequest extends FormRequest
                             }
                         } catch (\Exception $e) {
                         }
-                    }
-
-                    // Kiểm tra trùng lịch cho lớp học phần
-                    $hasSectionConflict = ExamSchedule::where('course_section_id', $schedule->course_section_id)
-                        ->where('id', '!=', $schedule->id)
-                        ->whereRaw('TIMESTAMP(exam_date, start_time) < ?', [$endAt->toDateTimeString()])
-                        ->whereRaw('TIMESTAMP(COALESCE(end_date, exam_date), end_time) > ?', [$startAt->toDateTimeString()])
-                        ->exists();
-
-                    if ($hasSectionConflict) {
-                        $fail('Lớp học phần này đã có lịch thi khác trùng vào thời gian này.');
-                    }
-
-                    // Kiểm tra trùng lịch cho giảng viên
-                    $lecturerId = Auth::id();
-                    $hasLecturerConflict = ExamSchedule::whereHas('courseSection', function ($q) use ($lecturerId) {
-                        $q->where('lecturer_id', $lecturerId);
-                    })
-                        ->where('id', '!=', $schedule->id)
-                        ->whereRaw('TIMESTAMP(exam_date, start_time) < ?', [$endAt->toDateTimeString()])
-                        ->whereRaw('TIMESTAMP(COALESCE(end_date, exam_date), end_time) > ?', [$startAt->toDateTimeString()])
-                        ->exists();
-
-                    if ($hasLecturerConflict) {
-                        $fail('Bạn đã có một lịch thi khác trùng vào thời gian này.');
                     }
                 },
             ],
