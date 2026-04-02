@@ -75,7 +75,10 @@ class StudentsResource extends Resource
                 ->label('Mã số sinh viên')
                 ->required()
                 ->unique(ignoreRecord: true)
-                ->maxLength(20),
+                ->regex("/^SV\d{7}$/")
+                ->validationMessages([
+                    'regex' => 'Mã số sinh viên phải có định dạng SVxxxxxxx, trong đó x là số.'
+                ]),
 
             TextInput::make('email')
                 ->label('Email')
@@ -196,7 +199,13 @@ class StudentsResource extends Resource
                     ->badge()
                     ->color('info')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable(
+                        query: function (Builder $query, string $search): Builder {
+                            return $query->orWhereHas('major', function (Builder $majorQuery) use ($search): void {
+                                $majorQuery->where('majors.name', 'like', "%{$search}%");
+                            });
+                        },
+                    ),
 
                 TextColumn::make('studentClass.name')
                     ->label('Lớp')
