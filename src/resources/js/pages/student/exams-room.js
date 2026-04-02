@@ -19,8 +19,23 @@ document.addEventListener("DOMContentLoaded", function () {
     trackCurrentQuestion(currentQuestionIndex);
 
     let timeLeft = parseInt(configEl?.dataset.timeLeft || '0', 10);
+    let minSubmitRemainingSeconds = parseInt(configEl?.dataset.minSubmitRemaining || '0', 10);
+    const minSubmitDuration = parseInt(configEl?.dataset.minSubmitDuration || '0', 10);
     const timerDisplay = document.getElementById('countdown-timer');
     const examForm = document.getElementById('exam-form');
+    const minSubmitNote = document.getElementById('min-submit-note');
+
+    const updateMinSubmitNote = () => {
+        if (!minSubmitNote || minSubmitDuration <= 0) return;
+
+        if (minSubmitRemainingSeconds > 0) {
+            minSubmitNote.textContent = `Có thể nộp sau ${formatDuration(minSubmitRemainingSeconds)} nữa.`;
+        } else {
+            minSubmitNote.textContent = 'Đã đủ thời gian tối thiểu, bạn có thể nộp bài.';
+        }
+    };
+
+    updateMinSubmitNote();
 
     // Question navigator
     document.querySelectorAll('[data-question-index]').forEach(btn => {
@@ -47,10 +62,21 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelector('[data-action="prev-question"]')?.addEventListener('click', prevQuestion);
     document.querySelector('[data-action="next-question"]')?.addEventListener('click', nextQuestion);
     document.querySelector('[data-action="submit-exam"]')?.addEventListener('click', () => {
+        if (minSubmitRemainingSeconds > 0) {
+            showToast(`Chưa đủ thời gian nộp bài. Bạn cần làm thêm ${formatDuration(minSubmitRemainingSeconds)}.`, 'warning');
+            return;
+        }
+
         if (confirm('Bạn chắc chắn muốn nộp bài? Không thể sửa sau khi nộp.')) {
             examForm.submit();
         }
     });
+
+    const flashMessage = examRoomConfig.flash?.message || '';
+    const flashType = examRoomConfig.flash?.type || 'warning';
+    if (flashMessage) {
+        showToast(flashMessage, flashType);
+    }
 
     // Countdown
     const countdown = setInterval(function () {
@@ -65,6 +91,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 (minutes < 10 ? "0" : "") + minutes + ":" +
                 (seconds < 10 ? "0" : "") + seconds;
             timeLeft -= 1;
+
+            if (minSubmitRemainingSeconds > 0) {
+                minSubmitRemainingSeconds -= 1;
+                updateMinSubmitNote();
+            }
 
             if (timeLeft < 300) {
                 timerDisplay.classList.add('urgent');
@@ -143,6 +174,21 @@ document.addEventListener("DOMContentLoaded", function () {
 function updateAnsweredCount() {
     const answered = document.querySelectorAll('.q-btn.answered').length;
     document.getElementById('answered-count').innerText = answered;
+}
+
+function formatDuration(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    if (minutes > 0 && seconds > 0) {
+        return `${minutes} phút ${seconds} giây`;
+    }
+
+    if (minutes > 0) {
+        return `${minutes} phút`;
+    }
+
+    return `${seconds} giây`;
 }
 
 let toastTimeout;

@@ -630,7 +630,12 @@ $totalQuestions = count($questions);
 
     {{-- ─── 2-Column Layout ─── --}}
     <div class="zen-layout" id="main-content">
-        <div id="exam-config" data-total-questions="{{ $totalQuestions }}" data-time-left="{{ $timeLeftSeconds }}" hidden></div>
+        <div id="exam-config"
+            data-total-questions="{{ $totalQuestions }}"
+            data-time-left="{{ $timeLeftSeconds }}"
+            data-min-submit-remaining="{{ $minSubmitRemainingSeconds }}"
+            data-min-submit-duration="{{ (int) ($exam->min_duration_before_submit ?? 0) }}"
+            hidden></div>
 
         {{-- ═══ Left Column: Questions ═══ --}}
         <div class="zen-left">
@@ -771,6 +776,9 @@ $totalQuestions = count($questions);
                     Nộp bài thi
                 </button>
                 <p class="submit-note">Không thể sửa sau khi nộp</p>
+                @if(($exam->min_duration_before_submit ?? 0) > 0)
+                <p class="submit-note" id="min-submit-note"></p>
+                @endif
             </div>
         </div>
     </div>
@@ -785,9 +793,16 @@ $totalQuestions = count($questions);
     </div>
 
     @php
+    $flashMessage = session('warning') ?? session('error');
+    $flashType = session('warning') ? 'warning' : 'error';
+
     $studentExamRoomConfig = [
     'saveUrl' => route('student.exams.save-answer', $schedule->id),
     'csrfToken' => csrf_token(),
+    'flash' => [
+    'message' => $flashMessage,
+    'type' => $flashMessage ? $flashType : null,
+    ],
     ];
     @endphp
     <script id="student-exam-room-config" type="application/json">

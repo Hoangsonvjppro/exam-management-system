@@ -80,6 +80,9 @@ class ExamController extends Controller
         // Deadline = min(started_at + duration, schedule.end_time) hoặc duration tuỳ cấu hình
         $deadline = $schedule->getDeadlineFor($attempt);
         $timeLeftSeconds = $deadline->getTimestamp() - now()->getTimestamp();
+        $minDurationSeconds = max(0, (int) ($exam->min_duration_before_submit ?? 0) * 60);
+        $elapsedSeconds = (int) $attempt->started_at->diffInSeconds(now());
+        $minSubmitRemainingSeconds = max(0, $minDurationSeconds - $elapsedSeconds);
 
         // Nếu thời gian đã hết thì tự động finalize (chấm điểm luôn)
         if ($timeLeftSeconds <= 0) {
@@ -98,6 +101,7 @@ class ExamController extends Controller
             'attempt',
             'questions',
             'timeLeftSeconds',
+            'minSubmitRemainingSeconds',
             'savedAnswers'
         ));
     }
@@ -142,9 +146,22 @@ class ExamController extends Controller
         if (!$request->has('is_forced_submit')) {
             $minDuration = $exam->min_duration_before_submit ?? 0;
             if ($minDuration > 0) {
-                $minutesPassed = $attempt->started_at->diffInMinutes(now());
-                if ($minutesPassed < $minDuration) {
-                    return back()->with('error', "Bạn phải làm bài ít nhất {$minDuration} phút trước khi nộp bài. Bạn đã làm được {$minutesPassed} phút.");
+                $requiredSeconds = (int) $minDuration * 60;
+                $elapsedSeconds = (int) $attempt->started_at->diffInSeconds(now());
+                if ($elapsedSeconds < $requiredSeconds) {
+                    $remainingSeconds = max(0, $requiredSeconds - $elapsedSeconds);
+                    $remainingMinutes = (int) floor($remainingSeconds / 60);
+                    $remainingExtraSeconds = $remainingSeconds % 60;
+
+                    $remainingText = [];
+                    if ($remainingMinutes > 0) {
+                        $remainingText[] = "{$remainingMinutes} phút";
+                    }
+                    if ($remainingExtraSeconds > 0) {
+                        $remainingText[] = "{$remainingExtraSeconds} giây";
+                    }
+
+                    return back()->with('warning', 'Chưa đủ thời gian nộp bài. Bạn cần làm thêm ' . implode(' ', $remainingText) . '.');
                 }
             }
         }
