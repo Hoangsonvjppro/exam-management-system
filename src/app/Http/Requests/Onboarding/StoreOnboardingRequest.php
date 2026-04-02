@@ -14,19 +14,19 @@ class StoreOnboardingRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'name'         => ['required', 'string', 'max:255'],
             'student_code' => ['required', 'string', 'max:20', 'unique:users,student_code'],
-            'class_name'   => ['required', 'string', 'max:100'],
         ];
     }
 
     public function messages(): array
     {
         return [
+            'name.required'         => 'Vui lòng nhập họ tên đầy đủ.',
+            'name.max'              => 'Họ tên không được vượt quá 255 ký tự.',
             'student_code.required' => 'Vui lòng nhập mã số sinh viên.',
             'student_code.unique'   => 'Mã số sinh viên đã tồn tại trong hệ thống.',
             'student_code.max'      => 'Mã số sinh viên không được vượt quá 20 ký tự.',
-            'class_name.required'   => 'Vui lòng nhập tên lớp.',
-            'class_name.max'        => 'Tên lớp không được vượt quá 100 ký tự.',
         ];
     }
 }

@@ -18,8 +18,8 @@ class StudentOnboardingController extends Controller
         $validated = $request->validated();
 
         $user = auth()->user();
+        $user->name = $validated['name'];
         $user->student_code = $validated['student_code'];
-        $user->class_name = $validated['class_name'];
         $user->save();
 
         return redirect()->route('dashboard');
