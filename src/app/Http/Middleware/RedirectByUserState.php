@@ -30,13 +30,9 @@ class RedirectByUserState
                 return redirect()->route('lecturer.dashboard');
             }
 
-            if ($user->hasRole('student')) {
-                return redirect()->route('student.dashboard');
-            }
+            return redirect()->route('student.dashboard');
         } catch (QueryException) {
             return $next($request);
         }
-
-        return $next($request);
     }
 }
