@@ -44,7 +44,11 @@ jobs:
 
       - name: Cài đặt PHP dependencies
         working-directory: ./src
-        run: composer install $COMPOSER_FLAGS
+        run: |
+          set -euxo pipefail
+          rm -rf vendor/
+          composer install $COMPOSER_FLAGS --no-scripts
+          composer install $COMPOSER_FLAGS
 
       - name: Kiểm tra platform requirements (PHP extensions)
         working-directory: ./src
@@ -59,7 +63,6 @@ jobs:
           npm run build
 
       - name: Chạy lệnh mở rộng cho teammate (nếu có)
-        working-directory: ./src
         run: |
           set -euxo pipefail
           if [ -f .github/scripts/deploy-extra.sh ]; then
@@ -71,12 +74,12 @@ jobs:
 
       - name: Cập nhật Database (Xóa trắng và Seed lại)
         working-directory: ./src
-        if: ${{ contains(github.event.head_commit.message, '[fresh-seed]') }}
+        if: ${{ github.event.head_commit && contains(github.event.head_commit.message, '[fresh-seed]') }}
         run: php artisan migrate:fresh --seed --force --no-interaction
 
       - name: Cập nhật Database (Bình thường)
         working-directory: ./src
-        if: ${{ !contains(github.event.head_commit.message, '[fresh-seed]') }}
+        if: ${{ !github.event.head_commit || !contains(github.event.head_commit.message, '[fresh-seed]') }}
         run: php artisan migrate --force --no-interaction
 
       - name: Tối ưu cache Laravel
