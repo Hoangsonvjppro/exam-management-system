@@ -83,7 +83,7 @@ class UsersTable
                 EditAction::make(),
 
                 Action::make('toggle_active')
-                    ->label(fn(User $record): string => $record->is_active ? 'Khoa tài khoản' : 'Mở khóa')
+                    ->label(fn(User $record): string => $record->is_active ? 'Khoá tài khoản' : 'Mở khóa')
                     ->color(fn(User $record): string => $record->is_active ? 'danger' : 'success')
                     ->requiresConfirmation()
                     ->visible(function (): bool {
