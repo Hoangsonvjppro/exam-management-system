@@ -28,8 +28,6 @@ class AnnouncementResource extends Resource
     protected static ?string $navigationLabel = 'Thông báo';
     protected static ?string $modelLabel = 'Thông báo';
     protected static ?string $pluralModelLabel = 'Thông báo';
-    protected static string | \UnitEnum | null $navigationGroup = 'Nội dung';
-    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
@@ -39,12 +37,6 @@ class AnnouncementResource extends Resource
                 ->required()
                 ->maxLength(255)
                 ->columnSpanFull(),
-
-            Textarea::make('body')
-                ->label('Nội dung')
-                ->rows(5)
-                ->columnSpanFull(),
-
             Select::make('type')
                 ->label('Loại thông báo')
                 ->options([
@@ -58,7 +50,13 @@ class AnnouncementResource extends Resource
 
             Toggle::make('is_published')
                 ->label('Hiển thị trên trang chủ')
+                ->inline(false)
                 ->default(true),
+
+            Textarea::make('body')
+                ->label('Nội dung')
+                ->rows(5)
+                ->columnSpanFull(),
         ]);
     }
 
@@ -74,13 +72,13 @@ class AnnouncementResource extends Resource
                 TextColumn::make('type')
                     ->label('Loại')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'urgent'  => 'danger',
                         'warning' => 'warning',
                         'event'   => 'success',
                         default   => 'info',
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'urgent'  => 'Khẩn cấp',
                         'warning' => 'Cảnh báo',
                         'event'   => 'Sự kiện',
@@ -89,7 +87,8 @@ class AnnouncementResource extends Resource
 
                 IconColumn::make('is_published')
                     ->label('Hiển thị')
-                    ->boolean(),
+                    ->boolean()
+                    ->alignCenter(),
 
                 TextColumn::make('created_at')
                     ->label('Ngày tạo')
@@ -112,8 +111,6 @@ class AnnouncementResource extends Resource
     {
         return [
             'index'  => ListAnnouncements::route('/'),
-            'create' => CreateAnnouncement::route('/create'),
-            'edit'   => EditAnnouncement::route('/{record}/edit'),
         ];
     }
 
