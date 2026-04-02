@@ -2,15 +2,40 @@
 
 namespace App\Http\Controllers\Lecturer;
 
+use App\Exports\ProcessGradesExport;
 use App\Http\Controllers\Controller;
 use App\Models\CourseSection;
 use App\Models\GradeColumn;
 use App\Models\StudentGrade;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class GradeManagerController extends Controller
 {
+    public function export(CourseSection $section): BinaryFileResponse
+    {
+        Gate::authorize('manage', $section);
+
+        $section->load([
+            'subject:id,code,name',
+            'semester:id,name',
+            'students:id,name,student_code',
+            'gradeColumns' => fn($query) => $query->orderBy('order'),
+            'gradeColumns.studentGrades:id,grade_column_id,student_id,score',
+        ]);
+
+        $fileName = sprintf(
+            'diem-qua-trinh-%s-%s.xlsx',
+            str($section->code)->slug('-'),
+            now()->format('Ymd-His')
+        );
+
+        return Excel::download(new ProcessGradesExport($section), $fileName);
+    }
+
     /**
      * Tạo cột điểm mới cho lớp
      */
@@ -103,7 +128,7 @@ class GradeManagerController extends Controller
             return response()->json(['error' => 'Sinh viên không thuộc lớp này'], 403);
         }
 
-        $updateData = ['updated_by' => auth()->id()];
+        $updateData = ['updated_by' => Auth::id()];
         if (array_key_exists('score', $validated)) {
             $updateData['score'] = $validated['score'];
         }

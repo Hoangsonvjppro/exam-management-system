@@ -67,28 +67,7 @@ class StudentResultService
         $totalWeightedScore4 = 0;
 
         foreach ($sections as $section) {
-            $sectionTotal10 = 0;
-            $hasAllGrades = true;
-            $totalWeight = 0;
-
-            foreach ($section->gradeColumns as $column) {
-                $grade = $column->studentGrades->first();
-                if ($grade && $grade->score !== null) {
-                    $sectionTotal10 += ($grade->score * ($column->weight / 100));
-                } else {
-                    $hasAllGrades = false;
-                }
-                $totalWeight += $column->weight;
-            }
-
-            // Điểm tổng hệ 10
-            $sectionFinal10 = round($sectionTotal10, 2);
-            $conversion = $this->convertGradeTo4AndLetter($sectionFinal10);
-
-            $section->final_score_10 = $sectionFinal10;
-            $section->final_score_4 = $conversion['gpa4'];
-            $section->letter_grade = $conversion['letter'];
-            $section->has_all_grades = $hasAllGrades && $totalWeight >= 100;
+            $this->applyComputedScores($section);
 
             // Tính điểm trung bình môn học kỳ
             $credits = $section->subject->credits ?? 0;
@@ -97,7 +76,7 @@ class StudentResultService
             // Tính gpa có trọng số (hiện tại tính tích luỹ tạm thời trên số môn đã có. 
             // Nếu muốn chỉ tính môn có đủ điểm thì bỏ check này hoặc đưa vào block if ($hasAllGrades))
             // Ở đây tính theo điểm hiện tại hiện có.
-            $totalWeightedScore10 += ($sectionFinal10 * $credits);
+            $totalWeightedScore10 += ($section->final_score_10 * $credits);
             $totalWeightedScore4 += ($section->final_score_4 * $credits);
         }
 
@@ -114,6 +93,45 @@ class StudentResultService
                 'gpa_10' => $gpa10,
                 'gpa_4' => $gpa4,
             ]
+        ];
+    }
+
+    public function applyComputedScores(CourseSection $section): CourseSection
+    {
+        $computed = $this->computeSectionScores($section);
+
+        $section->final_score_10 = $computed['final_score_10'];
+        $section->final_score_4 = $computed['final_score_4'];
+        $section->letter_grade = $computed['letter_grade'];
+        $section->has_all_grades = $computed['has_all_grades'];
+
+        return $section;
+    }
+
+    public function computeSectionScores(CourseSection $section): array
+    {
+        $sectionTotal10 = 0;
+        $hasAllGrades = true;
+        $totalWeight = 0;
+
+        foreach ($section->gradeColumns as $column) {
+            $grade = $column->studentGrades->first();
+            if ($grade && $grade->score !== null) {
+                $sectionTotal10 += ((float) $grade->score) * (((float) $column->weight) / 100);
+            } else {
+                $hasAllGrades = false;
+            }
+            $totalWeight += (float) $column->weight;
+        }
+
+        $finalScore10 = round($sectionTotal10, 2);
+        $conversion = $this->convertGradeTo4AndLetter($finalScore10);
+
+        return [
+            'final_score_10' => $finalScore10,
+            'final_score_4' => $conversion['gpa4'],
+            'letter_grade' => $conversion['letter'],
+            'has_all_grades' => $hasAllGrades && $totalWeight >= 100,
         ];
     }
 

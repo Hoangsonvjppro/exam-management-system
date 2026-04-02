@@ -514,9 +514,15 @@
                         <p class="text-[12px] text-text-muted font-medium mt-1">Quản lý các cột điểm thành phần. Tổng trọng số: <span class="font-bold border-b border-dashed" :class="totalWeight > 100 ? 'text-red-500 border-red-500' : 'text-teal-600 border-teal-600'" x-text="totalWeight + '%'"></span></p>
                     </div>
                     @can('manage', $section)
-                    <x-button variant="primary" @click="$dispatch('open-modal', 'column-modal'); isEditingColumn = false; columnData = {name: '', weight: 10};">
-                        + Thêm cột điểm
-                    </x-button>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('lecturer.classes.grades.export', $section) }}"
+                            class="inline-flex h-10 items-center px-4 rounded-[8px] border border-border-clean bg-white text-[13px] font-semibold text-navy-900 hover:bg-surface-0 transition-colors">
+                            Xuất Excel
+                        </a>
+                        <x-button variant="primary" @click="$dispatch('open-modal', 'column-modal'); isEditingColumn = false; columnData = {name: '', weight: 10};">
+                            + Thêm cột điểm
+                        </x-button>
+                    </div>
                     @endcan
                 </div>
 

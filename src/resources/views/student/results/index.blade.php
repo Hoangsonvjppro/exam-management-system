@@ -98,6 +98,7 @@
                             <th class="px-5 py-4 text-right">Điểm hệ 10</th>
                             <th class="px-5 py-4 text-center">Điểm hệ 4</th>
                             <th class="px-5 py-4 text-center">Điểm chữ</th>
+                            <th class="px-5 py-4 text-center">Phiếu điểm</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y border-border-clean" x-data="resultsExpansionState()">
@@ -145,11 +146,18 @@
                                     {{ $section->letter_grade }}
                                 </span>
                             </td>
+                            <td class="px-5 py-4 align-middle text-center">
+                                <a href="{{ route('student.results.score-slip', $section) }}"
+                                    @click.stop
+                                    class="inline-flex items-center justify-center h-8 px-3 rounded-[8px] border border-blue-200 bg-blue-50 text-[11px] font-bold uppercase tracking-wide text-blue-700 hover:bg-blue-100 transition-colors">
+                                    PDF
+                                </a>
+                            </td>
                         </tr>
 
                         <!-- Expanded Details Row -->
                         <tr x-show="expandedRows.includes({{ $index }})" x-transition x-cloak class="bg-surface-0/30">
-                            <td colspan="6" class="px-5 py-4 !border-t-0">
+                            <td colspan="7" class="px-5 py-4 !border-t-0">
                                 <div class="pl-14 pr-4">
                                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-[8px] border-[0.5px] border-border-clean shadow-sm">
                                         @forelse($section->gradeColumns as $column)
