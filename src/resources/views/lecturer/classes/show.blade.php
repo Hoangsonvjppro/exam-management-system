@@ -209,9 +209,9 @@
                                         <p class="text-[11px] text-text-muted mt-0.5">{{ $schedule->exam->duration_minutes }} phút · {{ $schedule->exam->questions_count ?? 0 }} câu</p>
                                     </td>
                                     <td class="py-3 px-3 text-[12px] text-text-muted">
-                                        {{ $schedule->exam_date->format('d/m/Y') }}
+                                        {{ $schedule->date_range_text }}
                                         @if($schedule->start_time)
-                                        <div>{{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}</div>
+                                        <div>{{ $schedule->time_range_text }}</div>
                                         @endif
                                     </td>
                                     <td class="py-3 px-3">
@@ -514,9 +514,15 @@
                         <p class="text-[12px] text-text-muted font-medium mt-1">Quản lý các cột điểm thành phần. Tổng trọng số: <span class="font-bold border-b border-dashed" :class="totalWeight > 100 ? 'text-red-500 border-red-500' : 'text-teal-600 border-teal-600'" x-text="totalWeight + '%'"></span></p>
                     </div>
                     @can('manage', $section)
-                    <x-button variant="primary" @click="$dispatch('open-modal', 'column-modal'); isEditingColumn = false; columnData = {name: '', weight: 10};">
-                        + Thêm cột điểm
-                    </x-button>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('lecturer.classes.grades.export', $section) }}"
+                            class="inline-flex h-10 items-center px-4 rounded-[8px] border border-border-clean bg-white text-[13px] font-semibold text-navy-900 hover:bg-surface-0 transition-colors">
+                            Xuất Excel
+                        </a>
+                        <x-button variant="primary" @click="$dispatch('open-modal', 'column-modal'); isEditingColumn = false; columnData = {name: '', weight: 10};">
+                            + Thêm cột điểm
+                        </x-button>
+                    </div>
                     @endcan
                 </div>
 
@@ -748,25 +754,26 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Ngày thi <span class="text-red-500">*</span></label>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Ngày bắt đầu <span class="text-red-500">*</span></label>
                         <input type="date" name="exam_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
                         <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="exam_date"></p>
                     </div>
                     <div>
-                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Số SV tối đa</label>
-                        <input type="number" name="max_students" min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Không giới hạn">
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Ngày kết thúc <span class="text-red-500">*</span></label>
+                        <input type="date" name="end_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                        <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_date"></p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[12px] font-semibold text-navy-900 mb-1">Giờ bắt đầu <span class="text-red-500">*</span></label>
-                        <input type="time" name="start_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                        <input type="text" name="start_time" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" title="Nhập giờ theo định dạng 24h, ví dụ 08:30" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
                         <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="start_time"></p>
                     </div>
                     <div>
                         <label class="block text-[12px] font-semibold text-navy-900 mb-1">Giờ kết thúc <span class="text-red-500">*</span></label>
-                        <input type="time" name="end_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                        <input type="text" name="end_time" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" title="Nhập giờ theo định dạng 24h, ví dụ 17:45" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
                         <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_time"></p>
                     </div>
                 </div>

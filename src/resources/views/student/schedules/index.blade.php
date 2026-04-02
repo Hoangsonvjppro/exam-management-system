@@ -31,43 +31,42 @@
                     <tbody>
                         @foreach($schedules as $schedule)
                         @php
-                            $now = now();
-                            $examDate = $schedule->exam_date->format('Y-m-d');
-                            $startDt = \Carbon\Carbon::parse($examDate . ' ' . $schedule->start_time);
-                            $endDt   = \Carbon\Carbon::parse($examDate . ' ' . $schedule->end_time);
+                        $now = now();
+                        $startDt = $schedule->start_datetime;
+                        $endDt = $schedule->end_datetime;
 
-                            if ($now->lt($startDt)) {
-                                $statusLabel = 'Sắp tới';
-                                $statusCls   = 'bg-[#EBF2FA] text-[#1A3A6B]';
-                                $isOpen      = false;
-                            } elseif ($now->between($startDt, $endDt)) {
-                                $statusLabel = 'Đang mở';
-                                $statusCls   = 'bg-[#ECFDF5] text-[#065F46]';
-                                $isOpen      = true;
-                            } else {
-                                $statusLabel = 'Đã kết thúc';
-                                $statusCls   = 'bg-[#F3F4F6] text-[#6B7C99]';
-                                $isOpen      = false;
-                            }
+                        if ($now->lt($startDt)) {
+                        $statusLabel = 'Sắp tới';
+                        $statusCls = 'bg-[#EBF2FA] text-[#1A3A6B]';
+                        $isOpen = false;
+                        } elseif ($now->between($startDt, $endDt)) {
+                        $statusLabel = 'Đang mở';
+                        $statusCls = 'bg-[#ECFDF5] text-[#065F46]';
+                        $isOpen = true;
+                        } else {
+                        $statusLabel = 'Đã kết thúc';
+                        $statusCls = 'bg-[#F3F4F6] text-[#6B7C99]';
+                        $isOpen = false;
+                        }
 
-                            // Override by schedule status
-                            if ($schedule->status === 'cancelled') {
-                                $statusLabel = 'Đã hủy';
-                                $statusCls   = 'bg-[#FEF2F2] text-[#991B1B]';
-                                $isOpen      = false;
-                            } elseif ($schedule->status === 'completed') {
-                                $statusLabel = 'Hoàn thành';
-                                $statusCls   = 'bg-[#ECFDF5] text-[#065F46]';
-                                $isOpen      = false;
-                            }
+                        // Override by schedule status
+                        if ($schedule->status === 'cancelled') {
+                        $statusLabel = 'Đã hủy';
+                        $statusCls = 'bg-[#FEF2F2] text-[#991B1B]';
+                        $isOpen = false;
+                        } elseif ($schedule->status === 'completed') {
+                        $statusLabel = 'Hoàn thành';
+                        $statusCls = 'bg-[#ECFDF5] text-[#065F46]';
+                        $isOpen = false;
+                        }
                         @endphp
                         <tr class="border-t border-[#EBF2FA] hover:bg-[#F8FAFD] transition-colors">
                             <td class="px-5 py-4 font-bold text-[#1A3A6B]">{{ $schedule->exam->title }}</td>
                             <td class="px-5 py-4 text-gray-500 font-medium">{{ $schedule->courseSection->name ?? '—' }}</td>
-                            <td class="px-5 py-4 text-center font-semibold text-gray-700">{{ $schedule->exam_date->format('d/m/Y') }}</td>
+                            <td class="px-5 py-4 text-center font-semibold text-gray-700">{{ $schedule->date_range_text }}</td>
                             <td class="px-5 py-4 text-center text-gray-700 flex flex-col justify-center">
-                                <span class="font-bold text-[#1A3A6B]">{{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }}</span>
-                                <span class="text-[10px] text-gray-400 uppercase font-bold">{{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}</span>
+                                <span class="font-bold text-[#1A3A6B]">{{ $schedule->start_datetime->format('H:i') }}</span>
+                                <span class="text-[10px] text-gray-400 uppercase font-bold">{{ $schedule->end_datetime->format('H:i') }}</span>
                             </td>
                             <td class="px-5 py-4 text-center">
                                 <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border {{ $statusCls }}">{{ $statusLabel }}</span>

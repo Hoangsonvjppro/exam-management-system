@@ -19,8 +19,8 @@ class StudentExamService
     {
         $exam = $schedule->exam;
         $now = now();
-        $scheduleStart = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->start_time);
-        $scheduleEnd = \Carbon\Carbon::parse($schedule->exam_date->format('Y-m-d') . ' ' . $schedule->end_time);
+        $scheduleStart = $schedule->start_datetime;
+        $scheduleEnd = $schedule->end_datetime;
 
         if ($now->lt($scheduleStart)) {
             throw new DomainException('Ca thi chưa bắt đầu.');
@@ -192,7 +192,7 @@ class StudentExamService
 
                 if ($typeCode === 'multiple_choice' && isset($validated['option_ids'])) {
                     $newOptionIds = array_map('intval', $validated['option_ids']);
-                    
+
                     // Atomic Sync: Delete options not in the new set, then insert missing ones
                     // Using a transaction (already active) to ensure consistency
                     $studentAnswer->selectedOptions()
@@ -213,7 +213,6 @@ class StudentExamService
                 }
 
                 return ['http_code' => 200, 'message' => ''];
-
             } catch (UniqueConstraintViolationException $e) {
                 // If a concurrent request already inserted the record, we treat it as success
                 return ['http_code' => 200, 'message' => ''];

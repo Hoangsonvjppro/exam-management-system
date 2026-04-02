@@ -22,74 +22,79 @@ class UpdateExamScheduleRequest extends FormRequest
 
         return [
             'exam_date'     => 'required|date|after_or_equal:today',
+            'end_date'      => 'required|date|after_or_equal:exam_date',
             'start_time'    => [
                 'required',
                 'date_format:H:i',
                 function ($attribute, $value, $fail) {
-                    $examDate = $this->input('exam_date');
-                    if ($examDate === date('Y-m-d')) {
-                        if ($value <= date('H:i')) {
-                            $fail('Giờ bắt đầu phải lớn hơn giờ hiện tại nếu thi trong hôm nay.');
-                        }
+                    $window = $this->parseScheduleWindow();
+
+                    if (! $window) {
+                        return;
                     }
-                }
+
+                    [$startAt] = $window;
+                    if ($startAt->lessThanOrEqualTo(now())) {
+                        $fail('Thời gian bắt đầu phải lớn hơn thời điểm hiện tại.');
+                    }
+                },
             ],
             'end_time'      => [
                 'required',
                 'date_format:H:i',
-                'after:start_time',
                 function ($attribute, $value, $fail) use ($examId, $schedule) {
-                    $startTime = $this->input('start_time');
-                    $examDate = $this->input('exam_date');
+                    $window = $this->parseScheduleWindow();
+
+                    if (! $window) {
+                        return;
+                    }
+
+                    [$startAt, $endAt] = $window;
+
+                    if ($endAt->lessThanOrEqualTo($startAt)) {
+                        $fail('Thời điểm kết thúc phải sau thời điểm bắt đầu.');
+                        return;
+                    }
+
                     $exam = Exam::find($examId);
-                    
-                    if ($exam && $startTime) {
+
+                    if ($exam) {
                         try {
-                            $start = Carbon::createFromFormat('H:i', $startTime);
-                            $end = Carbon::createFromFormat('H:i', $value);
-                            $diff = $start->diffInMinutes($end);
+                            $diff = $startAt->diffInMinutes($endAt);
 
                             if ($diff < $exam->duration_minutes) {
                                 $fail("Thời gian thi ({$diff} phút) không đủ cho thời lượng đề thi ({$exam->duration_minutes} phút).");
                             }
-                        } catch (\Exception $e) {}
+                        } catch (\Exception $e) {
+                        }
                     }
 
                     // Kiểm tra trùng lịch cho lớp học phần
-                    if ($examDate && $startTime && $value) {
-                        $hasSectionConflict = ExamSchedule::where('course_section_id', $schedule->course_section_id)
-                            ->where('id', '!=', $schedule->id)
-                            ->where('exam_date', $examDate)
-                            ->where(function ($query) use ($startTime, $value) {
-                                $query->where('start_time', '<', $value)
-                                      ->where('end_time', '>', $startTime);
-                            })
-                            ->exists();
+                    $hasSectionConflict = ExamSchedule::where('course_section_id', $schedule->course_section_id)
+                        ->where('id', '!=', $schedule->id)
+                        ->whereRaw('TIMESTAMP(exam_date, start_time) < ?', [$endAt->toDateTimeString()])
+                        ->whereRaw('TIMESTAMP(COALESCE(end_date, exam_date), end_time) > ?', [$startAt->toDateTimeString()])
+                        ->exists();
 
-                        if ($hasSectionConflict) {
-                            $fail("Lớp học phần này đã có lịch thi khác trùng vào thời gian này.");
-                        }
-
-                        // Kiểm tra trùng lịch cho giảng viên
-                        $lecturerId = Auth::id();
-                        $hasLecturerConflict = ExamSchedule::whereHas('courseSection', function($q) use ($lecturerId) {
-                                $q->where('lecturer_id', $lecturerId);
-                            })
-                            ->where('id', '!=', $schedule->id)
-                            ->where('exam_date', $examDate)
-                            ->where(function ($query) use ($startTime, $value) {
-                                $query->where('start_time', '<', $value)
-                                      ->where('end_time', '>', $startTime);
-                            })
-                            ->exists();
-
-                        if ($hasLecturerConflict) {
-                            $fail("Bạn đã có một lịch thi khác trùng vào thời gian này.");
-                        }
+                    if ($hasSectionConflict) {
+                        $fail('Lớp học phần này đã có lịch thi khác trùng vào thời gian này.');
                     }
-                }
+
+                    // Kiểm tra trùng lịch cho giảng viên
+                    $lecturerId = Auth::id();
+                    $hasLecturerConflict = ExamSchedule::whereHas('courseSection', function ($q) use ($lecturerId) {
+                        $q->where('lecturer_id', $lecturerId);
+                    })
+                        ->where('id', '!=', $schedule->id)
+                        ->whereRaw('TIMESTAMP(exam_date, start_time) < ?', [$endAt->toDateTimeString()])
+                        ->whereRaw('TIMESTAMP(COALESCE(end_date, exam_date), end_time) > ?', [$startAt->toDateTimeString()])
+                        ->exists();
+
+                    if ($hasLecturerConflict) {
+                        $fail('Bạn đã có một lịch thi khác trùng vào thời gian này.');
+                    }
+                },
             ],
-            'max_students'  => 'nullable|integer|min:1',
             'notes'         => 'nullable|string|max:1000',
             'status'        => 'sometimes|in:scheduled,in_progress,completed,cancelled',
             'link_grade_column' => 'nullable|boolean',
@@ -100,11 +105,36 @@ class UpdateExamScheduleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'exam_date.required'         => 'Ngày thi là bắt buộc.',
-            'exam_date.after_or_equal'   => 'Ngày thi phải từ hôm nay trở đi.',
+            'exam_date.required'         => 'Ngày bắt đầu là bắt buộc.',
+            'exam_date.after_or_equal'   => 'Ngày bắt đầu phải từ hôm nay trở đi.',
+            'end_date.required'          => 'Ngày kết thúc là bắt buộc.',
+            'end_date.after_or_equal'    => 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
             'start_time.required'        => 'Giờ bắt đầu là bắt buộc.',
             'end_time.required'          => 'Giờ kết thúc là bắt buộc.',
-            'end_time.after'             => 'Giờ kết thúc phải sau giờ bắt đầu.',
         ];
+    }
+
+    /**
+     * @return array{0: Carbon, 1: Carbon}|null
+     */
+    private function parseScheduleWindow(): ?array
+    {
+        $startDate = $this->input('exam_date');
+        $endDate = $this->input('end_date') ?: $startDate;
+        $startTime = $this->input('start_time');
+        $endTime = $this->input('end_time');
+
+        if (! $startDate || ! $startTime || ! $endDate || ! $endTime) {
+            return null;
+        }
+
+        try {
+            $startAt = Carbon::createFromFormat('Y-m-d H:i', $startDate . ' ' . $startTime);
+            $endAt = Carbon::createFromFormat('Y-m-d H:i', $endDate . ' ' . $endTime);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        return [$startAt, $endAt];
     }
 }

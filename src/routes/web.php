@@ -127,6 +127,7 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
         Route::get('/exams', [\App\Http\Controllers\Student\ExamController::class, 'index'])->name('exams.index');
 
         Route::get('/results', [StudentPageController::class, 'results'])->name('results.index');
+        Route::get('/results/{section}/score-slip', [StudentPageController::class, 'exportScoreSlip'])->name('results.score-slip');
 
         Route::get('/attendance', [StudentPageController::class, 'attendance'])->name('attendance.index');
 
@@ -185,6 +186,8 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
                 ->name('classes.grade-columns.destroy');
             Route::post('/classes/{section}/grade-columns/{column}/grades', [\App\Http\Controllers\Lecturer\GradeManagerController::class, 'saveGrades'])
                 ->name('classes.grades.save');
+            Route::get('/classes/{section}/grades/export', [\App\Http\Controllers\Lecturer\GradeManagerController::class, 'export'])
+                ->name('classes.grades.export');
 
             // Tạo lại mã tham gia lớp học
             Route::post('/classes/{section}/regenerate-code', [LecturerSectionController::class, 'regenerateCode'])

@@ -19,25 +19,24 @@ class StudentExamQueryService
                 ->where('course_section_students.status', EnrollmentService::PIVOT_ENROLLED);
         })->pluck('id');
 
-        $schedules = ExamSchedule::whereHas('courseSection', function($q) use ($enrolledSectionIds) {
+        $schedules = ExamSchedule::whereHas('courseSection', function ($q) use ($enrolledSectionIds) {
             $q->whereIn('id', $enrolledSectionIds);
         })
-            ->whereHas('exam', function($q) {
+            ->whereHas('exam', function ($q) {
                 $q->published();
             })
             ->with(['courseSection', 'exam'])
-            ->orderBy('exam_date')
-            ->orderBy('start_time')
+            ->orderByRaw('TIMESTAMP(exam_date, start_time)')
             ->get();
 
         return [
-            'upcoming' => $schedules->filter(function($schedule) {
+            'upcoming' => $schedules->filter(function ($schedule) {
                 return $schedule->start_datetime->isFuture();
             }),
-            'available' => $schedules->filter(function($schedule) {
+            'available' => $schedules->filter(function ($schedule) {
                 return $schedule->start_datetime->isPast() && $schedule->end_datetime->isFuture();
             }),
-            'ended' => $schedules->filter(function($schedule) {
+            'ended' => $schedules->filter(function ($schedule) {
                 return $schedule->end_datetime->isPast();
             }),
         ];

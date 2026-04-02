@@ -161,11 +161,11 @@
                                     @endif
                                     {{ $statusConfig[1] }}
                                 </span>
-                                <span class="text-[11px] text-text-muted font-semibold">{{ $schedule->exam_date->format('d/m/Y') }}</span>
+                                <span class="text-[11px] text-text-muted font-semibold">{{ $schedule->date_range_text }}</span>
                             </div>
                             <h4 class="font-bold text-base text-navy-900 leading-snug mb-1">{{ $schedule->exam->title }}</h4>
                             <div class="flex items-center gap-3 mt-2 text-[11px] text-text-muted">
-                                <span class="font-semibold">{{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} — {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}</span>
+                                <span class="font-semibold">{{ $schedule->time_range_text }}</span>
                                 <span>·</span>
                                 <span>{{ $schedule->exam->duration_minutes }} phút</span>
                                 <span>·</span>
