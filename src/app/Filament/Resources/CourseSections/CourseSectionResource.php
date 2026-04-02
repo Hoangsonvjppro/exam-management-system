@@ -39,9 +39,9 @@ class CourseSectionResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Lớp học phần';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Nội dung';
+    protected static string | \UnitEnum | null $navigationGroup = 'Quản lý lớp';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {

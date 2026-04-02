@@ -31,6 +31,11 @@ class Department extends Model
         return $this->hasMany(User::class);
     }
 
+    public function subjects(): HasMany
+    {
+        return $this->hasMany(Subject::class);
+    }
+    
     // ── Scopes ──────────────────────────────────────────────────
 
     public function scopeActive(Builder $query): Builder

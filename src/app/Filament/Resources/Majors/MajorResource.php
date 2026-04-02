@@ -29,7 +29,7 @@ class MajorResource extends Resource
 
     protected static ?string $navigationLabel = 'Ngành học';
     protected static string | \UnitEnum | null $navigationGroup = 'Đào tạo';
-    protected static ?int    $navigationSort  = 2;
+    protected static ?int    $navigationSort  = 3;
     protected static ?string $modelLabel      = 'Ngành học';
     protected static ?string $pluralModelLabel = 'Ngành học';
     protected static ?string $recordTitleAttribute = 'name';

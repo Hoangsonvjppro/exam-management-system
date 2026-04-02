@@ -33,9 +33,9 @@ class ChapterResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Chương';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Nội dung';
+    protected static string | \UnitEnum | null $navigationGroup = 'Đào tạo';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 5;
 
     public static function form(Schema $schema): Schema
     {
@@ -105,10 +105,6 @@ class ChapterResource extends Resource
                         fn($state, $record) =>
                         "Chương {$record->order}: {$state}"
                     ),
-
-                TextColumn::make('order')
-                    ->label('Thứ tự chương')
-                    ->sortable(),
             ])
             ->defaultKeySort(false)
             ->groups([
