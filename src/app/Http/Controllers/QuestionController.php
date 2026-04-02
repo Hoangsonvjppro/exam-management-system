@@ -11,9 +11,23 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use App\Models\Subject;
 
 class QuestionController extends Controller
 {
+    /**
+     * API for AJAX: Get chapters by subject ID.
+     */
+    public function getChaptersBySubject(int $subjectId): JsonResponse
+    {
+        $chapters = \App\Models\Chapter::where('subject_id', $subjectId)
+            ->orderBy('order')
+            ->get(['id', 'name']);
+
+        return response()->json($chapters);
+    }
+
     public function index(IndexQuestionRequest $request, QuestionBankQueryService $questionBankQueryService): View
     {
         $this->authorize('viewAny', Question::class);

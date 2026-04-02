@@ -31,8 +31,12 @@ class UpdateQuestionRequest extends FormRequest
             'question_type_id' => ['required', 'integer', Rule::exists('question_types', 'id')],
             'content' => ['required', 'string', 'min:5'],
             'difficulty' => ['required', 'string', Rule::in(['remember', 'understand', 'apply', 'analyze'])],
-            'status' => ['required', 'string', Rule::in(['draft', 'approved', 'hidden'])],
-            'explanation' => ['nullable', 'string'],
+            
+            // Validate options array structure coming from the form
+            'options' => ['required', 'array', 'min:2'],
+            'options.*.content' => ['required', 'string'],
+            'correct_options' => ['required', 'array', 'min:1'],
+            'correct_options.*' => ['integer', 'min:0'],
         ];
     }
 }

@@ -14,40 +14,39 @@
                     @csrf
                     @method('PUT')
                     <div class="space-y-4">
-                        <div class="grid grid-cols-1 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày thi <span class="text-[#DC2626]">*</span></label>
+                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày bắt đầu <span class="text-[#DC2626]">*</span></label>
                                 <input type="date" name="exam_date" value="{{ old('exam_date', $schedule->exam_date->format('Y-m-d')) }}" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
                                 @error('exam_date') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày kết thúc <span class="text-[#DC2626]">*</span></label>
+                                <input type="date" name="end_date" value="{{ old('end_date', ($schedule->end_date ?? $schedule->exam_date)->format('Y-m-d')) }}" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
+                                @error('end_date') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Giờ bắt đầu <span class="text-[#DC2626]">*</span></label>
-                                <input type="time" name="start_time" value="{{ old('start_time', \Carbon\Carbon::parse($schedule->start_time)->format('H:i')) }}" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
+                                <input type="text" name="start_time" value="{{ old('start_time', \Carbon\Carbon::parse($schedule->start_time)->format('H:i')) }}" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" title="Nhập giờ theo định dạng 24h, ví dụ 08:30" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
                                 @error('start_time') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Giờ kết thúc <span class="text-[#DC2626]">*</span></label>
-                                <input type="time" name="end_time" value="{{ old('end_time', \Carbon\Carbon::parse($schedule->end_time)->format('H:i')) }}" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
+                                <input type="text" name="end_time" value="{{ old('end_time', \Carbon\Carbon::parse($schedule->end_time)->format('H:i')) }}" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" title="Nhập giờ theo định dạng 24h, ví dụ 17:45" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
                                 @error('end_time') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Số SV tối đa</label>
-                                <input type="number" name="max_students" value="{{ old('max_students', $schedule->max_students) }}" min="1" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
-                            </div>
-                            <div>
-                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Trạng thái</label>
-                                <select name="status" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
-                                    @foreach(['scheduled' => 'Đã lên lịch', 'in_progress' => 'Đang diễn ra', 'completed' => 'Hoàn thành', 'cancelled' => 'Đã hủy'] as $val => $label)
-                                        <option value="{{ $val }}" {{ old('status', $schedule->status) === $val ? 'selected' : '' }}>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        <div>
+                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Trạng thái</label>
+                            <select name="status" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
+                                @foreach(['scheduled' => 'Đã lên lịch', 'in_progress' => 'Đang diễn ra', 'completed' => 'Hoàn thành', 'cancelled' => 'Đã hủy'] as $val => $label)
+                                <option value="{{ $val }}" {{ old('status', $schedule->status) === $val ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div>
@@ -55,7 +54,33 @@
                             <textarea name="notes" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]" rows="3">{{ old('notes', $schedule->notes) }}</textarea>
                         </div>
 
-                        <div class="flex justify-end gap-3 pt-2">
+                        @php
+                        $currentLinkedColumnId = $schedule->courseSection->gradeColumns->where('exam_schedule_id', $schedule->id)->first()?->id;
+                        @endphp
+                        <div class="mt-4 p-4 border border-indigo-100 rounded-[8px] bg-indigo-50/30">
+                            <label class="block text-[13px] font-bold text-[#1A3A6B] mb-1">Cột điểm đồng bộ</label>
+                            <p class="text-[11px] text-[#6B7C99] mb-3 leading-relaxed">Kết quả bài thi sẽ được hệ thống tự động đổ vào cột điểm này khi sinh viên nộp bài.</p>
+
+                            <select name="grade_column_id" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5]">
+                                <option value="">-- Không đồng bộ điểm / Xóa đồng bộ --</option>
+                                @foreach($schedule->courseSection->gradeColumns as $col)
+                                <option value="{{ $col->id }}" {{ $currentLinkedColumnId === $col->id ? 'selected' : '' }}>
+                                    {{ $col->name }} ({{ floatval($col->weight) }}%)
+                                </option>
+                                @endforeach
+                            </select>
+
+                            @if(!$currentLinkedColumnId)
+                            <div class="mt-3">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" name="link_grade_column" value="1" class="rounded border-indigo-300 text-[#185FA5] focus:ring-[#185FA5]">
+                                    <span class="text-[12px] text-[#1A3A6B]">Hoặc đánh dấu để <strong>Tự động tạo cột mới</strong> (Trọng số 0%)</span>
+                                </label>
+                            </div>
+                            @endif
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t border-[#D6E2F0]">
                             <a href="{{ route('lecturer.schedules.index') }}" class="border border-[#D6E2F0] text-[#1A3A6B] px-5 py-2.5 rounded-lg text-[13px] font-semibold hover:bg-[#F4F7FC] transition-colors">Hủy</a>
                             <button type="submit" class="bg-[#1A3A6B] text-white px-6 py-2.5 rounded-lg text-[13px] font-semibold hover:bg-[#0F2A53] transition-colors">
                                 Cập nhật

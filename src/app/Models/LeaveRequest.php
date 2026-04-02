@@ -15,6 +15,7 @@ class LeaveRequest extends Model
         'student_id',
         'date',
         'reason',
+        'proof_image_path',
         'status',
     ];
 

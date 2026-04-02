@@ -24,6 +24,15 @@ class Chapter extends Model
         return ['order' => 'integer'];
     }
 
+    protected static function booted()
+    {
+        static::addGlobalScope('order_by_subject', function ($query) {
+            $query
+                ->orderBy('subject_id')
+                ->orderBy('order');
+        });
+    }
+    
     public function scopeOrderedForQuestionBank(Builder $query): Builder
     {
         return $query->orderBy('order')->orderBy('id');

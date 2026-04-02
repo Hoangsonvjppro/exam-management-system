@@ -6,11 +6,38 @@
     ->orderBy('name')
     ->get(['id', 'name', 'code']);
 
-    $quickQuestionPool = \App\Models\Question::approved()
+    $quickChaptersBySubject = \App\Models\Chapter::query()
     ->whereIn('subject_id', $quickSubjectIds)
-    ->orderByDesc('updated_at')
-    ->limit(300)
-    ->get(['id', 'subject_id', 'content']);
+    ->orderBy('order')
+    ->get(['id', 'subject_id', 'name'])
+    ->groupBy('subject_id')
+    ->map(fn($items) => $items->map(fn($chapter) => [
+    'id' => (int) $chapter->id,
+    'name' => $chapter->name,
+    ])->values())
+    ->toArray();
+
+    $quickDifficulties = \App\Models\Difficulty::query()
+    ->orderedForQuestionBank()
+    ->get(['code', 'name'])
+    ->map(fn($difficulty) => [
+    'code' => $difficulty->code,
+    'name' => $difficulty->name,
+    ])
+    ->values()
+    ->toArray();
+
+    $quickQuestionTypes = \App\Models\QuestionType::query()
+    ->active()
+    ->orderedForQuestionBank()
+    ->get(['id', 'name', 'code'])
+    ->map(fn($type) => [
+    'id' => (int) $type->id,
+    'name' => $type->name,
+    'code' => $type->code,
+    ])
+    ->values()
+    ->toArray();
     @endphp
     @section('title', 'Quản lý Lịch Thi — EMS')
     @section('page-title', 'Lịch thi')
@@ -41,7 +68,7 @@
                     class="w-full pl-10 pr-4 py-2.5 bg-white border border-border-clean rounded-[10px] text-sm font-medium text-navy-900 placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all shadow-sm" />
             </div>
             <div class="w-full sm:w-56">
-                <select name="subject_id" onchange="this.form.submit()"
+                <select name="subject_id" data-auto-submit="form"
                     class="w-full px-4 py-2.5 bg-white border border-border-clean rounded-[10px] text-sm font-medium text-navy-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all shadow-sm cursor-pointer appearance-none"
                     style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%236B7C99%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem;">
                     <option value="">Tất cả môn học</option>
@@ -67,7 +94,7 @@
         </form>
 
         {{-- Table --}}
-        <div class="bg-white rounded-[10px] border border-border-clean overflow-hidden shadow-sm">
+        <div class="bg-white rounded-[10px] border border-border-clean overflow-visible shadow-sm">
             @if($schedules->isEmpty())
             <div class="text-center py-16">
                 <div class="w-16 h-16 bg-surface-1 rounded-full flex items-center justify-center mx-auto mb-4 border border-border-clean">
@@ -80,24 +107,26 @@
                 </x-button>
             </div>
             @else
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="bg-surface-1 text-navy-900">
-                        <th class="px-5 py-3 text-left font-semibold">Đề thi</th>
-                        <th class="px-5 py-3 text-left font-semibold">Lớp</th>
-                        <th class="px-5 py-3 text-center font-semibold">Ngày</th>
-                        <th class="px-5 py-3 text-center font-semibold">Giờ</th>
-                        <th class="px-5 py-3 text-center font-semibold">SV</th>
-                        <th class="px-5 py-3 text-center font-semibold">Trạng thái</th>
-                        <th class="px-5 py-3 text-center font-semibold">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody id="schedule-table-body">
-                    @foreach($schedules as $schedule)
-                    @include('lecturer.schedules.partials._schedule_row', ['schedule' => $schedule])
-                    @endforeach
-                </tbody>
-            </table>
+            <div class="overflow-x-auto overflow-y-visible relative">
+                <table class="w-full text-[14px] lg:text-[15px]">
+                    <thead>
+                        <tr class="bg-surface-1 text-navy-900">
+                            <th class="px-5 py-4 text-left font-semibold">Đề thi</th>
+                            <th class="px-5 py-4 text-left font-semibold">Lớp</th>
+                            <th class="px-5 py-4 text-center font-semibold">Ngày</th>
+                            <th class="px-5 py-4 text-center font-semibold">Giờ</th>
+                            <th class="px-5 py-4 text-center font-semibold">SV</th>
+                            <th class="px-5 py-4 text-center font-semibold">Trạng thái</th>
+                            <th class="px-5 py-4 text-center font-semibold">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-table-body">
+                        @foreach($schedules as $schedule)
+                        @include('lecturer.schedules.partials._schedule_row', ['schedule' => $schedule])
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
             @endif
         </div>
 
@@ -164,7 +193,13 @@
                             class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] font-medium focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 bg-white">
                             <option value="">-- Chọn đề thi môn hiện tại --</option>
                             @foreach($exams as $ex)
-                            <option value="{{ $ex->id }}" data-subject-id="{{ $ex->subject_id }}" x-show="'{{ $ex->subject_id }}' == selectedSubjectId">
+                            <option
+                                value="{{ $ex->id }}"
+                                data-subject-id="{{ $ex->subject_id }}"
+                                data-preview-url="{{ route('lecturer.exams.quick-preview', $ex) }}"
+                                data-quick-update-url="{{ route('lecturer.exams.quick-update', $ex) }}"
+                                data-edit-url="{{ route('lecturer.exams.edit', $ex) }}"
+                                x-show="'{{ $ex->subject_id }}' == selectedSubjectId">
                                 [{{ $ex->subject->code }}] {{ $ex->title }}
                             </option>
                             @endforeach
@@ -173,34 +208,57 @@
                             <x-ui-icon name="information-circle" class="w-3.5 h-3.5 mt-0.5 shrink-0" />
                             Danh sách đề thi được lọc tự động theo môn học bạn đã chọn ở Bước 1.
                         </p>
+                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                @click="openExamPreviewModal()"
+                                :disabled="!selectedExamId"
+                                class="px-3 py-1.5 rounded-lg text-[12px] font-bold border border-[#BFD4EA] text-navy-900 hover:bg-[#F3F8FD] disabled:opacity-50 disabled:cursor-not-allowed">
+                                Xem chi tiết đề
+                            </button>
+                            <button
+                                type="button"
+                                @click="openExamEditModal()"
+                                :disabled="!selectedExamId"
+                                class="px-3 py-1.5 rounded-lg text-[12px] font-bold border border-indigo-500 text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Sửa nhanh đề
+                            </button>
+                            <a
+                                x-show="selectedExamId"
+                                :href="selectedExamEditUrl()"
+                                class="text-[12px] font-bold text-indigo-600 hover:text-indigo-700">
+                                Mở trang sửa đầy đủ
+                            </a>
+                        </div>
                         <p class="mt-1.5 text-[11px] font-medium text-red-600 hidden" data-error="exam_id"></p>
                     </div>
 
                     {{-- 4. Thông tin chi tiết --}}
                     <div x-show="selectedSubjectId && hasSelectedSection && selectedExamId" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform -translate-y-2" class="space-y-5 pt-2">
                         <label class="block text-[12px] font-bold text-navy-900 uppercase tracking-wider mb-1">Bước 4: Thời gian & Cấu hình</label>
-                        
+
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ngày thi <span class="text-red-500">*</span></label>
+                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ngày bắt đầu <span class="text-red-500">*</span></label>
                                 <input type="date" name="exam_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
                                 <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="exam_date"></p>
                             </div>
                             <div>
-                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Số SV tối đa</label>
-                                <input type="number" name="max_students" min="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Không giới hạn">
+                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ngày kết thúc <span class="text-red-500">*</span></label>
+                                <input type="date" name="end_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
+                                <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_date"></p>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Giờ bắt đầu <span class="text-red-500">*</span></label>
-                                <input type="time" name="start_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <input type="text" name="start_time" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" title="Nhập giờ theo định dạng 24h, ví dụ 08:30">
                                 <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="start_time"></p>
                             </div>
                             <div>
                                 <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Giờ kết thúc <span class="text-red-500">*</span></label>
-                                <input type="time" name="end_time" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <input type="text" name="end_time" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" title="Nhập giờ theo định dạng 24h, ví dụ 17:45">
                                 <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_time"></p>
                             </div>
                         </div>
@@ -208,6 +266,16 @@
                         <div>
                             <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ghi chú cho sinh viên (vị trí phòng, thiết bị...)</label>
                             <textarea name="notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" rows="3" placeholder="Nhập ghi chú..."></textarea>
+                        </div>
+
+                        <div class="mt-4 p-4 border border-indigo-100 rounded-[8px] bg-indigo-50/50">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" name="link_grade_column" value="1" class="mt-0.5 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4" checked>
+                                <div>
+                                    <p class="text-[13px] font-bold text-navy-900">Tự động thêm vào bảng Điểm quá trình</p>
+                                    <p class="text-[11px] text-text-muted mt-0.5">Hệ thống sẽ tạo tự động một cột Điểm Bài Thi trong bảng điểm của (các) lớp học phần được chọn.</p>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
@@ -250,6 +318,8 @@
                     <input type="hidden" name="min_duration_before_submit" value="0">
                     <input type="hidden" name="show_score_after_submit" value="1">
                     <input type="hidden" name="show_answers_after_submit" value="0">
+                    <input type="hidden" name="multiple_choice_scoring_method" value="all_or_nothing">
+                    <div id="quick-selected-questions-container"></div>
 
                     <div>
                         <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Tên đề thi <span class="text-red-500">*</span></label>
@@ -280,28 +350,93 @@
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
                             <label class="text-[12px] font-semibold text-navy-900">Chọn câu hỏi <span class="text-red-500">*</span></label>
-                            <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">Mở trình tạo đầy đủ</a>
+                            <div class="flex items-center gap-3">
+                                <button type="button" class="text-[12px] font-semibold text-emerald-700 hover:text-emerald-800" @click="openQuickQuestionCreateModal()">+ Tạo câu hỏi nhanh</button>
+                                <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">Mở trình tạo đầy đủ</a>
+                            </div>
                         </div>
 
-                        @if($quickQuestionPool->isEmpty())
-                        <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800">
-                            Chưa có câu hỏi đã duyệt để tạo đề nhanh. Vui lòng tạo câu hỏi trước trong Ngân hàng câu hỏi.
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                            <input type="text" x-model="quickQuestionKeyword" @input="debouncedQuickQuestionSearch()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] md:col-span-2" placeholder="Tìm theo nội dung câu hỏi...">
+                            <select x-model="quickQuestionChapterId" @change="loadQuickQuestions({ page: 1 })" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <option value="">Tất cả chương</option>
+                                <template x-for="chapter in quickChapterOptions()" :key="chapter.id">
+                                    <option :value="String(chapter.id)" x-text="chapter.name"></option>
+                                </template>
+                            </select>
                         </div>
-                        @else
-                        <div class="max-h-[280px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70 px-2 mt-1">
-                            @foreach($quickQuestionPool as $question)
-                            <label class="quick-question-item flex items-start gap-3 p-3 hover:bg-white cursor-pointer rounded-md transition-colors" data-subject-id="{{ $question->subject_id }}">
-                                <input type="checkbox" name="question_ids[]" value="{{ $question->id }}" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500">
-                                <span class="text-[12px] text-navy-900 leading-relaxed">{{ \Illuminate\Support\Str::limit(trim(strip_tags($question->content)), 180) }}</span>
-                            </label>
-                            @endforeach
+
+                        <div class="flex items-center justify-between mb-2 gap-3">
+                            <select x-model="quickQuestionDifficulty" @change="loadQuickQuestions({ page: 1 })" class="w-full md:w-[220px] border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                                <option value="">Tất cả độ khó</option>
+                                <template x-for="difficulty in quickDifficultyOptions" :key="difficulty.code">
+                                    <option :value="difficulty.code" x-text="difficulty.name"></option>
+                                </template>
+                            </select>
+                            <p class="text-[11px] text-text-muted whitespace-nowrap" x-text="`Đã chọn ${quickQuestionSelectedIds.length} câu`"></p>
                         </div>
-                        @endif
+
+                        <div class="max-h-[320px] overflow-y-auto border border-gray-200 rounded-lg bg-surface-0 divide-y divide-border-clean/70 px-2 mt-1">
+                            <div x-show="quickQuestionLoading" class="p-5 text-center text-[12px] text-text-muted">Đang tải câu hỏi...</div>
+
+                            <template x-if="!quickQuestionLoading && !quickSubjectId">
+                                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-[12px] text-blue-800 m-2">
+                                    Chọn môn học trước để tải câu hỏi phù hợp.
+                                </div>
+                            </template>
+
+                            <template x-if="!quickQuestionLoading && quickSubjectId && quickQuestions.length === 0">
+                                <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-[12px] text-amber-800 m-2">
+                                    Không có câu hỏi phù hợp với bộ lọc hiện tại.
+                                </div>
+                            </template>
+
+                            <template x-for="question in quickQuestions" :key="question.id">
+                                <div class="p-3 rounded-md transition-colors" :class="isQuickQuestionSelected(question.id) ? 'bg-blue-50/60' : 'hover:bg-white'">
+                                    <div class="flex items-start gap-3">
+                                        <input type="checkbox" class="mt-0.5 rounded border-gray-300 text-navy-900 focus:ring-indigo-500" :checked="isQuickQuestionSelected(question.id)" @change="toggleQuickQuestionSelection(question.id, $event.target.checked)">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700" x-show="question.chapter" x-text="question.chapter?.name || ''"></span>
+                                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700" x-text="difficultyLabel(question.difficulty)"></span>
+                                                <span class="text-[10px] text-text-muted" x-text="`ID: ${question.id}`"></span>
+                                            </div>
+                                            <p class="text-[12px] text-navy-900 leading-relaxed" x-text="stripHtml(question.content)"></p>
+                                            <button type="button" class="mt-2 text-[11px] font-semibold text-blue-700 hover:text-blue-800" @click="toggleQuickQuestionPreview(question.id)">
+                                                <span x-text="isQuickQuestionPreviewOpen(question.id) ? 'Ẩn đáp án chi tiết' : 'Xem đáp án chi tiết'"></span>
+                                            </button>
+
+                                            <div class="mt-2 space-y-1" x-show="isQuickQuestionPreviewOpen(question.id)">
+                                                <template x-if="(question.options || []).length === 0">
+                                                    <p class="text-[11px] text-text-muted italic">Câu hỏi chưa có phương án trả lời.</p>
+                                                </template>
+                                                <template x-for="option in (question.options || [])" :key="`${question.id}-${option.label}`">
+                                                    <div class="text-[11px] rounded-md border px-2 py-1 flex items-start gap-2" :class="option.is_correct ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-slate-50 text-slate-700'">
+                                                        <span class="font-semibold" x-text="`${option.label}.`"></span>
+                                                        <span class="flex-1" x-text="option.content"></span>
+                                                        <span x-show="option.is_correct" class="font-semibold text-[10px]">Đúng</span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div class="p-2" x-show="quickQuestionHasMore()">
+                                <button type="button" class="w-full text-[12px] font-semibold text-blue-700 border border-blue-200 rounded-md py-2 hover:bg-blue-50" :disabled="quickQuestionLoading" @click="loadQuickQuestions({ page: quickQuestionPage + 1, append: true })">
+                                    Tải thêm câu hỏi
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 text-[11px] text-text-muted" x-show="quickQuestionTotal > 0" x-text="`Hiển thị ${quickQuestions.length}/${quickQuestionTotal} câu hỏi`"></div>
+                        <div class="mt-2 text-[11px] text-red-600" x-show="quickQuestionFormError" x-text="quickQuestionFormError"></div>
                     </div>
 
                     <div class="flex justify-end gap-3 pt-4 border-t border-border-clean">
                         <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'quick-create-exam-modal')">Huỷ</x-button>
-                        <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingQuickExam || {{ $quickQuestionPool->isEmpty() ? 'true' : 'false' }}">
+                        <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingQuickExam || quickQuestionSelectedIds.length === 0">
                             <span x-show="!isSubmittingQuickExam">Tạo đề và tự chọn</span>
                             <span x-show="isSubmittingQuickExam" class="flex items-center gap-2">
                                 <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -314,6 +449,231 @@
                     </div>
                 </form>
             </div>
+        </x-modal>
+
+        <x-modal name="quick-question-modal" maxWidth="xl">
+            <div class="p-6 md:p-7 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-[17px] font-bold text-navy-900">Tạo câu hỏi nhanh</h3>
+                        <p class="text-[12px] text-text-muted mt-1">Câu hỏi mới sẽ tự động xuất hiện trong danh sách chọn.</p>
+                    </div>
+                    <button type="button" class="text-text-muted hover:text-navy-900" @click="$dispatch('close-modal', 'quick-question-modal')">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Môn học</label>
+                        <select x-model="quickQuestionCreator.subject_id" @change="syncQuickQuestionCreatorChapterOptions()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" required>
+                            <option value="">-- Chọn môn học --</option>
+                            @foreach($quickSubjects as $subject)
+                            <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Chương</label>
+                        <select x-model="quickQuestionCreator.chapter_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]">
+                            <option value="">-- Tất cả chương --</option>
+                            <template x-for="chapter in quickQuestionCreatorChapterOptions" :key="chapter.id">
+                                <option :value="String(chapter.id)" x-text="chapter.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1">Độ khó</label>
+                        <select x-model="quickQuestionCreator.difficulty" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" required>
+                            <template x-for="difficulty in quickDifficultyOptions" :key="difficulty.code">
+                                <option :value="difficulty.code" x-text="difficulty.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-semibold text-navy-900 mb-1">Loại câu hỏi</label>
+                    <select x-model="quickQuestionCreator.question_type_id" @change="onQuickQuestionTypeChanged()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" required>
+                        <option value="">-- Chọn loại câu hỏi --</option>
+                        <template x-for="questionType in quickQuestionTypes" :key="questionType.id">
+                            <option :value="String(questionType.id)" x-text="questionType.name"></option>
+                        </template>
+                    </select>
+                    <p class="mt-1 text-[11px] text-text-muted" x-text="quickQuestionCorrectHint()"></p>
+                </div>
+
+                <div>
+                    <label class="block text-[12px] font-semibold text-navy-900 mb-1">Nội dung câu hỏi</label>
+                    <textarea x-model="quickQuestionCreator.content" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Nhập nội dung câu hỏi..."></textarea>
+                </div>
+
+                <div class="space-y-2 border border-border-clean rounded-lg p-3 bg-surface-0">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[12px] font-semibold text-navy-900">Phương án trả lời</label>
+                        <button type="button" class="text-[12px] font-semibold text-blue-700 hover:text-blue-800" @click="addQuickQuestionCreatorOption()">+ Thêm phương án</button>
+                    </div>
+                    <template x-for="(option, index) in quickQuestionCreator.options" :key="index">
+                        <div class="flex items-start gap-2">
+                            <input
+                                :type="quickQuestionCreatorUsesCheckbox() ? 'checkbox' : 'radio'"
+                                :name="quickQuestionCreatorUsesCheckbox() ? `quick-correct-${index}` : 'quick-correct-one'"
+                                class="mt-2 rounded border-gray-300 text-navy-900 focus:ring-indigo-500"
+                                :checked="quickQuestionCreator.correct_options.includes(index)"
+                                @change="toggleQuickQuestionCreatorCorrect(index, $event.target.checked)">
+                            <input type="text" x-model="quickQuestionCreator.options[index]" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-[13px]" :placeholder="`Phương án ${String.fromCharCode(65 + index)}`">
+                            <button type="button" class="text-red-600 text-[18px] leading-none px-2 py-1" @click="removeQuickQuestionCreatorOption(index)">&times;</button>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="text-[12px] text-red-600" x-show="quickQuestionCreatorError" x-text="quickQuestionCreatorError"></div>
+
+                <div class="flex justify-end gap-3 pt-3 border-t border-border-clean">
+                    <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'quick-question-modal')">Huỷ</x-button>
+                    <x-button type="button" variant="primary" x-bind:disabled="isSubmittingQuickQuestion" @click="submitQuickQuestionCreator()">
+                        <span x-show="!isSubmittingQuickQuestion">Lưu và thêm vào danh sách</span>
+                        <span x-show="isSubmittingQuickQuestion">Đang lưu...</span>
+                    </x-button>
+                </div>
+            </div>
+        </x-modal>
+
+        <x-modal name="exam-preview-modal" maxWidth="3xl">
+            <div class="px-6 py-4 border-b border-border-clean flex items-center justify-between bg-surface-0">
+                <h3 class="text-[17px] font-bold text-navy-900">Chi tiết đề thi</h3>
+                <button @click="$dispatch('close-modal', 'exam-preview-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto max-h-[80vh] space-y-4">
+                <div x-show="isLoadingExamPreview" class="py-10 text-center text-[13px] text-text-muted">
+                    Đang tải thông tin đề thi...
+                </div>
+
+                <div x-show="!isLoadingExamPreview && examPreviewError" class="p-4 rounded-lg border border-red-200 bg-red-50 text-[13px] text-red-700" x-text="examPreviewError"></div>
+
+                <div x-show="!isLoadingExamPreview && examPreviewData" class="space-y-4">
+                    <div>
+                        <h4 class="text-[18px] font-bold text-navy-900" x-text="examPreviewData?.title || ''"></h4>
+                        <p class="text-[12px] text-text-muted mt-1" x-text="(examPreviewData?.subject?.code || '') + ' - ' + (examPreviewData?.subject?.name || '')"></p>
+                        <p class="text-[13px] text-slate-700 mt-2" x-show="examPreviewData?.description" x-text="examPreviewData?.description"></p>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="p-3 rounded-lg border border-border-clean bg-surface-0">
+                            <p class="text-[11px] text-text-muted">Thời lượng</p>
+                            <p class="text-[16px] font-bold text-navy-900" x-text="(examPreviewData?.duration_minutes || 0) + ' phút'"></p>
+                        </div>
+                        <div class="p-3 rounded-lg border border-border-clean bg-surface-0">
+                            <p class="text-[11px] text-text-muted">Số câu hỏi</p>
+                            <p class="text-[16px] font-bold text-navy-900" x-text="examPreviewData?.question_count || 0"></p>
+                        </div>
+                        <div class="p-3 rounded-lg border border-border-clean bg-surface-0">
+                            <p class="text-[11px] text-text-muted">Đã gán lịch</p>
+                            <p class="text-[16px] font-bold text-navy-900" x-text="examPreviewData?.schedule_count || 0"></p>
+                        </div>
+                        <div class="p-3 rounded-lg border border-border-clean bg-surface-0">
+                            <p class="text-[11px] text-text-muted">Lượt làm bài</p>
+                            <p class="text-[16px] font-bold text-navy-900" x-text="examPreviewData?.attempt_count || 0"></p>
+                        </div>
+                    </div>
+
+                    <div x-show="examPreviewData && !examPreviewData.can_edit_structure" class="p-3 rounded-lg border border-amber-300 bg-amber-50 text-[12px] text-amber-800">
+                        Đề thi đã có sinh viên làm bài, bạn chỉ có thể chỉnh sửa tên và mô tả.
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-[12px] font-bold text-navy-900 uppercase tracking-wider">Câu hỏi trong đề</p>
+                            <p class="text-[11px] text-text-muted">Hiển thị tối đa 8 câu đầu</p>
+                        </div>
+
+                        <div class="space-y-2" x-show="examPreviewData?.questions_preview?.length">
+                            <template x-for="question in (examPreviewData?.questions_preview || [])" :key="question.order">
+                                <div class="p-3 rounded-lg border border-border-clean bg-white">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <p class="text-[12px] font-bold text-navy-900" x-text="'Câu ' + question.order"></p>
+                                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700" x-show="question.difficulty" x-text="difficultyLabel(question.difficulty)"></span>
+                                    </div>
+                                    <p class="text-[12px] text-slate-700" x-text="question.content"></p>
+                                </div>
+                            </template>
+                        </div>
+
+                        <p x-show="!(examPreviewData?.questions_preview?.length)" class="text-[12px] text-text-muted italic py-2">
+                            Chưa có dữ liệu câu hỏi cho đề này.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-border-clean flex items-center justify-end gap-2 bg-surface-0">
+                <button type="button" class="px-3 py-1.5 rounded-lg border border-border-clean text-[12px] font-semibold text-navy-900 hover:bg-surface-1" @click="$dispatch('close-modal', 'exam-preview-modal')">
+                    Đóng
+                </button>
+                <button type="button" class="px-3 py-1.5 rounded-lg border border-indigo-500 text-[12px] font-semibold text-indigo-600 hover:bg-indigo-50" @click="$dispatch('close-modal', 'exam-preview-modal'); openExamEditModal()" :disabled="!selectedExamId">
+                    Sửa nhanh
+                </button>
+                <a :href="selectedExamEditUrl()" x-show="selectedExamId" class="px-3 py-1.5 rounded-lg bg-navy-900 text-white text-[12px] font-semibold hover:bg-navy-950">
+                    Mở trang sửa đầy đủ
+                </a>
+            </div>
+        </x-modal>
+
+        <x-modal name="quick-edit-exam-modal" maxWidth="2xl">
+            <div class="px-6 py-4 border-b border-border-clean flex items-center justify-between bg-surface-0">
+                <h3 class="text-[17px] font-bold text-navy-900">Sửa nhanh đề thi</h3>
+                <button @click="$dispatch('close-modal', 'quick-edit-exam-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form class="p-6 space-y-4" @submit.prevent="submitQuickExamEdit()">
+                <div x-show="isLoadingExamPreview" class="py-6 text-center text-[13px] text-text-muted">
+                    Đang tải dữ liệu đề thi...
+                </div>
+
+                <div x-show="!isLoadingExamPreview" class="space-y-4">
+                    <div x-show="quickExamEditWarning" class="p-3 rounded-lg border border-amber-300 bg-amber-50 text-[12px] text-amber-800" x-text="quickExamEditWarning"></div>
+                    <div x-show="quickExamEditError" class="p-3 rounded-lg border border-red-200 bg-red-50 text-[12px] text-red-700" x-text="quickExamEditError"></div>
+
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Tên đề thi <span class="text-red-500">*</span></label>
+                        <input type="text" x-model="quickExamEditForm.title" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" maxlength="255">
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Mô tả</label>
+                        <textarea x-model="quickExamEditForm.description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" placeholder="Ghi chú ngắn cho đề thi"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Thời lượng (phút) <span class="text-red-500">*</span></label>
+                        <input type="number" min="1" x-model.number="quickExamEditForm.duration_minutes" :disabled="examPreviewData && !examPreviewData.can_edit_structure" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] disabled:bg-gray-100 disabled:text-gray-500">
+                        <p x-show="examPreviewData && !examPreviewData.can_edit_structure" class="text-[11px] text-amber-700 mt-1">
+                            Đề đã có sinh viên làm bài nên không thể sửa thời lượng.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-border-clean flex items-center justify-end gap-2">
+                    <button type="button" class="px-3 py-1.5 rounded-lg border border-border-clean text-[12px] font-semibold text-navy-900 hover:bg-surface-1" @click="$dispatch('close-modal', 'quick-edit-exam-modal')">
+                        Huỷ
+                    </button>
+                    <button type="submit" class="px-4 py-1.5 rounded-lg bg-navy-900 text-white text-[12px] font-semibold hover:bg-navy-950 disabled:opacity-50 disabled:cursor-not-allowed" :disabled="isSavingQuickExamEdit || !selectedExamId">
+                        <span x-show="!isSavingQuickExamEdit">Lưu thay đổi</span>
+                        <span x-show="isSavingQuickExamEdit">Đang lưu...</span>
+                    </button>
+                </div>
+            </form>
         </x-modal>
 
         {{-- Modal: Phân sinh viên vào ca thi --}}
@@ -441,311 +801,35 @@
 
     </div>
 
-    <script>
-        function scheduleManager() {
-            return {
-                isSubmitting: false,
-                selectedExamId: '',
-                selectedSubjectId: '',
-                hasSelectedSection: false,
-                quickSubjectId: '',
-                isSubmittingQuickExam: false,
-
-                // Assign Students Modal
-                assignModalOpen: false,
-                assignModalScheduleId: null,
-                assignModalExamTitle: '',
-                assignModalClassName: '',
-                assignLoading: false,
-                assignSaving: false,
-                assignStudents: [],
-                assignSelectedIds: [],
-                assignSearchQuery: '',
-
-                openAssignModal(scheduleId, examTitle, className) {
-                    this.assignModalScheduleId = scheduleId;
-                    this.assignModalExamTitle = examTitle;
-                    this.assignModalClassName = className;
-                    this.assignSearchQuery = '';
-                    this.assignStudents = [];
-                    this.assignSelectedIds = [];
-                    this.assignModalOpen = true;
-                    this.assignLoading = true;
-                    this.loadStudents(scheduleId);
-                },
-
-                async loadStudents(scheduleId) {
-                    try {
-                        const response = await fetch(`/lecturer/schedules/${scheduleId}/students`, {
-                            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-                        });
-                        const data = await response.json();
-                        this.assignStudents = data.students || [];
-                        // Nếu đã có assignment thì tick những SV đã assign, ngược lại chọn tất cả
-                        if (data.assigned_ids && data.assigned_ids.length > 0) {
-                            this.assignSelectedIds = [...data.assigned_ids];
-                        } else {
-                            // Mặc định chọn tất cả
-                            this.assignSelectedIds = this.assignStudents.map(s => s.id);
-                        }
-                    } catch (error) {
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Không thể tải danh sách sinh viên.', type: 'error' }
-                        }));
-                    } finally {
-                        this.assignLoading = false;
-                    }
-                },
-
-                filteredStudents() {
-                    if (!this.assignSearchQuery) return this.assignStudents;
-                    const q = this.assignSearchQuery.toLowerCase();
-                    return this.assignStudents.filter(s =>
-                        (s.name && s.name.toLowerCase().includes(q)) ||
-                        (s.email && s.email.toLowerCase().includes(q)) ||
-                        (s.student_id && s.student_id.toLowerCase().includes(q))
-                    );
-                },
-
-                toggleStudent(id) {
-                    const idx = this.assignSelectedIds.indexOf(id);
-                    if (idx >= 0) {
-                        this.assignSelectedIds.splice(idx, 1);
-                    } else {
-                        this.assignSelectedIds.push(id);
-                    }
-                },
-
-                selectAllStudents() {
-                    this.assignSelectedIds = this.assignStudents.map(s => s.id);
-                },
-
-                deselectAllStudents() {
-                    this.assignSelectedIds = [];
-                },
-
-                async submitAssign() {
-                    this.assignSaving = true;
-                    try {
-                        const response = await fetch(`/lecturer/schedules/${this.assignModalScheduleId}/assign-students`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value
-                            },
-                            body: JSON.stringify({ student_ids: this.assignSelectedIds })
-                        });
-
-                        const result = await response.json();
-
-                        if (response.ok && result.success) {
-                            this.assignModalOpen = false;
-                            // Cập nhật số SV trên bảng
-                            window.location.reload();
-                            window.dispatchEvent(new CustomEvent('toast', {
-                                detail: { message: result.message, type: 'success' }
-                            }));
-                        } else {
-                            window.dispatchEvent(new CustomEvent('toast', {
-                                detail: { message: result.message || 'Có lỗi xảy ra.', type: 'error' }
-                            }));
-                        }
-                    } catch (error) {
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Có lỗi hệ thống xảy ra!', type: 'error' }
-                        }));
-                    } finally {
-                        this.assignSaving = false;
-                    }
-                },
-
-                onSubjectChange() {
-                    // Reset dependency selections
-                    this.hasSelectedSection = false;
-                    this.selectedExamId = '';
-                    
-                    // Uncheck all classes
-                    document.querySelectorAll('input[name="course_section_ids[]"]').forEach(cb => {
-                        cb.checked = false;
-                    });
-                    
-                    // Trigger custom subject filter logic for Quick Create if needed
-                    this.quickSubjectId = this.selectedSubjectId;
-                    this.onQuickSubjectChange();
-                },
-
-                onSectionChange() {
-                    const checked = document.querySelectorAll('input[name="course_section_ids[]"]:checked');
-                    this.hasSelectedSection = checked.length > 0;
-                },
-
-                onQuickSubjectChange() {
-                    document.querySelectorAll('.quick-question-item').forEach(item => {
-                        const itemSubjectId = item.getAttribute('data-subject-id');
-                        const checkbox = item.querySelector('input[type="checkbox"]');
-                        const visible = !this.quickSubjectId || String(itemSubjectId) === String(this.quickSubjectId);
-                        item.classList.toggle('hidden', !visible);
-                        if (!visible && checkbox) {
-                            checkbox.checked = false;
-                        }
-                    });
-                },
-
-                clearErrors(formElement) {
-                    formElement.querySelectorAll('[data-error]').forEach(el => {
-                        el.textContent = '';
-                        el.classList.add('hidden');
-                    });
-                },
-
-                showErrors(formElement, errors) {
-                    for (const [field, messages] of Object.entries(errors)) {
-                        const errorEl = formElement.querySelector(`[data-error="${field}"]`);
-                        if (errorEl) {
-                            errorEl.textContent = messages[0];
-                            errorEl.classList.remove('hidden');
-                        }
-                    }
-                },
-
-                async submitCreateForm(formElement) {
-                    this.isSubmitting = true;
-                    this.clearErrors(formElement);
-
-                    const formData = new FormData(formElement);
-
-                    try {
-                        const response = await fetch("{{ route('lecturer.schedules.store') }}", {
-                            method: 'POST',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'application/json',
-                            },
-                            body: formData,
-                        });
-
-                        const result = await response.json();
-
-                        if (response.ok && result.success) {
-                            const tbody = document.getElementById('schedule-table-body');
-                            if (tbody) {
-                                tbody.insertAdjacentHTML('afterbegin', result.html);
-                            } else {
-                                window.location.reload();
-                                return;
-                            }
-
-                            this.$dispatch('close-modal', 'create-schedule-modal');
-                            formElement.reset();
-                            this.selectedExamId = '';
-                            this.selectedSubjectId = '';
-
-                            window.dispatchEvent(new CustomEvent('toast', {
-                                detail: {
-                                    message: result.message,
-                                    type: 'success'
-                                }
-                            }));
-                        } else if (response.status === 422 && result.errors) {
-                            this.showErrors(formElement, result.errors);
-                        } else {
-                            window.dispatchEvent(new CustomEvent('toast', {
-                                detail: {
-                                    message: result.message || 'Có lỗi xảy ra.',
-                                    type: 'error'
-                                }
-                            }));
-                        }
-                    } catch (error) {
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: {
-                                message: 'Có lỗi hệ thống xảy ra!',
-                                type: 'error'
-                            }
-                        }));
-                    } finally {
-                        this.isSubmitting = false;
-                    }
-                },
-
-                async submitQuickExamForm(formElement) {
-                    this.isSubmittingQuickExam = true;
-                    const formData = new FormData(formElement);
-
-                    try {
-                        const response = await fetch("{{ route('lecturer.exams.store') }}", {
-                            method: 'POST',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'text/html',
-                            },
-                            body: formData,
-                            redirect: 'follow',
-                        });
-
-                        if (!response.ok) {
-                            throw new Error('Failed to create exam');
-                        }
-
-                        const createdUrl = response.url || '';
-                        const match = createdUrl.match(/\/lecturer\/exams\/(\d+)/);
-                        const examId = match ? match[1] : null;
-
-                        if (!examId) {
-                            window.dispatchEvent(new CustomEvent('toast', {
-                                detail: {
-                                    message: 'Không thể tạo đề nhanh. Vui lòng dùng trình tạo đầy đủ.',
-                                    type: 'error'
-                                }
-                            }));
-                            return;
-                        }
-
-                        const selectedSubject = formElement.querySelector('select[name="subject_id"] option:checked');
-                        const subjectId = selectedSubject ? selectedSubject.value : '';
-                        const subjectCode = selectedSubject ? selectedSubject.textContent.split(' - ')[0] : 'SUB';
-                        const title = String(formData.get('title') || 'Đề thi mới');
-
-                        const examSelect = document.getElementById('schedule-modal-exam-id');
-                        if (examSelect) {
-                            const existing = Array.from(examSelect.options).some(opt => String(opt.value) === String(examId));
-                            if (!existing) {
-                                const option = document.createElement('option');
-                                option.value = examId;
-                                option.setAttribute('data-subject-id', subjectId);
-                                option.textContent = `[${subjectCode}] ${title}`;
-                                examSelect.appendChild(option);
-                            }
-                            examSelect.value = examId;
-                            this.selectedExamId = examId;
-                            this.onExamChange();
-                        }
-
-                        this.$dispatch('close-modal', 'quick-create-exam-modal');
-                        formElement.reset();
-                        this.quickSubjectId = '';
-                        this.onQuickSubjectChange();
-
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: {
-                                message: 'Đã tạo đề thi và tự động chọn vào lịch thi.',
-                                type: 'success'
-                            }
-                        }));
-                    } catch (error) {
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: {
-                                message: 'Không thể tạo đề thi nhanh. Hãy kiểm tra dữ liệu đầu vào.',
-                                type: 'error'
-                            }
-                        }));
-                    } finally {
-                        this.isSubmittingQuickExam = false;
-                    }
-                }
-            }
-        }
+    @php
+    $quickExamConfig = [
+    'chaptersBySubject' => $quickChaptersBySubject,
+    'difficulties' => $quickDifficulties,
+    'questionTypes' => $quickQuestionTypes,
+    ];
+    @endphp
+    <script id="quick-exam-config-data" type="application/json">
+        @json($quickExamConfig)
     </script>
+
+
+    @php
+    $scheduleIndexConfig = [
+    'quickQuestionApiUrl' => route('lecturer.api.exam-form.questions'),
+    'quickQuestionCreateUrl' => route('lecturer.api.exam-form.quick-question'),
+    'quickPreviewUrlTemplate' => route('lecturer.exams.quick-preview', ['exam' => '__EXAM_ID__']),
+    'quickUpdateUrlTemplate' => route('lecturer.exams.quick-update', ['exam' => '__EXAM_ID__']),
+    'examEditUrlTemplate' => route('lecturer.exams.edit', ['exam' => '__EXAM_ID__']),
+    'scheduleStoreUrl' => route('lecturer.schedules.store'),
+    'examStoreUrl' => route('lecturer.exams.store'),
+    'csrfToken' => csrf_token(),
+    ];
+    @endphp
+    <script id="schedule-index-config" type="application/json">
+        @json($scheduleIndexConfig)
+    </script>
+
+    @push('scripts')
+    @vite(['resources/js/pages/lecturer/schedules-index.js'])
+    @endpush
 </x-app-layout>

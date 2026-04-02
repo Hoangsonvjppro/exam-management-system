@@ -51,17 +51,7 @@ class ExamService
             $exam = Exam::create($data);
             $exam->refresh(); // Đảm bảo nạp các giá trị mặc định từ DB (như status)
 
-            // Lưu matrix rows
-            foreach ($matrixData as $row) {
-                ExamMatrix::create([
-                    'exam_id' => $exam->id,
-                    'chapter_id' => $row['chapter_id'] ?? null,
-                    'difficulty' => $row['difficulty'],
-                    'question_type_id' => $row['question_type_id'] ?? null,
-                    'question_count' => $row['question_count'],
-                    'points_each' => 1.00,
-                ]);
-            }
+            $this->syncMatrixRows($exam, $matrixData);
 
             // Sinh câu hỏi tự động từ ma trận
             $matrixRows = $exam->matrices()->with('chapter')->get();
@@ -91,21 +81,35 @@ class ExamService
                     'show_score_after_submit',
                     'show_answers_after_submit',
                 ])->toArray();
-            } else {
-                // Update questions only if structure is editable
-                $questionIds = $data['question_ids'] ?? [];
-                if (! empty($questionIds)) {
-                    $this->syncQuestions($exam, $questionIds);
-                }
 
-                $totalPoints = $exam->examQuestions()->sum('points');
-                $data['total_points'] = $totalPoints;
-                $data['pass_points'] = min($exam->pass_points ?? 0, $totalPoints);
+                $exam->update($data);
+
+                return $exam;
             }
 
-            $exam->update($data);
+            $creationMode = $data['creation_mode'] ?? 'manual';
+            $baseExamData = collect($data)->except([
+                'creation_mode',
+                'question_ids',
+                'matrix',
+            ])->toArray();
 
-            return $exam;
+            // Luôn cập nhật metadata trước để matrix generation dùng đúng subject hiện tại
+            $exam->update($baseExamData);
+
+            if ($creationMode === 'matrix') {
+                $this->syncMatrixRows($exam, $data['matrix'] ?? []);
+
+                $matrixRows = $exam->matrices()->with('chapter')->get();
+                $this->examGenerationService->generateFromMatrix($exam, $matrixRows, false);
+            } else {
+                $this->syncQuestions($exam, $data['question_ids'] ?? []);
+
+                // Nếu chuyển từ matrix sang manual, xoá rows matrix cũ để tránh lệch trạng thái
+                $exam->matrices()->delete();
+            }
+
+            return $exam->refresh();
         });
     }
 
@@ -179,6 +183,25 @@ class ExamService
     }
 
     /**
+     * Đồng bộ lại toàn bộ rows matrix cho đề thi.
+     */
+    private function syncMatrixRows(Exam $exam, array $matrixData): void
+    {
+        $exam->matrices()->delete();
+
+        foreach ($matrixData as $row) {
+            ExamMatrix::create([
+                'exam_id' => $exam->id,
+                'chapter_id' => $row['chapter_id'] ?? null,
+                'difficulty' => $row['difficulty'],
+                'question_type_id' => $row['question_type_id'] ?? null,
+                'question_count' => $row['question_count'],
+                'points_each' => 1.00,
+            ]);
+        }
+    }
+
+    /**
      * Đồng bộ câu hỏi vào đề thi, tạo snapshot và tính lại total_points.
      */
     private function syncQuestions(Exam $exam, array $questionIds): void
@@ -196,12 +219,11 @@ class ExamService
             $question = $questions->get($questionId);
             if (!$question) continue;
 
-            // Tạo snapshot JSON chứa nội dung câu hỏi + options
             $snapshot = [
                 'id' => $question->id,
                 'content' => $question->content,
                 'difficulty' => $question->difficulty,
-                'explanation' => $question->explanation,
+                'question_type_code' => $question->questionType?->code,
                 'options' => $question->options->map(fn($opt) => [
                     'id' => $opt->id,
                     'label' => $opt->label,

@@ -62,14 +62,6 @@ class CourseSection extends Model
             ->withTimestamps();
     }
 
-    /**
-     * Lịch học chi tiết.
-     */
-    public function classSchedules(): HasMany
-    {
-        return $this->hasMany(ClassSchedule::class);
-    }
-
     // ── Scopes ─────────────────────────────────────────────────
 
     public function scopeActive(Builder $query): Builder
@@ -115,6 +107,22 @@ class CourseSection extends Model
         return $this->hasMany(LeaveRequest::class, 'course_section_id');
     }
 
+    public function gradeColumns(): HasMany
+    {
+        return $this->hasMany(GradeColumn::class);
+    }
+
+    // ── Import helpers ─────────────────────────────────────────
+
+    public static function findByCode(string $code): ?static
+    {
+        return static::where('code', trim($code))->first();
+    }
+
+    public static function findOrNewByCode(string $code): static
+    {
+        return static::firstOrNew(['code' => trim($code)]);
+    }
     // ── Code Generation ────────────────────────────────────────
 
     public static function generateCode(int|string|null $subjectId, int|string|null $semesterId): ?string

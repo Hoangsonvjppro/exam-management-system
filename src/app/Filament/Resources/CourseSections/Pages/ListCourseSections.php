@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources\CourseSections\Pages;
 
+use App\Filament\Imports\CourseSectionStudentImporter;
 use App\Filament\Resources\CourseSections\CourseSectionResource;
 use App\Models\CourseSection;
+use App\Services\AttendanceGradeService;
 use Filament\Actions\Action;
+use Filament\Actions\ImportAction;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Str;
 
@@ -29,7 +32,9 @@ class ListCourseSections extends ListRecords
                         ? strtoupper((string) $data['invite_code'])
                         : strtoupper(Str::random(8));
 
-                    CourseSection::query()->create($data);
+                    $section = CourseSection::query()->create($data);
+
+                    app(AttendanceGradeService::class)->ensureColumn($section);
                 })
                 ->successNotificationTitle('Đã thêm lớp học phần'),
         ];

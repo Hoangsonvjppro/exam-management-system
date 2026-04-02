@@ -10,7 +10,9 @@
             <div class="flex items-center gap-3">
                 <div class="badge s-upcoming">Tổng: <span id="matrixTotalQuestions">0</span> câu</div>
                 <button type="submit" class="btn btn-primary" id="btn-submit-matrix">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
                     Tạo Đề Từ Ma Trận
                 </button>
             </div>
@@ -27,20 +29,20 @@
                     <label class="text-[12px] font-bold text-[#1A3A6B] uppercase tracking-wider">Cấu hình mẫu</label>
                     <div class="flex items-center gap-2">
                         <label class="text-[12px] font-semibold text-[#6B7C99]">Tổng số câu:</label>
-                        <input type="number" id="preset-total" value="20" min="4" max="100" class="ca-input" style="width:70px" oninput="updateActivePreset()">
+                        <input type="number" id="preset-total" value="20" min="4" max="100" class="ca-input" style="width:70px" data-action="preset-total-input">
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2" id="preset-buttons">
-                    <button type="button" class="preset-btn" data-preset="easy" onclick="applyPreset('easy')">
+                    <button type="button" class="preset-btn" data-action="apply-preset" data-preset="easy">
                         📗 Mẫu Dễ <span class="text-[10px] text-[#6B7C99] ml-1">(60% NB)</span>
                     </button>
-                    <button type="button" class="preset-btn" data-preset="standard" onclick="applyPreset('standard')">
+                    <button type="button" class="preset-btn" data-action="apply-preset" data-preset="standard">
                         📘 Mẫu Chuẩn <span class="text-[10px] text-[#6B7C99] ml-1">(4-3-2-1)</span>
                     </button>
-                    <button type="button" class="preset-btn" data-preset="hard" onclick="applyPreset('hard')">
+                    <button type="button" class="preset-btn" data-action="apply-preset" data-preset="hard">
                         📕 Mẫu Khó <span class="text-[10px] text-[#6B7C99] ml-1">(Thi cuối kỳ)</span>
                     </button>
-                    <button type="button" class="preset-btn" onclick="clearMatrix()">
+                    <button type="button" class="preset-btn" data-action="clear-matrix">
                         🗑️ Xóa tất cả
                     </button>
                 </div>
@@ -67,8 +69,10 @@
                 </tbody>
             </table>
 
-            <button type="button" onclick="addMatrixRow()" class="btn btn-ghost mt-4 w-full">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+            <button type="button" data-action="add-matrix-row" class="btn btn-ghost mt-4 w-full">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
                 Thêm hàng ma trận
             </button>
         </div>

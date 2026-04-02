@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Services\GoogleAuthService;
 use App\Services\UserStateService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
@@ -65,10 +67,16 @@ class GoogleLoginController extends Controller
         $user = $this->googleAuthService->findOrCreateFromGoogleUser($googleUser);
 
         // Lecturers must not log in via Google.
-        if ($user->hasRole('lecturer')) {
-            return redirect()->route('login')->withErrors([
-                'google_auth' => 'Giảng viên không thể đăng nhập bằng Google. Vui lòng dùng email và mật khẩu.',
-            ]);
+        if (Schema::hasTable('roles') && Schema::hasTable('model_has_roles')) {
+            try {
+                if ($user->hasRole('lecturer')) {
+                    return redirect()->route('login')->withErrors([
+                        'google_auth' => 'Giảng viên không thể đăng nhập bằng Google. Vui lòng dùng email và mật khẩu.',
+                    ]);
+                }
+            } catch (QueryException) {
+                // Continue with safe fallback route resolution below.
+            }
         }
 
         Auth::login($user);

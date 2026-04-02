@@ -7,16 +7,7 @@
     $mainScreenSemesterOptions = collect($semesters ?? []);
     @endphp
 
-    <div class="space-y-6" x-data="{
-        searchQuery: '',
-        statusFilter: 'all',
-        semesterFilter: localStorage.getItem('ems_main_filter_semester') || 'all',
-        subjectFilter: localStorage.getItem('ems_main_filter_subject') || 'all',
-        persistMainFilters() {
-            localStorage.setItem('ems_main_filter_semester', this.semesterFilter || 'all');
-            localStorage.setItem('ems_main_filter_subject', this.subjectFilter || 'all');
-        }
-    }">
+    <div class="space-y-6" x-data="lecturerClassIndexFiltersState()">
 
         <x-card padding="true" variant="featured">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">

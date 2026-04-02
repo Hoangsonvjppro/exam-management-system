@@ -4,9 +4,10 @@ namespace App\Services;
 
 use App\Models\CourseSection;
 use App\Models\ExamSchedule;
-use App\Models\Notification;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Models\UserNotification;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Schema;
 
 class StudentDashboardService
 {
@@ -22,33 +23,32 @@ class StudentDashboardService
 
         // All schedules (backward compat)
         $schedules = ExamSchedule::whereIn('course_section_id', $sectionIds)
-            ->whereHas('exam', fn ($q) => $q->published())
+            ->whereHas('exam', fn($q) => $q->published())
             ->with(['exam.subject', 'courseSection'])
-            ->orderByDesc('exam_date')
-            ->orderByDesc('start_time')
+            ->orderByRaw('TIMESTAMP(exam_date, start_time) DESC')
             ->get();
 
         // Upcoming exams — not yet ended, ordered by nearest first, max 6
         $upcomingExams = ExamSchedule::whereIn('course_section_id', $sectionIds)
-            ->whereHas('exam', fn ($q) => $q->published())
-            ->where(function ($q) {
-                $q->where('exam_date', '>', now()->toDateString())
-                    ->orWhere(function ($q2) {
-                        $q2->where('exam_date', now()->toDateString())
-                            ->where('end_time', '>=', now()->toTimeString());
-                    });
-            })
+            ->whereHas('exam', fn($q) => $q->published())
+            ->whereRaw('TIMESTAMP(COALESCE(end_date, exam_date), end_time) >= ?', [now()->toDateTimeString()])
             ->with(['exam.subject', 'courseSection'])
-            ->orderBy('exam_date')
-            ->orderBy('start_time')
+            ->orderByRaw('TIMESTAMP(exam_date, start_time)')
             ->limit(6)
             ->get();
 
         // Recent notifications for this user
-        $recentNotifications = Notification::where('user_id', $user->id)
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
+        $recentNotifications = collect();
+        if (Schema::hasTable('user_notifications')) {
+            try {
+                $recentNotifications = UserNotification::where('user_id', $user->id)
+                    ->orderByDesc('created_at')
+                    ->limit(5)
+                    ->get();
+            } catch (QueryException) {
+                $recentNotifications = collect();
+            }
+        }
 
         return [
             'enrolledSections'     => $enrolledSections,
@@ -81,26 +81,31 @@ class StudentDashboardService
     public function getClassShowData(User $user, CourseSection $section): array
     {
         // Notifications/Feed for this section (for this student)
-        $notifications = Notification::where('user_id', $user->id)
-            ->where('data->course_section_id', $section->id)
-            ->orderByDesc('created_at')
-            ->limit(20)
-            ->get();
+        $notifications = collect();
+        if (Schema::hasTable('user_notifications')) {
+            try {
+                $notifications = UserNotification::where('user_id', $user->id)
+                    ->where('data->course_section_id', $section->id)
+                    ->orderByDesc('created_at')
+                    ->limit(20)
+                    ->get();
+            } catch (QueryException) {
+                $notifications = collect();
+            }
+        }
 
         // Exam schedules for this section
         $examSchedules = ExamSchedule::where('course_section_id', $section->id)
-            ->whereHas('exam', fn ($q) => $q->published())
+            ->whereHas('exam', fn($q) => $q->published())
             ->with(['exam.subject'])
-            ->orderByDesc('exam_date')
-            ->orderByDesc('start_time')
+            ->orderByRaw('TIMESTAMP(exam_date, start_time) DESC')
             ->get();
 
         // Determine status for each schedule for this student
-        $examSchedules->each(function ($schedule) use ($user) {
+        $examSchedules->each(function (ExamSchedule $schedule) use ($user) {
             $now = now();
-            $examDate = $schedule->exam_date->format('Y-m-d');
-            $startDt = Carbon::parse($examDate . ' ' . $schedule->start_time);
-            $endDt = Carbon::parse($examDate . ' ' . $schedule->end_time);
+            $startDt = $schedule->start_datetime;
+            $endDt = $schedule->end_datetime;
 
             if ($schedule->status === 'cancelled') {
                 $schedule->student_status = 'cancelled';
@@ -132,7 +137,7 @@ class StudentDashboardService
 
         // Grades — completed attempts for this student in this section's exams
         $completedAttempts = \App\Models\ExamAttempt::where('user_id', $user->id)
-            ->whereHas('schedule', fn ($q) => $q->where('course_section_id', $section->id))
+            ->whereHas('schedule', fn($q) => $q->where('course_section_id', $section->id))
             ->where('status', 'completed')
             ->with(['schedule.exam', 'complaint'])
             ->orderByDesc('completed_at')
@@ -140,7 +145,7 @@ class StudentDashboardService
 
         // Attendance
         $attendanceSessions = \App\Models\AttendanceSession::where('course_section_id', $section->id)
-            ->with(['records' => function($q) use ($user) {
+            ->with(['records' => function ($q) use ($user) {
                 $q->where('student_id', $user->id);
             }])
             ->orderByDesc('date')
@@ -152,8 +157,18 @@ class StudentDashboardService
             ->orderByDesc('created_at')
             ->get();
 
+        // Eager load section with grade columns for process score
+        $section->load([
+            'subject',
+            'lecturer',
+            'semester',
+            'gradeColumns.studentGrades' => function ($query) use ($user) {
+                $query->where('student_id', $user->id);
+            }
+        ]);
+
         return [
-            'section'            => $section->load(['subject', 'lecturer', 'semester']),
+            'section'            => $section,
             'notifications'      => $notifications,
             'examSchedules'      => $examSchedules,
             'completedAttempts'  => $completedAttempts,

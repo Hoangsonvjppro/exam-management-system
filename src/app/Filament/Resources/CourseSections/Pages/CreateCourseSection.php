@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CourseSections\Pages;
 
 use App\Filament\Resources\CourseSections\CourseSectionResource;
+use App\Services\AttendanceGradeService;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Str;
 
@@ -24,5 +25,10 @@ class CreateCourseSection extends CreateRecord
         $data['lecturer_id'] = auth()->id();
 
         return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        app(AttendanceGradeService::class)->ensureColumn($this->record);
     }
 }

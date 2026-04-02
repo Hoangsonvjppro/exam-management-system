@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\CourseSection;
-use App\Models\Notification;
+use App\Models\UserNotification;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class NotificationService
@@ -18,32 +20,40 @@ class NotificationService
      */
     public function sendToSection(CourseSection $section, array $data): void
     {
-        $students = $section->students;
-
-        if ($students->isEmpty()) {
-            throw new \DomainException('Lớp học phần này chưa có sinh viên nào để gửi thông báo.');
+        if (! Schema::hasTable('user_notifications')) {
+            throw new \DomainException('He thong thong bao chua san sang. Vui long thu lai sau.');
         }
 
-        $now = now();
-        $notificationsToInsert = [];
+        try {
+            $students = $section->students;
 
-        foreach ($students as $student) {
-            $notificationsToInsert[] = [
-                'id'         => (string) Str::uuid(),
-                'user_id'    => $student->id,
-                'type'       => 'course_announcement',
-                'title'      => $data['title'],
-                'message'    => $data['message'],
-                'data'       => json_encode([
-                    'course_section_id'   => $section->id,
-                    'course_section_name' => $section->name ?? $section->code,
-                ]),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
+            if ($students->isEmpty()) {
+                throw new \DomainException('Lớp học phần này chưa có sinh viên nào để gửi thông báo.');
+            }
+
+            $now = now();
+            $notificationsToInsert = [];
+
+            foreach ($students as $student) {
+                $notificationsToInsert[] = [
+                    'id'         => (string) Str::uuid(),
+                    'user_id'    => $student->id,
+                    'type'       => 'course_announcement',
+                    'title'      => $data['title'],
+                    'message'    => $data['message'],
+                    'data'       => json_encode([
+                        'course_section_id'   => $section->id,
+                        'course_section_name' => $section->name ?? $section->code,
+                    ]),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            // Bulk insert for performance
+            UserNotification::insert($notificationsToInsert);
+        } catch (QueryException) {
+            throw new \DomainException('He thong thong bao gap loi du lieu. Vui long thu lai sau.');
         }
-
-        // Bulk insert for performance
-        Notification::insert($notificationsToInsert);
     }
 }

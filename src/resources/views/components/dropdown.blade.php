@@ -13,8 +13,8 @@ default => $width,
 };
 @endphp
 
-<div class="relative" x-data="{ open: false }" @click.outside="open = false" @close.stop="open = false">
-    <div @click="open = ! open">
+<div class="relative" x-data="dropdownState()" @click.outside="close()" @close.stop="close()">
+    <div @click="toggle()">
         {{ $trigger }}
     </div>
 
@@ -27,7 +27,7 @@ default => $width,
         x-transition:leave-end="opacity-0 scale-95"
         class="absolute z-50 mt-2 {{ $width }} {{ $alignmentClasses }}"
         style="display: none;"
-        @click="open = false">
+        @click="close()">
         <div class="shadow-card {{ $contentClasses }}">
             {{ $content }}
         </div>

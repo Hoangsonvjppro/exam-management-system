@@ -45,24 +45,24 @@
                             </td>
                             <td class="py-3 px-4 align-top text-center">
                                 @php
-                                    $attemptCorrectCount = $complaint->attempt->correct_count ?? 0;
-                                    $attemptTotalQuestions = $complaint->schedule->exam->questions()->count();
+                                $attemptCorrectCount = $complaint->attempt->correct_count ?? 0;
+                                $attemptTotalQuestions = $complaint->schedule->exam->questions()->count();
                                 @endphp
                                 <span class="text-[14px] font-bold text-navy-900">{{ $attemptCorrectCount }}/{{ $attemptTotalQuestions }}</span>
                                 <span class="block text-[11px] text-text-muted mt-0.5">Điểm: {{ number_format($complaint->current_score, 1) }}/10</span>
                                 @if($complaint->updated_score)
-                                    <span class="block text-[12px] font-bold text-teal-600 mt-1">-> {{ number_format($complaint->updated_score, 1) }}/10</span>
+                                <span class="block text-[12px] font-bold text-teal-600 mt-1">-> {{ number_format($complaint->updated_score, 1) }}/10</span>
                                 @endif
                             </td>
                             <td class="py-3 px-4 align-top text-center">
                                 @php
-                                    $statusConfig = match($complaint->status) {
-                                        'pending'   => ['bg-yellow-50 text-yellow-700 border-yellow-200', 'Đang chờ'],
-                                        'reviewing' => ['bg-blue-50 text-blue-700 border-blue-200', 'Đang xem'],
-                                        'resolved'  => ['bg-teal-50 text-teal-700 border-teal-200', 'Đã duyệt'],
-                                        'rejected'  => ['bg-red-50 text-red-700 border-red-200', 'Từ chối'],
-                                        default     => ['bg-gray-50 text-gray-500 border-gray-200', 'N/A']
-                                    };
+                                $statusConfig = match($complaint->status) {
+                                'pending' => ['bg-yellow-50 text-yellow-700 border-yellow-200', 'Đang chờ'],
+                                'reviewing' => ['bg-blue-50 text-blue-700 border-blue-200', 'Đang xem'],
+                                'resolved' => ['bg-teal-50 text-teal-700 border-teal-200', 'Đã duyệt'],
+                                'rejected' => ['bg-red-50 text-red-700 border-red-200', 'Từ chối'],
+                                default => ['bg-gray-50 text-gray-500 border-gray-200', 'N/A']
+                                };
                                 @endphp
                                 <span class="inline-flex items-center text-[10px] font-bold uppercase rounded-[4px] px-2 py-1 border {{ $statusConfig[0] }}">
                                     {{ $statusConfig[1] }}
@@ -80,12 +80,12 @@
                             </td>
                             <td class="py-3 px-4 align-top text-center">
                                 @if(in_array($complaint->status, ['pending', 'reviewing']))
-                                    <x-button type="button" variant="primary" size="sm" 
-                                        @click="openReviewModal({{ $complaint->id }}, '{{ addslashes($complaint->student->name) }}', '{{ addslashes($complaint->reason) }}', {{ $attemptCorrectCount }}, {{ $attemptTotalQuestions }})">
-                                        Xử lý
-                                    </x-button>
+                                <x-button type="button" variant="primary" size="sm"
+                                    @click="openReviewModal({{ $complaint->id }}, '{{ addslashes($complaint->student->name) }}', '{{ addslashes($complaint->reason) }}', {{ $attemptCorrectCount }}, {{ $attemptTotalQuestions }})">
+                                    Xử lý
+                                </x-button>
                                 @else
-                                    <span class="text-[11px] text-text-muted font-medium">Hoàn tất lúc<br>{{ $complaint->resolved_at?->format('H:i d/m') }}</span>
+                                <span class="text-[11px] text-text-muted font-medium">Hoàn tất lúc<br>{{ $complaint->resolved_at?->format('H:i d/m') }}</span>
                                 @endif
                             </td>
                         </tr>
@@ -137,7 +137,9 @@
                             :class="resolutionStatus === 'resolved' ? 'border-teal-500 bg-teal-50/30' : 'border-border-clean hover:bg-surface-0'">
                             <input type="radio" name="status" value="resolved" x-model="resolutionStatus" class="sr-only">
                             <div class="w-4 h-4 rounded-full border border-teal-500 flex items-center justify-center" :class="resolutionStatus === 'resolved' ? 'bg-teal-500' : 'bg-white'">
-                                <svg x-show="resolutionStatus === 'resolved'" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                <svg x-show="resolutionStatus === 'resolved'" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                </svg>
                             </div>
                             <span class="text-[13px] font-bold text-teal-700">Chấp nhận</span>
                         </label>
@@ -145,7 +147,9 @@
                             :class="resolutionStatus === 'rejected' ? 'border-red-500 bg-red-50/30' : 'border-border-clean hover:bg-surface-0'">
                             <input type="radio" name="status" value="rejected" x-model="resolutionStatus" class="sr-only">
                             <div class="w-4 h-4 rounded-full border border-red-500 flex items-center justify-center" :class="resolutionStatus === 'rejected' ? 'bg-red-500' : 'bg-white'">
-                                <svg x-show="resolutionStatus === 'rejected'" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <svg x-show="resolutionStatus === 'rejected'" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
                             </div>
                             <span class="text-[13px] font-bold text-red-700">Từ chối</span>
                         </label>
@@ -177,102 +181,7 @@
         </x-modal>
     </div>
 
-    <script>
-        function lecturerComplaints() {
-            return {
-                complaintId: null,
-                reviewStudentName: '',
-                reviewReason: '',
-                reviewCurrentCorrectCount: 0,
-                reviewTotalQuestions: 0,
-                resolutionStatus: 'resolved',
-                updatedCorrectCount: '',
-                reviewerNote: '',
-                isSubmitting: false,
-
-                get currentScoreDisplay() {
-                    if (this.reviewTotalQuestions > 0) {
-                        return (this.reviewCurrentCorrectCount / this.reviewTotalQuestions * 10).toFixed(1) + '/10';
-                    }
-                    return '0/10';
-                },
-
-                get previewScore() {
-                    const count = parseInt(this.updatedCorrectCount);
-                    if (isNaN(count) || this.reviewTotalQuestions === 0) return '—';
-                    return (count / this.reviewTotalQuestions * 10).toFixed(1);
-                },
-
-                openReviewModal(id, studentName, reason, currentCorrectCount, totalQuestions) {
-                    this.complaintId = id;
-                    this.reviewStudentName = studentName;
-                    this.reviewReason = reason;
-                    this.reviewCurrentCorrectCount = currentCorrectCount;
-                    this.reviewTotalQuestions = totalQuestions;
-                    this.resolutionStatus = 'resolved';
-                    this.updatedCorrectCount = currentCorrectCount;
-                    this.reviewerNote = '';
-                    this.$dispatch('open-modal', 'review-modal');
-                },
-
-                submitReview() {
-                    if (!this.reviewerNote || this.reviewerNote.trim().length < 5) {
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Vui lòng nhập ghi chú phản hồi (ít nhất 5 ký tự).', type: 'error' }
-                        }));
-                        return;
-                    }
-
-                    if (this.resolutionStatus === 'resolved') {
-                        const count = parseInt(this.updatedCorrectCount);
-                        if (isNaN(count) || count < 0 || count > this.reviewTotalQuestions || this.updatedCorrectCount.toString().includes('.')) {
-                            window.dispatchEvent(new CustomEvent('toast', {
-                                detail: { message: `Số câu đúng phải là số nguyên từ 0 đến ${this.reviewTotalQuestions}.`, type: 'error' }
-                            }));
-                            return;
-                        }
-                    }
-
-                    this.isSubmitting = true;
-
-                    fetch(`/lecturer/complaints/${this.complaintId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: JSON.stringify({
-                            status: this.resolutionStatus,
-                            reviewer_note: this.reviewerNote,
-                            updated_correct_count: this.resolutionStatus === 'resolved' ? parseInt(this.updatedCorrectCount) : null
-                        })
-                    })
-                    .then(r => r.json().then(data => ({status: r.status, body: data})))
-                    .then(res => {
-                        this.isSubmitting = false;
-                        if (res.status === 200) {
-                            window.dispatchEvent(new CustomEvent('toast', {
-                                detail: { message: res.body.message, type: 'success' }
-                            }));
-                            this.$dispatch('close-modal', 'review-modal');
-                            setTimeout(() => window.location.reload(), 1500);
-                        } else {
-                            const errorMsg = res.body.errors 
-                                ? Object.values(res.body.errors).flat().join(', ') 
-                                : (res.body.message || 'Có lỗi xảy ra');
-                            window.dispatchEvent(new CustomEvent('toast', {
-                                detail: { message: errorMsg, type: 'error' }
-                            }));
-                        }
-                    })
-                    .catch(() => {
-                        this.isSubmitting = false;
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: 'Lỗi kết nối máy chủ', type: 'error' }
-                        }));
-                    });
-                }
-            }
-        }
-    </script>
+    @push('scripts')
+    @vite(['resources/js/pages/lecturer/complaints-index.js'])
+    @endpush
 </x-app-layout>

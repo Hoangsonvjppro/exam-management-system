@@ -3,27 +3,42 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Schema;
 
 class UserStateService
 {
+    private function roleTablesReady(): bool
+    {
+        return Schema::hasTable('roles') && Schema::hasTable('model_has_roles');
+    }
+
     public function syncStudentRole(User $user): void
     {
-        if ($user->hasRole('lecturer')) {
-            if ($user->hasRole('student')) {
-                $user->removeRole('student');
-            }
-
+        if (! $this->roleTablesReady()) {
             return;
         }
 
-        $hasEnrollment = $user->enrolledSections()->exists();
+        try {
+            if ($user->hasRole('lecturer')) {
+                if ($user->hasRole('student')) {
+                    $user->removeRole('student');
+                }
 
-        if ($hasEnrollment && ! $user->hasRole('student')) {
-            $user->assignRole('student');
-        }
+                return;
+            }
 
-        if (! $hasEnrollment && $user->hasRole('student')) {
-            $user->removeRole('student');
+            $hasEnrollment = $user->enrolledSections()->exists();
+
+            if ($hasEnrollment && ! $user->hasRole('student')) {
+                $user->assignRole('student');
+            }
+
+            if (! $hasEnrollment && $user->hasRole('student')) {
+                $user->removeRole('student');
+            }
+        } catch (QueryException) {
+            // Skip role-sync if schema is not ready.
         }
     }
 
@@ -31,12 +46,20 @@ class UserStateService
     {
         $this->syncStudentRole($user);
 
-        if ($user->hasRole('lecturer')) {
-            return 'lecturer.dashboard';
+        if (! $this->roleTablesReady()) {
+            return 'landing';
         }
 
-        if ($user->hasRole('student')) {
-            return 'student.dashboard';
+        try {
+            if ($user->hasRole('lecturer')) {
+                return 'lecturer.classes.index';
+            }
+
+            if ($user->hasRole('student')) {
+                return 'student.dashboard';
+            }
+        } catch (QueryException) {
+            return 'landing';
         }
 
         // Authenticated user without specific role stays on landing page.

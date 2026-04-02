@@ -7,10 +7,13 @@ use App\Http\Requests\CourseSection\StoreCourseSectionRequest;
 use App\Http\Requests\CourseSection\UpdateCourseSectionRequest;
 use App\Models\CourseSection;
 use App\Models\User;
+use App\Models\UserNotification;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -18,8 +21,7 @@ class CourseSectionController extends Controller
 {
     public function __construct(
         private readonly \App\Services\CourseSectionService $courseSectionService
-    ) {
-    }
+    ) {}
 
     public function index(): View
     {
@@ -82,9 +84,54 @@ class CourseSectionController extends Controller
             'examSchedules.exam' => fn($q) => $q->withCount('questions'),
             'complaints.student' => fn($q) => $q->latest(),
             'attendanceSessions.records',
+            'gradeColumns.studentGrades',
         ]);
 
-        return view('lecturer.classes.show', compact('section'));
+        $studentIds = $section->students->pluck('id');
+
+        $announcementFeed = collect();
+        if ($studentIds->isNotEmpty() && Schema::hasTable('user_notifications')) {
+            // Reconstruct lecturer-sent class announcements from delivered student notifications.
+            try {
+                $announcementFeed = UserNotification::query()
+                    ->whereIn('user_id', $studentIds)
+                    ->where('data->course_section_id', $section->id)
+                    ->where('type', 'course_announcement')
+                    ->where('title', '!=', 'Lịch thi mới')
+                    ->orderByDesc('created_at')
+                    ->limit(300)
+                    ->get()
+                    ->unique(fn($item) => $item->title . '|' . $item->message . '|' . optional($item->created_at)->format('Y-m-d H:i:s'))
+                    ->map(fn($item) => (object) [
+                        'created_at' => $item->created_at,
+                        'title' => $item->title,
+                        'message' => $item->message,
+                        'source' => 'announcement',
+                    ])
+                    ->values();
+            } catch (QueryException) {
+                $announcementFeed = collect();
+            }
+        }
+
+        $subjectName = $section->subject->name ?? 'Không xác định';
+        $examScheduleFeed = $section->examSchedules
+            ->sortByDesc('created_at')
+            ->map(fn($schedule) => (object) [
+                'created_at' => $schedule->created_at,
+                'title' => 'Lịch thi mới',
+                'message' => 'Bạn đã tạo một lịch thi mới cho môn học ' . $subjectName . '. Thời gian: ' . $schedule->start_datetime->format('H:i d/m/Y') . ' - ' . $schedule->end_datetime->format('H:i d/m/Y'),
+                'source' => 'exam_schedule',
+            ])
+            ->values();
+
+        $sectionFeedItems = $announcementFeed
+            ->concat($examScheduleFeed)
+            ->sortByDesc(fn($item) => optional($item->created_at)->timestamp ?? 0)
+            ->take(30)
+            ->values();
+
+        return view('lecturer.classes.show', compact('section', 'sectionFeedItems'));
     }
 
     public function edit(CourseSection $section): View

@@ -2,13 +2,7 @@
     @section('title', 'Thông báo — EMS')
     @section('page-title', 'Thông báo của tôi')
 
-    <div x-data="{ 
-        modalOpen: false, 
-        currentTitle: '', 
-        currentMessage: '', 
-        currentDate: '', 
-        currentClass: '' 
-    }">
+    <div x-data="studentNotificationsModalState()">
         <div class="space-y-6">
             @if($notifications->isEmpty())
             <div class="bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[10px] p-12 text-center">
@@ -44,13 +38,7 @@
                             $safeDate = $notification->created_at->format('d/m/Y H:i');
                             $safeClass = addslashes($className);
                             @endphp
-                            <x-button variant="outline" class="!px-3 !py-1.5" x-on:click="
-                                            currentTitle = '{{ $safeTitle }}';
-                                            currentMessage = '{{ $safeMessage }}';
-                                            currentDate = '{{ $safeDate }}';
-                                            currentClass = '{{ $safeClass }}';
-                                            modalOpen = true;
-                                        ">
+                            <x-button variant="outline" class="!px-3 !py-1.5" x-on:click="openModal('{{ $safeTitle }}', '{{ $safeMessage }}', '{{ $safeDate }}', '{{ $safeClass }}')">
                                 Xem chi tiết
                             </x-button>
                         </div>
@@ -74,15 +62,15 @@
             x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0">
-            <div x-on:click.outside="modalOpen = false" class="bg-white border-[0.5px] border-border-clean rounded-[10px] shadow-sm w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div x-on:click.outside="closeModal()" class="bg-white border-[0.5px] border-border-clean rounded-[10px] shadow-sm w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden">
                 <div class="p-6 border-b-[0.5px] border-border-clean flex items-start justify-between shrink-0 bg-surface-0">
                     <div>
-                    <div class="mb-6">
-                        <span x-text="currentClass" class="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 border-[0.5px] border-blue-200 rounded-[4px] text-[10px] font-bold uppercase tracking-wider mb-2"></span>
-                        <h3 x-text="currentTitle" class="text-xl font-bold text-navy-900 leading-tight"></h3>
+                        <div class="mb-6">
+                            <span x-text="currentClass" class="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 border-[0.5px] border-blue-200 rounded-[4px] text-[10px] font-bold uppercase tracking-wider mb-2"></span>
+                            <h3 x-text="currentTitle" class="text-xl font-bold text-navy-900 leading-tight"></h3>
+                        </div>
                     </div>
-                    </div>
-                    <button x-on:click="modalOpen = false" class="text-text-muted hover:text-navy-900 transition-colors p-1">
+                    <button x-on:click="closeModal()" class="text-text-muted hover:text-navy-900 transition-colors p-1">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>

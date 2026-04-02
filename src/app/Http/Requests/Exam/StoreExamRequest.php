@@ -17,6 +17,9 @@ class StoreExamRequest extends FormRequest
     {
         $this->merge([
             'allow_late_entrance' => $this->boolean('allow_late_entrance'),
+            'show_score_after_submit' => $this->boolean('show_score_after_submit'),
+            'show_answers_after_submit' => $this->boolean('show_answers_after_submit'),
+            'multiple_choice_scoring_method' => $this->input('multiple_choice_scoring_method', 'all_or_nothing'),
         ]);
     }
 
@@ -37,6 +40,7 @@ class StoreExamRequest extends FormRequest
             'late_entrance_behavior'      => 'required|in:fixed_end,flexible_duration',
             'min_duration_before_submit'  => 'required|integer|min:0',
             'creation_mode'               => 'required|in:manual,matrix',
+            'multiple_choice_scoring_method' => ['required', 'string', Rule::in(['all_or_nothing', 'partial_credit'])],
         ];
 
         if ($this->input('creation_mode') === 'matrix') {
@@ -46,7 +50,7 @@ class StoreExamRequest extends FormRequest
             $rules['matrix.*.question_type_id']  = 'nullable|exists:question_types,id';
             $rules['matrix.*.question_count']    = 'required|integer|min:1';
         } else {
-            $rules['question_ids']   = 'required|array';
+            $rules['question_ids']   = 'required|array|min:1';
             $rules['question_ids.*'] = 'exists:questions,id';
         }
 
@@ -66,6 +70,7 @@ class StoreExamRequest extends FormRequest
             'creation_mode.required'         => 'Chế độ tạo đề là bắt buộc.',
             'creation_mode.in'               => 'Chế độ tạo đề không hợp lệ.',
             'question_ids.required'          => 'Vui lòng chọn ít nhất một câu hỏi.',
+            'question_ids.min'               => 'Vui lòng chọn ít nhất một câu hỏi.',
             'question_ids.*.exists'          => 'Câu hỏi được chọn không tồn tại.',
             'matrix.required'                => 'Vui lòng cấu hình ít nhất một hàng ma trận.',
             'matrix.*.difficulty.required'   => 'Vui lòng chọn mức độ khó.',

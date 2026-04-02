@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int    $exam_id
  * @property int    $exam_room_id
  * @property string $exam_date
+ * @property string|null $end_date
  * @property string $start_time
  * @property string $end_time
  * @property int    $max_students
@@ -27,6 +28,7 @@ class ExamSchedule extends Model
         'exam_id',
         'course_section_id',
         'exam_date',
+        'end_date',
         'start_time',
         'end_time',
         'max_students',
@@ -36,6 +38,7 @@ class ExamSchedule extends Model
 
     protected $casts = [
         'exam_date' => 'date',
+        'end_date' => 'date',
         'max_students' => 'integer',
     ];
 
@@ -64,7 +67,7 @@ class ExamSchedule extends Model
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'exam_schedule_students', 'exam_schedule_id', 'student_id')
-            ->withPivot('seat_number', 'attendance_status')
+            ->withPivot('attendance_status')
             ->withTimestamps();
     }
 
@@ -77,7 +80,10 @@ class ExamSchedule extends Model
 
     public function scopeUpcoming(Builder $query): Builder
     {
-        return $query->where('exam_date', '>=', now()->toDateString())
+        return $query->whereRaw(
+            "TIMESTAMP(exam_date, start_time) >= ?",
+            [now()->toDateTimeString()]
+        )
             ->where('status', 'scheduled');
     }
 
@@ -86,6 +92,31 @@ class ExamSchedule extends Model
     public function getAssignedCountAttribute(): int
     {
         return $this->scheduleStudents()->count();
+    }
+
+    /**
+     * Trạng thái runtime theo thời gian thực tế của ca thi.
+     */
+    public function getRuntimeStatusAttribute(): string
+    {
+        if (in_array($this->status, ['cancelled', 'completed'], true)) {
+            return $this->status;
+        }
+
+        if ($this->is_not_started) {
+            return 'scheduled';
+        }
+
+        if (! $this->is_over) {
+            return 'in_progress';
+        }
+
+        return 'completed';
+    }
+
+    public function getCanEditAttribute(): bool
+    {
+        return $this->runtime_status === 'scheduled';
     }
 
     /**
@@ -103,9 +134,8 @@ class ExamSchedule extends Model
         }
 
         // Mặc định (fixed_end): Deadline = min(started_at + exam->duration, schedule.end_time)
-        if ($this->exam_date && $this->end_time) {
-            // $scheduleEnd = Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->end_time);
-            $scheduleEnd = Carbon::parse($this->exam_date)->copy()->setTimeFromTimeString($this->end_time);
+        if ($this->end_time) {
+            $scheduleEnd = $this->end_datetime;
             return $durationEnd->lt($scheduleEnd) ? $durationEnd : $scheduleEnd;
         }
 
@@ -114,12 +144,31 @@ class ExamSchedule extends Model
 
     public function getStartDatetimeAttribute(): Carbon
     {
-        return Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->start_time);
+        return Carbon::parse($this->exam_date)->copy()->setTimeFromTimeString($this->start_time);
     }
 
     public function getEndDatetimeAttribute(): Carbon
     {
-        return Carbon::parse($this->exam_date->format('Y-m-d') . ' ' . $this->end_time);
+        $endDate = $this->end_date ?: $this->exam_date;
+
+        return Carbon::parse($endDate)->copy()->setTimeFromTimeString($this->end_time);
+    }
+
+    public function getDateRangeTextAttribute(): string
+    {
+        $startDate = $this->start_datetime->format('d/m/Y');
+        $endDate = $this->end_datetime->format('d/m/Y');
+
+        if ($startDate === $endDate) {
+            return $startDate;
+        }
+
+        return $startDate . ' - ' . $endDate;
+    }
+
+    public function getTimeRangeTextAttribute(): string
+    {
+        return $this->start_datetime->format('H:i') . ' - ' . $this->end_datetime->format('H:i');
     }
 
     public function getIsNotStartedAttribute(): bool

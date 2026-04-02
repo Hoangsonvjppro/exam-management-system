@@ -46,6 +46,11 @@ class AdminPanelProvider extends PanelProvider
                 FilamentInfoWidget::class,
                    AdminStatsWidget::class,
             ])
+            ->navigationGroups([
+                'Người dùng',
+                'Quản lý lớp',
+                'Đào tạo',
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
