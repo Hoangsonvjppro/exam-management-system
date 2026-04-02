@@ -36,6 +36,10 @@ class StudentsResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Người dùng';
+
+    protected static ?int $navigationSort = 3;
+
     protected static ?string $navigationLabel = "Sinh viên";
 
     protected static ?string $modelLabel = 'Sinh viên';

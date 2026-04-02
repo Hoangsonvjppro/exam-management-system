@@ -36,9 +36,9 @@ class StudentClassResource extends Resource
 
     protected static ?string $navigationLabel = 'Lớp sinh viên';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Đào tạo';
+    protected static string | \UnitEnum | null $navigationGroup = 'Quản lý lớp';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $modelLabel = 'Lớp';
 

@@ -33,9 +33,9 @@ class SemesterResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Học kỳ';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Nội dung';
+    protected static string | \UnitEnum | null $navigationGroup = 'Đào tạo';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
