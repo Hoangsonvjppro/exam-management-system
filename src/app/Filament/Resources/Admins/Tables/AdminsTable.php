@@ -11,6 +11,7 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Gate;
 
 class AdminsTable
 {
@@ -57,10 +58,33 @@ class AdminsTable
                 EditAction::make(),
 
                 Action::make('toggle_active')
-                    ->label(fn (Admin $record): string => $record->is_active ? 'Khóa tài khoản' : 'Mở khóa')
-                    ->color(fn (Admin $record): string => $record->is_active ? 'danger' : 'success')
+                    ->label(fn(Admin $record): string => $record->is_active ? 'Khóa tài khoản' : 'Mở khóa')
+                    ->color(fn(Admin $record): string => $record->is_active ? 'danger' : 'success')
                     ->requiresConfirmation()
+                    ->visible(function (Admin $record): bool {
+                        $actor = auth('admin')->user();
+
+                        if (! $actor || ! Gate::forUser($actor)->allows('admin.admins.block')) {
+                            return false;
+                        }
+
+                        if ($record->id === $actor->id) {
+                            return false;
+                        }
+
+                        if ($record->is_super_admin && ! $actor->is_super_admin) {
+                            return false;
+                        }
+
+                        return true;
+                    })
                     ->action(function (Admin $record): void {
+                        $actor = auth('admin')->user();
+
+                        abort_unless($actor && Gate::forUser($actor)->allows('admin.admins.block'), 403);
+                        abort_if($record->id === $actor->id, 403);
+                        abort_if($record->is_super_admin && ! $actor->is_super_admin, 403);
+
                         $record->update(['is_active' => ! $record->is_active]);
 
                         Notification::make()

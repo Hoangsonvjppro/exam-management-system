@@ -53,6 +53,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(QuestionType::class, QuestionTypePolicy::class);
         Gate::policy(Tag::class, TagPolicy::class);
 
+        Gate::before(function ($user, string $ability): ?bool {
+            if ($user instanceof Admin && $user->is_active && $user->is_super_admin) {
+                return true;
+            }
+
+            return null;
+        });
+
         View::composer('layouts.app', function ($view): void {
             $user = Auth::user();
             $unreadNotificationCount = 0;

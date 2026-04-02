@@ -21,7 +21,7 @@ class AdminResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-     protected static string | \UnitEnum | null $navigationGroup = 'Người dùng';
+    protected static string | \UnitEnum | null $navigationGroup = 'Người dùng';
 
     protected static ?int $navigationSort = 1;
 
@@ -61,20 +61,20 @@ class AdminResource extends Resource
     {
         $admin = auth('admin')->user();
 
-        return $admin ? Gate::forUser($admin)->allows('admin.admins.view') : false;
+        return $admin ? Gate::forUser($admin)->allows('viewAny', Admin::class) : false;
     }
 
     public static function canCreate(): bool
     {
         $admin = auth('admin')->user();
 
-        return $admin ? Gate::forUser($admin)->allows('admin.admins.create') : false;
+        return $admin ? Gate::forUser($admin)->allows('create', Admin::class) : false;
     }
 
     public static function canEdit($record): bool
     {
         $admin = auth('admin')->user();
 
-        return $admin ? Gate::forUser($admin)->allows('admin.admins.update') : false;
+        return $admin ? Gate::forUser($admin)->allows('update', $record) : false;
     }
 }
