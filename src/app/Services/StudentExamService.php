@@ -34,8 +34,7 @@ class StudentExamService
         }
 
         $skipLateEntranceChecks =
-            $schedule->schedule_mode === \App\Models\ExamSchedule::MODE_IN_RANGE
-            || (bool) $schedule->disable_attempt_timer;
+            $schedule->schedule_mode === \App\Models\ExamSchedule::MODE_IN_RANGE;
 
         // Logic check vào muộn
         if (!$skipLateEntranceChecks && $now->gt($scheduleStart)) {
@@ -306,7 +305,17 @@ class StudentExamService
         }
 
         try {
-            return Carbon::parse($enrolledAt)->gt($schedule->created_at);
+            $enrolledAt = Carbon::parse($enrolledAt);
+
+            if (! $enrolledAt->gt($schedule->created_at)) {
+                return false;
+            }
+
+            if ($schedule->schedule_mode === ExamSchedule::MODE_IN_RANGE) {
+                return $enrolledAt->lte($schedule->end_datetime);
+            }
+
+            return $enrolledAt->lte($schedule->start_datetime);
         } catch (\Throwable) {
             return false;
         }

@@ -63,7 +63,18 @@ class ExamSchedulePolicy
         }
 
         try {
-            return Carbon::parse($enrolledAt)->gt($schedule->created_at);
+            $enrolledAt = Carbon::parse($enrolledAt);
+
+            if (! $enrolledAt->gt($schedule->created_at)) {
+                return false;
+            }
+
+            // Chỉ chấp nhận fallback nếu mốc vào lớp vẫn hợp lý theo cửa sổ thời gian ca thi.
+            if ($schedule->schedule_mode === ExamSchedule::MODE_IN_RANGE) {
+                return $enrolledAt->lte($schedule->end_datetime);
+            }
+
+            return $enrolledAt->lte($schedule->start_datetime);
         } catch (\Throwable) {
             return false;
         }
