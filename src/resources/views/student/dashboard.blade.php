@@ -87,7 +87,7 @@
                 </button>
             </form>
 
-            <p class="mt-2 text-[11px] text-[#6B7C99]">Liên hệ giảng viên để nhận mã mời nếu bạn chưa có.</p>
+            <p class="mt-2 text-[11px] text-[#6B7C99]">Liên hệ giảng viên để nhận mã mời hoặc quét QR mã lớp để tham gia tự động.</p>
         </div>
 
         {{-- ═══ Class List ═══ --}}

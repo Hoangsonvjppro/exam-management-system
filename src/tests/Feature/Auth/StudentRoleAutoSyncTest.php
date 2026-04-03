@@ -84,4 +84,56 @@ class StudentRoleAutoSyncTest extends TestCase
 
         $this->assertFalse($studentUser->hasRole($studentRole));
     }
+
+    public function test_join_class_via_qr_route_redirects_to_student_class_workspace(): void
+    {
+        Role::query()->create([
+            'name' => 'student',
+            'guard_name' => 'web',
+        ]);
+
+        $lecturer = User::factory()->create([
+            'email' => 'lecturer-qr@ems.local',
+        ]);
+
+        $semester = Semester::query()->create([
+            'name' => 'HK2 2026-2027',
+            'year' => 2026,
+            'term' => 2,
+            'start_date' => '2027-02-01',
+            'end_date' => '2027-06-15',
+            'is_current' => true,
+        ]);
+
+        $subject = Subject::query()->create([
+            'code' => 'QR101',
+            'name' => 'Nhap mon QR',
+            'credits' => 3,
+        ]);
+
+        $section = CourseSection::query()->create([
+            'code' => 'QR101-01-HK2-2627',
+            'invite_code' => 'QRJOIN1',
+            'subject_id' => $subject->id,
+            'semester_id' => $semester->id,
+            'lecturer_id' => $lecturer->id,
+            'max_students' => 60,
+            'status' => 'active',
+        ]);
+
+        $studentUser = User::factory()->create([
+            'student_code' => 'SVQR001',
+            'class_name' => 'DHKTPM17A',
+        ]);
+
+        $this->actingAs($studentUser)
+            ->get(route('student.join-class.qr', ['invite_code' => 'QRJOIN1']))
+            ->assertRedirect(route('student.classes.show', $section));
+
+        $this->assertDatabaseHas('course_section_students', [
+            'course_section_id' => $section->id,
+            'student_id' => $studentUser->id,
+            'status' => 'enrolled',
+        ]);
+    }
 }

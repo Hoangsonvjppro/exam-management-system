@@ -5,6 +5,82 @@ function getClassesShowConfig() {
     return classesShowConfig;
 }
 
+window.inviteCodeCardState = function inviteCodeCardState() {
+    return {
+        copied: false,
+        inviteCode: '',
+        joinClassQrUrl: '',
+
+        init() {
+            this.inviteCode = String(this.$el?.dataset?.inviteCode || '').trim().toUpperCase();
+            this.joinClassQrUrl = String(this.$el?.dataset?.joinQrUrl || '').trim();
+        },
+
+        copyInviteCode() {
+            if (!this.inviteCode) {
+                return;
+            }
+
+            if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: 'Trình duyệt không hỗ trợ sao chép tự động.',
+                        type: 'error'
+                    }
+                }));
+                return;
+            }
+
+            navigator.clipboard.writeText(this.inviteCode)
+                .then(() => {
+                    this.copied = true;
+                    window.setTimeout(() => {
+                        this.copied = false;
+                    }, 1800);
+                })
+                .catch(() => {
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: {
+                            message: 'Không thể sao chép mã mời.',
+                            type: 'error'
+                        }
+                    }));
+                });
+        },
+
+        showInviteQr() {
+            if (!this.inviteCode) {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: 'Không tìm thấy mã mời lớp học phần.',
+                        type: 'error'
+                    }
+                }));
+                return;
+            }
+
+            const joinClassUrl = new URL(this.joinClassQrUrl || `${window.location.origin}/join-class/qr`, window.location.origin);
+            joinClassUrl.searchParams.set('invite_code', this.inviteCode);
+
+            const inviteCodeEl = document.getElementById('display-invite-code');
+            const inviteQrEl = document.getElementById('display-invite-qr-code');
+
+            if (inviteCodeEl) {
+                inviteCodeEl.textContent = this.inviteCode;
+            }
+
+            if (inviteQrEl) {
+                const qrSize = window.innerWidth >= 1024 ? 420 : (window.innerWidth >= 640 ? 360 : 300);
+                inviteQrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&margin=2&format=png&data=${encodeURIComponent(joinClassUrl.toString())}`;
+            }
+
+            window.dispatchEvent(new CustomEvent('open-modal', {
+                detail: 'show-invite-code-modal'
+            }));
+        }
+    };
+};
+
 window.attendanceManager = function attendanceManager(sectionId) {
     return {
         records: {},
