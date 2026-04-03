@@ -78,20 +78,20 @@ class SubjectResource extends Resource
                 ->maxValue(10)
                 ->required(),
 
-            Select::make('department_id')
-                ->label('Khoa phụ trách')
-                ->relationship('department', 'name')
-                ->searchable(['name', 'code'])
-                ->getOptionLabelFromRecordUsing(
-                    fn($record) =>
-                    "{$record->code} - {$record->name}"
-                )
-                ->preload()
-                ->required()
-                ->native(false)
-                ->validationMessages([
-                    'required' => ':Attribute là bắt buộc'
-                ]),
+            // Select::make('department_id')
+            //     ->label('Khoa phụ trách')
+            //     ->relationship('department', 'name')
+            //     ->searchable(['name', 'code'])
+            //     ->getOptionLabelFromRecordUsing(
+            //         fn($record) =>
+            //         "{$record->code} - {$record->name}"
+            //     )
+            //     ->preload()
+            //     ->required()
+            //     ->native(false)
+            //     ->validationMessages([
+            //         'required' => ':Attribute là bắt buộc'
+            //     ]),
 
             Textarea::make('description')
                 ->label('Mô tả môn học')
@@ -121,9 +121,9 @@ class SubjectResource extends Resource
                     ->label('Số tín chỉ')
                     ->sortable(),
 
-                TextColumn::make('department.name')
-                    ->label('Khoa')
-                    ->toggleable(),
+                // TextColumn::make('department.name')
+                //     ->label('Khoa')
+                //     ->toggleable(),
 
                 TextColumn::make('updated_at')
                     ->label('Cập nhật lần cuối')
