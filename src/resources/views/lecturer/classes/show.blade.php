@@ -221,16 +221,6 @@
                         <p class="mt-2 text-[28px] font-bold text-navy-900 leading-none">{{ $section->examSchedules->count() }}</p>
                         <p class="text-[12px] text-text-muted mt-1">ca thi trong lớp học phần</p>
                     </x-card>
-
-                    <!-- <x-card variant="featured" padding="true">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">Thông báo nhanh</p>
-                        <p class="mt-2 text-[13px] text-navy-900 leading-relaxed">Nên cập nhật thông báo lớp trước mỗi đợt kiểm tra để sinh viên nắm rõ lịch và yêu cầu phòng thi.</p>
-                        @can('manage', $section)
-                        <x-button variant="secondary" size="sm" class="mt-3" @click="$dispatch('open-modal', 'create-notification-modal')">
-                            Đăng thông báo ngay
-                        </x-button>
-                        @endcan
-                    </x-card> -->
                 </div>
 
                 <x-card padding="true">
@@ -1004,7 +994,7 @@
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="text-[12px] font-semibold text-navy-900">Chọn ít nhất 1 câu hỏi <span class="text-red-500">*</span></label>
-                    <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">
+                        <a href="{{ route('lecturer.exams.create', ['subject_id' => $section->subject_id]) }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">
                         Mở trình tạo đầy đủ
                     </a>
                 </div>
