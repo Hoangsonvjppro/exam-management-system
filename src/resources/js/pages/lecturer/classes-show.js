@@ -81,6 +81,36 @@ window.inviteCodeCardState = function inviteCodeCardState() {
     };
 };
 
+window.studentRowMenuState = function studentRowMenuState() {
+    return {
+        open: false,
+        confirmingRemove: false,
+        menuTop: 0,
+        menuLeft: 0,
+        menuWidth: 248,
+
+        placeMenu() {
+            const rect = this.$refs.menuBtn.getBoundingClientRect();
+            this.menuTop = rect.bottom + 8;
+            this.menuLeft = Math.max(12, rect.right - this.menuWidth);
+        },
+
+        toggleMenu() {
+            this.open = !this.open;
+            this.confirmingRemove = false;
+
+            if (this.open) {
+                this.$nextTick(() => this.placeMenu());
+            }
+        },
+
+        closeMenu() {
+            this.open = false;
+            this.confirmingRemove = false;
+        },
+    };
+};
+
 window.attendanceManager = function attendanceManager(sectionId) {
     return {
         records: {},
@@ -318,12 +348,186 @@ window.classWorkspaceManager = function classWorkspaceManager(initialTab) {
         activeTab: initialTab || 'overview',
         isSubmittingSchedule: false,
         isSubmittingQuickExam: false,
+        studentDetailLoading: false,
+        studentDetailError: '',
+        studentDetailStudentName: '',
+        studentDetailEnrollmentLabel: '',
+        studentDetailSummary: {
+            attempt_count: 0,
+            completed_count: 0,
+            average_score: null,
+            highest_score: null,
+        },
+        studentExamAttempts: [],
+        removingStudentId: null,
+
+        init() {
+            window.addEventListener('lecturer-student-open-detail', (event) => {
+                const detail = event?.detail || {};
+                this.openStudentDetail(detail.id, detail.name || '');
+            });
+
+            window.addEventListener('lecturer-student-remove', (event) => {
+                const detail = event?.detail || {};
+                this.removeStudentFromSection(detail.id, detail.name || '');
+            });
+        },
 
         switchTab(tab) {
             this.activeTab = tab;
             const url = new URL(window.location.href);
             url.searchParams.set('tab', tab);
             window.history.replaceState({}, '', url);
+        },
+
+        buildStudentUrl(studentId, template) {
+            if (!template || !studentId) {
+                return '';
+            }
+
+            return template.replace('__STUDENT_ID__', String(studentId));
+        },
+
+        resetStudentDetailState() {
+            this.studentDetailError = '';
+            this.studentDetailEnrollmentLabel = '';
+            this.studentDetailSummary = {
+                attempt_count: 0,
+                completed_count: 0,
+                average_score: null,
+                highest_score: null,
+            };
+            this.studentExamAttempts = [];
+        },
+
+        formatAttemptScore(score) {
+            if (score === null || score === undefined || score === '') {
+                return '—';
+            }
+
+            const numericScore = Number.parseFloat(score);
+            if (!Number.isFinite(numericScore)) {
+                return '—';
+            }
+
+            return `${numericScore.toFixed(1)}/10`;
+        },
+
+        formatCorrectCount(correctCount, questionCount) {
+            if (correctCount === null || correctCount === undefined || correctCount === '') {
+                return '—';
+            }
+
+            if (questionCount === null || questionCount === undefined || questionCount === '') {
+                return `${correctCount}/—`;
+            }
+
+            return `${correctCount}/${questionCount}`;
+        },
+
+        async openStudentDetail(studentId, fallbackName = '') {
+            this.studentDetailStudentName = fallbackName || '';
+            this.resetStudentDetailState();
+            this.studentDetailLoading = true;
+
+            window.dispatchEvent(new CustomEvent('open-modal', {
+                detail: 'student-detail-modal'
+            }));
+
+            try {
+                const detailUrl = this.buildStudentUrl(
+                    studentId,
+                    getClassesShowConfig().studentDetailUrlTemplate || ''
+                );
+
+                if (!detailUrl) {
+                    throw new Error('Không xác định được đường dẫn xem chi tiết sinh viên.');
+                }
+
+                const response = await fetch(detailUrl, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                });
+
+                const result = await response.json().catch(() => ({}));
+
+                if (!response.ok || !result?.success) {
+                    throw new Error(result?.message || 'Không thể tải dữ liệu chi tiết sinh viên.');
+                }
+
+                const student = result.student || {};
+                const summary = result.summary || {};
+
+                this.studentDetailStudentName = student.name || fallbackName || '';
+                this.studentDetailEnrollmentLabel = student.enrollment_status_label || '—';
+                this.studentDetailSummary = {
+                    attempt_count: Number(summary.attempt_count || 0),
+                    completed_count: Number(summary.completed_count || 0),
+                    average_score: summary.average_score ?? null,
+                    highest_score: summary.highest_score ?? null,
+                };
+                this.studentExamAttempts = Array.isArray(result.attempts) ? result.attempts : [];
+            } catch (error) {
+                this.studentDetailError = error?.message || 'Không thể tải dữ liệu chi tiết sinh viên.';
+            } finally {
+                this.studentDetailLoading = false;
+            }
+        },
+
+        async removeStudentFromSection(studentId, studentName = '') {
+            if (this.removingStudentId) {
+                return;
+            }
+
+            this.removingStudentId = studentId;
+
+            try {
+                const removeUrl = this.buildStudentUrl(
+                    studentId,
+                    getClassesShowConfig().studentRemoveUrlTemplate || ''
+                );
+
+                if (!removeUrl) {
+                    throw new Error('Không xác định được đường dẫn xoá sinh viên.');
+                }
+
+                const response = await fetch(removeUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': getClassesShowConfig().csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    }
+                });
+
+                const result = await response.json().catch(() => ({}));
+
+                if (!response.ok || !result?.success) {
+                    throw new Error(result?.message || 'Không thể xoá sinh viên khỏi lớp học phần.');
+                }
+
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: result.message || `Đã xoá ${studentName || 'sinh viên'} khỏi lớp học phần.`,
+                        type: 'success'
+                    }
+                }));
+
+                window.setTimeout(() => {
+                    window.location.reload();
+                }, 600);
+            } catch (error) {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: error?.message || 'Không thể xoá sinh viên khỏi lớp học phần.',
+                        type: 'error'
+                    }
+                }));
+            } finally {
+                this.removingStudentId = null;
+            }
         },
 
         clearErrors(formElement) {

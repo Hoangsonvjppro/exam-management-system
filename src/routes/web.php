@@ -202,6 +202,12 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
             Route::post('/classes/{section}/regenerate-code', [LecturerSectionController::class, 'regenerateCode'])
                 ->name('classes.regenerate-code');
 
+            // Thao tác sinh viên trong lớp học phần
+            Route::get('/classes/{section}/students/{student}', [LecturerSectionController::class, 'showStudent'])
+                ->name('classes.students.show');
+            Route::delete('/classes/{section}/students/{student}', [LecturerSectionController::class, 'removeStudent'])
+                ->name('classes.students.destroy');
+
             // Gửi thông báo đến sinh viên trong lớp
             Route::post('/classes/{section}/notifications', [NotificationController::class, 'store'])
                 ->name('classes.notifications.store');

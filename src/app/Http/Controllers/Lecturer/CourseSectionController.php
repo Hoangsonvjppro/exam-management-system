@@ -7,10 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CourseSection\StoreCourseSectionRequest;
 use App\Http\Requests\CourseSection\UpdateCourseSectionRequest;
 use App\Models\CourseSection;
+use App\Models\ExamAttempt;
 use App\Models\User;
 use App\Models\UserNotification;
+use App\Services\EnrollmentService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -21,7 +24,8 @@ use Illuminate\View\View;
 class CourseSectionController extends Controller
 {
     public function __construct(
-        private readonly \App\Services\CourseSectionService $courseSectionService
+        private readonly \App\Services\CourseSectionService $courseSectionService,
+        private readonly EnrollmentService $enrollmentService,
     ) {}
 
     public function index(): View
@@ -116,13 +120,6 @@ class CourseSectionController extends Controller
 
                 $submittedCount = $scores->count();
                 $assignedCount = $schedule->students->count();
-                $passThreshold = (float) ($schedule->exam?->pass_points ?? 0);
-
-                if ($passThreshold <= 0) {
-                    $passThreshold = 5.0;
-                }
-
-                $passedCount = $scores->filter(fn(float $score) => $score >= $passThreshold)->count();
 
                 return (object) [
                     'schedule_id' => $schedule->id,
@@ -135,9 +132,6 @@ class CourseSectionController extends Controller
                     'average_score' => $submittedCount > 0 ? round((float) $scores->avg(), 2) : null,
                     'highest_score' => $submittedCount > 0 ? round((float) $scores->max(), 2) : null,
                     'lowest_score' => $submittedCount > 0 ? round((float) $scores->min(), 2) : null,
-                    'pass_threshold' => $passThreshold,
-                    'passed_count' => $passedCount,
-                    'pass_rate' => $submittedCount > 0 ? round(($passedCount / $submittedCount) * 100, 1) : null,
                 ];
             });
 
@@ -241,5 +235,155 @@ class CourseSectionController extends Controller
         $section = $this->courseSectionService->regenerateInviteCode($section);
 
         return back()->with('success', 'Đã tạo mã mời mới: ' . $section->invite_code);
+    }
+
+    public function showStudent(Request $request, CourseSection $section, User $student): JsonResponse|View
+    {
+        Gate::authorize('manage', $section);
+
+        $enrollment = $section->students()
+            ->where('users.id', $student->id)
+            ->first();
+
+        if (! $enrollment) {
+            abort(404, 'Sinh viên không thuộc lớp học phần này.');
+        }
+
+        $enrollmentStatus = (string) ($enrollment->pivot->status ?? EnrollmentService::PIVOT_ENROLLED);
+
+        $attempts = ExamAttempt::query()
+            ->where('user_id', $student->id)
+            ->whereHas('schedule', fn($query) => $query->where('course_section_id', $section->id))
+            ->with([
+                'schedule' => fn($scheduleQuery) => $scheduleQuery
+                    ->with([
+                        'exam' => fn($examQuery) => $examQuery
+                            ->withCount('questions')
+                            ->select(['id', 'title']),
+                    ])
+                    ->select(['id', 'exam_id', 'course_section_id', 'exam_date', 'start_time', 'end_time']),
+            ])
+            ->orderByDesc('id')
+            ->get();
+
+        $attemptRows = $attempts->map(function (ExamAttempt $attempt): array {
+            $statusValue = $attempt->status instanceof ExamAttemptStatus
+                ? $attempt->status->value
+                : (string) $attempt->status;
+
+            $statusLabel = match ($statusValue) {
+                ExamAttemptStatus::Completed->value => 'Đã nộp',
+                ExamAttemptStatus::InProgress->value => 'Đang thi',
+                default => 'Không xác định',
+            };
+
+            $score = $attempt->total_score !== null ? (float) $attempt->total_score : null;
+            $questionCount = $attempt->schedule?->exam?->questions_count;
+
+            return [
+                'attempt_id' => (int) $attempt->id,
+                'exam_title' => $attempt->schedule?->exam?->title ?? 'Đề thi',
+                'attempt_number' => (int) $attempt->attempt_number,
+                'status' => $statusValue,
+                'status_label' => $statusLabel,
+                'score' => $score,
+                'correct_count' => $attempt->correct_count !== null ? (int) $attempt->correct_count : null,
+                'question_count' => $questionCount !== null ? (int) $questionCount : null,
+                'started_at' => $attempt->started_at?->format('H:i d/m/Y'),
+                'completed_at' => $attempt->completed_at?->format('H:i d/m/Y'),
+                'schedule_time' => trim(collect([
+                    $attempt->schedule?->date_range_text,
+                    $attempt->schedule?->time_range_text,
+                ])->filter()->implode(' · ')),
+            ];
+        })->values();
+
+        $completedScores = $attemptRows
+            ->where('status', ExamAttemptStatus::Completed->value)
+            ->pluck('score')
+            ->filter(fn($score) => $score !== null)
+            ->map(fn($score) => (float) $score)
+            ->values();
+
+        $payload = [
+            'success' => true,
+            'student' => [
+                'id' => (int) $student->id,
+                'name' => $student->name,
+                'email' => $student->email,
+                'student_code' => $student->student_code,
+                'enrollment_status' => $enrollmentStatus,
+                'enrollment_status_label' => $enrollmentStatus === EnrollmentService::PIVOT_DROPPED ? 'Đã rời lớp' : 'Đang học',
+            ],
+            'summary' => [
+                'attempt_count' => $attemptRows->count(),
+                'completed_count' => $attemptRows->where('status', ExamAttemptStatus::Completed->value)->count(),
+                'average_score' => $completedScores->isEmpty() ? null : round((float) $completedScores->avg(), 2),
+                'highest_score' => $completedScores->isEmpty() ? null : round((float) $completedScores->max(), 2),
+            ],
+            'attempts' => $attemptRows,
+        ];
+
+        if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+            return response()->json($payload);
+        }
+
+        $section->loadMissing(['subject:id,code,name', 'semester:id,name']);
+
+        return view('lecturer.classes.student-show', [
+            'section' => $section,
+            'studentDetail' => $payload['student'],
+            'summary' => $payload['summary'],
+            'attempts' => $payload['attempts'],
+        ]);
+    }
+
+    public function removeStudent(Request $request, CourseSection $section, User $student): JsonResponse|RedirectResponse
+    {
+        Gate::authorize('manage', $section);
+
+        $enrollment = $section->students()
+            ->where('users.id', $student->id)
+            ->first();
+
+        if (! $enrollment) {
+            if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sinh viên không thuộc lớp học phần này.',
+                ], 404);
+            }
+
+            return redirect()
+                ->route('lecturer.classes.show', ['section' => $section, 'tab' => 'students'])
+                ->with('error', 'Sinh viên không thuộc lớp học phần này.');
+        }
+
+        $enrollmentStatus = (string) ($enrollment->pivot->status ?? EnrollmentService::PIVOT_ENROLLED);
+        if ($enrollmentStatus === EnrollmentService::PIVOT_DROPPED) {
+            if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sinh viên này đã được xoá khỏi lớp trước đó.',
+                ], 422);
+            }
+
+            return redirect()
+                ->route('lecturer.classes.show', ['section' => $section, 'tab' => 'students'])
+                ->with('warning', 'Sinh viên này đã được xoá khỏi lớp trước đó.');
+        }
+
+        $this->enrollmentService->leaveClass($section, $student);
+
+        if (! ($request->expectsJson() || $request->wantsJson() || $request->ajax())) {
+            return redirect()
+                ->route('lecturer.classes.show', ['section' => $section, 'tab' => 'students'])
+                ->with('success', 'Đã xoá sinh viên khỏi lớp học phần.');
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xoá sinh viên khỏi lớp học phần.',
+        ]);
     }
 }
