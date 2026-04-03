@@ -36,8 +36,8 @@
                     @can('manageLecturer', $exam)
                     @php
                     $deleteConfirmMessage = $attemptCount > 0
-                    ? 'Đề đã có sinh viên thi. Sẽ xoá mềm (lưu trữ). Tiếp tục?'
-                    : 'Xoá vĩnh viễn đề thi này?';
+                    ? 'Đề đã có sinh viên thi. Hệ thống sẽ lưu trữ đề thay vì xóa hoàn toàn. Bạn có chắc chắn muốn tiếp tục?'
+                    : 'Bạn có chắc chắn muốn xóa vĩnh viễn đề thi này?';
                     @endphp
                     <a href="{{ route('lecturer.exams.edit', $exam->id) }}"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-border-clean rounded-[6px] text-xs font-medium text-text-muted hover:bg-surface-1 transition">
@@ -83,20 +83,32 @@
                     </button>
                     @endif
 
-                    <div x-data="confirmActionState()" class="inline">
+                    <div x-data="confirmActionState()" class="relative inline-block" @keydown.escape.window="confirming = false">
                         <button type="button" @click="confirming = true" x-show="!confirming"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500 rounded-[6px] text-xs font-medium text-white hover:bg-red-600 transition">
                             <x-ui-icon name="x-mark" class="w-3.5 h-3.5" />
-                            Xoá
+                            Xóa
                         </button>
-                        <div x-show="confirming" x-cloak class="inline-flex flex-col items-center gap-1 bg-red-50 p-2 rounded border border-red-200 min-w-[150px]">
-                            <span class="text-[10px] text-red-700 font-bold leading-tight text-center">{{ $deleteConfirmMessage }}</span>
-                            <div class="flex gap-3 mt-1">
+                        <div x-show="confirming"
+                            x-cloak
+                            x-transition.opacity.duration.150ms
+                            @click.outside="confirming = false"
+                            class="absolute right-0 top-full mt-2 z-20 w-[300px] rounded-xl border border-red-200 bg-white p-3 text-left shadow-[0_12px_30px_rgba(15,23,42,0.14)]">
+                            <p class="text-[12px] font-bold text-red-700">Xác nhận xóa đề thi</p>
+                            <p class="mt-1 text-[11px] leading-relaxed text-text-muted">{{ $deleteConfirmMessage }}</p>
+                            <div class="mt-3 flex items-center justify-end gap-2">
+                                <button type="button"
+                                    @click="confirming = false"
+                                    class="inline-flex items-center rounded-md border border-border-clean px-2.5 py-1.5 text-[11px] font-semibold text-text-muted hover:bg-surface-1 transition-colors">
+                                    Hủy
+                                </button>
                                 <form method="POST" action="{{ route('lecturer.exams.destroy', $exam->id) }}" class="inline">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="text-[10px] font-bold text-red-600 hover:underline">Xoá</button>
+                                    <button type="submit"
+                                        class="inline-flex items-center rounded-md bg-red-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-red-700 transition-colors">
+                                        Xác nhận xóa
+                                    </button>
                                 </form>
-                                <button type="button" @click="confirming = false" class="text-[10px] text-navy-400 hover:underline">Hủy</button>
                             </div>
                         </div>
                     </div>

@@ -121,7 +121,7 @@ $studentSidebarSections = auth()->user()->enrolledSections()
                     <div class="px-2 py-1 space-y-1">
                         <button type="button"
                             class="sidebar-link w-full"
-                            @click="openClassMenu = !openClassMenu">
+                            @click="toggleClassMenu()">
                             <div class="w-[48px] flex items-center justify-center flex-shrink-0">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -165,7 +165,7 @@ $studentSidebarSections = auth()->user()->enrolledSections()
                                 </svg>
                             </div>
                             <span class="sidebar-label flex-1 text-left transition-opacity duration-300 pr-2" x-show="isExpanded" x-cloak>Ngân hàng câu hỏi</span>
-                            <svg x-show="isExpanded" x-cloak class="w-4 h-4 mr-3 text-text-muted transition-transform cursor-pointer hover:text-navy-900" :class="openQuestionBank ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" @click.prevent.stop="openQuestionBank = !openQuestionBank">
+                            <svg x-show="isExpanded" x-cloak class="w-4 h-4 mr-3 text-text-muted transition-transform cursor-pointer hover:text-navy-900" :class="openQuestionBank ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" @click.prevent.stop="toggleQuestionBank()">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </a>
@@ -190,7 +190,7 @@ $studentSidebarSections = auth()->user()->enrolledSections()
                     <div class="px-2 py-1 space-y-1">
                         <button type="button"
                             class="sidebar-link w-full"
-                            @click="openExamBank = !openExamBank">
+                            @click="toggleExamBank()">
                             <div class="w-[48px] flex items-center justify-center flex-shrink-0">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -258,7 +258,7 @@ $studentSidebarSections = auth()->user()->enrolledSections()
                     <div class="px-2 py-1 space-y-1">
                         <button type="button"
                             class="sidebar-link w-full"
-                            @click="openClassMenu = !openClassMenu">
+                            @click="toggleClassMenu()">
                             <div class="w-[48px] flex items-center justify-center flex-shrink-0">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />

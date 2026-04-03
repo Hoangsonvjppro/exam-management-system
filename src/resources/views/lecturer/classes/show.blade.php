@@ -209,7 +209,7 @@
             </div>
 
             <div class="p-4 sm:p-6 space-y-6" x-show="activeTab === 'overview'" x-transition.opacity.duration.150ms>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <x-card variant="default" padding="true">
                         <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">Sĩ số lớp</p>
                         <p class="mt-2 text-[28px] font-bold text-navy-900 leading-none">{{ $section->students->count() }}</p>
@@ -222,7 +222,7 @@
                         <p class="text-[12px] text-text-muted mt-1">ca thi trong lớp học phần</p>
                     </x-card>
 
-                    <x-card variant="featured" padding="true">
+                    <!-- <x-card variant="featured" padding="true">
                         <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">Thông báo nhanh</p>
                         <p class="mt-2 text-[13px] text-navy-900 leading-relaxed">Nên cập nhật thông báo lớp trước mỗi đợt kiểm tra để sinh viên nắm rõ lịch và yêu cầu phòng thi.</p>
                         @can('manage', $section)
@@ -230,7 +230,7 @@
                             Đăng thông báo ngay
                         </x-button>
                         @endcan
-                    </x-card>
+                    </x-card> -->
                 </div>
 
                 <x-card padding="true">
