@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 /**
  * ============================================================
- * TagSeeder — Tạo 15 tag chuẩn cho ngân hàng câu hỏi
+ * TagSeeder — Tạo bộ tag chuẩn cho ngân hàng câu hỏi
  * ============================================================
  */
 class TagSeeder extends Seeder
@@ -18,12 +18,15 @@ class TagSeeder extends Seeder
         $tags = [
             // Tags theo lĩnh vực
             'Lập trình',
+            'C++',
             'Cấu trúc dữ liệu',
             'Cơ sở dữ liệu',
             'Mạng máy tính',
             'Lập trình Web',
+            'Laravel',
             'Thuật toán',
             'Hệ điều hành',
+            'REST API',
             // Tags theo mức độ / mục đích
             'Cơ bản',
             'Nâng cao',
@@ -34,6 +37,8 @@ class TagSeeder extends Seeder
             'SQL',
             'OOP',
             'TCP/IP',
+            'Bảo mật',
+            'DevOps',
         ];
 
         $count = 0;
