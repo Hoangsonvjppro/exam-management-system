@@ -404,7 +404,6 @@
                     <div class="flex items-center justify-between mb-2">
                         <div>
                             <h3 class="text-[18px] font-bold text-navy-900">Lưới điểm danh ({{ $section->attendanceSessions->count() }} buổi)</h3>
-                            <p class="text-[12px] text-text-muted font-medium mt-1">Bấm vào ô để thay đổi: Có mặt (Xanh) - Vắng (Đỏ) - Muộn (Vàng) - Có phép (Xám).</p>
                         </div>
                         @can('manage', $section)
                         <x-button variant="primary" @click="$dispatch('open-modal', 'create-attendance-session-modal')">
@@ -549,14 +548,14 @@
                                     </td>
                                     <td class="py-4 px-4 align-top">
                                         <p class="text-[13px] text-navy-900 leading-relaxed max-w-[400px] break-words">{{ $leaveReq->reason }}</p>
-                                        @if($leaveReq->proof_image_path)
+                                        @if($leaveReq->proof_image_url)
                                         <div class="mt-2 flex flex-col gap-2">
-                                            <a href="{{ asset('storage/' . $leaveReq->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold text-blue-700 hover:text-blue-900">
+                                            <a href="{{ $leaveReq->proof_image_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold text-blue-700 hover:text-blue-900">
                                                 <x-ui-icon name="eye" class="w-4 h-4" />
                                                 Xem ảnh minh chứng
                                             </a>
-                                            <a href="{{ asset('storage/' . $leaveReq->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="w-fit">
-                                                <img src="{{ asset('storage/' . $leaveReq->proof_image_path) }}" alt="Ảnh minh chứng nghỉ phép" class="w-28 h-28 rounded-[8px] border border-border-clean object-cover" loading="lazy">
+                                            <a href="{{ $leaveReq->proof_image_url }}" target="_blank" rel="noopener noreferrer" class="w-fit">
+                                                <img src="{{ $leaveReq->proof_image_url }}" alt="Ảnh minh chứng nghỉ phép" class="w-28 h-28 rounded-[8px] border border-border-clean object-cover" loading="lazy">
                                             </a>
                                         </div>
                                         @endif
