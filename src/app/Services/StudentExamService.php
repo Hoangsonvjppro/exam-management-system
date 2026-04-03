@@ -12,6 +12,7 @@ use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Carbon;
 
 class StudentExamService
 {
@@ -32,8 +33,12 @@ class StudentExamService
             throw new DomainException('Ca thi đã kết thúc.');
         }
 
+        $skipLateEntranceChecks =
+            $schedule->schedule_mode === \App\Models\ExamSchedule::MODE_IN_RANGE
+            || (bool) $schedule->disable_attempt_timer;
+
         // Logic check vào muộn
-        if ($now->gt($scheduleStart)) {
+        if (!$skipLateEntranceChecks && $now->gt($scheduleStart)) {
             if (!$exam->allow_late_entrance) {
                 throw new DomainException('Kỳ thi này không cho phép vào thi muộn.');
             }
@@ -264,8 +269,46 @@ class StudentExamService
             ->where('student_id', $userId)
             ->exists();
 
-        if (! $isAssigned) {
-            throw new DomainException('Bạn chưa được phân vào ca thi này.');
+        if ($isAssigned) {
+            return;
+        }
+
+        if ($this->canAutoAssignLateEnrolledStudent($schedule, $userId)) {
+            $schedule->scheduleStudents()->firstOrCreate(
+                ['student_id' => $userId],
+                ['attendance_status' => 'pending']
+            );
+
+            return;
+        }
+
+        throw new DomainException('Bạn chưa được phân vào ca thi này.');
+    }
+
+    private function canAutoAssignLateEnrolledStudent(ExamSchedule $schedule, int $userId): bool
+    {
+        if (! $schedule->created_at) {
+            return false;
+        }
+
+        $courseSection = $schedule->courseSection;
+        if (! $courseSection) {
+            return false;
+        }
+
+        $enrolledAt = $courseSection->students()
+            ->where('users.id', $userId)
+            ->where('course_section_students.status', EnrollmentService::PIVOT_ENROLLED)
+            ->value('course_section_students.enrolled_at');
+
+        if (! $enrolledAt) {
+            return false;
+        }
+
+        try {
+            return Carbon::parse($enrolledAt)->gt($schedule->created_at);
+        } catch (\Throwable) {
+            return false;
         }
     }
 }

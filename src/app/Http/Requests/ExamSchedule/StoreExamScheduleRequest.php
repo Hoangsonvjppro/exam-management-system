@@ -11,6 +11,27 @@ use Illuminate\Validation\ValidationException;
 
 class StoreExamScheduleRequest extends FormRequest
 {
+    public function prepareForValidation(): void
+    {
+        $scheduleMode = (string) ($this->input('schedule_mode') ?: 'within_day');
+
+        $merge = [
+            'schedule_mode' => $scheduleMode,
+            'disable_attempt_timer' => $this->boolean('disable_attempt_timer'),
+        ];
+
+        if (! $this->filled('end_date') && $this->filled('exam_date')) {
+            $merge['end_date'] = $this->input('exam_date');
+        }
+
+        if ($scheduleMode === 'in_range') {
+            $merge['start_time'] = '00:00';
+            $merge['end_time'] = '23:59';
+        }
+
+        $this->merge($merge);
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -20,6 +41,8 @@ class StoreExamScheduleRequest extends FormRequest
     {
         return [
             'exam_id'              => 'required|exists:exams,id',
+            'schedule_mode'        => 'required|in:within_day,in_range',
+            'disable_attempt_timer' => 'boolean',
             'course_section_ids'   => 'required|array|min:1',
             'course_section_ids.*' => [
                 'required',
@@ -58,6 +81,10 @@ class StoreExamScheduleRequest extends FormRequest
                 'required',
                 'date_format:H:i',
                 function ($attribute, $value, $fail) {
+                    if ($this->input('schedule_mode') !== 'within_day') {
+                        return;
+                    }
+
                     $window = $this->parseScheduleWindow();
 
                     if (! $window) {
@@ -65,7 +92,7 @@ class StoreExamScheduleRequest extends FormRequest
                     }
 
                     [$startAt] = $window;
-                    
+
                     // Nới lỏng 10 phút để tránh lỗi khi GV thao tác chậm 
                     // (Ví dụ: GV chọn 08:30 nhưng lúc bấm Lưu đã là 08:31)
                     if ($startAt->lessThanOrEqualTo(now()->subMinutes(10))) {
@@ -78,6 +105,8 @@ class StoreExamScheduleRequest extends FormRequest
                 'date_format:H:i',
                 function ($attribute, $value, $fail) {
                     $examId = $this->input('exam_id');
+                    $scheduleMode = (string) $this->input('schedule_mode', 'within_day');
+                    $disableAttemptTimer = (bool) $this->boolean('disable_attempt_timer');
                     $window = $this->parseScheduleWindow();
 
                     if (! $window) {
@@ -97,7 +126,7 @@ class StoreExamScheduleRequest extends FormRequest
                             try {
                                 $diff = $startAt->diffInMinutes($endAt);
 
-                                if ($diff < $exam->duration_minutes) {
+                                if (! $disableAttemptTimer && $scheduleMode === 'within_day' && $diff < $exam->duration_minutes) {
                                     $fail("Thời gian thi ({$diff} phút) không đủ cho thời lượng đề thi ({$exam->duration_minutes} phút).");
                                 }
                             } catch (\Exception $e) {
@@ -110,6 +139,24 @@ class StoreExamScheduleRequest extends FormRequest
             'link_grade_column' => 'nullable|boolean',
             'grade_column_id'   => 'nullable|integer',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            if ($this->input('schedule_mode') === 'within_day') {
+                $startDate = (string) $this->input('exam_date');
+                $endDate = (string) $this->input('end_date');
+
+                if ($startDate !== '' && $endDate !== '' && $startDate !== $endDate) {
+                    $validator->errors()->add('end_date', 'Chế độ kiểm tra trong ngày yêu cầu ngày bắt đầu và kết thúc phải trùng nhau.');
+                }
+            }
+        });
     }
 
     public function messages(): array

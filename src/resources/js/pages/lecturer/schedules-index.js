@@ -41,6 +41,8 @@ window.scheduleManager = function scheduleManager() {
         selectedExamId: '',
         selectedSubjectId: '',
         hasSelectedSection: false,
+        scheduleMode: 'within_day',
+        singleDayDate: '',
         quickSubjectId: '',
         quickQuestionApiUrl: scheduleIndexConfig.quickQuestionApiUrl || '',
         quickQuestionCreateUrl: scheduleIndexConfig.quickQuestionCreateUrl || '',
@@ -923,6 +925,9 @@ window.scheduleManager = function scheduleManager() {
                     formElement.reset();
                     this.selectedExamId = '';
                     this.selectedSubjectId = '';
+                    this.hasSelectedSection = false;
+                    this.scheduleMode = 'within_day';
+                    this.singleDayDate = '';
 
                     window.dispatchEvent(new CustomEvent('toast', {
                         detail: {

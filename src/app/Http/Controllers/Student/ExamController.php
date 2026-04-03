@@ -13,6 +13,8 @@ use App\Services\StudentExamService;
 use App\Services\StudentExamQueryService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\RedirectResponse;
 use DomainException;
 
 class ExamController extends Controller
@@ -32,10 +34,12 @@ class ExamController extends Controller
     }
 
     // Tạo sảnh chờ, hiện thông tin đề thi và nút bắt đầu
-    public function show(ExamSchedule $schedule): \Illuminate\View\View
+    public function show(ExamSchedule $schedule): \Illuminate\View\View|RedirectResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('viewAsStudent', $schedule);
+        if ($redirect = $this->authorizeStudentExamAccess('viewAsStudent', $schedule)) {
+            return $redirect;
+        }
 
         $showData = $this->studentExamQueryService->getShowData($schedule, (int) Auth::id());
         $inProgressAttempt = $showData['inProgressAttempt'];
@@ -49,7 +53,9 @@ class ExamController extends Controller
     public function start(ExamSchedule $schedule): \Illuminate\Http\RedirectResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('attemptExam', $schedule);
+        if ($redirect = $this->authorizeStudentExamAccess('attemptExam', $schedule)) {
+            return $redirect;
+        }
 
         try {
             $this->studentExamService->startAttempt(
@@ -69,7 +75,9 @@ class ExamController extends Controller
     public function room(ExamSchedule $schedule): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('attemptExam', $schedule);
+        if ($redirect = $this->authorizeStudentExamAccess('attemptExam', $schedule)) {
+            return $redirect;
+        }
 
         $attempt = $this->studentExamQueryService->getInProgressAttempt($schedule, (int) Auth::id());
 
@@ -111,7 +119,11 @@ class ExamController extends Controller
     public function saveAnswer(SaveAnswerRequest $request, ExamSchedule $schedule): \Illuminate\Http\JsonResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('attemptExam', $schedule);
+        try {
+            $this->authorize('attemptExam', $schedule);
+        } catch (AuthorizationException) {
+            return response()->json(['error' => 'Bạn không có quyền truy cập ca thi này.'], 403);
+        }
 
         $result = $this->studentExamService->saveAnswer(
             $schedule,
@@ -131,7 +143,9 @@ class ExamController extends Controller
     public function submit(SubmitExamRequest $request, ExamSchedule $schedule): \Illuminate\Http\RedirectResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('attemptExam', $schedule);
+        if ($redirect = $this->authorizeStudentExamAccess('attemptExam', $schedule)) {
+            return $redirect;
+        }
 
         $attempt = ExamAttempt::forSchedule($schedule->id)
             ->forUser(Auth::id())
@@ -197,7 +211,9 @@ class ExamController extends Controller
     public function result(ExamSchedule $schedule): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('viewAsStudent', $schedule);
+        if ($redirect = $this->authorizeStudentExamAccess('viewAsStudent', $schedule)) {
+            return $redirect;
+        }
 
         try {
             $attempt = $this->studentExamQueryService->getCompletedAttempt($schedule, (int) Auth::id());
@@ -219,5 +235,17 @@ class ExamController extends Controller
             'correctCount',
             'totalQuestions'
         ));
+    }
+
+    private function authorizeStudentExamAccess(string $ability, ExamSchedule $schedule): ?RedirectResponse
+    {
+        try {
+            $this->authorize($ability, $schedule);
+            return null;
+        } catch (AuthorizationException) {
+            return redirect()
+                ->route('student.schedules.index')
+                ->with('warning', 'Bạn không có quyền truy cập ca thi này hoặc chưa được phân ca.');
+        }
     }
 }

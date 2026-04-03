@@ -21,9 +21,33 @@ document.addEventListener("DOMContentLoaded", function () {
     let timeLeft = parseInt(configEl?.dataset.timeLeft || '0', 10);
     let minSubmitRemainingSeconds = parseInt(configEl?.dataset.minSubmitRemaining || '0', 10);
     const minSubmitDuration = parseInt(configEl?.dataset.minSubmitDuration || '0', 10);
+    const disableAttemptTimer = (configEl?.dataset.disableAttemptTimer || '0') === '1';
+    const scheduleEndLabel = configEl?.dataset.scheduleEndLabel || '';
     const timerDisplay = document.getElementById('countdown-timer');
+    const timerLabel = document.getElementById('timer-label');
+    const timerStatusText = document.getElementById('timer-status-text');
+    const timerWindowNote = document.getElementById('timer-window-note');
     const examForm = document.getElementById('exam-form');
     const minSubmitNote = document.getElementById('min-submit-note');
+
+    if (disableAttemptTimer) {
+        if (timerLabel) {
+            timerLabel.textContent = 'Chế độ làm bài';
+        }
+
+        if (timerDisplay) {
+            timerDisplay.textContent = 'Không giới hạn';
+            timerDisplay.classList.add('no-timer');
+        }
+
+        if (timerStatusText) {
+            timerStatusText.textContent = 'Tính theo cửa sổ ca thi';
+        }
+
+        if (timerWindowNote && scheduleEndLabel) {
+            timerWindowNote.textContent = `Đóng ca lúc ${scheduleEndLabel}`;
+        }
+    }
 
     const updateMinSubmitNote = () => {
         if (!minSubmitNote || minSubmitDuration <= 0) return;
@@ -82,23 +106,28 @@ document.addEventListener("DOMContentLoaded", function () {
     const countdown = setInterval(function () {
         if (timeLeft <= 0) {
             clearInterval(countdown);
-            timerDisplay.innerHTML = "00:00";
+            if (timerDisplay && !disableAttemptTimer) {
+                timerDisplay.innerHTML = "00:00";
+            }
             examForm.submit();
         } else {
-            let minutes = Math.floor(timeLeft / 60);
-            let seconds = timeLeft % 60;
-            timerDisplay.innerHTML =
-                (minutes < 10 ? "0" : "") + minutes + ":" +
-                (seconds < 10 ? "0" : "") + seconds;
+            if (timerDisplay && !disableAttemptTimer) {
+                let minutes = Math.floor(timeLeft / 60);
+                let seconds = timeLeft % 60;
+                timerDisplay.innerHTML =
+                    (minutes < 10 ? "0" : "") + minutes + ":" +
+                    (seconds < 10 ? "0" : "") + seconds;
+
+                if (timeLeft < 300) {
+                    timerDisplay.classList.add('urgent');
+                }
+            }
+
             timeLeft -= 1;
 
             if (minSubmitRemainingSeconds > 0) {
                 minSubmitRemainingSeconds -= 1;
                 updateMinSubmitNote();
-            }
-
-            if (timeLeft < 300) {
-                timerDisplay.classList.add('urgent');
             }
         }
     }, 1000);

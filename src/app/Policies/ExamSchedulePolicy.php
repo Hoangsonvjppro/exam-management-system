@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\ExamStatus;
 use App\Models\ExamSchedule;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 class ExamSchedulePolicy
 {
@@ -38,9 +39,34 @@ class ExamSchedulePolicy
             return true;
         }
 
-        return $schedule->scheduleStudents()
+        $isAssigned = $schedule->scheduleStudents()
             ->where('student_id', $user->id)
             ->exists();
+
+        if ($isAssigned) {
+            return true;
+        }
+
+        // Cho phép truy cập nếu sinh viên vừa tham gia lớp sau khi lịch thi được tạo
+        // (phục vụ tự động đồng bộ assignment ở bước bắt đầu thi).
+        if (! $schedule->created_at) {
+            return false;
+        }
+
+        $enrolledAt = $courseSection->students()
+            ->where('users.id', $user->id)
+            ->where('course_section_students.status', self::ENROLLMENT_STATUS_ENROLLED)
+            ->value('course_section_students.enrolled_at');
+
+        if (! $enrolledAt) {
+            return false;
+        }
+
+        try {
+            return Carbon::parse($enrolledAt)->gt($schedule->created_at);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**
