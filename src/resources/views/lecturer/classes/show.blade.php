@@ -979,7 +979,7 @@
     </x-slide-over>
 
     <x-slide-over name="quick-create-exam-slide" title="Tạo đề thi nhanh cho {{ $section->subject->name ?? 'môn học' }}" maxWidth="2xl">
-        <form @submit.prevent="submitQuickExamForm($el)" class="space-y-5">
+        <form method="POST" action="{{ route('lecturer.exams.store') }}" @submit="if (typeof submitQuickExamForm === 'function') { $event.preventDefault(); submitQuickExamForm($el); }" class="space-y-5">
             @csrf
 
             <input type="hidden" name="subject_id" value="{{ $section->subject_id }}">
@@ -1041,8 +1041,11 @@
 
             <div class="flex justify-end gap-3 pt-4 border-t border-border-clean">
                 <x-button type="button" variant="ghost" @click="$dispatch('close-slide-over', 'quick-create-exam-slide')">Huỷ</x-button>
-                <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingQuickExam || {{ $quickQuestionPool->isEmpty() ? 'true' : 'false' }}">
-                    <span x-show="!isSubmittingQuickExam">Tạo đề và chọn luôn</span>
+                <button type="submit"
+                    class="px-[18px] py-2 text-[13px] rounded-[6px] bg-[#001f3f] text-white font-medium transition-opacity hover:opacity-85 disabled:opacity-50"
+                    x-bind:disabled="isSubmittingQuickExam"
+                    @disabled($quickQuestionPool->isEmpty())>
+                    <span>Tạo đề và chọn luôn</span>
                     <span x-show="isSubmittingQuickExam" class="flex items-center gap-2">
                         <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1050,7 +1053,7 @@
                         </svg>
                         Đang tạo...
                     </span>
-                </x-button>
+                </button>
             </div>
         </form>
     </x-slide-over>
