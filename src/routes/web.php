@@ -77,6 +77,11 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
     Route::post('/onboarding', [StudentOnboardingController::class, 'store'])
         ->name('onboarding.store');
 
+    // Xem ảnh minh chứng xin nghỉ phép qua app route
+    Route::get('/leave-requests/{leaveRequest}/proof-image', [\App\Http\Controllers\LeaveRequestProofImageController::class, 'show'])
+        ->whereNumber('leaveRequest')
+        ->name('leave-requests.proof-image');
+
 
     // ----------------------------------------------------------
     // 2b. STUDENT ROUTES
