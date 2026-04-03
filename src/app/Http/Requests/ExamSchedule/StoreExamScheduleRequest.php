@@ -5,7 +5,9 @@ namespace App\Http\Requests\ExamSchedule;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Exam;
 use App\Models\CourseSection;
+use App\Services\SemesterGovernanceService;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class StoreExamScheduleRequest extends FormRequest
 {
@@ -32,6 +34,20 @@ class StoreExamScheduleRequest extends FormRequest
                         $section = CourseSection::find($value);
                         if ($exam && $section && $exam->subject_id !== $section->subject_id) {
                             $fail("Lớp học phần {$section->name} không thuộc môn học của đề thi này.");
+                        }
+
+                        if ($section) {
+                            try {
+                                app(SemesterGovernanceService::class)->assertSectionAllowsExamScheduling($section);
+
+                                if ($window) {
+                                    [$startAt, $endAt] = $window;
+                                    app(SemesterGovernanceService::class)->assertScheduleWindowInsideSemester($section, $startAt, $endAt);
+                                }
+                            } catch (ValidationException $e) {
+                                $message = collect($e->errors())->flatten()->first() ?? 'Không thể tạo lịch thi cho học kỳ này.';
+                                $fail((string) $message);
+                            }
                         }
                     }
                 },

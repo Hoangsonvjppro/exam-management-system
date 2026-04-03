@@ -30,26 +30,25 @@ class CourseSectionController extends Controller
         $user = Auth::user();
 
         $sections = $user->courseSections()
+            ->with(['subject', 'semester'])
             ->withCount('students')
             ->latest()
             ->paginate(12);
 
-        // Load data cho slide-over form tạo lớp mới
+        // Dataset cho bộ lọc và modal tạo lớp
         $subjects = $user->subjects()->orderBy('subjects.name')->get(['subjects.id', 'subjects.code', 'subjects.name']);
         $semesters = \App\Models\Semester::orderByDesc('start_date')->get();
+        $createSemesters = \App\Models\Semester::query()
+            ->openForCourseSectionCreation()
+            ->orderByDesc('start_date')
+            ->get();
 
-        return view('lecturer.classes.index', compact('sections', 'subjects', 'semesters'));
+        return view('lecturer.classes.index', compact('sections', 'subjects', 'semesters', 'createSemesters'));
     }
 
-    public function create(): View
+    public function create(): RedirectResponse
     {
-        /** @var User $user */
-        $user = Auth::user();
-
-        $subjects = $user->subjects()->orderBy('subjects.name')->get(['subjects.id', 'subjects.code', 'subjects.name']);
-        $semesters = \App\Models\Semester::orderByDesc('start_date')->get();
-
-        return view('lecturer.classes.create', compact('subjects', 'semesters'));
+        return redirect()->route('lecturer.classes.index', ['open_create_modal' => 1]);
     }
 
     public function store(StoreCourseSectionRequest $request): RedirectResponse|JsonResponse

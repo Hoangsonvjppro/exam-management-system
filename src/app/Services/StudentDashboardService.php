@@ -18,7 +18,7 @@ class StudentDashboardService
      */
     public function getDashboardData(User $user): array
     {
-        $enrolledSections = $user->enrolledSections()->withCount('students')->with('lecturer')->get();
+        $enrolledSections = $user->enrolledSections()->withCount('students')->with(['lecturer', 'semester'])->get();
         $sectionIds = $enrolledSections->pluck('id');
 
         // All schedules (backward compat)
@@ -68,7 +68,7 @@ class StudentDashboardService
         return [
             'enrolledSections' => $user->enrolledSections()
                 ->withCount('students')
-                ->with('lecturer')
+                ->with(['lecturer', 'semester'])
                 ->get(),
         ];
     }

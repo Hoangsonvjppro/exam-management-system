@@ -20,6 +20,25 @@
     ->orderByDesc('updated_at')
     ->limit(120)
     ->get(['id', 'content']);
+
+    $semesterLifecycle = $section->semester?->lifecycle_status;
+    $isUpcomingSemesterWorkspace = $semesterLifecycle === \App\Models\Semester::STATUS_UPCOMING;
+    $workspaceStatusLabel = match (true) {
+    $section->status === 'archived' => 'Đã lưu trữ',
+    $section->status === 'cancelled' => 'Đã huỷ',
+    $semesterLifecycle === \App\Models\Semester::STATUS_UPCOMING => 'Sắp mở',
+    $semesterLifecycle === \App\Models\Semester::STATUS_CURRENT => 'Đang diễn ra',
+    $semesterLifecycle === \App\Models\Semester::STATUS_ENDED => 'Đã kết thúc',
+    default => 'Đang hoạt động',
+    };
+    $workspaceStatusClass = match (true) {
+    $section->status === 'archived' => 'bg-surface-1 text-text-muted border border-border-clean',
+    $section->status === 'cancelled' => 'bg-red-50 text-red-700 border border-red-200',
+    $semesterLifecycle === \App\Models\Semester::STATUS_UPCOMING => 'bg-amber-50 text-amber-800 border border-amber-200',
+    $semesterLifecycle === \App\Models\Semester::STATUS_CURRENT => 'bg-teal-50 text-teal-800 border border-teal-200',
+    $semesterLifecycle === \App\Models\Semester::STATUS_ENDED => 'bg-slate-100 text-slate-700 border border-slate-300',
+    default => 'bg-teal-50 text-teal-800 border border-teal-200',
+    };
     @endphp
 
     <div class="space-y-6" x-data="classWorkspaceManager('{{ $activeTab }}')">
@@ -41,15 +60,8 @@
                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-1 text-text-muted border border-border-clean">
                         {{ $section->semester->name ?? 'Chưa gán học kỳ' }}
                     </span>
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold
-                        @if($section->status === 'active') bg-teal-50 text-teal-800 border border-teal-200
-                        @elseif($section->status === 'archived') bg-surface-1 text-text-muted border border-border-clean
-                        @else bg-red-50 text-red-700 border border-red-200 @endif">
-                        {{ match($section->status) {
-                            'active'   => 'Đang mở',
-                            'archived' => 'Đã lưu trữ',
-                            default    => 'Đã huỷ',
-                        } }}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold {{ $workspaceStatusClass }}">
+                        {{ $workspaceStatusLabel }}
                     </span>
                 </div>
             </div>
@@ -66,233 +78,307 @@
             </div>
         </div>
 
-        {{-- ═══ Mã mời tham gia lớp ═══ --}}
-        @can('manage', $section)
-        <x-card padding="true" variant="featured" x-data="{ copied: false }">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                    <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-1">Mã mời tham gia lớp</p>
-                    <p class="text-[12px] text-text-muted">Gửi mã này cho sinh viên để họ tham gia lớp học phần.</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="flex items-center bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] overflow-hidden">
-                        <span class="px-4 py-2 font-mono text-[16px] font-black text-[#1A3A6B] tracking-[0.2em] select-all">{{ $section->invite_code ?? '—' }}</span>
-                        @if($section->invite_code)
-                        <button type="button"
-                            @click="navigator.clipboard.writeText('{{ $section->invite_code }}'); copied = true; setTimeout(() => copied = false, 2000)"
-                            class="px-3 py-2 border-l border-[#D6E2F0] text-[#6B7C99] hover:text-[#1A3A6B] hover:bg-[#F4F7FC] transition-colors"
-                            :title="copied ? 'Đã sao chép!' : 'Sao chép mã'">
-                            <template x-if="!copied">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                            </template>
-                            <template x-if="copied">
-                                <svg class="w-4 h-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                                </svg>
-                            </template>
-                        </button>
-                        @endif
-                    </div>
-                    <form method="POST" action="{{ route('lecturer.classes.regenerate-code', $section) }}">
-                        @csrf
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold text-[#6B7C99] bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] hover:text-[#1A3A6B] hover:border-[#185FA5] transition-colors"
-                            data-confirm-message="Tạo mã mới sẽ vô hiệu hóa mã cũ. Tiếp tục?">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                            Tạo mã mới
-                        </button>
-                    </form>
-                </div>
+        @if($isUpcomingSemesterWorkspace)
+        <div class="rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900">
+            <p class="font-semibold">Không gian lớp đang ở chế độ học kỳ sắp mở.</p>
+            <p class="mt-1 text-[12px] text-amber-800">Dữ liệu lớp được hiển thị ở dạng chuẩn bị trước khai giảng để phân biệt với lớp đang diễn ra.</p>
+        </div>
+        @endif
+
+        <div class="relative">
+            @if($isUpcomingSemesterWorkspace)
+            <div class="pointer-events-none absolute inset-0 z-20 rounded-[10px] bg-white/45 backdrop-blur-[1px]"></div>
+            <div class="pointer-events-none absolute right-3 top-3 z-30 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                Sắp mở
             </div>
-        </x-card>
-        @endcan
+            @endif
 
-        <x-card padding="false" class="overflow-hidden">
-            <div class="px-4 sm:px-6 border-b border-border-clean bg-surface-1">
-                <div class="flex flex-wrap items-center gap-2 py-2">
-                    <button type="button"
-                        @click="switchTab('overview')"
-                        :class="activeTab === 'overview' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
-                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
-                        Thông tin chung
-                    </button>
-                    <button type="button"
-                        @click="switchTab('students')"
-                        :class="activeTab === 'students' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
-                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
-                        Danh sách sinh viên
-                    </button>
-                    <button type="button"
-                        @click="switchTab('attendance')"
-                        :class="activeTab === 'attendance' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
-                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
-                        Điểm danh
-                    </button>
-                    <button type="button"
-                        @click="switchTab('leaves')"
-                        :class="activeTab === 'leaves' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
-                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors flex items-center gap-1.5">
-                        Xin nghỉ phép
-                        @if($section->leaveRequests->where('status', 'pending')->count() > 0)
-                        <span class="bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                            {{ $section->leaveRequests->where('status', 'pending')->count() }}
-                        </span>
-                        @endif
-                    </button>
-                    <button type="button"
-                        @click="switchTab('grading')"
-                        :class="activeTab === 'grading' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
-                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
-                        Điểm quá trình
-                    </button>
-                    <button type="button"
-                        @click="switchTab('statistics')"
-                        :class="activeTab === 'statistics' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
-                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
-                        Thống kê
-                    </button>
-                    <button type="button"
-                        @click="switchTab('complaints')"
-                        :class="activeTab === 'complaints' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
-                        class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors flex items-center gap-1.5">
-                        Khiếu nại điểm
-                        @if($section->complaints->where('status', 'pending')->count() > 0)
-                        <span class="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                            {{ $section->complaints->where('status', 'pending')->count() }}
-                        </span>
-                        @endif
-                    </button>
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-6 space-y-6" x-show="activeTab === 'overview'" x-transition.opacity.duration.150ms>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <x-card variant="default" padding="true">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">Sĩ số lớp</p>
-                        <p class="mt-2 text-[28px] font-bold text-navy-900 leading-none">{{ $section->students->count() }}</p>
-                        <p class="text-[12px] text-text-muted mt-1">/ {{ $section->max_students }} sinh viên</p>
-                    </x-card>
-
-                    <x-card variant="default" padding="true">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">Lịch thi đã tạo</p>
-                        <p class="mt-2 text-[28px] font-bold text-navy-900 leading-none">{{ $section->examSchedules->count() }}</p>
-                        <p class="text-[12px] text-text-muted mt-1">ca thi trong lớp học phần</p>
-                    </x-card>
-
-                    <x-card variant="featured" padding="true">
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">Thông báo nhanh</p>
-                        <p class="mt-2 text-[13px] text-navy-900 leading-relaxed">Nên cập nhật thông báo lớp trước mỗi đợt kiểm tra để sinh viên nắm rõ lịch và yêu cầu phòng thi.</p>
-                        @can('manage', $section)
-                        <x-button variant="secondary" size="sm" class="mt-3" @click="$dispatch('open-modal', 'create-notification-modal')">
-                            Đăng thông báo ngay
-                        </x-button>
-                        @endcan
-                    </x-card>
-                </div>
-
-                <x-card padding="true">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-[16px] font-bold text-navy-900">Bảng tin lớp học phần</h3>
-                        <span class="text-[12px] text-text-muted">{{ $sectionFeedItems->count() }} mục gần nhất</span>
+            {{-- ═══ Mã mời tham gia lớp ═══ --}}
+            @can('manage', $section)
+            <x-card padding="true" variant="featured" x-data="{ copied: false }">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-1">Mã mời tham gia lớp</p>
+                        <p class="text-[12px] text-text-muted">Gửi mã này cho sinh viên để họ tham gia lớp học phần.</p>
                     </div>
-
-                    @if($sectionFeedItems->isEmpty())
-                    <div class="text-center py-10 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
-                        <x-ui-icon name="bell-slash" class="w-10 h-10 text-blue-100 mx-auto mb-3" />
-                        <p class="text-[13px] text-text-muted">Chưa có thông báo nào bạn đã gửi cho lớp này.</p>
-                    </div>
-                    @else
-                    <div class="space-y-3">
-                        @foreach($sectionFeedItems as $feed)
-                        <div class="border-[0.5px] border-border-clean rounded-[8px] p-4 bg-white hover:bg-surface-0 transition-colors">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">
-                                    {{ $feed->created_at?->format('H:i — d/m/Y') ?? 'N/A' }}
-                                </span>
-                                <span class="inline-flex items-center text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-[4px] border
-                                    {{ ($feed->source ?? '') === 'exam_schedule' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-teal-50 text-teal-700 border-teal-200' }}">
-                                    {{ ($feed->source ?? '') === 'exam_schedule' ? 'Lịch thi' : 'Thông báo' }}
-                                </span>
-                            </div>
-                            <h4 class="text-sm font-bold text-navy-900 mb-1">{{ $feed->title }}</h4>
-                            <p class="text-xs text-text-muted leading-relaxed whitespace-pre-wrap">{{ $feed->message }}</p>
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] overflow-hidden">
+                            <span class="px-4 py-2 font-mono text-[16px] font-black text-[#1A3A6B] tracking-[0.2em] select-all">{{ $section->invite_code ?? '—' }}</span>
+                            @if($section->invite_code)
+                            <button type="button"
+                                @click="navigator.clipboard.writeText('{{ $section->invite_code }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                class="px-3 py-2 border-l border-[#D6E2F0] text-[#6B7C99] hover:text-[#1A3A6B] hover:bg-[#F4F7FC] transition-colors"
+                                :title="copied ? 'Đã sao chép!' : 'Sao chép mã'">
+                                <template x-if="!copied">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                </template>
+                                <template x-if="copied">
+                                    <svg class="w-4 h-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </template>
+                            </button>
+                            @endif
                         </div>
-                        @endforeach
+                        <form method="POST" action="{{ route('lecturer.classes.regenerate-code', $section) }}">
+                            @csrf
+                            <button type="submit"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold text-[#6B7C99] bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] hover:text-[#1A3A6B] hover:border-[#185FA5] transition-colors"
+                                data-confirm-message="Tạo mã mới sẽ vô hiệu hóa mã cũ. Tiếp tục?">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Tạo mã mới
+                            </button>
+                        </form>
                     </div>
-                    @endif
-                </x-card>
+                </div>
+            </x-card>
+            @endcan
 
-                <x-card padding="true">
-                    <div class="flex items-center justify-between mb-5">
-                        <h3 class="text-[16px] font-bold text-navy-900">Lịch thi của lớp</h3>
-                        @can('manage', $section)
-                        <x-button variant="secondary" size="sm" @click="$dispatch('open-slide-over', 'create-schedule-inline-slide')">
-                            + Lên lịch thi
-                        </x-button>
-                        @endcan
+            <x-card padding="false" class="overflow-hidden">
+                <div class="px-4 sm:px-6 border-b border-border-clean bg-surface-1">
+                    <div class="flex flex-wrap items-center gap-2 py-2">
+                        <button type="button"
+                            @click="switchTab('overview')"
+                            :class="activeTab === 'overview' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                            class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
+                            Thông tin chung
+                        </button>
+                        <button type="button"
+                            @click="switchTab('students')"
+                            :class="activeTab === 'students' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                            class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
+                            Danh sách sinh viên
+                        </button>
+                        <button type="button"
+                            @click="switchTab('attendance')"
+                            :class="activeTab === 'attendance' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                            class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
+                            Điểm danh
+                        </button>
+                        <button type="button"
+                            @click="switchTab('leaves')"
+                            :class="activeTab === 'leaves' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                            class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors flex items-center gap-1.5">
+                            Xin nghỉ phép
+                            @if($section->leaveRequests->where('status', 'pending')->count() > 0)
+                            <span class="bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                                {{ $section->leaveRequests->where('status', 'pending')->count() }}
+                            </span>
+                            @endif
+                        </button>
+                        <button type="button"
+                            @click="switchTab('grading')"
+                            :class="activeTab === 'grading' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                            class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
+                            Điểm quá trình
+                        </button>
+                        <button type="button"
+                            @click="switchTab('statistics')"
+                            :class="activeTab === 'statistics' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                            class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors">
+                            Thống kê
+                        </button>
+                        <button type="button"
+                            @click="switchTab('complaints')"
+                            :class="activeTab === 'complaints' ? 'bg-white text-navy-900 border-border-clean' : 'text-text-muted border-transparent'"
+                            class="h-9 px-4 border rounded-[6px] text-[13px] font-semibold transition-colors flex items-center gap-1.5">
+                            Khiếu nại điểm
+                            @if($section->complaints->where('status', 'pending')->count() > 0)
+                            <span class="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                                {{ $section->complaints->where('status', 'pending')->count() }}
+                            </span>
+                            @endif
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-4 sm:p-6 space-y-6" x-show="activeTab === 'overview'" x-transition.opacity.duration.150ms>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <x-card variant="default" padding="true">
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">Sĩ số lớp</p>
+                            <p class="mt-2 text-[28px] font-bold text-navy-900 leading-none">{{ $section->students->count() }}</p>
+                            <p class="text-[12px] text-text-muted mt-1">/ {{ $section->max_students }} sinh viên</p>
+                        </x-card>
+
+                        <x-card variant="default" padding="true">
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">Lịch thi đã tạo</p>
+                            <p class="mt-2 text-[28px] font-bold text-navy-900 leading-none">{{ $section->examSchedules->count() }}</p>
+                            <p class="text-[12px] text-text-muted mt-1">ca thi trong lớp học phần</p>
+                        </x-card>
+
+                        <x-card variant="featured" padding="true">
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted">Thông báo nhanh</p>
+                            <p class="mt-2 text-[13px] text-navy-900 leading-relaxed">Nên cập nhật thông báo lớp trước mỗi đợt kiểm tra để sinh viên nắm rõ lịch và yêu cầu phòng thi.</p>
+                            @can('manage', $section)
+                            <x-button variant="secondary" size="sm" class="mt-3" @click="$dispatch('open-modal', 'create-notification-modal')">
+                                Đăng thông báo ngay
+                            </x-button>
+                            @endcan
+                        </x-card>
                     </div>
 
-                    @if($section->examSchedules->isEmpty())
-                    <div class="text-center py-10 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
-                        <p class="text-[13px] font-medium text-text-muted mb-1">Chưa có lịch thi nào cho lớp này.</p>
-                        <p class="text-[12px] text-text-muted">Bạn có thể tạo lịch thi ngay mà không cần rời khỏi không gian lớp.</p>
-                    </div>
-                    @else
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="border-b-[1.5px] border-border-clean">
-                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Đề thi</th>
-                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Thời gian</th>
-                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Trạng thái</th>
-                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-border-clean/70">
-                                @foreach($section->examSchedules->sortByDesc('created_at') as $schedule)
-                                <tr>
-                                    <td class="py-3 px-3">
-                                        <p class="text-[13px] font-semibold text-navy-900">{{ $schedule->exam->title }}</p>
-                                        <p class="text-[11px] text-text-muted mt-0.5">{{ $schedule->exam->duration_minutes }} phút · {{ $schedule->exam->questions_count ?? 0 }} câu</p>
-                                    </td>
-                                    <td class="py-3 px-3 text-[12px] text-text-muted">
-                                        {{ $schedule->date_range_text }}
-                                        @if($schedule->start_time)
-                                        <div>{{ $schedule->time_range_text }}</div>
-                                        @endif
-                                    </td>
-                                    <td class="py-3 px-3">
-                                        <span class="inline-flex items-center uppercase text-[10px] font-bold px-2 py-1 rounded-[4px]
+                    <x-card padding="true">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-[16px] font-bold text-navy-900">Bảng tin lớp học phần</h3>
+                            <span class="text-[12px] text-text-muted">{{ $sectionFeedItems->count() }} mục gần nhất</span>
+                        </div>
+
+                        @if($sectionFeedItems->isEmpty())
+                        <div class="text-center py-10 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
+                            <x-ui-icon name="bell-slash" class="w-10 h-10 text-blue-100 mx-auto mb-3" />
+                            <p class="text-[13px] text-text-muted">Chưa có thông báo nào bạn đã gửi cho lớp này.</p>
+                        </div>
+                        @else
+                        <div class="space-y-3">
+                            @foreach($sectionFeedItems as $feed)
+                            <div class="border-[0.5px] border-border-clean rounded-[8px] p-4 bg-white hover:bg-surface-0 transition-colors">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+                                        {{ $feed->created_at?->format('H:i — d/m/Y') ?? 'N/A' }}
+                                    </span>
+                                    <span class="inline-flex items-center text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-[4px] border
+                                    {{ ($feed->source ?? '') === 'exam_schedule' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-teal-50 text-teal-700 border-teal-200' }}">
+                                        {{ ($feed->source ?? '') === 'exam_schedule' ? 'Lịch thi' : 'Thông báo' }}
+                                    </span>
+                                </div>
+                                <h4 class="text-sm font-bold text-navy-900 mb-1">{{ $feed->title }}</h4>
+                                <p class="text-xs text-text-muted leading-relaxed whitespace-pre-wrap">{{ $feed->message }}</p>
+                            </div>
+                            @endforeach
+                        </div>
+                        @endif
+                    </x-card>
+
+                    <x-card padding="true">
+                        <div class="flex items-center justify-between mb-5">
+                            <h3 class="text-[16px] font-bold text-navy-900">Lịch thi của lớp</h3>
+                            @can('manage', $section)
+                            <x-button variant="secondary" size="sm" @click="$dispatch('open-slide-over', 'create-schedule-inline-slide')">
+                                + Lên lịch thi
+                            </x-button>
+                            @endcan
+                        </div>
+
+                        @if($section->examSchedules->isEmpty())
+                        <div class="text-center py-10 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
+                            <p class="text-[13px] font-medium text-text-muted mb-1">Chưa có lịch thi nào cho lớp này.</p>
+                            <p class="text-[12px] text-text-muted">Bạn có thể tạo lịch thi ngay mà không cần rời khỏi không gian lớp.</p>
+                        </div>
+                        @else
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b-[1.5px] border-border-clean">
+                                        <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Đề thi</th>
+                                        <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Thời gian</th>
+                                        <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Trạng thái</th>
+                                        <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-border-clean/70">
+                                    @foreach($section->examSchedules->sortByDesc('created_at') as $schedule)
+                                    <tr>
+                                        <td class="py-3 px-3">
+                                            <p class="text-[13px] font-semibold text-navy-900">{{ $schedule->exam->title }}</p>
+                                            <p class="text-[11px] text-text-muted mt-0.5">{{ $schedule->exam->duration_minutes }} phút · {{ $schedule->exam->questions_count ?? 0 }} câu</p>
+                                        </td>
+                                        <td class="py-3 px-3 text-[12px] text-text-muted">
+                                            {{ $schedule->date_range_text }}
+                                            @if($schedule->start_time)
+                                            <div>{{ $schedule->time_range_text }}</div>
+                                            @endif
+                                        </td>
+                                        <td class="py-3 px-3">
+                                            <span class="inline-flex items-center uppercase text-[10px] font-bold px-2 py-1 rounded-[4px]
                                                     @if($schedule->status === 'in_progress') bg-teal-50 text-teal-800 border border-teal-200
                                                     @elseif($schedule->status === 'scheduled') bg-blue-50 text-blue-700 border border-blue-200
                                                     @elseif($schedule->status === 'completed') bg-gray-50 text-gray-700 border border-gray-200
                                                     @else bg-surface-1 text-text-muted border border-border-clean @endif">
-                                            {{ match($schedule->status) {
+                                                {{ match($schedule->status) {
                                                         'in_progress' => 'Đang thi',
                                                         'scheduled'   => 'Đã lên lịch',
                                                         'completed'   => 'Đã hoàn thành',
                                                         default       => 'Đã huỷ',
                                                     } }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-3">
+                                            @can('manageLecturer', $schedule->exam)
+                                            <div class="flex items-center gap-3">
+                                                <a href="{{ route('lecturer.schedules.edit', $schedule) }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">Sửa</a>
+                                                <form method="POST" action="{{ route('lecturer.schedules.destroy', $schedule) }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-[12px] font-semibold text-red-600 hover:text-red-700"
+                                                        data-confirm-message="Xoá lịch thi này?">
+                                                        Xoá
+                                                    </button>
+                                                </form>
+                                            </div>
+                                            @endcan
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @endif
+                    </x-card>
+                </div>
+
+                <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'students'" x-transition.opacity.duration.150ms style="display:none;">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <h3 class="text-[18px] font-bold text-navy-900">Danh sách sinh viên ({{ $section->students->count() }})</h3>
+                        @can('manage', $section)
+                        <x-button variant="primary" @click="$dispatch('open-slide-over', 'create-schedule-inline-slide')">
+                            Tạo bài thi cho lớp này
+                        </x-button>
+                        @endcan
+                    </div>
+
+                    @if($section->students->isEmpty())
+                    <div class="text-center py-12 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
+                        <p class="text-[13px] font-medium text-text-muted">Hiện chưa có sinh viên nào trong lớp học phần này.</p>
+                    </div>
+                    @else
+                    <div class="overflow-x-auto border border-border-clean rounded-[8px]">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-surface-1 border-b border-border-clean">
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Họ tên</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">MSSV</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Email</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Trạng thái</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Điều kiện thi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-clean/70">
+                                @foreach($section->students->sortBy('name') as $student)
+                                @php
+                                $enrollStatus = $student->pivot->status ?? 'enrolled';
+                                $isBlocked = $enrollStatus !== 'enrolled';
+                                @endphp
+                                <tr class="hover:bg-surface-0 transition-colors">
+                                    <td class="py-3 px-4 text-[13px] font-semibold text-navy-900">{{ $student->name }}</td>
+                                    <td class="py-3 px-4 text-[12px] text-text-muted font-mono">{{ $student->student_code ?? '—' }}</td>
+                                    <td class="py-3 px-4 text-[12px] text-text-muted">{{ $student->email }}</td>
+                                    <td class="py-3 px-4">
+                                        <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-1 rounded-[4px]
+                                                @if($enrollStatus === 'enrolled') bg-teal-50 text-teal-800 border border-teal-200
+                                                @elseif($enrollStatus === 'dropped') bg-red-50 text-red-700 border border-red-200
+                                                @else bg-surface-1 text-text-muted border border-border-clean @endif">
+                                            {{ $enrollStatus === 'enrolled' ? 'Đang học' : ($enrollStatus === 'dropped' ? 'Đã rời lớp' : 'Tạm dừng') }}
                                         </span>
                                     </td>
-                                    <td class="py-3 px-3">
-                                        @can('manageLecturer', $schedule->exam)
-                                        <div class="flex items-center gap-3">
-                                            <a href="{{ route('lecturer.schedules.edit', $schedule) }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">Sửa</a>
-                                            <form method="POST" action="{{ route('lecturer.schedules.destroy', $schedule) }}">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-[12px] font-semibold text-red-600 hover:text-red-700"
-                                                    data-confirm-message="Xoá lịch thi này?">
-                                                    Xoá
-                                                </button>
-                                            </form>
-                                        </div>
-                                        @endcan
+                                    <td class="py-3 px-4">
+                                        <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-1 rounded-[4px]
+                                                {{ $isBlocked ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200' }}">
+                                            {{ $isBlocked ? 'Cấm thi tạm thời' : 'Đủ điều kiện' }}
+                                        </span>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -300,558 +386,500 @@
                         </table>
                     </div>
                     @endif
-                </x-card>
-            </div>
-
-            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'students'" x-transition.opacity.duration.150ms style="display:none;">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <h3 class="text-[18px] font-bold text-navy-900">Danh sách sinh viên ({{ $section->students->count() }})</h3>
-                    @can('manage', $section)
-                    <x-button variant="primary" @click="$dispatch('open-slide-over', 'create-schedule-inline-slide')">
-                        Tạo bài thi cho lớp này
-                    </x-button>
-                    @endcan
                 </div>
 
-                @if($section->students->isEmpty())
-                <div class="text-center py-12 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
-                    <p class="text-[13px] font-medium text-text-muted">Hiện chưa có sinh viên nào trong lớp học phần này.</p>
-                </div>
-                @else
-                <div class="overflow-x-auto border border-border-clean rounded-[8px]">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-surface-1 border-b border-border-clean">
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Họ tên</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">MSSV</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Email</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Trạng thái</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Điều kiện thi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border-clean/70">
-                            @foreach($section->students->sortBy('name') as $student)
-                            @php
-                            $enrollStatus = $student->pivot->status ?? 'enrolled';
-                            $isBlocked = $enrollStatus !== 'enrolled';
-                            @endphp
-                            <tr class="hover:bg-surface-0 transition-colors">
-                                <td class="py-3 px-4 text-[13px] font-semibold text-navy-900">{{ $student->name }}</td>
-                                <td class="py-3 px-4 text-[12px] text-text-muted font-mono">{{ $student->student_code ?? '—' }}</td>
-                                <td class="py-3 px-4 text-[12px] text-text-muted">{{ $student->email }}</td>
-                                <td class="py-3 px-4">
-                                    <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-1 rounded-[4px]
-                                                @if($enrollStatus === 'enrolled') bg-teal-50 text-teal-800 border border-teal-200
-                                                @elseif($enrollStatus === 'dropped') bg-red-50 text-red-700 border border-red-200
-                                                @else bg-surface-1 text-text-muted border border-border-clean @endif">
-                                        {{ $enrollStatus === 'enrolled' ? 'Đang học' : ($enrollStatus === 'dropped' ? 'Đã rời lớp' : 'Tạm dừng') }}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4">
-                                    <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-1 rounded-[4px]
-                                                {{ $isBlocked ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200' }}">
-                                        {{ $isBlocked ? 'Cấm thi tạm thời' : 'Đủ điều kiện' }}
-                                    </span>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @endif
-            </div>
-
-            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'attendance'" x-transition.opacity.duration.150ms style="display:none;" x-data="attendanceManager({{ $section->id }})">
-                <div class="flex items-center justify-between mb-2">
-                    <div>
-                        <h3 class="text-[18px] font-bold text-navy-900">Lưới điểm danh ({{ $section->attendanceSessions->count() }} buổi)</h3>
-                        <p class="text-[12px] text-text-muted font-medium mt-1">Bấm vào ô để thay đổi: Có mặt (Xanh) - Vắng (Đỏ) - Muộn (Vàng) - Có phép (Xám).</p>
+                <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'attendance'" x-transition.opacity.duration.150ms style="display:none;" x-data="attendanceManager({{ $section->id }})">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <h3 class="text-[18px] font-bold text-navy-900">Lưới điểm danh ({{ $section->attendanceSessions->count() }} buổi)</h3>
+                            <p class="text-[12px] text-text-muted font-medium mt-1">Bấm vào ô để thay đổi: Có mặt (Xanh) - Vắng (Đỏ) - Muộn (Vàng) - Có phép (Xám).</p>
+                        </div>
+                        @can('manage', $section)
+                        <x-button variant="primary" @click="$dispatch('open-modal', 'create-attendance-session-modal')">
+                            + Tạo buổi điểm danh
+                        </x-button>
+                        @endcan
                     </div>
-                    @can('manage', $section)
-                    <x-button variant="primary" @click="$dispatch('open-modal', 'create-attendance-session-modal')">
-                        + Tạo buổi điểm danh
-                    </x-button>
-                    @endcan
-                </div>
 
-                @if($section->attendanceSessions->isEmpty())
-                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
-                    <x-ui-icon name="clipboard-document-check" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
-                    <p class="text-sm text-text-muted font-medium">Lớp chưa có buổi điểm danh nào.</p>
-                </div>
-                @else
-                <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
-                    <table class="w-full text-left border-collapse whitespace-nowrap">
-                        <thead>
-                            <tr class="bg-surface-1 border-b border-border-clean">
-                                <th class="sticky left-0 z-10 bg-surface-1 py-3 px-4 w-[250px] text-[12px] font-semibold text-text-muted border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">Sinh viên</th>
-                                @foreach($section->attendanceSessions->sortBy('date') as $session)
-                                <th class="py-2 px-3 text-center border-r border-border-clean min-w-[220px] align-top">
-                                    <p class="text-[12px] font-bold text-navy-900 leading-tight whitespace-normal break-words" title="{{ $session->title }}">{{ $session->title }}</p>
-                                    <p class="text-[10px] text-text-muted mt-1 mb-2">{{ $session->date->format('d/m/Y') }}</p>
-                                    <div class="grid grid-cols-2 gap-2 mt-1" x-init="sessions[{{ $session->id }}] = { is_open: {{ $session->is_open ? 'true' : 'false' }}, code: '{{ $session->secret_code }}' }">
-                                        <button @click="toggleSessionOpen({{ $session->id }})"
-                                            :disabled="isTogglingSession"
-                                            class="w-full min-h-[42px] px-2 py-2 text-[10px] font-bold uppercase rounded-[8px] border transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                                            :class="sessions[{{ $session->id }}]?.is_open ? 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100' : 'bg-surface-0 text-text-muted border-border-clean hover:bg-surface-1'">
-                                            <span x-text="sessions[{{ $session->id }}]?.is_open ? 'Đang mở điểm danh' : 'Đã đóng điểm danh'"></span>
-                                        </button>
-                                        <button
-                                            @click="sessions[{{ $session->id }}]?.is_open ? showPinCode(sessions[{{ $session->id }}]?.code) : null"
-                                            :disabled="!sessions[{{ $session->id }}]?.is_open"
-                                            class="w-full min-h-[42px] px-2 py-2 rounded-[8px] border transition-colors flex flex-col items-center justify-center gap-0.5"
-                                            :class="sessions[{{ $session->id }}]?.is_open ? 'border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700' : 'border-border-clean bg-surface-0 text-text-muted cursor-not-allowed opacity-70'">
-                                            <span class="text-[10px] font-bold uppercase tracking-wide">Hiện QR và mã</span>
-                                            <span class="text-[11px] font-mono font-black tracking-[0.16em]" x-text="sessions[{{ $session->id }}]?.is_open ? sessions[{{ $session->id }}]?.code : '-----'"></span>
-                                        </button>
-                                    </div>
-                                </th>
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border-clean/70">
-                            @foreach($section->students->sortBy('name') as $student)
-                            <tr class="hover:bg-surface-0 transition-colors group">
-                                <td class="sticky left-0 z-10 bg-white py-3 px-4 border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-surface-0 transition-colors">
-                                    <p class="text-[13px] font-semibold text-navy-900">{{ $student->name }}</p>
-                                    <p class="text-[11px] text-text-muted font-mono mt-0.5">{{ $student->student_code ?? '—' }}</p>
-                                </td>
-                                @foreach($section->attendanceSessions->sortBy('date') as $session)
-                                @php
-                                $record = $session->records->where('student_id', $student->id)->first();
-                                $status = $record ? $record->status : 'absent';
-                                $recordId = $record ? $record->id : 'null';
-                                @endphp
-                                <td class="p-0 text-center border-r border-border-clean align-middle">
-                                    <button type="button"
-                                        @if($recordId !=='null' )
-                                        class="w-full h-full min-h-[50px] px-2 py-2 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-                                        :class="{
+                    @if($section->attendanceSessions->isEmpty())
+                    <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                        <x-ui-icon name="clipboard-document-check" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
+                        <p class="text-sm text-text-muted font-medium">Lớp chưa có buổi điểm danh nào.</p>
+                    </div>
+                    @else
+                    <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-surface-1 border-b border-border-clean">
+                                    <th class="sticky left-0 z-10 bg-surface-1 py-3 px-4 w-[250px] text-[12px] font-semibold text-text-muted border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">Sinh viên</th>
+                                    @foreach($section->attendanceSessions->sortBy('date') as $session)
+                                    <th class="py-2 px-3 text-center border-r border-border-clean min-w-[220px] align-top">
+                                        <p class="text-[12px] font-bold text-navy-900 leading-tight whitespace-normal break-words" title="{{ $session->title }}">{{ $session->title }}</p>
+                                        <p class="text-[10px] text-text-muted mt-1 mb-2">{{ $session->date->format('d/m/Y') }}</p>
+                                        <div class="grid grid-cols-2 gap-2 mt-1" x-init="sessions[{{ $session->id }}] = { is_open: {{ $session->is_open ? 'true' : 'false' }}, code: '{{ $session->secret_code }}' }">
+                                            <button @click="toggleSessionOpen({{ $session->id }})"
+                                                :disabled="isTogglingSession"
+                                                class="w-full min-h-[42px] px-2 py-2 text-[10px] font-bold uppercase rounded-[8px] border transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                                                :class="sessions[{{ $session->id }}]?.is_open ? 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100' : 'bg-surface-0 text-text-muted border-border-clean hover:bg-surface-1'">
+                                                <span x-text="sessions[{{ $session->id }}]?.is_open ? 'Đang mở điểm danh' : 'Đã đóng điểm danh'"></span>
+                                            </button>
+                                            <button
+                                                @click="sessions[{{ $session->id }}]?.is_open ? showPinCode(sessions[{{ $session->id }}]?.code) : null"
+                                                :disabled="!sessions[{{ $session->id }}]?.is_open"
+                                                class="w-full min-h-[42px] px-2 py-2 rounded-[8px] border transition-colors flex flex-col items-center justify-center gap-0.5"
+                                                :class="sessions[{{ $session->id }}]?.is_open ? 'border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700' : 'border-border-clean bg-surface-0 text-text-muted cursor-not-allowed opacity-70'">
+                                                <span class="text-[10px] font-bold uppercase tracking-wide">Hiện QR và mã</span>
+                                                <span class="text-[11px] font-mono font-black tracking-[0.16em]" x-text="sessions[{{ $session->id }}]?.is_open ? sessions[{{ $session->id }}]?.code : '-----'"></span>
+                                            </button>
+                                        </div>
+                                    </th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-clean/70">
+                                @foreach($section->students->sortBy('name') as $student)
+                                <tr class="hover:bg-surface-0 transition-colors group">
+                                    <td class="sticky left-0 z-10 bg-white py-3 px-4 border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-surface-0 transition-colors">
+                                        <p class="text-[13px] font-semibold text-navy-900">{{ $student->name }}</p>
+                                        <p class="text-[11px] text-text-muted font-mono mt-0.5">{{ $student->student_code ?? '—' }}</p>
+                                    </td>
+                                    @foreach($section->attendanceSessions->sortBy('date') as $session)
+                                    @php
+                                    $record = $session->records->where('student_id', $student->id)->first();
+                                    $status = $record ? $record->status : 'absent';
+                                    $recordId = $record ? $record->id : 'null';
+                                    @endphp
+                                    <td class="p-0 text-center border-r border-border-clean align-middle">
+                                        <button type="button"
+                                            @if($recordId !=='null' )
+                                            class="w-full h-full min-h-[50px] px-2 py-2 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                                            :class="{
                                             'bg-teal-50 hover:bg-teal-100': records['{{ $session->id }}_{{ $student->id }}'] === 'present',
                                             'bg-red-50 hover:bg-red-100': records['{{ $session->id }}_{{ $student->id }}'] === 'absent',
                                             'bg-gray-50 hover:bg-gray-100': records['{{ $session->id }}_{{ $student->id }}'] === 'excused'
                                         }"
-                                        @click="toggleStatus({{ $session->id }}, {{ $student->id }}, {{ $recordId }})"
-                                        x-init="records['{{ $session->id }}_{{ $student->id }}'] = '{{ $status }}'"
-                                        @else
-                                        class="w-full h-full min-h-[50px] flex items-center justify-center bg-gray-50 text-gray-300"
-                                        disabled
-                                        @endif>
-                                        @if($recordId !== 'null')
-                                        <div class="w-5 h-5 rounded-full flex items-center justify-center shadow-sm border transition-colors"
-                                            :class="{
+                                            @click="toggleStatus({{ $session->id }}, {{ $student->id }}, {{ $recordId }})"
+                                            x-init="records['{{ $session->id }}_{{ $student->id }}'] = '{{ $status }}'"
+                                            @else
+                                            class="w-full h-full min-h-[50px] flex items-center justify-center bg-gray-50 text-gray-300"
+                                            disabled
+                                            @endif>
+                                            @if($recordId !== 'null')
+                                            <div class="w-5 h-5 rounded-full flex items-center justify-center shadow-sm border transition-colors"
+                                                :class="{
                                                 'bg-teal-500 border-teal-600 text-white': records['{{ $session->id }}_{{ $student->id }}'] === 'present',
                                                 'bg-white border-red-300 text-red-500': records['{{ $session->id }}_{{ $student->id }}'] === 'absent',
                                                 'bg-surface-1 border-gray-300 text-gray-500': records['{{ $session->id }}_{{ $student->id }}'] === 'excused'
                                             }">
-                                            <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'present'">
-                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'present'">
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </template>
+                                                <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'absent'">
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </template>
+                                                <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'excused'">
+                                                    <span class="text-[9px] font-bold uppercase">P</span>
+                                                </template>
+                                            </div>
+                                            @else
+                                            <span class="text-xs text-text-muted">N/A</span>
+                                            @endif
+                                        </button>
+                                    </td>
+                                    @endforeach
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </div>
+
+                {{-- ═══ TAB: Xin nghỉ phép ═══ --}}
+                <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'leaves'" x-transition.opacity.duration.150ms style="display:none;" x-data="leaveRequestManager({{ $section->id }})">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-[18px] font-bold text-navy-900">Đơn xin nghỉ phép</h3>
+                        <p class="text-[12px] text-text-muted font-medium mt-1">Duyệt hoặc từ chối các đơn xin nghỉ phép của sinh viên.</p>
+                    </div>
+
+                    @if($section->leaveRequests->isEmpty())
+                    <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                        <x-ui-icon name="document-text" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
+                        <p class="text-sm text-text-muted font-medium">Lớp chưa có đơn xin nghỉ phép nào.</p>
+                    </div>
+                    @else
+                    <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-surface-1 border-b border-border-clean">
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Sinh viên</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Ngày xin nghỉ</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Lý do / Minh chứng</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center pr-6">Trạng thái / Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-clean/70">
+                                @foreach($section->leaveRequests->sortByDesc('created_at') as $leaveReq)
+                                <tr class="hover:bg-surface-0 transition-colors">
+                                    <td class="py-4 px-4 align-top w-[200px]">
+                                        <p class="text-[13px] font-bold text-navy-900">{{ $leaveReq->student->name }}</p>
+                                        <p class="text-[11px] text-text-muted mt-0.5">{{ $leaveReq->student->student_code ?? '—' }}</p>
+                                        <p class="text-[10px] text-text-muted mt-2 italic">Gửi lúc: {{ $leaveReq->created_at->format('H:i d/m/y') }}</p>
+                                    </td>
+                                    <td class="py-4 px-4 align-top w-[150px]">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-[4px] text-[12px] font-mono font-bold bg-surface-1 text-navy-900 border border-border-clean">
+                                            {{ $leaveReq->date->format('d/m/Y') }}
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-4 align-top">
+                                        <p class="text-[13px] text-navy-900 leading-relaxed max-w-[400px] break-words">{{ $leaveReq->reason }}</p>
+                                        @if($leaveReq->proof_image_path)
+                                        <div class="mt-2 flex flex-col gap-2">
+                                            <a href="{{ asset('storage/' . $leaveReq->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold text-blue-700 hover:text-blue-900">
+                                                <x-ui-icon name="eye" class="w-4 h-4" />
+                                                Xem ảnh minh chứng
+                                            </a>
+                                            <a href="{{ asset('storage/' . $leaveReq->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="w-fit">
+                                                <img src="{{ asset('storage/' . $leaveReq->proof_image_path) }}" alt="Ảnh minh chứng nghỉ phép" class="w-28 h-28 rounded-[8px] border border-border-clean object-cover" loading="lazy">
+                                            </a>
+                                        </div>
+                                        @endif
+                                    </td>
+                                    <td class="py-4 px-4 align-top text-center w-[180px]">
+                                        @if($leaveReq->status === 'pending')
+                                        <div class="flex flex-col gap-2 relative">
+                                            <div x-show="activeRequestId === {{ $leaveReq->id }}" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center">
+                                                <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                                 </svg>
-                                            </template>
-                                            <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'absent'">
-                                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </template>
-                                            <template x-if="records['{{ $session->id }}_{{ $student->id }}'] === 'excused'">
-                                                <span class="text-[9px] font-bold uppercase">P</span>
-                                            </template>
+                                            </div>
+                                            <button type="button"
+                                                @click="updateLeaveStatus({{ $leaveReq->id }}, 'approved')"
+                                                class="w-full h-8 text-[11px] font-bold uppercase text-teal-700 bg-teal-50 border border-teal-200 rounded-[6px] hover:bg-teal-100 transition-colors">
+                                                Duyệt phép
+                                            </button>
+                                            <button type="button"
+                                                @click="updateLeaveStatus({{ $leaveReq->id }}, 'rejected')"
+                                                class="w-full h-8 text-[11px] font-bold uppercase text-red-700 bg-red-50 border border-red-200 rounded-[6px] hover:bg-red-100 transition-colors">
+                                                Từ chối
+                                            </button>
                                         </div>
                                         @else
-                                        <span class="text-xs text-text-muted">N/A</span>
-                                        @endif
-                                    </button>
-                                </td>
-                                @endforeach
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @endif
-            </div>
-
-            {{-- ═══ TAB: Xin nghỉ phép ═══ --}}
-            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'leaves'" x-transition.opacity.duration.150ms style="display:none;" x-data="leaveRequestManager({{ $section->id }})">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-[18px] font-bold text-navy-900">Đơn xin nghỉ phép</h3>
-                    <p class="text-[12px] text-text-muted font-medium mt-1">Duyệt hoặc từ chối các đơn xin nghỉ phép của sinh viên.</p>
-                </div>
-
-                @if($section->leaveRequests->isEmpty())
-                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
-                    <x-ui-icon name="document-text" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
-                    <p class="text-sm text-text-muted font-medium">Lớp chưa có đơn xin nghỉ phép nào.</p>
-                </div>
-                @else
-                <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-surface-1 border-b border-border-clean">
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Sinh viên</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Ngày xin nghỉ</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Lý do / Minh chứng</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center pr-6">Trạng thái / Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border-clean/70">
-                            @foreach($section->leaveRequests->sortByDesc('created_at') as $leaveReq)
-                            <tr class="hover:bg-surface-0 transition-colors">
-                                <td class="py-4 px-4 align-top w-[200px]">
-                                    <p class="text-[13px] font-bold text-navy-900">{{ $leaveReq->student->name }}</p>
-                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $leaveReq->student->student_code ?? '—' }}</p>
-                                    <p class="text-[10px] text-text-muted mt-2 italic">Gửi lúc: {{ $leaveReq->created_at->format('H:i d/m/y') }}</p>
-                                </td>
-                                <td class="py-4 px-4 align-top w-[150px]">
-                                    <span class="inline-flex items-center px-2 py-1 rounded-[4px] text-[12px] font-mono font-bold bg-surface-1 text-navy-900 border border-border-clean">
-                                        {{ $leaveReq->date->format('d/m/Y') }}
-                                    </span>
-                                </td>
-                                <td class="py-4 px-4 align-top">
-                                    <p class="text-[13px] text-navy-900 leading-relaxed max-w-[400px] break-words">{{ $leaveReq->reason }}</p>
-                                    @if($leaveReq->proof_image_path)
-                                    <div class="mt-2 flex flex-col gap-2">
-                                        <a href="{{ asset('storage/' . $leaveReq->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold text-blue-700 hover:text-blue-900">
-                                            <x-ui-icon name="eye" class="w-4 h-4" />
-                                            Xem ảnh minh chứng
-                                        </a>
-                                        <a href="{{ asset('storage/' . $leaveReq->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="w-fit">
-                                            <img src="{{ asset('storage/' . $leaveReq->proof_image_path) }}" alt="Ảnh minh chứng nghỉ phép" class="w-28 h-28 rounded-[8px] border border-border-clean object-cover" loading="lazy">
-                                        </a>
-                                    </div>
-                                    @endif
-                                </td>
-                                <td class="py-4 px-4 align-top text-center w-[180px]">
-                                    @if($leaveReq->status === 'pending')
-                                    <div class="flex flex-col gap-2 relative">
-                                        <div x-show="activeRequestId === {{ $leaveReq->id }}" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center">
-                                            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                            </svg>
-                                        </div>
-                                        <button type="button"
-                                            @click="updateLeaveStatus({{ $leaveReq->id }}, 'approved')"
-                                            class="w-full h-8 text-[11px] font-bold uppercase text-teal-700 bg-teal-50 border border-teal-200 rounded-[6px] hover:bg-teal-100 transition-colors">
-                                            Duyệt phép
-                                        </button>
-                                        <button type="button"
-                                            @click="updateLeaveStatus({{ $leaveReq->id }}, 'rejected')"
-                                            class="w-full h-8 text-[11px] font-bold uppercase text-red-700 bg-red-50 border border-red-200 rounded-[6px] hover:bg-red-100 transition-colors">
-                                            Từ chối
-                                        </button>
-                                    </div>
-                                    @else
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-[4px] text-[11px] font-bold uppercase border
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-[4px] text-[11px] font-bold uppercase border
                                             {{ $leaveReq->status === 'approved' ? 'bg-teal-50 text-teal-700 border-teal-200' : 'bg-red-50 text-red-700 border-red-200' }}">
-                                        {{ $leaveReq->status === 'approved' ? 'Đã duyệt' : 'Từ chối' }}
-                                    </span>
-                                    @endif
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @endif
-            </div>
-
-            {{-- ═══ TAB: Điểm quá trình ═══ --}}
-            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'grading'" x-transition.opacity.duration.150ms style="display:none;" x-data="gradeManager({{ $section->id }})" x-init="initData()">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 class="text-[18px] font-bold text-navy-900">Điểm quá trình</h3>
-                        <p class="text-[12px] text-text-muted font-medium mt-1">Quản lý các cột điểm thành phần. Tổng trọng số: <span class="font-bold border-b border-dashed" :class="totalWeight > 100 ? 'text-red-500 border-red-500' : 'text-teal-600 border-teal-600'" x-text="totalWeight + '%'"></span></p>
-                    </div>
-                    @can('manage', $section)
-                    <div class="flex items-center gap-2">
-                        <a href="{{ route('lecturer.classes.grades.export', $section) }}"
-                            class="inline-flex h-10 items-center px-4 rounded-[8px] border border-border-clean bg-white text-[13px] font-semibold text-navy-900 hover:bg-surface-0 transition-colors">
-                            Xuất Excel
-                        </a>
-                        <x-button variant="primary" @click="$dispatch('open-modal', 'column-modal'); isEditingColumn = false; columnData = {name: '', weight: 10};">
-                            + Thêm cột điểm
-                        </x-button>
-                    </div>
-                    @endcan
-                </div>
-
-                @if($section->students->isEmpty())
-                <div class="text-center py-10 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
-                    <p class="text-[13px] text-text-muted">Lớp học phần chưa có sinh viên, không thể nhập điểm.</p>
-                </div>
-                @else
-                <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white shadow-sm">
-                    <table class="w-full text-left border-collapse whitespace-nowrap">
-                        <thead>
-                            <tr class="bg-surface-1 border-b border-border-clean">
-                                <th class="sticky left-0 z-10 bg-surface-1 py-3 px-4 w-[250px] text-[12px] font-semibold text-text-muted border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                                    Thành viên lớp
-                                </th>
-                                @forelse($section->gradeColumns->sortBy('order') as $col)
-                                <th class="py-2 px-3 text-center border-r border-border-clean min-w-[130px] group relative">
-                                    <p class="text-[13px] font-bold text-navy-900 leading-tight" title="{{ $col->name }}">{{ \Illuminate\Support\Str::limit($col->name, 20) }}</p>
-                                    <p class="text-[11px] text-text-muted mt-0.5 mb-1">{{ (float)$col->weight }}%</p>
-                                    @can('manage', $section)
-                                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm px-1 py-0.5 rounded shadow-sm border border-border-clean flex items-center hidden group-hover:flex gap-1.5 z-20">
-                                        <button @click="editColumn({{ $col->id }}, '{{ addslashes($col->name) }}', {{ (float)$col->weight }})" class="text-[10px] text-blue-600 hover:text-blue-800" title="Sửa cột"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg></button>
-                                        <button @click="deleteColumn({{ $col->id }})" class="text-[10px] text-red-600 hover:text-red-800" title="Xóa cột"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg></button>
-                                    </div>
-                                    @endcan
-                                </th>
-                                @empty
-                                <th class="py-3 px-4 text-center text-[12px] text-text-muted italic bg-surface-0 border-border-clean">
-                                    Chưa có cột điểm nào. Hãy nhấp "+ Thêm cột điểm".
-                                </th>
-                                @endforelse
-                                <!-- Cột tính tổng tạm điểm quá trình -->
-                                @if($section->gradeColumns->count() > 0)
-                                <th class="py-2 px-3 text-center border-l bg-surface-0/50 min-w-[100px]">
-                                    <p class="text-[12px] font-bold text-indigo-700">Tổng điểm QT</p>
-                                    <p class="text-[10px] text-text-muted">(Tạm tính)</p>
-                                </th>
-                                @endif
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border-clean/70 relative">
-                            <!-- Overlay loading indicator per row inline update could exist, but we do top progress bar -->
-                            <div x-show="isSaving" class="absolute top-0 left-0 right-0 h-0.5 bg-blue-500 z-20 animate-pulse" style="display: none;"></div>
-
-                            @foreach($section->students->sortBy('name') as $student)
-                            <tr class="hover:bg-surface-0 transition-colors group">
-                                <td class="sticky left-0 z-10 bg-white py-2.5 px-4 border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-surface-0 transition-colors">
-                                    <p class="text-[13px] font-semibold text-navy-900">{{ $student->name }}</p>
-                                    <p class="text-[11px] text-text-muted font-mono mt-0.5">{{ $student->student_code ?? '—' }}</p>
-                                </td>
-
-                                @foreach($section->gradeColumns->sortBy('order') as $col)
-                                @php
-                                $grade = $col->studentGrades->where('student_id', $student->id)->first();
-                                $score = $grade ? $grade->score : '';
-                                $note = $grade ? $grade->note : '';
-                                @endphp
-                                <td class="p-0 border-r border-border-clean align-middle relative">
-                                    <div class="absolute right-0 top-0 bottom-0 w-1 bg-green-400 opacity-0 transition-opacity" :class="{'opacity-100': saved['{{$col->id}}_{{$student->id}}']}"></div>
-                                    <input type="number" step="0.01" min="0" max="10"
-                                        class="w-full h-full min-h-[46px] text-center border-none bg-transparent text-[14px] font-bold text-navy-900 focus:ring-0 focus:bg-blue-50/50 hover:bg-gray-50/50 transition-colors outline-none cursor-text
-                                            {{ $score === '' ? 'text-gray-400 font-normal placeholder:text-gray-300' : '' }}"
-                                        placeholder="-"
-                                        @can('manage', $section)
-                                        x-model="scores['{{$col->id}}_{{$student->id}}']"
-                                        @blur="saveScore({{ $col->id }}, {{ $student->id }}, $event.target.value)"
-                                        @keydown.enter="$event.target.blur()"
-                                        @endcan
-                                        @cannot('manage', $section)
-                                        value="{{ $score }}" disabled
-                                        @endcannot />
-                                    @can('manage', $section)
-                                    <input type="hidden" x-init="initialScores['{{$col->id}}_{{$student->id}}'] = '{{ $score }}'; scores['{{$col->id}}_{{$student->id}}'] = '{{ $score }}';">
-                                    @endcan
-                                </td>
+                                            {{ $leaveReq->status === 'approved' ? 'Đã duyệt' : 'Từ chối' }}
+                                        </span>
+                                        @endif
+                                    </td>
+                                </tr>
                                 @endforeach
-
-                                @if($section->gradeColumns->count() > 0)
-                                <td class="py-2 px-3 text-center border-l bg-surface-0/30 align-middle">
-                                    <div class="text-[14px] font-black text-indigo-700" x-text="calculateProcessGrade({{ $student->id }})"></div>
-                                </td>
-                                @endif
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
                 </div>
 
-                <p class="text-[12px] text-text-muted mt-2">
-                    <span class="inline-block w-2 h-2 rounded-full bg-green-400 mr-1 align-baseline"></span> Có viền xanh lá: Điểm đã được lưu tự động thành công. Tab/Click ra ngoài để lưu điểm.
-                </p>
-                @endif
-
-                <x-modal name="column-modal" maxWidth="md">
-                    <div class="p-6">
-                        <div class="flex items-center justify-between mb-5">
-                            <h3 class="text-[18px] font-bold text-navy-900" x-text="isEditingColumn ? 'Sửa cột điểm' : 'Thêm cột điểm mới'"></h3>
-                            <button @click="$dispatch('close-modal', 'column-modal')" class="text-text-muted hover:text-navy-900"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg></button>
+                {{-- ═══ TAB: Điểm quá trình ═══ --}}
+                <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'grading'" x-transition.opacity.duration.150ms style="display:none;" x-data="gradeManager({{ $section->id }})" x-init="initData()">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-[18px] font-bold text-navy-900">Điểm quá trình</h3>
+                            <p class="text-[12px] text-text-muted font-medium mt-1">Quản lý các cột điểm thành phần. Tổng trọng số: <span class="font-bold border-b border-dashed" :class="totalWeight > 100 ? 'text-red-500 border-red-500' : 'text-teal-600 border-teal-600'" x-text="totalWeight + '%'"></span></p>
                         </div>
-
-                        <form @submit.prevent="submitColumnForm()" class="space-y-4">
-                            <div>
-                                <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Tên cột <span class="text-red-500">*</span></label>
-                                <input type="text" x-model="columnData.name" required class="w-full border border-border-clean rounded-[6px] px-3 py-2 text-[13px] focus:border-blue-500 focus:ring-1 focus:ring-blue-200" placeholder="VD: Giữa kỳ, Bài tập số 1...">
-                            </div>
-                            <div>
-                                <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Trọng số (%) <span class="text-red-500">*</span></label>
-                                <input type="number" step="0.5" min="0" max="100" x-model="columnData.weight" required class="w-full border border-border-clean rounded-[6px] px-3 py-2 text-[13px] focus:border-blue-500 focus:ring-1 focus:ring-blue-200">
-                                <p class="text-[11px] text-text-muted mt-1">Nên tính trên tổng 100% của tất cả các cột điểm quá trình.</p>
-                            </div>
-
-                            <div class="pt-4 flex justify-end gap-2 border-t border-border-clean">
-                                <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'column-modal')">Huỷ</x-button>
-                                <x-button type="submit" variant="primary">
-                                    <span x-show="!isSubmittingColumn" x-text="isEditingColumn ? 'Cập nhật' : 'Thêm cột'"></span>
-                                    <span x-show="isSubmittingColumn">Đang xử lý...</span>
-                                </x-button>
-                            </div>
-                        </form>
+                        @can('manage', $section)
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('lecturer.classes.grades.export', $section) }}"
+                                class="inline-flex h-10 items-center px-4 rounded-[8px] border border-border-clean bg-white text-[13px] font-semibold text-navy-900 hover:bg-surface-0 transition-colors">
+                                Xuất Excel
+                            </a>
+                            <x-button variant="primary" @click="$dispatch('open-modal', 'column-modal'); isEditingColumn = false; columnData = {name: '', weight: 10};">
+                                + Thêm cột điểm
+                            </x-button>
+                        </div>
+                        @endcan
                     </div>
-                </x-modal>
-            </div>
 
-            {{-- ═══ TAB: Thống kê ═══ --}}
-            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'statistics'" x-transition.opacity.duration.150ms style="display:none;">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h3 class="text-[18px] font-bold text-navy-900">Thống kê điểm bài thi</h3>
-                        <p class="text-[12px] text-text-muted font-medium mt-1">Theo từng bài thi: trung bình, cao nhất, thấp nhất và tỷ lệ đạt.</p>
+                    @if($section->students->isEmpty())
+                    <div class="text-center py-10 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
+                        <p class="text-[13px] text-text-muted">Lớp học phần chưa có sinh viên, không thể nhập điểm.</p>
                     </div>
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-1 text-text-muted border border-border-clean">
-                        {{ $examStatistics->count() }} bài thi
-                    </span>
-                </div>
-
-                @if($examStatistics->isEmpty())
-                <div class="text-center py-12 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
-                    <p class="text-[13px] font-medium text-text-muted">Lớp này chưa có bài thi để thống kê.</p>
-                </div>
-                @else
-                <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
-                    <table class="w-full text-left border-collapse min-w-[920px]">
-                        <thead>
-                            <tr class="bg-surface-1 border-b border-border-clean">
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Bài thi</th>
-                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Mốc đạt</th>
-                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Đã nộp</th>
-                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Trung bình</th>
-                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Cao nhất</th>
-                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Thấp nhất</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Tỷ lệ đạt</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border-clean/70">
-                            @foreach($examStatistics as $stat)
-                            @php
-                            $statusLabel = match($stat->status) {
-                            'in_progress' => ['Đang thi', 'bg-teal-50 text-teal-800 border-teal-200'],
-                            'scheduled' => ['Đã lên lịch', 'bg-blue-50 text-blue-700 border-blue-200'],
-                            'completed' => ['Đã hoàn thành', 'bg-gray-50 text-gray-700 border-gray-200'],
-                            default => ['Đã huỷ', 'bg-red-50 text-red-700 border-red-200'],
-                            };
-                            @endphp
-                            <tr class="hover:bg-surface-0 transition-colors">
-                                <td class="py-3 px-4 align-top">
-                                    <p class="text-[13px] font-semibold text-navy-900">{{ $stat->exam_title }}</p>
-                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $stat->date_range_text }} · {{ $stat->time_range_text }}</p>
-                                    <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded-[4px] border mt-2 {{ $statusLabel[1] }}">
-                                        {{ $statusLabel[0] }}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-3 text-center text-[13px] font-semibold text-navy-900">
-                                    {{ number_format($stat->pass_threshold, 2) }}
-                                </td>
-                                <td class="py-3 px-3 text-center text-[13px] font-semibold text-navy-900">
-                                    {{ $stat->submitted_count }}/{{ $stat->assigned_count }}
-                                </td>
-                                <td class="py-3 px-3 text-center text-[13px] font-bold text-navy-900">
-                                    {{ $stat->average_score !== null ? number_format($stat->average_score, 2) : '—' }}
-                                </td>
-                                <td class="py-3 px-3 text-center text-[13px] font-bold text-blue-700">
-                                    {{ $stat->highest_score !== null ? number_format($stat->highest_score, 2) : '—' }}
-                                </td>
-                                <td class="py-3 px-3 text-center text-[13px] font-bold text-amber-700">
-                                    {{ $stat->lowest_score !== null ? number_format($stat->lowest_score, 2) : '—' }}
-                                </td>
-                                <td class="py-3 px-4 text-center">
-                                    @if($stat->pass_rate !== null)
-                                    <p class="text-[14px] font-black text-teal-700">{{ number_format($stat->pass_rate, 1) }}%</p>
-                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $stat->passed_count }}/{{ $stat->submitted_count }} đạt</p>
-                                    @else
-                                    <span class="text-[12px] text-text-muted">—</span>
+                    @else
+                    <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white shadow-sm">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead>
+                                <tr class="bg-surface-1 border-b border-border-clean">
+                                    <th class="sticky left-0 z-10 bg-surface-1 py-3 px-4 w-[250px] text-[12px] font-semibold text-text-muted border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                        Thành viên lớp
+                                    </th>
+                                    @forelse($section->gradeColumns->sortBy('order') as $col)
+                                    <th class="py-2 px-3 text-center border-r border-border-clean min-w-[130px] group relative">
+                                        <p class="text-[13px] font-bold text-navy-900 leading-tight" title="{{ $col->name }}">{{ \Illuminate\Support\Str::limit($col->name, 20) }}</p>
+                                        <p class="text-[11px] text-text-muted mt-0.5 mb-1">{{ (float)$col->weight }}%</p>
+                                        @can('manage', $section)
+                                        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm px-1 py-0.5 rounded shadow-sm border border-border-clean flex items-center hidden group-hover:flex gap-1.5 z-20">
+                                            <button @click="editColumn({{ $col->id }}, '{{ addslashes($col->name) }}', {{ (float)$col->weight }})" class="text-[10px] text-blue-600 hover:text-blue-800" title="Sửa cột"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg></button>
+                                            <button @click="deleteColumn({{ $col->id }})" class="text-[10px] text-red-600 hover:text-red-800" title="Xóa cột"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg></button>
+                                        </div>
+                                        @endcan
+                                    </th>
+                                    @empty
+                                    <th class="py-3 px-4 text-center text-[12px] text-text-muted italic bg-surface-0 border-border-clean">
+                                        Chưa có cột điểm nào. Hãy nhấp "+ Thêm cột điểm".
+                                    </th>
+                                    @endforelse
+                                    <!-- Cột tính tổng tạm điểm quá trình -->
+                                    @if($section->gradeColumns->count() > 0)
+                                    <th class="py-2 px-3 text-center border-l bg-surface-0/50 min-w-[100px]">
+                                        <p class="text-[12px] font-bold text-indigo-700">Tổng điểm QT</p>
+                                        <p class="text-[10px] text-text-muted">(Tạm tính)</p>
+                                    </th>
                                     @endif
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <p class="text-[12px] text-text-muted">Tỷ lệ đạt được tính trên số bài đã nộp của từng bài thi.</p>
-                @endif
-            </div>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-clean/70 relative">
+                                <!-- Overlay loading indicator per row inline update could exist, but we do top progress bar -->
+                                <div x-show="isSaving" class="absolute top-0 left-0 right-0 h-0.5 bg-blue-500 z-20 animate-pulse" style="display: none;"></div>
 
-            {{-- ═══ TAB: Khiếu nại ═══ --}}
-            <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'complaints'" x-transition.opacity.duration.150ms style="display:none;">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-[18px] font-bold text-navy-900">Khiếu nại điểm thi</h3>
-                    <p class="text-[12px] text-text-muted font-medium">Danh sách các khiếu nại của lớp học này.</p>
-                </div>
+                                @foreach($section->students->sortBy('name') as $student)
+                                <tr class="hover:bg-surface-0 transition-colors group">
+                                    <td class="sticky left-0 z-10 bg-white py-2.5 px-4 border-r border-border-clean shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] group-hover:bg-surface-0 transition-colors">
+                                        <p class="text-[13px] font-semibold text-navy-900">{{ $student->name }}</p>
+                                        <p class="text-[11px] text-text-muted font-mono mt-0.5">{{ $student->student_code ?? '—' }}</p>
+                                    </td>
 
-                @if($section->complaints->isEmpty())
-                <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
-                    <x-ui-icon name="information-circle" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
-                    <p class="text-[13px] text-text-muted">Chưa có khiếu nại nào từ sinh viên trong lớp này.</p>
-                </div>
-                @else
-                <div class="overflow-x-auto border border-border-clean rounded-[8px]">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-surface-1 border-b border-border-clean">
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Sinh viên</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Điểm</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Lý do</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Trạng thái</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border-clean/70">
-                            @foreach($section->complaints as $complaint)
-                            <tr class="hover:bg-surface-0 transition-colors">
-                                <td class="py-3 px-4 align-top">
-                                    <p class="text-[13px] font-bold text-navy-900">{{ $complaint->student->name }}</p>
-                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $complaint->created_at->format('H:i d/m/y') }}</p>
-                                </td>
-                                <td class="py-3 px-4 align-top text-center">
-                                    <span class="text-[14px] font-bold text-navy-900">{{ number_format($complaint->current_score, 2) }}</span>
-                                    @if($complaint->updated_score)
-                                    <span class="block text-[11px] font-bold text-teal-600">→ {{ number_format($complaint->updated_score, 2) }}</span>
-                                    @endif
-                                </td>
-                                <td class="py-3 px-4 align-top">
-                                    <p class="text-[12px] text-text-muted line-clamp-2" title="{{ $complaint->reason }}">{{ $complaint->reason }}</p>
-                                </td>
-                                <td class="py-3 px-4 align-top text-center">
+                                    @foreach($section->gradeColumns->sortBy('order') as $col)
                                     @php
-                                    $st = match($complaint->status) {
-                                    'pending' => ['bg-yellow-50 text-yellow-700 border-yellow-200', 'Chờ'],
-                                    'resolved' => ['bg-teal-50 text-teal-700 border-teal-200', 'Xong'],
-                                    'rejected' => ['bg-red-50 text-red-700 border-red-200', 'Từ chối'],
-                                    default => ['bg-gray-50 text-gray-500 border-gray-200', 'N/A']
-                                    };
+                                    $grade = $col->studentGrades->where('student_id', $student->id)->first();
+                                    $score = $grade ? $grade->score : '';
+                                    $note = $grade ? $grade->note : '';
                                     @endphp
-                                    <span class="inline-flex items-center text-[10px] font-bold uppercase rounded-[4px] px-2 py-0.5 border {{ $st[0] }}">
-                                        {{ $st[1] }}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4 align-top text-center">
-                                    @if($complaint->status === 'pending')
-                                    <button @click="openReviewModal({{ $complaint->id }}, '{{ addslashes($complaint->student->name) }}', '{{ addslashes($complaint->reason) }}', {{ $complaint->current_score }})"
-                                        class="text-[12px] font-bold text-blue-600 hover:underline">Xử lý</button>
-                                    @else
-                                    <span class="text-[11px] text-text-muted">Đã xử lý</span>
+                                    <td class="p-0 border-r border-border-clean align-middle relative">
+                                        <div class="absolute right-0 top-0 bottom-0 w-1 bg-green-400 opacity-0 transition-opacity" :class="{'opacity-100': saved['{{$col->id}}_{{$student->id}}']}"></div>
+                                        <input type="number" step="0.01" min="0" max="10"
+                                            class="w-full h-full min-h-[46px] text-center border-none bg-transparent text-[14px] font-bold text-navy-900 focus:ring-0 focus:bg-blue-50/50 hover:bg-gray-50/50 transition-colors outline-none cursor-text
+                                            {{ $score === '' ? 'text-gray-400 font-normal placeholder:text-gray-300' : '' }}"
+                                            placeholder="-"
+                                            @can('manage', $section)
+                                            x-model="scores['{{$col->id}}_{{$student->id}}']"
+                                            @blur="saveScore({{ $col->id }}, {{ $student->id }}, $event.target.value)"
+                                            @keydown.enter="$event.target.blur()"
+                                            @endcan
+                                            @cannot('manage', $section)
+                                            value="{{ $score }}" disabled
+                                            @endcannot />
+                                        @can('manage', $section)
+                                        <input type="hidden" x-init="initialScores['{{$col->id}}_{{$student->id}}'] = '{{ $score }}'; scores['{{$col->id}}_{{$student->id}}'] = '{{ $score }}';">
+                                        @endcan
+                                    </td>
+                                    @endforeach
+
+                                    @if($section->gradeColumns->count() > 0)
+                                    <td class="py-2 px-3 text-center border-l bg-surface-0/30 align-middle">
+                                        <div class="text-[14px] font-black text-indigo-700" x-text="calculateProcessGrade({{ $student->id }})"></div>
+                                    </td>
                                     @endif
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p class="text-[12px] text-text-muted mt-2">
+                        <span class="inline-block w-2 h-2 rounded-full bg-green-400 mr-1 align-baseline"></span> Có viền xanh lá: Điểm đã được lưu tự động thành công. Tab/Click ra ngoài để lưu điểm.
+                    </p>
+                    @endif
+
+                    <x-modal name="column-modal" maxWidth="md">
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-5">
+                                <h3 class="text-[18px] font-bold text-navy-900" x-text="isEditingColumn ? 'Sửa cột điểm' : 'Thêm cột điểm mới'"></h3>
+                                <button @click="$dispatch('close-modal', 'column-modal')" class="text-text-muted hover:text-navy-900"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg></button>
+                            </div>
+
+                            <form @submit.prevent="submitColumnForm()" class="space-y-4">
+                                <div>
+                                    <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Tên cột <span class="text-red-500">*</span></label>
+                                    <input type="text" x-model="columnData.name" required class="w-full border border-border-clean rounded-[6px] px-3 py-2 text-[13px] focus:border-blue-500 focus:ring-1 focus:ring-blue-200" placeholder="VD: Giữa kỳ, Bài tập số 1...">
+                                </div>
+                                <div>
+                                    <label class="block text-[12px] font-semibold text-navy-900 mb-1.5">Trọng số (%) <span class="text-red-500">*</span></label>
+                                    <input type="number" step="0.5" min="0" max="100" x-model="columnData.weight" required class="w-full border border-border-clean rounded-[6px] px-3 py-2 text-[13px] focus:border-blue-500 focus:ring-1 focus:ring-blue-200">
+                                    <p class="text-[11px] text-text-muted mt-1">Nên tính trên tổng 100% của tất cả các cột điểm quá trình.</p>
+                                </div>
+
+                                <div class="pt-4 flex justify-end gap-2 border-t border-border-clean">
+                                    <x-button type="button" variant="ghost" @click="$dispatch('close-modal', 'column-modal')">Huỷ</x-button>
+                                    <x-button type="submit" variant="primary">
+                                        <span x-show="!isSubmittingColumn" x-text="isEditingColumn ? 'Cập nhật' : 'Thêm cột'"></span>
+                                        <span x-show="isSubmittingColumn">Đang xử lý...</span>
+                                    </x-button>
+                                </div>
+                            </form>
+                        </div>
+                    </x-modal>
                 </div>
-                @endif
-            </div>
-        </x-card>
+
+                {{-- ═══ TAB: Thống kê ═══ --}}
+                <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'statistics'" x-transition.opacity.duration.150ms style="display:none;">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-[18px] font-bold text-navy-900">Thống kê điểm bài thi</h3>
+                            <p class="text-[12px] text-text-muted font-medium mt-1">Theo từng bài thi: trung bình, cao nhất, thấp nhất và tỷ lệ đạt.</p>
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-1 text-text-muted border border-border-clean">
+                            {{ $examStatistics->count() }} bài thi
+                        </span>
+                    </div>
+
+                    @if($examStatistics->isEmpty())
+                    <div class="text-center py-12 bg-surface-0 border border-border-clean border-dashed rounded-[8px]">
+                        <p class="text-[13px] font-medium text-text-muted">Lớp này chưa có bài thi để thống kê.</p>
+                    </div>
+                    @else
+                    <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
+                        <table class="w-full text-left border-collapse min-w-[920px]">
+                            <thead>
+                                <tr class="bg-surface-1 border-b border-border-clean">
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Bài thi</th>
+                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Mốc đạt</th>
+                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Đã nộp</th>
+                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Trung bình</th>
+                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Cao nhất</th>
+                                    <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Thấp nhất</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Tỷ lệ đạt</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-clean/70">
+                                @foreach($examStatistics as $stat)
+                                @php
+                                $statusLabel = match($stat->status) {
+                                'in_progress' => ['Đang thi', 'bg-teal-50 text-teal-800 border-teal-200'],
+                                'scheduled' => ['Đã lên lịch', 'bg-blue-50 text-blue-700 border-blue-200'],
+                                'completed' => ['Đã hoàn thành', 'bg-gray-50 text-gray-700 border-gray-200'],
+                                default => ['Đã huỷ', 'bg-red-50 text-red-700 border-red-200'],
+                                };
+                                @endphp
+                                <tr class="hover:bg-surface-0 transition-colors">
+                                    <td class="py-3 px-4 align-top">
+                                        <p class="text-[13px] font-semibold text-navy-900">{{ $stat->exam_title }}</p>
+                                        <p class="text-[11px] text-text-muted mt-0.5">{{ $stat->date_range_text }} · {{ $stat->time_range_text }}</p>
+                                        <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-0.5 rounded-[4px] border mt-2 {{ $statusLabel[1] }}">
+                                            {{ $statusLabel[0] }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3 text-center text-[13px] font-semibold text-navy-900">
+                                        {{ number_format($stat->pass_threshold, 2) }}
+                                    </td>
+                                    <td class="py-3 px-3 text-center text-[13px] font-semibold text-navy-900">
+                                        {{ $stat->submitted_count }}/{{ $stat->assigned_count }}
+                                    </td>
+                                    <td class="py-3 px-3 text-center text-[13px] font-bold text-navy-900">
+                                        {{ $stat->average_score !== null ? number_format($stat->average_score, 2) : '—' }}
+                                    </td>
+                                    <td class="py-3 px-3 text-center text-[13px] font-bold text-blue-700">
+                                        {{ $stat->highest_score !== null ? number_format($stat->highest_score, 2) : '—' }}
+                                    </td>
+                                    <td class="py-3 px-3 text-center text-[13px] font-bold text-amber-700">
+                                        {{ $stat->lowest_score !== null ? number_format($stat->lowest_score, 2) : '—' }}
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        @if($stat->pass_rate !== null)
+                                        <p class="text-[14px] font-black text-teal-700">{{ number_format($stat->pass_rate, 1) }}%</p>
+                                        <p class="text-[11px] text-text-muted mt-0.5">{{ $stat->passed_count }}/{{ $stat->submitted_count }} đạt</p>
+                                        @else
+                                        <span class="text-[12px] text-text-muted">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-[12px] text-text-muted">Tỷ lệ đạt được tính trên số bài đã nộp của từng bài thi.</p>
+                    @endif
+                </div>
+
+                {{-- ═══ TAB: Khiếu nại ═══ --}}
+                <div class="p-4 sm:p-6 space-y-5" x-show="activeTab === 'complaints'" x-transition.opacity.duration.150ms style="display:none;">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-[18px] font-bold text-navy-900">Khiếu nại điểm thi</h3>
+                        <p class="text-[12px] text-text-muted font-medium">Danh sách các khiếu nại của lớp học này.</p>
+                    </div>
+
+                    @if($section->complaints->isEmpty())
+                    <div class="text-center py-12 bg-surface-0 border-[0.5px] border-border-clean border-dashed rounded-[8px]">
+                        <x-ui-icon name="information-circle" class="w-12 h-12 text-blue-100 mx-auto mb-4" />
+                        <p class="text-[13px] text-text-muted">Chưa có khiếu nại nào từ sinh viên trong lớp này.</p>
+                    </div>
+                    @else
+                    <div class="overflow-x-auto border border-border-clean rounded-[8px]">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-surface-1 border-b border-border-clean">
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Sinh viên</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Điểm</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Lý do</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Trạng thái</th>
+                                    <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-clean/70">
+                                @foreach($section->complaints as $complaint)
+                                <tr class="hover:bg-surface-0 transition-colors">
+                                    <td class="py-3 px-4 align-top">
+                                        <p class="text-[13px] font-bold text-navy-900">{{ $complaint->student->name }}</p>
+                                        <p class="text-[11px] text-text-muted mt-0.5">{{ $complaint->created_at->format('H:i d/m/y') }}</p>
+                                    </td>
+                                    <td class="py-3 px-4 align-top text-center">
+                                        <span class="text-[14px] font-bold text-navy-900">{{ number_format($complaint->current_score, 2) }}</span>
+                                        @if($complaint->updated_score)
+                                        <span class="block text-[11px] font-bold text-teal-600">→ {{ number_format($complaint->updated_score, 2) }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="py-3 px-4 align-top">
+                                        <p class="text-[12px] text-text-muted line-clamp-2" title="{{ $complaint->reason }}">{{ $complaint->reason }}</p>
+                                    </td>
+                                    <td class="py-3 px-4 align-top text-center">
+                                        @php
+                                        $st = match($complaint->status) {
+                                        'pending' => ['bg-yellow-50 text-yellow-700 border-yellow-200', 'Chờ'],
+                                        'resolved' => ['bg-teal-50 text-teal-700 border-teal-200', 'Xong'],
+                                        'rejected' => ['bg-red-50 text-red-700 border-red-200', 'Từ chối'],
+                                        default => ['bg-gray-50 text-gray-500 border-gray-200', 'N/A']
+                                        };
+                                        @endphp
+                                        <span class="inline-flex items-center text-[10px] font-bold uppercase rounded-[4px] px-2 py-0.5 border {{ $st[0] }}">
+                                            {{ $st[1] }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 align-top text-center">
+                                        @if($complaint->status === 'pending')
+                                        <button @click="openReviewModal({{ $complaint->id }}, '{{ addslashes($complaint->student->name) }}', '{{ addslashes($complaint->reason) }}', {{ $complaint->current_score }})"
+                                            class="text-[12px] font-bold text-blue-600 hover:underline">Xử lý</button>
+                                        @else
+                                        <span class="text-[11px] text-text-muted">Đã xử lý</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </div>
+            </x-card>
+        </div>
 
         @can('manage', $section)
         <x-slide-over name="create-schedule-inline-slide" title="Tạo lịch thi cho {{ $section->name ?? $section->code }}" maxWidth="2xl">
