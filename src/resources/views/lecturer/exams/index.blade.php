@@ -1,6 +1,7 @@
 <x-app-layout>
     @php
     $selectedSubjectId = (string) request()->query('subject_id', '');
+    $createExamRouteParams = $selectedSubjectId !== '' ? ['subject_id' => $selectedSubjectId] : [];
     @endphp
     <div class="py-8 bg-[#F8FAFD] min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8" x-data="subjectFilterState(@js($selectedSubjectId))">
@@ -11,7 +12,7 @@
                         {{ $selectedSubjectId ? 'Đang lọc theo môn học từ Sidebar.' : 'Tất cả đề thi của bạn trong hệ thống.' }}
                     </p>
                 </div>
-                <a href="{{ route('lecturer.exams.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-[#1A3A6B] border border-transparent rounded-lg font-bold text-white text-xs uppercase tracking-wider hover:bg-[#142d54] transition shadow-sm">
+                <a href="{{ route('lecturer.exams.create', $createExamRouteParams) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-[#1A3A6B] border border-transparent rounded-lg font-bold text-white text-xs uppercase tracking-wider hover:bg-[#142d54] transition shadow-sm">
                     <x-ui-icon name="plus" class="w-4 h-4" />
                     Thêm đề thi mới
                 </a>

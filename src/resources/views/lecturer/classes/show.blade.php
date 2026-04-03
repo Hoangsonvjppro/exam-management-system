@@ -998,7 +998,7 @@
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
                         <label class="text-[12px] font-semibold text-navy-900">Chọn ít nhất 1 câu hỏi <span class="text-red-500">*</span></label>
-                        <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">
+                        <a href="{{ route('lecturer.exams.create', ['subject_id' => $section->subject_id]) }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">
                             Mở trình tạo đầy đủ
                         </a>
                     </div>

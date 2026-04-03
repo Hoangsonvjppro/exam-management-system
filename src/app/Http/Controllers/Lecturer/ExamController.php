@@ -36,7 +36,7 @@ class ExamController extends Controller
     }
 
     // Hiển thị form tạo đề thi mới
-    public function create(): View
+    public function create(Request $request, ?CourseSection $courseSection = null): View
     {
         /** @var User $user */
         $user = \Illuminate\Support\Facades\Auth::user();
@@ -45,6 +45,18 @@ class ExamController extends Controller
             ->subjects()
             ->pluck('subjects.id')
             ->unique();
+
+        $preselectedSubjectId = null;
+        if ($courseSection) {
+            Gate::authorize('manage', $courseSection);
+            $preselectedSubjectId = (int) $courseSection->subject_id;
+        } elseif ($request->filled('subject_id')) {
+            $preselectedSubjectId = (int) $request->query('subject_id');
+        }
+
+        if (! $assignedSubjectIds->contains($preselectedSubjectId)) {
+            $preselectedSubjectId = null;
+        }
 
         $subjects = \App\Models\Subject::whereIn('id', $assignedSubjectIds)->get();
         $chapters = \App\Models\Chapter::whereIn('subject_id', $assignedSubjectIds)->orderBy('order')->get();
@@ -63,7 +75,7 @@ class ExamController extends Controller
             $availabilityMap[$key] = (int) $row->cnt;
         }
 
-        return view("lecturer.exams.create", compact('subjects', 'chapters', 'difficulties', 'availabilityMap'));
+        return view("lecturer.exams.create", compact('subjects', 'chapters', 'difficulties', 'availabilityMap', 'preselectedSubjectId'));
     }
 
     // Tạo 1 đề thi mới: phân luồng manual vs matrix
