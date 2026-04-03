@@ -7,7 +7,7 @@
 
                <a href="{{ route('lecturer.dashboard') }}" class="text-primary">Dashboard</a>
                <span>/</span>
-               <a href="{{ route('lecturer.questions.index') }}" class="bg-blue-500 text-white px-1">Questions</a>
+               <a href="{{ route('lecturer.questions.index') }}" class="">Questions</a>
 
             </nav>
             <h2 class="text-3xl font-extrabold text-primary font-headline tracking-tight"> Quản lý câu hỏi</h2>
