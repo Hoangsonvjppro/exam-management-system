@@ -4,6 +4,7 @@
     ->active()
     ->orderedForQuestionBank()
     ->get(['id', 'name', 'code']);
+    $defaultSubjectId = (string) old('subject_id', $preselectedSubjectId ?? '');
     @endphp
     <style>
         .ds-section {
@@ -360,7 +361,7 @@
                                         <select id="subject_id" name="subject_id" class="ca-select @error('subject_id') error @enderror" required>
                                             <option value="">-- Chọn môn học --</option>
                                             @foreach($subjects as $subject)
-                                            <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
+                                            <option value="{{ $subject->id }}" {{ $defaultSubjectId === (string) $subject->id ? 'selected' : '' }}>{{ $subject->name }}</option>
                                             @endforeach
                                         </select>
                                         @error('subject_id') <span class="text-error">{{ $message }}</span> @enderror

@@ -38,6 +38,10 @@
     ])
     ->values()
     ->toArray();
+
+    $fullExamBuilderParams = request()->filled('subject_id')
+    ? ['subject_id' => request()->query('subject_id')]
+    : [];
     @endphp
     @section('title', 'Quản lý Lịch Thi — EMS')
     @section('page-title', 'Lịch thi')
@@ -352,7 +356,7 @@
                             <label class="text-[12px] font-semibold text-navy-900">Chọn câu hỏi <span class="text-red-500">*</span></label>
                             <div class="flex items-center gap-3">
                                 <button type="button" class="text-[12px] font-semibold text-emerald-700 hover:text-emerald-800" @click="openQuickQuestionCreateModal()">+ Tạo câu hỏi nhanh</button>
-                                <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">Mở trình tạo đầy đủ</a>
+                                <a href="{{ route('lecturer.exams.create', $fullExamBuilderParams) }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">Mở trình tạo đầy đủ</a>
                             </div>
                         </div>
 
