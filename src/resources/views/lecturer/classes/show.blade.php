@@ -950,21 +950,29 @@
                 </div>
 
                 <div>
-                    <label class="block text-[12px] font-semibold text-navy-900 mb-1">Ghi chú</label>
                     <textarea name="notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" rows="3" placeholder="Lưu ý cho ca thi..."></textarea>
+                </div>
+
+                <div class="flex items-center gap-3 p-3 bg-surface-1 border border-border-clean rounded-lg">
+                    <input type="checkbox" id="inline-link-grade" name="link_grade_column" value="1" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <label for="inline-link-grade" class="text-[13px] font-semibold text-navy-900 cursor-pointer">Tạo cột điểm quá trình cho bài thi này</label>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4 border-t border-border-clean">
                     <x-button type="button" variant="ghost" @click="$dispatch('close-slide-over', 'create-schedule-inline-slide')">Huỷ</x-button>
                     <x-button type="submit" variant="primary" x-bind:disabled="isSubmittingSchedule">
-                        <span x-show="!isSubmittingSchedule">Tạo lịch thi</span>
-                        <span x-show="isSubmittingSchedule" class="flex items-center gap-2">
-                            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                            </svg>
-                            Đang tạo...
-                        </span>
+                        <template x-if="!isSubmittingSchedule">
+                            <span>Tạo lịch thi</span>
+                        </template>
+                        <template x-if="isSubmittingSchedule">
+                            <span class="flex items-center gap-2">
+                                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                Đang tạo...
+                            </span>
+                        </template>
                     </x-button>
                 </div>
             </form>

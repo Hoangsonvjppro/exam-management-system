@@ -65,8 +65,11 @@ class StoreExamScheduleRequest extends FormRequest
                     }
 
                     [$startAt] = $window;
-                    if ($startAt->lessThanOrEqualTo(now())) {
-                        $fail('Thời gian bắt đầu phải lớn hơn thời điểm hiện tại.');
+                    
+                    // Nới lỏng 10 phút để tránh lỗi khi GV thao tác chậm 
+                    // (Ví dụ: GV chọn 08:30 nhưng lúc bấm Lưu đã là 08:31)
+                    if ($startAt->lessThanOrEqualTo(now()->subMinutes(10))) {
+                        $fail('Thời gian bắt đầu phải lớn hơn thời điểm hiện tại (cho phép trễ đến 10 phút).');
                     }
                 },
             ],
