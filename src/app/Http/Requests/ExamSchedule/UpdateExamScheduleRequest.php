@@ -2,9 +2,12 @@
 
 namespace App\Http\Requests\ExamSchedule;
 
+use App\Models\CourseSection;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Exam;
+use App\Services\SemesterGovernanceService;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class UpdateExamScheduleRequest extends FormRequest
 {
@@ -73,6 +76,35 @@ class UpdateExamScheduleRequest extends FormRequest
             'link_grade_column' => 'nullable|boolean',
             'grade_column_id'   => 'nullable|integer',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $schedule = $this->route('schedule');
+            $section = $schedule?->courseSection;
+            $window = $this->parseScheduleWindow();
+
+            if (! $section instanceof CourseSection || ! $window) {
+                return;
+            }
+
+            try {
+                app(SemesterGovernanceService::class)->assertSectionAllowsExamScheduling($section);
+                [$startAt, $endAt] = $window;
+                app(SemesterGovernanceService::class)->assertScheduleWindowInsideSemester($section, $startAt, $endAt);
+            } catch (ValidationException $e) {
+                foreach ($e->errors() as $field => $messages) {
+                    foreach ($messages as $message) {
+                        $validator->errors()->add((string) $field, (string) $message);
+                    }
+                }
+            }
+        });
     }
 
     public function messages(): array

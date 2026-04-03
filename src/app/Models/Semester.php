@@ -135,6 +135,16 @@ class Semester extends Model
         return $this->isCurrentPeriod() || $this->isUpcomingPeriod();
     }
 
+    public function allowsExamScheduling(): bool
+    {
+        return $this->allowsCourseSectionCreation();
+    }
+
+    public function allowsGradeEditing(): bool
+    {
+        return $this->isCurrentPeriod();
+    }
+
     protected function lifecycleStatus(): Attribute
     {
         return Attribute::get(function (): string {

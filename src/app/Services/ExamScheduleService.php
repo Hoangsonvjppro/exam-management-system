@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class ExamScheduleService
 {
+    public function __construct(
+        private readonly SemesterGovernanceService $semesterGovernanceService,
+    ) {}
+
     /**
      * Tạo lịch thi mới cho 1 đề thi và áp dụng cho nhiều lớp.
      */
@@ -21,6 +25,12 @@ class ExamScheduleService
 
         DB::transaction(function () use ($exam, $data, $courseSectionIds, &$schedules) {
             foreach ($courseSectionIds as $sectionId) {
+                $section = \App\Models\CourseSection::query()
+                    ->with('semester')
+                    ->findOrFail($sectionId);
+
+                $this->semesterGovernanceService->assertSectionAllowsExamScheduling($section);
+
                 $scheduleData = $data;
                 unset($scheduleData['course_section_ids']);
                 $scheduleData['course_section_id'] = $sectionId;
@@ -62,6 +72,9 @@ class ExamScheduleService
      */
     public function updateSchedule(ExamSchedule $schedule, array $data): ExamSchedule
     {
+        $schedule->loadMissing('courseSection.semester', 'exam');
+        $this->semesterGovernanceService->assertScheduleCanMutate($schedule);
+
         $schedule->update($data);
 
         if (!empty($data['link_grade_column'])) {
@@ -115,6 +128,9 @@ class ExamScheduleService
 
     public function deleteSchedule(ExamSchedule $schedule): void
     {
+        $schedule->loadMissing('courseSection.semester');
+        $this->semesterGovernanceService->assertScheduleCanMutate($schedule);
+
         if (! $schedule->can_edit) {
             throw new \DomainException('Không thể xóa ca thi đã bắt đầu hoặc đã kết thúc.');
         }
@@ -124,6 +140,9 @@ class ExamScheduleService
 
     public function cancelSchedule(ExamSchedule $schedule): ExamSchedule
     {
+        $schedule->loadMissing('courseSection.semester');
+        $this->semesterGovernanceService->assertScheduleCanMutate($schedule);
+
         return DB::transaction(function () use ($schedule) {
             $schedule->update(['status' => 'cancelled']);
 
@@ -139,6 +158,9 @@ class ExamScheduleService
      */
     public function autoAssignStudents(ExamSchedule $schedule): int
     {
+        $schedule->loadMissing('courseSection.semester');
+        $this->semesterGovernanceService->assertScheduleCanMutate($schedule);
+
         $courseSection = $schedule->courseSection;
 
         if (! $courseSection) {
@@ -176,6 +198,9 @@ class ExamScheduleService
      */
     public function syncAssignedStudents(ExamSchedule $schedule, \Illuminate\Support\Collection $studentIds): int
     {
+        $schedule->loadMissing('courseSection.semester');
+        $this->semesterGovernanceService->assertScheduleCanMutate($schedule);
+
         return DB::transaction(function () use ($schedule, $studentIds) {
             // Xóa toàn bộ assignment cũ
             $schedule->scheduleStudents()->delete();
