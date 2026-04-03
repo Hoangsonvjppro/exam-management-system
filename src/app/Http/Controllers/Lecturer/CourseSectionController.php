@@ -47,7 +47,10 @@ class CourseSectionController extends Controller
         $user = Auth::user();
 
         $subjects = $user->subjects()->orderBy('subjects.name')->get(['subjects.id', 'subjects.code', 'subjects.name']);
-        $semesters = \App\Models\Semester::orderByDesc('start_date')->get();
+        $semesters = \App\Models\Semester::query()
+            ->openForCourseSectionCreation()
+            ->orderByDesc('start_date')
+            ->get();
 
         return view('lecturer.classes.create', compact('subjects', 'semesters'));
     }

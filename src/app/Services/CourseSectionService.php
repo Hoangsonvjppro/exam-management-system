@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CourseSection;
+use App\Models\Semester;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -22,6 +23,13 @@ class CourseSectionService
      */
     public function createCourseSection(User $lecturer, array $data): CourseSection
     {
+        $semester = Semester::query()->find($data['semester_id']);
+        if (! $semester || ! $semester->allowsCourseSectionCreation()) {
+            throw ValidationException::withMessages([
+                'semester_id' => 'Chỉ có thể tạo lớp học phần cho học kỳ hiện tại hoặc sắp tới.',
+            ]);
+        }
+
         $assignedSubjectIds = $lecturer->subjects()
             ->pluck('subjects.id')
             ->map(fn($id) => (int) $id)

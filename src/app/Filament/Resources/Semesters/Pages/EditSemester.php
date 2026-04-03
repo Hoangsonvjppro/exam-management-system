@@ -3,7 +3,8 @@
 namespace App\Filament\Resources\Semesters\Pages;
 
 use App\Filament\Resources\Semesters\SemesterResource;
-use App\Models\Semester;
+use App\Services\SemesterLifecycleService;
+use App\Services\SemesterValidationService;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -14,18 +15,23 @@ class EditSemester extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->disabled(fn(): bool => $this->record->courseSections()->exists())
+                ->tooltip(fn(): ?string => $this->record->courseSections()->exists()
+                    ? 'Không thể xóa học kỳ đã phát sinh lớp học phần.'
+                    : null),
         ];
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        if (! empty($data['is_current'])) {
-            Semester::query()
-                ->whereKeyNot($this->record->getKey())
-                ->update(['is_current' => false]);
-        }
+        app(SemesterValidationService::class)->validateForUpsert($data, (int) $this->record->getKey());
 
         return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        app(SemesterLifecycleService::class)->syncAll();
     }
 }

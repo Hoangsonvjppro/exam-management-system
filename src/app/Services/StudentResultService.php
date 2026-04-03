@@ -38,7 +38,7 @@ class StudentResultService
         // Chọn học kỳ
         $currentSemester = $semesterId
             ? $semesters->firstWhere('id', $semesterId)
-            : ($semesters->firstWhere('is_current', true) ?? $semesters->first());
+            : ($semesters->first(fn(Semester $semester): bool => $semester->isCurrentPeriod()) ?? $semesters->first());
 
         if (!$currentSemester) {
             $currentSemester = $semesters->first();

@@ -21,6 +21,7 @@ class SemesterSeeder extends Seeder
                 'term' => 1,
                 'start_date' => '2025-09-01',
                 'end_date' => '2026-01-15',
+                'status' => 'ended',
                 'is_current' => false,
             ],
             [
@@ -29,6 +30,7 @@ class SemesterSeeder extends Seeder
                 'term' => 2,
                 'start_date' => '2026-02-17',
                 'end_date' => '2026-06-30',
+                'status' => 'current',
                 'is_current' => true,
             ],
             [
@@ -37,6 +39,7 @@ class SemesterSeeder extends Seeder
                 'term' => 3,
                 'start_date' => '2026-07-06',
                 'end_date' => '2026-08-28',
+                'status' => 'upcoming',
                 'is_current' => false,
             ],
         ];

@@ -7,17 +7,13 @@ use App\Filament\Resources\Semesters\Pages\EditSemester;
 use App\Filament\Resources\Semesters\Pages\ListSemesters;
 use App\Filament\Support\HasAdminCrudPermissions;
 use App\Models\Semester;
-use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -79,11 +75,8 @@ class SemesterResource extends Resource
                 ->label('Ngày kết thúc')
                 ->native(false)
                 ->required()
-                ->afterOrEqual('start_date'),
-
-            Toggle::make('is_current')
-                ->label('Học kỳ hiện tại')
-                ->default(false),
+                ->afterOrEqual('start_date')
+                ->helperText('Trạng thái current / upcoming / ended được hệ thống tự động tính theo ngày.'),
         ]);
     }
 
@@ -120,11 +113,41 @@ class SemesterResource extends Resource
                     ->date('d/m/Y')
                     ->sortable(),
 
-                IconColumn::make('is_current')
-                    ->label('Học kỳ hiện tại')
-                    ->boolean(),
+                TextColumn::make('lifecycle_status')
+                    ->label('Trạng thái')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        Semester::STATUS_CURRENT => 'success',
+                        Semester::STATUS_UPCOMING => 'warning',
+                        Semester::STATUS_ENDED => 'gray',
+                        Semester::STATUS_ARCHIVED => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn(string $state) => match ($state) {
+                        Semester::STATUS_CURRENT => 'Đang diễn ra',
+                        Semester::STATUS_UPCOMING => 'Sắp tới',
+                        Semester::STATUS_ENDED => 'Đã qua',
+                        Semester::STATUS_ARCHIVED => 'Lưu trữ',
+                        default => $state,
+                    })
+                    ->alignCenter(),
+
+                TextColumn::make('course_sections_count')
+                    ->label('Số lớp HP')
+                    ->counts('courseSections')
+                    ->badge()
+                    ->color('info')
+                    ->alignCenter(),
             ])
             ->filters([
+                SelectFilter::make('status')
+                    ->label('Trạng thái')
+                    ->options([
+                        Semester::STATUS_CURRENT => 'Đang diễn ra',
+                        Semester::STATUS_UPCOMING => 'Sắp tới',
+                        Semester::STATUS_ENDED => 'Đã qua',
+                        Semester::STATUS_ARCHIVED => 'Lưu trữ',
+                    ]),
                 SelectFilter::make('term')
                     ->label('Học kỳ')
                     ->options([
@@ -133,15 +156,14 @@ class SemesterResource extends Resource
                         3 => 'HK He',
                     ]),
             ])
-            ->defaultSort('year', 'desc')
+            ->defaultSort('start_date', 'desc')
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                DeleteAction::make()
+                    ->disabled(fn(Semester $record): bool => $record->courseSections()->exists())
+                    ->tooltip(fn(Semester $record): ?string => $record->courseSections()->exists()
+                        ? 'Không thể xóa học kỳ đã phát sinh lớp học phần.'
+                        : null),
             ]);
     }
 
