@@ -19,7 +19,7 @@ class EnrollmentService
     ) {}
 
     /**
-     * @return array{type:string,message:string}
+     * @return array{type:string,message:string,section_id?:int}
      */
     public function joinClass(User $user, string $inviteCode): array
     {
@@ -100,12 +100,14 @@ class EnrollmentService
 
                 return [
                     'type' => 'success',
+                    'section_id' => $section->id,
                     'message' => 'Bạn đã tham gia lại lớp học phần thành công.',
                 ];
             }
 
             return [
                 'type' => 'success',
+                'section_id' => $section->id,
                 'message' => 'Ban da tham gia lop hoc phan nay roi.',
             ];
         }
@@ -121,6 +123,7 @@ class EnrollmentService
 
         return [
             'type' => 'success',
+            'section_id' => $section->id,
             'message' => 'Tham gia lop hoc phan thanh cong.',
         ];
     }

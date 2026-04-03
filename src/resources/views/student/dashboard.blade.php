@@ -59,7 +59,7 @@
             </div>
             @endif
 
-            <form action="{{ route('student.join-class') }}" method="POST" class="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+            <form action="{{ route('student.join-class') }}" method="POST" x-data="{ joining: false }" @submit="joining = true" class="flex flex-col sm:flex-row items-start sm:items-end gap-3">
                 @csrf
                 <div class="flex-1 w-full sm:w-auto">
                     <label for="invite_code" class="block text-xs font-medium text-[#1A3A6B] mb-1">Mã mời lớp</label>
@@ -67,6 +67,10 @@
                         id="invite_code"
                         name="invite_code"
                         value="{{ old('invite_code') }}"
+                        autocomplete="off"
+                        autocapitalize="characters"
+                        spellcheck="false"
+                        x-on:keydown.enter.prevent.stop="$el.form && $el.form.requestSubmit()"
                         placeholder="Nhập mã mời do giảng viên cung cấp"
                         class="w-full border-[1.5px] rounded-[6px] px-3 py-2 text-sm text-[#1A3A6B] bg-white
                                   placeholder:text-[#6B7C99]/60
@@ -78,6 +82,8 @@
                     @enderror
                 </div>
                 <button type="submit"
+                    :disabled="joining"
+                    :class="joining ? 'opacity-70 cursor-not-allowed' : ''"
                     class="inline-flex items-center gap-2 px-5 py-2 bg-[#1A3A6B] text-white text-sm font-medium rounded-[6px]
                                hover:bg-[#0B2347] active:scale-[0.98] transition-all shadow-sm whitespace-nowrap">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

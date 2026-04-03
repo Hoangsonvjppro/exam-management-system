@@ -30,6 +30,13 @@ class StudentEnrollmentController extends Controller
         }
 
         if ($result['type'] === 'success') {
+            $sectionId = isset($result['section_id']) ? (int) $result['section_id'] : null;
+
+            if ($sectionId && $sectionId > 0) {
+                return redirect()->route('student.classes.show', ['section' => $sectionId])
+                    ->with('success', $result['message']);
+            }
+
             return back()->with('success', $result['message']);
         }
 
