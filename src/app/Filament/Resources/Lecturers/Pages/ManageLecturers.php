@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Lecturers\Pages;
 
+use App\Filament\Imports\LecturerImporter;
 use App\Filament\Resources\Lecturers\LecturersResource;
 use Filament\Actions\CreateAction;
+use Filament\Actions\ImportAction;
 use Filament\Resources\Pages\ManageRecords;
 use Illuminate\Support\Carbon;
 
@@ -30,6 +32,12 @@ class ManageLecturers extends ManageRecords
                 ->after(function ($record) {
                     $record->assignRole('lecturer');
                 }),
+            ImportAction::make('import_lecturers')
+                ->importer(LecturerImporter::class)
+                ->label('Import giảng viên')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('primary')
+                ->modalHeading('Import giảng viên từ CSV'),
         ];
     }
 }

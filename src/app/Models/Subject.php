@@ -42,6 +42,17 @@ class Subject extends Model
         return $query->orderBy('name');
     }
 
+    public function scopeSearch(Builder $query, ?string $keyword): Builder
+    {
+        if (blank($keyword)) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $q) use ($keyword) {
+            $q->where('subject_code', 'like', "%{$keyword}%")
+                ->orWhere('name', 'like', "%{$keyword}%");
+        });
+    }
     public function chapters(): HasMany
     {
         return $this->hasMany(Chapter::class);
