@@ -507,14 +507,14 @@
                         </div>
                         <h4 class="text-[13px] font-bold text-navy-900">Xin nghỉ ngày: {{ $req->date->format('d/m/Y') }}</h4>
                         <p class="text-[12px] text-text-muted mt-0.5">Lý do: {{ $req->reason }}</p>
-                        @if($req->proof_image_path)
+                        @if($req->proof_image_url)
                         <div class="mt-2 flex flex-col gap-2">
-                            <a href="{{ asset('storage/' . $req->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold text-blue-700 hover:text-blue-900">
+                            <a href="{{ $req->proof_image_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-1.5 text-[12px] font-semibold text-blue-700 hover:text-blue-900">
                                 <x-ui-icon name="eye" class="w-4 h-4" />
                                 Xem ảnh minh chứng
                             </a>
-                            <a href="{{ asset('storage/' . $req->proof_image_path) }}" target="_blank" rel="noopener noreferrer" class="w-fit">
-                                <img src="{{ asset('storage/' . $req->proof_image_path) }}" alt="Ảnh minh chứng xin nghỉ" class="w-24 h-24 rounded-[8px] border border-border-clean object-cover" loading="lazy">
+                            <a href="{{ $req->proof_image_url }}" target="_blank" rel="noopener noreferrer" class="w-fit">
+                                <img src="{{ $req->proof_image_url }}" alt="Ảnh minh chứng xin nghỉ" class="w-24 h-24 rounded-[8px] border border-border-clean object-cover" loading="lazy">
                             </a>
                         </div>
                         @endif
