@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Exam;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 use Illuminate\Validation\Rule;
@@ -22,11 +23,24 @@ class UpdateExamRequest extends FormRequest
 
     public function rules(): array
     {
-        $lecturerSubjectIds = \Illuminate\Support\Facades\Auth::user()->courseSections()->pluck('subject_id')->unique()->toArray();
+        $authUser = \Illuminate\Support\Facades\Auth::user();
+        $lecturerSubjectIds = [];
+
+        if ($authUser instanceof User) {
+            $lecturerSubjectIds = $authUser
+                ->subjects()
+                ->pluck('subjects.id')
+                ->map(fn($id) => (int) $id)
+                ->unique()
+                ->toArray();
+        }
+
         $currentExam = $this->route('exam');
         if ($currentExam) {
-            $lecturerSubjectIds[] = $currentExam->subject_id;
+            $lecturerSubjectIds[] = (int) $currentExam->subject_id;
         }
+
+        $subjectId = (int) $this->input('subject_id');
 
         $canEditStructure = (bool) ($currentExam?->canEditStructure());
 
@@ -50,18 +64,37 @@ class UpdateExamRequest extends FormRequest
 
             if ($this->input('creation_mode') === 'matrix') {
                 $rules['matrix']                    = 'required|array|min:1';
-                $rules['matrix.*.chapter_id']       = 'nullable|exists:chapters,id';
+                $rules['matrix.*.chapter_id']       = [
+                    'nullable',
+                    Rule::exists('chapters', 'id')->where(function ($query) use ($subjectId): void {
+                        if ($subjectId > 0) {
+                            $query->where('subject_id', $subjectId);
+                        }
+                    }),
+                ];
                 $rules['matrix.*.difficulty']        = 'required|in:remember,understand,apply,analyze';
                 $rules['matrix.*.question_type_id']  = 'nullable|exists:question_types,id';
                 $rules['matrix.*.question_count']    = 'required|integer|min:1';
             } else {
                 $rules['question_ids']   = 'required|array|min:1';
-                $rules['question_ids.*'] = 'exists:questions,id';
+                $rules['question_ids.*'] = [
+                    Rule::exists('questions', 'id')->where(function ($query) use ($subjectId): void {
+                        if ($subjectId > 0) {
+                            $query->where('subject_id', $subjectId);
+                        }
+                    }),
+                ];
             }
         } else {
             $rules['creation_mode'] = 'nullable|in:manual,matrix';
             $rules['question_ids']   = 'nullable|array';
-            $rules['question_ids.*'] = 'exists:questions,id';
+            $rules['question_ids.*'] = [
+                Rule::exists('questions', 'id')->where(function ($query) use ($subjectId): void {
+                    if ($subjectId > 0) {
+                        $query->where('subject_id', $subjectId);
+                    }
+                }),
+            ];
             $rules['matrix']         = 'nullable|array';
         }
 
@@ -75,7 +108,7 @@ class UpdateExamRequest extends FormRequest
             'duration_minutes.required' => 'Thời gian làm bài là bắt buộc.',
             'duration_minutes.min'     => 'Thời gian làm bài phải ít nhất 1 phút.',
             'subject_id.required'      => 'Môn học là bắt buộc.',
-            'subject_id.exists'        => 'Môn học không tồn tại.',
+            'subject_id.exists'        => 'Bạn chỉ có thể cập nhật đề cho các môn được phân công.',
             'exam_type.required'       => 'Loại đề thi là bắt buộc.',
             'exam_type.in'             => 'Loại đề thi không hợp lệ.',
             'creation_mode.required'   => 'Chế độ tạo đề là bắt buộc.',

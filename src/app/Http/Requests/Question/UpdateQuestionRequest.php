@@ -17,8 +17,16 @@ class UpdateQuestionRequest extends FormRequest
      */
     public function rules(): array
     {
+        $assignedSubjectIds = $this->user()
+            ? $this->user()->subjects()->pluck('subjects.id')->map(fn($id) => (int) $id)->all()
+            : [];
+
         return [
-            'subject_id' => ['required', 'integer', Rule::exists('subjects', 'id')],
+            'subject_id' => [
+                'required',
+                'integer',
+                Rule::exists('subjects', 'id')->where(fn($query) => $query->whereIn('id', $assignedSubjectIds)),
+            ],
             'chapter_id' => [
                 'nullable',
                 'integer',
@@ -31,7 +39,7 @@ class UpdateQuestionRequest extends FormRequest
             'question_type_id' => ['required', 'integer', Rule::exists('question_types', 'id')],
             'content' => ['required', 'string', 'min:5'],
             'difficulty' => ['required', 'string', Rule::in(['remember', 'understand', 'apply', 'analyze'])],
-            
+
             // Validate options array structure coming from the form
             'options' => ['required', 'array', 'min:2'],
             'options.*.content' => ['required', 'string'],

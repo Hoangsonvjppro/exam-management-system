@@ -8,13 +8,33 @@ use App\Models\ExamAttempt;
 use App\Models\Question;
 use App\Models\QuestionType;
 use App\Models\Subject;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class QuestionBankQueryService
 {
+    /**
+     * @return array<int>
+     */
+    private function getAssignedSubjectIds(): array
+    {
+        $user = Auth::user();
+        if (! $user instanceof User) {
+            return [];
+        }
+
+        return $user->subjects()
+            ->pluck('subjects.id')
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     /**
      * @param array<string, mixed> $filters
      * @return array{
@@ -26,14 +46,16 @@ class QuestionBankQueryService
     public function getIndexData(array $filters): array
     {
         $subjectCode = $filters['sub-sel-ques'] ?? null;
+        $assignedSubjectIds = $this->getAssignedSubjectIds();
 
         $subjects = Subject::query()
-            ->whereHas('courseSections', fn($q) => $q->where('lecturer_id', auth()->id()))
+            ->whereIn('id', $assignedSubjectIds)
             ->orderedForQuestionBank()
             ->get();
 
         $chapters = Chapter::query()
             ->orderedForQuestionBank()
+            ->whereIn('subject_id', $assignedSubjectIds)
             ->forSubjectCode($subjectCode)
             ->get();
 
@@ -66,13 +88,16 @@ class QuestionBankQueryService
      */
     public function getFormData(): array
     {
+        $assignedSubjectIds = $this->getAssignedSubjectIds();
+
         $subjects = Subject::query()
-            ->whereHas('courseSections', fn($q) => $q->where('lecturer_id', auth()->id()))
+            ->whereIn('id', $assignedSubjectIds)
             ->orderedForQuestionBank()
             ->get(['id', 'name', 'code']);
 
         $chapters = Chapter::query()
             ->with('subject:id,name')
+            ->whereIn('subject_id', $assignedSubjectIds)
             ->orderedForQuestionBank()
             ->get(['id', 'subject_id', 'name']);
 
@@ -173,12 +198,14 @@ class QuestionBankQueryService
      */
     public function getFilteredQuestionsQuery(array $filters): Builder
     {
+        $assignedSubjectIds = $this->getAssignedSubjectIds();
         $subjectCode = $filters['sub-sel-ques'] ?? null;
         $chapterId = $filters['chap-sel-ques'] ?? null;
         $difficultyFilter = $filters['diff-sel-ques'] ?? null;
         $keyword = trim((string) ($filters['q'] ?? ''));
 
         return Question::query()
+            ->whereIn('subject_id', $assignedSubjectIds)
             ->when($subjectCode, function (Builder $query) use ($subjectCode) {
                 $query->whereHas('subject', function (Builder $subjectQuery) use ($subjectCode) {
                     $subjectQuery->where('code', $subjectCode);

@@ -2,42 +2,63 @@
 
 namespace Database\Seeders;
 
+use App\Models\Department;
+use App\Models\StudentClass;
 use App\Models\User;
-use Illuminate\Database\Seeder;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 
 /**
  * ============================================================
- * UserSeeder — Tạo 3 Giảng viên + 20 Sinh viên
+ * UserSeeder — Seed tài khoản theo domain mới
  * ============================================================
- * Dữ liệu đầy đủ các trường: name, email, password,
- * lecturer_code/student_code, class_name, date_of_birth,
- * department, phone, email_verified_at.
+ * - Giảng viên: do admin cấp tài khoản (đăng nhập mã GV + mật khẩu)
+ * - Sinh viên: đăng nhập Google, sau đó tự hoàn tất hồ sơ
+ *   (MSSV + họ tên đầy đủ)
  * ============================================================
  */
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // ─── 1. Tạo 3 Giảng viên ────────────────────────────
+        $departmentId = Department::query()
+            ->where('code', 'CT')
+            ->value('id');
+
+        $studentClasses = StudentClass::query()
+            ->orderByDesc('academic_year')
+            ->orderBy('class_group')
+            ->get();
+
+        $lecturerCount = $this->seedLecturers($departmentId);
+        [$onboardedCount, $pendingCount] = $this->seedStudents($departmentId, $studentClasses);
+
+        $this->command->info("✅ Đã seed {$lecturerCount} tài khoản giảng viên do admin cấp (mật khẩu tạm thời: password).");
+        $this->command->info("✅ Đã seed {$onboardedCount} sinh viên đã hoàn tất onboarding Google.");
+        $this->command->info("✅ Đã seed {$pendingCount} tài khoản Google mới chưa hoàn tất onboarding.");
+    }
+
+    private function seedLecturers(?int $departmentId): int
+    {
         $lecturers = [
             [
-                'email'         => 'Sang@gmail.com',
-                'name'          => 'Nguyễn Thanh Sang',
-                'lecturer_code' => 'GV_SANG_001',
+                'email'         => 'sang@gmail.com',
+                'name'          => 'Nguyen Thanh Sang',
+                'lecturer_code' => 'GV_001',
                 'phone'         => '0901000001',
                 'date_of_birth' => '1985-03-15',
             ],
             [
-                'email'         => 'gv2@gmail.com',
-                'name'          => 'Trần Văn Hai',
+                'email'         => 'hai.lecturer@ems.edu.vn',
+                'name'          => 'Tran Van Hai',
                 'lecturer_code' => 'GV_002',
                 'phone'         => '0901000002',
                 'date_of_birth' => '1980-07-22',
             ],
             [
-                'email'         => 'gv3@gmail.com',
-                'name'          => 'Lê Thị Ba',
+                'email'         => 'ba.lecturer@ems.edu.vn',
+                'name'          => 'Le Thi Ba',
                 'lecturer_code' => 'GV_003',
                 'phone'         => '0901000003',
                 'date_of_birth' => '1988-11-10',
@@ -45,61 +66,129 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($lecturers as $data) {
-            $dob = Carbon::parse($data['date_of_birth']);
-            $password = $dob->format('dmY'); // e.g. 15031985
-
             $lecturer = User::updateOrCreate(
-                ['email' => $data['email']],
+                ['lecturer_code' => $data['lecturer_code']],
                 [
                     'name'              => $data['name'],
-                    'password'          => $password,
+                    'email'             => $data['email'],
+                    'password'          => 'password',
+                    'google_id'         => null,
+                    'google_avatar'     => null,
+                    'student_code'      => null,
                     'lecturer_code'     => $data['lecturer_code'],
-                    'department_id'        => '1',
+                    'student_class_id'  => null,
+                    'department_id'     => $departmentId,
                     'phone'             => $data['phone'],
                     'date_of_birth'     => $data['date_of_birth'],
                     'is_active'         => true,
+                    'must_change_password' => true,
+                    'password_changed_at'  => null,
                     'email_verified_at' => now(),
                 ]
             );
+
             $lecturer->syncRoles(['lecturer']);
         }
-        $this->command->info('✅ Tạo thành công 3 Giảng viên (Mật khẩu = ngày sinh ddMMyyyy)');
 
-        // ─── 2. Tạo 20 Sinh viên ────────────────────────────
+        return count($lecturers);
+    }
+
+    /**
+     * @return array{int, int}
+     */
+    private function seedStudents(?int $departmentId, Collection $studentClasses): array
+    {
         $studentNames = [
-            'Nguyễn Văn An',    'Trần Thị Bình',   'Lê Hoàng Cường',
-            'Phạm Minh Đức',    'Hoàng Thị Em',    'Võ Quang Phúc',
-            'Đặng Ngọc Giàu',   'Bùi Thanh Hà',    'Ngô Đình Khôi',
-            'Dương Thị Lan',    'Trương Quốc Minh', 'Lý Thị Ngọc',
-            'Hồ Văn Phong',     'Mai Thị Quỳnh',   'Tạ Đức Rạng',
-            'Châu Minh Sơn',    'Đinh Thị Trang',   'Phan Văn Uy',
-            'Vũ Thị Vân',       'Lưu Trọng Xuân',
+            'Nguyen Van An',
+            'Tran Thi Binh',
+            'Le Hoang Cuong',
+            'Pham Minh Duc',
+            'Hoang Thi Em',
+            'Vo Quang Phuc',
+            'Dang Ngoc Giau',
+            'Bui Thanh Ha',
+            'Ngo Dinh Khoi',
+            'Duong Thi Lan',
+            'Truong Quoc Minh',
+            'Ly Thi Ngoc',
+            'Ho Van Phong',
+            'Mai Thi Quynh',
+            'Ta Duc Rang',
+            'Chau Minh Son',
+            'Dinh Thi Trang',
+            'Phan Van Uy',
+            'Vu Thi Van',
+            'Luu Trong Xuan',
         ];
 
-        $classes = ['CNTT-K20A', 'CNTT-K20B', 'CNTT-K21A', 'CNTT-K21B'];
+        foreach ($studentNames as $index => $name) {
+            $order = $index + 1;
+            $studentCode = 'SV2026' . str_pad((string) $order, 3, '0', STR_PAD_LEFT);
+            $googleId = 'google-student-2026-' . str_pad((string) $order, 3, '0', STR_PAD_LEFT);
+            $classId = null;
 
-        for ($i = 1; $i <= 20; $i++) {
-            $studentCode = 'SV2026' . str_pad($i, 3, '0', STR_PAD_LEFT);
-            $dobString = '200' . rand(0, 4) . '-' . str_pad(rand(1, 12), 2, '0', STR_PAD_LEFT) . '-' . str_pad(rand(1, 28), 2, '0', STR_PAD_LEFT);
-            $dob = Carbon::parse($dobString);
-            $password = $dob->format('dmY'); // e.g. 05062003
+            if ($studentClasses->isNotEmpty()) {
+                $classId = $studentClasses[($order - 1) % $studentClasses->count()]->id;
+            }
+
+            $dob = Carbon::create(
+                year: 2002 + (($order - 1) % 4),
+                month: (($order - 1) % 12) + 1,
+                day: (($order - 1) % 28) + 1,
+            )->toDateString();
 
             $student = User::updateOrCreate(
-                ['email' => "sv{$i}@gmail.com"],
+                ['student_code' => $studentCode],
                 [
-                    'name'              => $studentNames[$i - 1],
-                    'password'          => $password,
+                    'name'              => $name,
+                    'email'             => 'sv' . str_pad((string) $order, 3, '0', STR_PAD_LEFT) . '@ems.edu.vn',
+                    'password'          => null,
+                    'google_id'         => $googleId,
+                    'google_avatar'     => 'https://i.pravatar.cc/150?u=' . $googleId,
                     'student_code'      => $studentCode,
-                    'date_of_birth'     => $dobString,
-                    'phone'             => '090200' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                    'lecturer_code'     => null,
+                    'date_of_birth'     => $dob,
+                    'phone'             => '0902' . str_pad((string) $order, 6, '0', STR_PAD_LEFT),
                     'is_active'         => true,
+                    'must_change_password' => false,
+                    'password_changed_at'  => null,
                     'email_verified_at' => now(),
-                    'department_id'     => '1',
-                    'student_class_id'  => '7',
+                    'department_id'     => $departmentId,
+                    'student_class_id'  => $classId,
                 ]
             );
+
             $student->syncRoles(['student']);
         }
-        $this->command->info('✅ Tạo thành công 20 Sinh viên (Mật khẩu = ngày sinh ddMMyyyy)');
+
+        $pendingGoogleAccounts = 5;
+        for ($i = 1; $i <= $pendingGoogleAccounts; $i++) {
+            $email = 'pending.sv' . str_pad((string) $i, 2, '0', STR_PAD_LEFT) . '@ems.edu.vn';
+            $googleId = 'google-pending-2026-' . str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+
+            $student = User::updateOrCreate(
+                ['email' => $email],
+                [
+                    'name'              => 'Google User ' . str_pad((string) $i, 2, '0', STR_PAD_LEFT),
+                    'password'          => null,
+                    'google_id'         => $googleId,
+                    'google_avatar'     => 'https://i.pravatar.cc/150?u=' . $googleId,
+                    'student_code'      => null,
+                    'lecturer_code'     => null,
+                    'phone'             => null,
+                    'date_of_birth'     => null,
+                    'department_id'     => null,
+                    'student_class_id'  => null,
+                    'is_active'         => true,
+                    'must_change_password' => false,
+                    'password_changed_at'  => null,
+                    'email_verified_at' => now(),
+                ]
+            );
+
+            $student->syncRoles(['student']);
+        }
+
+        return [count($studentNames), $pendingGoogleAccounts];
     }
 }

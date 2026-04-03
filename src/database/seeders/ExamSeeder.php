@@ -8,7 +8,6 @@ use App\Models\ExamQuestion;
 use App\Models\Question;
 use App\Models\QuestionOption;
 use App\Models\Subject;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -31,15 +30,6 @@ class ExamSeeder extends Seeder
 {
     public function run(): void
     {
-        // ─── Lấy giảng viên ──────────────────────────────────
-        $lecturers = User::whereHas('roles', fn($q) => $q->where('name', 'lecturer'))
-            ->orderBy('id')->get();
-
-        if ($lecturers->isEmpty()) {
-            $this->command->warn('⚠ Không tìm thấy giảng viên. Bỏ qua ExamSeeder.');
-            return;
-        }
-
         // ─── Lấy danh sách lớp HP ────────────────────────────
         $courseSections = CourseSection::with(['subject', 'students'])->get();
         if ($courseSections->isEmpty()) {
@@ -58,7 +48,6 @@ class ExamSeeder extends Seeder
             passPoints: 5.00,
             status: 'published',
             examType: 'official',
-            lecturer: $lecturers[0],           // GV Sang
             courseSections: $courseSections,
             examDate: now()->addDays(7)->format('Y-m-d'),
             startTime: '08:00:00',
@@ -76,7 +65,6 @@ class ExamSeeder extends Seeder
             passPoints: 4.00,
             status: 'published',
             examType: 'practice',
-            lecturer: $lecturers[min(2, $lecturers->count() - 1)], // GV Ba
             courseSections: $courseSections,
             examDate: now()->addDays(3)->format('Y-m-d'),
             startTime: '14:00:00',
@@ -96,7 +84,6 @@ class ExamSeeder extends Seeder
             passPoints: 5.00,
             status: 'draft',
             examType: 'official',
-            lecturer: $lecturers[min(1, $lecturers->count() - 1)], // GV Hai
             courseSections: $courseSections,
         );
 
@@ -113,7 +100,6 @@ class ExamSeeder extends Seeder
         float $passPoints,
         string $status,
         string $examType,
-        User $lecturer,
         $courseSections,
         ?string $examDate = null,
         ?string $startTime = null,
@@ -127,11 +113,26 @@ class ExamSeeder extends Seeder
             return;
         }
 
+        $sectionForSubject = $courseSections->first(fn($cs) => (int) $cs->subject_id === (int) $subject->id);
+        $lecturerId = $sectionForSubject?->lecturer_id;
+
+        if (! $lecturerId) {
+            $lecturerId = $subject->lecturers()
+                ->whereHas('roles', fn($q) => $q->where('name', 'lecturer'))
+                ->orderBy('users.id')
+                ->value('users.id');
+        }
+
+        if (! $lecturerId) {
+            $this->command->warn("  ⚠ Môn {$subjectCode} chưa có giảng viên được phân công. Bỏ qua.");
+            return;
+        }
+
         // ─── Tạo đề thi ──────────────────────────────────────
         $exam = Exam::updateOrCreate(
             ['title' => $title, 'subject_id' => $subject->id],
             [
-                'created_by'               => $lecturer->id,
+                'created_by'               => $lecturerId,
                 'description'              => $description,
                 'duration_minutes'         => $durationMinutes,
                 'status'                   => $status,
@@ -171,7 +172,7 @@ class ExamSeeder extends Seeder
         // ─── Tạo lịch thi (chỉ cho published) ───────────────
         if ($status === 'published' && $examDate && $startTime && $endTime) {
             // Tìm lớp HP của môn này
-            $section = $courseSections->first(fn($cs) => $cs->subject_id === $subject->id);
+            $section = $sectionForSubject;
 
             if ($section) {
                 $schedule = DB::table('exam_schedules')->updateOrInsert(
@@ -222,7 +223,7 @@ class ExamSeeder extends Seeder
     }
 
     // ─── Tạo snapshot JSON cho exam_questions ─────────────────
-    private function buildSnapshot(Question $question): array
+    private function buildSnapshot($question): array
     {
         $options = QuestionOption::where('question_id', $question->id)
             ->orderBy('order')

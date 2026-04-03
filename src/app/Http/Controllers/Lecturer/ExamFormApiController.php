@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Lecturer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Exam;
 use App\Models\Question;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -184,18 +184,21 @@ class ExamFormApiController extends Controller
     }
 
     /**
-     * Giữ quyền truy cập cho subject đang được phân công hoặc subject thuộc đề thi giảng viên đang quản lý.
+     * Chỉ cho phép truy cập subject đã được phân công cho giảng viên.
      */
     private function canAccessSubject(int $subjectId): bool
     {
-        $lecturerSubjectIds = Auth::user()->courseSections()->pluck('subject_id')->unique()->map(fn($id) => (int) $id)->toArray();
-        if (in_array($subjectId, $lecturerSubjectIds, true)) {
-            return true;
+        $authUser = Auth::user();
+        if (! $authUser instanceof User) {
+            return false;
         }
 
-        return Exam::query()
-            ->where('created_by', (int) Auth::id())
-            ->where('subject_id', $subjectId)
-            ->exists();
+        $lecturerSubjectIds = $authUser
+            ->subjects()
+            ->pluck('subjects.id')
+            ->map(fn($id) => (int) $id)
+            ->toArray();
+
+        return in_array($subjectId, $lecturerSubjectIds, true);
     }
 }

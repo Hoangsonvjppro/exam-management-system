@@ -9,6 +9,7 @@ use App\Http\Requests\Exam\UpdateExamRequest;
 use App\Models\CourseSection;
 use App\Models\Exam;
 use App\Models\Question;
+use App\Models\User;
 use App\Services\ExamService;
 use App\Services\LecturerExamQueryService;
 use Illuminate\Http\JsonResponse;
@@ -36,14 +37,21 @@ class ExamController extends Controller
     // Hiển thị form tạo đề thi mới
     public function create(): View
     {
-        $lecturerSubjectIds = \Illuminate\Support\Facades\Auth::user()->courseSections()->pluck('subject_id')->unique();
-        $subjects = \App\Models\Subject::whereIn('id', $lecturerSubjectIds)->get();
-        $chapters = \App\Models\Chapter::whereIn('subject_id', $lecturerSubjectIds)->orderBy('order')->get();
+        /** @var User $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        $assignedSubjectIds = $user
+            ->subjects()
+            ->pluck('subjects.id')
+            ->unique();
+
+        $subjects = \App\Models\Subject::whereIn('id', $assignedSubjectIds)->get();
+        $chapters = \App\Models\Chapter::whereIn('subject_id', $assignedSubjectIds)->orderBy('order')->get();
         $difficulties = \App\Models\Difficulty::query()->orderedForQuestionBank()->get(['code', 'name']);
 
         // Availability map: số câu hỏi theo chapter_id × difficulty cho tất cả subjects được phân công
         $availabilityRaw = Question::query()
-            ->whereIn('subject_id', $lecturerSubjectIds)
+            ->whereIn('subject_id', $assignedSubjectIds)
             ->selectRaw('subject_id, COALESCE(chapter_id, 0) as ch_id, difficulty, COUNT(*) as cnt')
             ->groupBy('subject_id', 'ch_id', 'difficulty')
             ->get();
@@ -58,7 +66,7 @@ class ExamController extends Controller
     }
 
     // Tạo 1 đề thi mới: phân luồng manual vs matrix
-    
+
     public function store(StoreExamRequest $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validated();
@@ -125,8 +133,15 @@ class ExamController extends Controller
     {
         Gate::authorize('manageLecturer', $exam);
 
-        $lecturerSubjectIds = \Illuminate\Support\Facades\Auth::user()->courseSections()->pluck('subject_id')->unique();
-        $allAllowedSubjectIds = $lecturerSubjectIds->push($exam->subject_id)->unique();
+        /** @var User $user */
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        $assignedSubjectIds = $user
+            ->subjects()
+            ->pluck('subjects.id')
+            ->unique();
+
+        $allAllowedSubjectIds = $assignedSubjectIds->push($exam->subject_id)->unique();
 
         $subjects = \App\Models\Subject::whereIn('id', $allAllowedSubjectIds)->get();
         $chapters = \App\Models\Chapter::whereIn('subject_id', $allAllowedSubjectIds)->orderBy('order')->get();

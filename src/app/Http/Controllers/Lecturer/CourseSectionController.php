@@ -35,7 +35,7 @@ class CourseSectionController extends Controller
             ->paginate(12);
 
         // Load data cho slide-over form tạo lớp mới
-        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $subjects = $user->subjects()->orderBy('subjects.name')->get(['subjects.id', 'subjects.code', 'subjects.name']);
         $semesters = \App\Models\Semester::orderByDesc('start_date')->get();
 
         return view('lecturer.classes.index', compact('sections', 'subjects', 'semesters'));
@@ -43,7 +43,10 @@ class CourseSectionController extends Controller
 
     public function create(): View
     {
-        $subjects = \App\Models\Subject::orderBy('name')->get();
+        /** @var User $user */
+        $user = Auth::user();
+
+        $subjects = $user->subjects()->orderBy('subjects.name')->get(['subjects.id', 'subjects.code', 'subjects.name']);
         $semesters = \App\Models\Semester::orderByDesc('start_date')->get();
 
         return view('lecturer.classes.create', compact('subjects', 'semesters'));
