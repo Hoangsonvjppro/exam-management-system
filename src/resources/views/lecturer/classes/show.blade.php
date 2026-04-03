@@ -68,7 +68,12 @@
 
         {{-- ═══ Mã mời tham gia lớp ═══ --}}
         @can('manage', $section)
-        <x-card padding="true" variant="featured" x-data="{ copied: false }">
+        <x-card
+            padding="true"
+            variant="featured"
+            x-data="inviteCodeCardState()"
+            data-invite-code="{{ $section->invite_code ?? '' }}"
+            data-join-qr-url="{{ route('student.join-class.qr') }}">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-1">Mã mời tham gia lớp</p>
@@ -76,25 +81,29 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex items-center bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] overflow-hidden">
-                        <span class="px-4 py-2 font-mono text-[16px] font-black text-[#1A3A6B] tracking-[0.2em] select-all">{{ $section->invite_code ?? '—' }}</span>
+                        <span class="px-4 py-2 font-mono text-[16px] font-black text-[#1A3A6B] tracking-[0.2em] select-all" x-text="inviteCode || '—'"></span>
                         @if($section->invite_code)
                         <button type="button"
-                            @click="navigator.clipboard.writeText('{{ $section->invite_code }}'); copied = true; setTimeout(() => copied = false, 2000)"
-                            class="px-3 py-2 border-l border-[#D6E2F0] text-[#6B7C99] hover:text-[#1A3A6B] hover:bg-[#F4F7FC] transition-colors"
-                            :title="copied ? 'Đã sao chép!' : 'Sao chép mã'">
-                            <template x-if="!copied">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                            </template>
-                            <template x-if="copied">
-                                <svg class="w-4 h-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                                </svg>
-                            </template>
+                            @click="copyInviteCode()"
+                            class="px-3 py-2 border-l border-[#D6E2F0] text-[#1A3A6B] hover:bg-[#F4F7FC] transition-colors inline-flex items-center gap-1.5"
+                            :title="copied ? 'Đã sao chép!' : 'Copy mã'">
+                            <svg class="w-4 h-4" :class="copied ? 'text-teal-600' : 'text-[#6B7C99]'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-[12px] font-semibold" x-text="copied ? 'Đã copy' : 'Copy mã'"></span>
                         </button>
                         @endif
                     </div>
+                    @if($section->invite_code)
+                    <button type="button"
+                        @click="showInviteQr()"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold text-[#1A3A6B] bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] hover:border-[#185FA5] hover:bg-[#F4F7FC] transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7V5a2 2 0 012-2h2M4 17v2a2 2 0 002 2h2m8-18h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M9 12h6" />
+                        </svg>
+                        Hiện QR và mã
+                    </button>
+                    @endif
                     <form method="POST" action="{{ route('lecturer.classes.regenerate-code', $section) }}">
                         @csrf
                         <button type="submit"
@@ -1029,6 +1038,32 @@
                 </div>
 
                 <!-- Background decorations -->
+                <div class="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl"></div>
+                <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-teal-500/20 rounded-full blur-3xl"></div>
+            </div>
+        </x-modal>
+
+        <x-modal name="show-invite-code-modal" maxWidth="2xl">
+            <div class="p-5 sm:p-7 lg:p-10 text-center bg-gradient-to-br from-indigo-900 via-navy-900 to-blue-900 relative overflow-hidden">
+                <div class="absolute top-4 right-4 sm:top-5 sm:right-5 z-10">
+                    <button @click="$dispatch('close-modal', 'show-invite-code-modal')" class="p-3 sm:p-3.5 text-white/60 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors backdrop-blur-sm">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="relative z-10 w-full flex flex-col items-center">
+                    <h3 class="text-base sm:text-xl font-semibold text-blue-200 mb-5 sm:mb-7 uppercase tracking-[0.2em]">Mã vào lớp học phần</h3>
+                    <div class="bg-white p-4 sm:p-6 lg:p-7 rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.5)] flex flex-col items-center w-full max-w-[560px]">
+                        <div class="w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] lg:w-[420px] lg:h-[420px] mb-5 border-[0.5px] border-border-clean p-3 rounded-[14px] bg-white">
+                            <img id="display-invite-qr-code" src="" alt="QR Code" class="w-full h-full object-contain" />
+                        </div>
+                        <p id="display-invite-code" class="text-[44px] sm:text-[60px] lg:text-[76px] leading-none font-black text-navy-900 font-mono tracking-[0.22em] pl-[0.22em]"></p>
+                    </div>
+                    <p class="text-base sm:text-lg font-semibold text-white/80 mt-6 sm:mt-8 mb-2">Sinh viên quét QR để tự động tham gia lớp</p>
+                    <p class="text-sm sm:text-base text-blue-100/70 uppercase tracking-[0.18em]">Hoặc nhập thủ công mã mời</p>
+                </div>
+
                 <div class="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl"></div>
                 <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-teal-500/20 rounded-full blur-3xl"></div>
             </div>

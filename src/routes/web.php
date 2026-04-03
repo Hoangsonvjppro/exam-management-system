@@ -87,6 +87,10 @@ Route::middleware(['auth', 'must_change_password_handled'])->group(function () {
     Route::post('/join-class', [StudentEnrollmentController::class, 'joinClass'])
         ->name('student.join-class');
 
+    // Tham gia lớp học bằng QR code (tự động)
+    Route::get('/join-class/qr', [StudentEnrollmentController::class, 'joinClassByQr'])
+        ->name('student.join-class.qr');
+
     // Rời khỏi lớp học (courseSection = ID lớp cần rời)
     Route::delete('/leave-class/{courseSection}', [StudentEnrollmentController::class, 'leaveClass'])
         ->name('student.leave-class');
