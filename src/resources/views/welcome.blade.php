@@ -150,8 +150,8 @@
                 {{-- Gateway Buttons --}}
                 <div class="gateway-buttons flex flex-col sm:flex-row gap-5 sm:gap-6 w-full max-w-xl">
 
-                    {{-- Nút Sinh viên (Google) --}}
-                    <a href="{{ route('login') }}"
+                    {{-- Nút Sinh viên (Google) → Chuyển thẳng sang Google OAuth --}}
+                    <a href="{{ route('google.redirect') }}"
                        id="btn-gateway-student"
                        class="gateway-btn flex-1 group relative bg-white text-navy-900 rounded-[10px] overflow-hidden border-[0.5px] border-white/80">
                         <div class="px-6 py-8 sm:py-10 flex flex-col items-center gap-4">
