@@ -150,6 +150,7 @@ class ExamSeeder extends Seeder
 
         // ─── Gắn câu hỏi vào đề ─────────────────────────────
         $questions = Question::where('subject_id', $subject->id)
+            ->with(['questionType', 'options'])
             ->inRandomOrder()
             ->limit($questionCount)
             ->get();
@@ -225,9 +226,13 @@ class ExamSeeder extends Seeder
     // ─── Tạo snapshot JSON cho exam_questions ─────────────────
     private function buildSnapshot($question): array
     {
-        $options = QuestionOption::where('question_id', $question->id)
+        $options = $question->relationLoaded('options')
+            ? $question->options->sortBy('order')
+            : QuestionOption::where('question_id', $question->id)
             ->orderBy('order')
-            ->get()
+            ->get();
+
+        $options = $options
             ->map(fn($opt) => [
                 'id'         => $opt->id,
                 'label'      => $opt->label,
@@ -242,6 +247,8 @@ class ExamSeeder extends Seeder
             'content'          => $question->content,
             'difficulty'       => $question->difficulty,
             'question_type_id' => $question->question_type_id,
+            'question_type_code' => $question->questionType?->code,
+            'question_type_name' => $question->questionType?->name,
             'options'          => $options,
             'snapshot_at'      => now()->toIso8601String(),
         ];

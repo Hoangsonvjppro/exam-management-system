@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ExamScheduleController extends Controller
@@ -212,14 +213,31 @@ class ExamScheduleController extends Controller
     {
         Gate::authorize('manageLecturer', $schedule->exam);
 
+        if (! $schedule->can_edit) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể thay đổi danh sách sinh viên khi ca thi đã bắt đầu hoặc đã kết thúc.',
+            ], 422);
+        }
+
         $request->validate([
             'student_ids'   => 'required|array',
-            'student_ids.*' => 'integer|exists:users,id',
+            'student_ids.*' => 'integer|distinct|exists:users,id',
         ]);
 
-        $studentIds = collect($request->input('student_ids'));
+        $studentIds = collect($request->input('student_ids', []))
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->values();
 
-        $count = $this->scheduleService->syncAssignedStudents($schedule, $studentIds);
+        try {
+            $count = $this->scheduleService->syncAssignedStudents($schedule, $studentIds);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first() ?? 'Không thể cập nhật danh sách sinh viên cho ca thi.',
+            ], 422);
+        }
 
         $courseSection = $schedule->courseSection;
         $totalEnrolled = $courseSection

@@ -9,6 +9,7 @@ use App\Models\CourseSection;
 use App\Services\AttendanceGradeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -42,7 +43,9 @@ class AttendanceSessionController extends Controller
                 'is_open' => true,
             ]);
 
-            $students = $section->students()->get();
+            $students = $section->students()
+                ->wherePivot('status', 'enrolled')
+                ->get();
 
             $records = [];
             $now = now();
@@ -147,11 +150,13 @@ class AttendanceSessionController extends Controller
                 ? AttendanceGradeService::APPROVED_LEAVE_PENALTY
                 : AttendanceGradeService::ABSENT_PENALTY;
 
+            $updaterId = Auth::id();
+
             $this->attendanceGradeService->deductScore(
                 $section,
                 (int) $record->student_id,
                 $penalty,
-                auth()->id(),
+                $updaterId,
                 'Tự động trừ điểm chuyên cần sau khi đóng buổi điểm danh'
             );
         }

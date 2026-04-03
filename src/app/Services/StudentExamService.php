@@ -12,12 +12,15 @@ use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Carbon;
 
 class StudentExamService
 {
     public function startAttempt(ExamSchedule $schedule, int $userId, string $ipAddress, ?string $userAgent = null): void
     {
         $exam = $schedule->exam;
+        $this->assertStudentCanAccessSchedule($schedule, $userId);
+
         $now = now();
         $scheduleStart = $schedule->start_datetime;
         $scheduleEnd = $schedule->end_datetime;
@@ -30,8 +33,11 @@ class StudentExamService
             throw new DomainException('Ca thi đã kết thúc.');
         }
 
+        $skipLateEntranceChecks =
+            $schedule->schedule_mode === \App\Models\ExamSchedule::MODE_IN_RANGE;
+
         // Logic check vào muộn
-        if ($now->gt($scheduleStart)) {
+        if (!$skipLateEntranceChecks && $now->gt($scheduleStart)) {
             if (!$exam->allow_late_entrance) {
                 throw new DomainException('Kỳ thi này không cho phép vào thi muộn.');
             }
@@ -231,5 +237,87 @@ class StudentExamService
                 return ['http_code' => 500, 'message' => 'Lỗi hệ thống khi lưu đáp án.'];
             }
         });
+    }
+
+    private function assertStudentCanAccessSchedule(ExamSchedule $schedule, int $userId): void
+    {
+        if ($schedule->status === 'cancelled') {
+            throw new DomainException('Ca thi đã bị hủy.');
+        }
+
+        $courseSection = $schedule->courseSection;
+        if (! $courseSection) {
+            throw new DomainException('Ca thi không hợp lệ.');
+        }
+
+        $isEnrolled = $courseSection->students()
+            ->where('users.id', $userId)
+            ->where('course_section_students.status', EnrollmentService::PIVOT_ENROLLED)
+            ->exists();
+
+        if (! $isEnrolled) {
+            throw new DomainException('Bạn không thuộc lớp học phần của ca thi này.');
+        }
+
+        $hasAssignments = $schedule->scheduleStudents()->exists();
+        if (! $hasAssignments) {
+            return;
+        }
+
+        $isAssigned = $schedule->scheduleStudents()
+            ->where('student_id', $userId)
+            ->exists();
+
+        if ($isAssigned) {
+            return;
+        }
+
+        if ($this->canAutoAssignLateEnrolledStudent($schedule, $userId)) {
+            $schedule->scheduleStudents()->firstOrCreate(
+                ['student_id' => $userId],
+                ['attendance_status' => 'pending']
+            );
+
+            return;
+        }
+
+        throw new DomainException('Bạn chưa được phân vào ca thi này.');
+    }
+
+    private function canAutoAssignLateEnrolledStudent(ExamSchedule $schedule, int $userId): bool
+    {
+        if (! $schedule->created_at) {
+            return false;
+        }
+
+        $courseSection = $schedule->courseSection;
+        if (! $courseSection) {
+            return false;
+        }
+
+        $enrolledAt = $courseSection->students()
+            ->where('users.id', $userId)
+            ->where('course_section_students.status', EnrollmentService::PIVOT_ENROLLED)
+            ->value('course_section_students.enrolled_at');
+
+        if (! $enrolledAt) {
+            return false;
+        }
+
+        try {
+            $enrolledAt = Carbon::parse($enrolledAt);
+
+            if (! $enrolledAt->gt($schedule->created_at)) {
+                return false;
+            }
+
+            if ($schedule->schedule_mode === ExamSchedule::MODE_IN_RANGE) {
+                return $enrolledAt->lte($schedule->end_datetime);
+            }
+
+            return $enrolledAt->lte($schedule->start_datetime);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

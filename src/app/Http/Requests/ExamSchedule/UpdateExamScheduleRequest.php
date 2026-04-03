@@ -11,6 +11,27 @@ use Illuminate\Validation\ValidationException;
 
 class UpdateExamScheduleRequest extends FormRequest
 {
+    public function prepareForValidation(): void
+    {
+        $scheduleMode = (string) ($this->input('schedule_mode') ?: 'within_day');
+
+        $merge = [
+            'schedule_mode' => $scheduleMode,
+            'disable_attempt_timer' => $this->boolean('disable_attempt_timer'),
+        ];
+
+        if (! $this->filled('end_date') && $this->filled('exam_date')) {
+            $merge['end_date'] = $this->input('exam_date');
+        }
+
+        if ($scheduleMode === 'in_range') {
+            $merge['start_time'] = '00:00';
+            $merge['end_time'] = '23:59';
+        }
+
+        $this->merge($merge);
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -22,12 +43,18 @@ class UpdateExamScheduleRequest extends FormRequest
         $examId = $schedule->exam_id;
 
         return [
+            'schedule_mode' => 'required|in:within_day,in_range',
+            'disable_attempt_timer' => 'boolean',
             'exam_date'     => 'required|date|after_or_equal:today',
             'end_date'      => 'required|date|after_or_equal:exam_date',
             'start_time'    => [
                 'required',
                 'date_format:H:i',
                 function ($attribute, $value, $fail) {
+                    if ($this->input('schedule_mode') !== 'within_day') {
+                        return;
+                    }
+
                     $window = $this->parseScheduleWindow();
 
                     if (! $window) {
@@ -44,6 +71,8 @@ class UpdateExamScheduleRequest extends FormRequest
                 'required',
                 'date_format:H:i',
                 function ($attribute, $value, $fail) use ($examId, $schedule) {
+                    $scheduleMode = (string) $this->input('schedule_mode', 'within_day');
+                    $disableAttemptTimer = (bool) $this->boolean('disable_attempt_timer');
                     $window = $this->parseScheduleWindow();
 
                     if (! $window) {
@@ -63,7 +92,7 @@ class UpdateExamScheduleRequest extends FormRequest
                         try {
                             $diff = $startAt->diffInMinutes($endAt);
 
-                            if ($diff < $exam->duration_minutes) {
+                            if (! $disableAttemptTimer && $scheduleMode === 'within_day' && $diff < $exam->duration_minutes) {
                                 $fail("Thời gian thi ({$diff} phút) không đủ cho thời lượng đề thi ({$exam->duration_minutes} phút).");
                             }
                         } catch (\Exception $e) {
@@ -83,6 +112,15 @@ class UpdateExamScheduleRequest extends FormRequest
         $validator->after(function ($validator): void {
             if ($validator->errors()->isNotEmpty()) {
                 return;
+            }
+
+            if ($this->input('schedule_mode') === 'within_day') {
+                $startDate = (string) $this->input('exam_date');
+                $endDate = (string) $this->input('end_date');
+
+                if ($startDate !== '' && $endDate !== '' && $startDate !== $endDate) {
+                    $validator->errors()->add('end_date', 'Chế độ kiểm tra trong ngày yêu cầu ngày bắt đầu và kết thúc phải trùng nhau.');
+                }
             }
 
             $schedule = $this->route('schedule');

@@ -172,6 +172,26 @@ $totalQuestions = count($questions);
             background: #10B981;
         }
 
+        .timer-status.info {
+            background: #DBEAFE;
+            color: #1E3A8A;
+        }
+
+        .timer-status-dot.info {
+            background: #3B82F6;
+        }
+
+        .timer-display.no-timer {
+            font-size: 26px;
+            letter-spacing: 0;
+        }
+
+        .timer-window-note {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #4B5563;
+        }
+
         /* ── Question Map ── */
         .qmap-block {
             padding: 16px 20px;
@@ -635,6 +655,8 @@ $totalQuestions = count($questions);
             data-time-left="{{ $timeLeftSeconds }}"
             data-min-submit-remaining="{{ $minSubmitRemainingSeconds }}"
             data-min-submit-duration="{{ (int) ($exam->min_duration_before_submit ?? 0) }}"
+            data-disable-attempt-timer="{{ $schedule->disable_attempt_timer ? '1' : '0' }}"
+            data-schedule-end-label="{{ $schedule->end_datetime->format('H:i d/m/Y') }}"
             hidden></div>
 
         {{-- ═══ Left Column: Questions ═══ --}}
@@ -728,12 +750,15 @@ $totalQuestions = count($questions);
 
             {{-- Timer --}}
             <div class="timer-block">
-                <div class="timer-label">Thời gian còn lại</div>
-                <div id="countdown-timer" class="timer-display">--:--</div>
-                <div class="timer-status">
-                    <span class="timer-status-dot"></span>
-                    Đang thi
+                <div id="timer-label" class="timer-label">{{ $schedule->disable_attempt_timer ? 'Chế độ làm bài' : 'Thời gian còn lại' }}</div>
+                <div id="countdown-timer" class="timer-display {{ $schedule->disable_attempt_timer ? 'no-timer' : '' }}">{{ $schedule->disable_attempt_timer ? 'Không giới hạn' : '--:--' }}</div>
+                <div id="timer-status" class="timer-status {{ $schedule->disable_attempt_timer ? 'info' : '' }}">
+                    <span class="timer-status-dot {{ $schedule->disable_attempt_timer ? 'info' : '' }}"></span>
+                    <span id="timer-status-text">{{ $schedule->disable_attempt_timer ? 'Tính theo cửa sổ ca thi' : 'Đang thi' }}</span>
                 </div>
+                @if($schedule->disable_attempt_timer)
+                <p id="timer-window-note" class="timer-window-note">Đóng ca lúc {{ $schedule->end_datetime->format('H:i d/m/Y') }}</p>
+                @endif
             </div>
 
             {{-- Question Map --}}

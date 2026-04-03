@@ -24,11 +24,16 @@ use Illuminate\Support\Carbon;
  */
 class ExamSchedule extends Model
 {
+    public const MODE_WITHIN_DAY = 'within_day';
+    public const MODE_IN_RANGE = 'in_range';
+
     protected $fillable = [
         'exam_id',
         'course_section_id',
         'exam_date',
         'end_date',
+        'schedule_mode',
+        'disable_attempt_timer',
         'start_time',
         'end_time',
         'max_students',
@@ -39,6 +44,7 @@ class ExamSchedule extends Model
     protected $casts = [
         'exam_date' => 'date',
         'end_date' => 'date',
+        'disable_attempt_timer' => 'boolean',
         'max_students' => 'integer',
     ];
 
@@ -125,6 +131,11 @@ class ExamSchedule extends Model
      */
     public function getDeadlineFor(ExamAttempt $attempt): Carbon
     {
+        // No per-attempt countdown: only lock by schedule closing window.
+        if ((bool) $this->disable_attempt_timer) {
+            return $this->end_datetime;
+        }
+
         $durationMinutes = $this->exam->duration_minutes ?? 0;
         $durationEnd = $attempt->started_at->copy()->addMinutes($durationMinutes);
 
@@ -168,6 +179,10 @@ class ExamSchedule extends Model
 
     public function getTimeRangeTextAttribute(): string
     {
+        if ($this->schedule_mode === self::MODE_IN_RANGE) {
+            return 'Cả ngày';
+        }
+
         return $this->start_datetime->format('H:i') . ' - ' . $this->end_datetime->format('H:i');
     }
 

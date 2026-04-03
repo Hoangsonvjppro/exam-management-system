@@ -65,9 +65,10 @@ class DatabaseSeeder extends Seeder
             $this->command->warn('⚠ Đang ở môi trường Local/Dev. Bắt đầu seed dữ liệu test...');
 
             $this->call([
-                TagSeeder::class,           // 15 tags cho ngân hàng câu hỏi
+                TagSeeder::class,           // Bộ tags cho ngân hàng câu hỏi
                 QuestionSeeder::class,      // 150 câu hỏi (30 câu/môn)
                 ExamSeeder::class,          // 3 đề thi + lịch thi + SV
+                DemoDataSeeder::class,      // Kịch bản demo đầy đủ (điểm danh, điểm, khiếu nại, thông báo)
             ]);
         }
 

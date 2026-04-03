@@ -47,7 +47,9 @@
 
     <div class="py-8 bg-[#F8FAFD] min-h-screen"
         data-pre-selected-subject-id="{{ $preSelectedSubjectId }}"
-        x-data="scheduleCreateManager($el.dataset.preSelectedSubjectId)">
+        data-initial-schedule-mode="{{ old('schedule_mode', 'within_day') }}"
+        data-initial-exam-date="{{ old('exam_date') }}"
+        x-data="scheduleCreateManager($el.dataset.preSelectedSubjectId, $el.dataset.initialScheduleMode, $el.dataset.initialExamDate)">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="mb-6 flex items-center justify-between">
                 <div>
@@ -170,30 +172,79 @@
 
                         <div id="main-form-fields" x-show="selectedSubjectId && hasSelectedSection && selectedExamId" x-transition class="space-y-4 transition-all duration-300">
                             <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1 uppercase tracking-wider">Bước {{ $preSelectedSection ? '3' : '4' }}: Chi tiết ca thi</label>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày bắt đầu <span class="text-[#DC2626]">*</span></label>
-                                    <input type="date" name="exam_date" value="{{ old('exam_date') }}" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
-                                    @error('exam_date') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+
+                            <div>
+                                <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-2">Chế độ mở đề <span class="text-[#DC2626]">*</span></label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="border border-[#D6E2F0] rounded-lg px-3 py-2 flex items-start gap-2 cursor-pointer"
+                                        :class="scheduleMode === 'in_range' ? 'bg-[#EAF4FD] border-[#185FA5]' : 'bg-white'">
+                                        <input type="radio" name="schedule_mode" value="in_range" x-model="scheduleMode" class="mt-0.5">
+                                        <span>
+                                            <span class="block text-[12px] font-semibold text-[#1A3A6B]">Trong khoảng thời gian</span>
+                                            <span class="block text-[11px] text-[#6B7C99]">Mở liên tục từ ngày bắt đầu đến ngày kết thúc.</span>
+                                        </span>
+                                    </label>
+                                    <label class="border border-[#D6E2F0] rounded-lg px-3 py-2 flex items-start gap-2 cursor-pointer"
+                                        :class="scheduleMode === 'within_day' ? 'bg-[#EAF4FD] border-[#185FA5]' : 'bg-white'">
+                                        <input type="radio" name="schedule_mode" value="within_day" x-model="scheduleMode" class="mt-0.5">
+                                        <span>
+                                            <span class="block text-[12px] font-semibold text-[#1A3A6B]">Kiểm tra trong ngày</span>
+                                            <span class="block text-[11px] text-[#6B7C99]">Chỉ cho phép tham gia trong khung giờ của 1 ngày.</span>
+                                        </span>
+                                    </label>
                                 </div>
-                                <div>
-                                    <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày kết thúc <span class="text-[#DC2626]">*</span></label>
-                                    <input type="date" name="end_date" value="{{ old('end_date') }}" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
-                                    @error('end_date') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
-                                </div>
+                                @error('schedule_mode') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                             </div>
 
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Giờ bắt đầu <span class="text-[#DC2626]">*</span></label>
-                                    <input type="text" name="start_time" value="{{ old('start_time') }}" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" title="Nhập giờ theo định dạng 24h, ví dụ 08:30" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
-                                    @error('start_time') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                            <template x-if="scheduleMode === 'within_day'">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày kiểm tra <span class="text-[#DC2626]">*</span></label>
+                                        <input type="date" name="exam_date" x-model="singleDayDate" value="{{ old('exam_date') }}" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
+                                        @error('exam_date') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <input type="hidden" name="end_date" :value="singleDayDate">
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Giờ bắt đầu <span class="text-[#DC2626]">*</span></label>
+                                            <input type="text" name="start_time" value="{{ old('start_time') }}" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" title="Nhập giờ theo định dạng 24h, ví dụ 08:30" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
+                                            @error('start_time') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div>
+                                            <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Giờ kết thúc <span class="text-[#DC2626]">*</span></label>
+                                            <input type="text" name="end_time" value="{{ old('end_time') }}" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" title="Nhập giờ theo định dạng 24h, ví dụ 17:45" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
+                                            @error('end_time') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Giờ kết thúc <span class="text-[#DC2626]">*</span></label>
-                                    <input type="text" name="end_time" value="{{ old('end_time') }}" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" title="Nhập giờ theo định dạng 24h, ví dụ 17:45" class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px]">
-                                    @error('end_time') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                            </template>
+
+                            <template x-if="scheduleMode === 'in_range'">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày bắt đầu <span class="text-[#DC2626]">*</span></label>
+                                        <input type="date" name="exam_date" value="{{ old('exam_date') }}" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
+                                        @error('exam_date') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-[12px] font-semibold text-[#1A3A6B] mb-1">Ngày kết thúc <span class="text-[#DC2626]">*</span></label>
+                                        <input type="date" name="end_date" value="{{ old('end_date') }}" required class="w-full border border-[#D6E2F0] rounded-lg px-3 py-2 text-[13px] focus:border-[#185FA5] focus:ring-1 focus:ring-[#E6F1FB]">
+                                        @error('end_date') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
+                            </template>
+
+                            <div class="p-3 border border-[#D6E2F0] rounded-lg bg-[#F8FAFD]">
+                                <label class="flex items-start gap-2 cursor-pointer">
+                                    <input type="checkbox" name="disable_attempt_timer" value="1" {{ old('disable_attempt_timer') ? 'checked' : '' }} class="mt-0.5 rounded border-[#D6E2F0] text-[#185FA5] focus:ring-[#185FA5]">
+                                    <span>
+                                        <span class="block text-[12px] font-semibold text-[#1A3A6B]">Không tính thời gian làm bài</span>
+                                        <span class="block text-[11px] text-[#6B7C99]">Sinh viên được làm bài đến khi hết cửa sổ mở đề, không đếm ngược theo thời lượng đề.</span>
+                                    </span>
+                                </label>
+                                @error('disable_attempt_timer') <span class="text-[11px] text-[#DC2626]">{{ $message }}</span> @enderror
                             </div>
 
                             <div>

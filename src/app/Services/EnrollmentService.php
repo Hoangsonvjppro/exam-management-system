@@ -6,6 +6,7 @@ use App\Models\CourseSection;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class EnrollmentService
@@ -53,43 +54,55 @@ class EnrollmentService
 
         $normalizedCode = Str::upper(trim($inviteCode));
 
-        $section = CourseSection::query()
-            ->withInviteCode($normalizedCode)
-            ->active()
-            ->with('semester')
-            ->first();
+        return DB::transaction(function () use ($normalizedCode, $user): array {
+            $section = CourseSection::query()
+                ->withInviteCode($normalizedCode)
+                ->active()
+                ->with('semester')
+                ->lockForUpdate()
+                ->first();
 
-        if (! $section) {
-            return [
-                'type' => 'invalid_code',
-                'message' => 'Ma lop khong hop le hoac lop dang dong.',
-            ];
-        }
+            /** @var CourseSection|null $section */
 
-        if (! $section->semester || ! $section->semester->isCurrentPeriod()) {
-            return [
-                'type' => 'invalid_code',
-                'message' => 'Lớp học phần chưa mở cho tham gia ở thời điểm hiện tại.',
-            ];
-        }
+            if (! $section) {
+                return [
+                    'type' => 'invalid_code',
+                    'message' => 'Ma lop khong hop le hoac lop dang dong.',
+                ];
+            }
 
-        $isFull = $section->students()
-            ->wherePivot('status', self::PIVOT_ENROLLED)
-            ->count() >= (int) $section->max_students;
+            if (! $section->semester || ! $section->semester->isCurrentPeriod()) {
+                return [
+                    'type' => 'invalid_code',
+                    'message' => 'Lớp học phần chưa mở cho tham gia ở thời điểm hiện tại.',
+                ];
+            }
 
-        if ($isFull) {
-            return [
-                'type' => 'invalid_code',
-                'message' => 'Lop hoc da du so luong sinh vien.',
-            ];
-        }
+            $existingPivot = $section->students()
+                ->where('student_id', $user->id)
+                ->lockForUpdate()
+                ->first();
 
-        $existingPivot = $section->students()
-            ->where('student_id', $user->id)
-            ->first();
+            if ($existingPivot && $existingPivot->pivot->status === self::PIVOT_ENROLLED) {
+                return [
+                    'type' => 'success',
+                    'section_id' => $section->id,
+                    'message' => 'Ban da tham gia lop hoc phan nay roi.',
+                ];
+            }
 
-        if ($existingPivot) {
-            if ($existingPivot->pivot->status === self::PIVOT_DROPPED) {
+            $isFull = $section->students()
+                ->wherePivot('status', self::PIVOT_ENROLLED)
+                ->count() >= (int) $section->max_students;
+
+            if ($isFull) {
+                return [
+                    'type' => 'invalid_code',
+                    'message' => 'Lop hoc da du so luong sinh vien.',
+                ];
+            }
+
+            if ($existingPivot && $existingPivot->pivot->status === self::PIVOT_DROPPED) {
                 $section->students()->updateExistingPivot($user->id, [
                     'status' => self::PIVOT_ENROLLED,
                     'enrolled_at' => now(),
@@ -105,27 +118,28 @@ class EnrollmentService
                 ];
             }
 
+            if ($existingPivot) {
+                // Các trạng thái khác (vd: completed) được chuyển về enrolled khi còn chỗ.
+                $section->students()->updateExistingPivot($user->id, [
+                    'status' => self::PIVOT_ENROLLED,
+                    'enrolled_at' => now(),
+                ]);
+            } else {
+                $section->students()->attach($user->id, [
+                    'status' => self::PIVOT_ENROLLED,
+                    'enrolled_at' => now(),
+                ]);
+            }
+
+            $this->attendanceGradeService->ensureScoreForStudent($section, $user->id, $section->lecturer_id);
+            $this->userStateService->syncStudentRole($user);
+
             return [
                 'type' => 'success',
                 'section_id' => $section->id,
-                'message' => 'Ban da tham gia lop hoc phan nay roi.',
+                'message' => 'Tham gia lop hoc phan thanh cong.',
             ];
-        }
-
-        $section->students()->attach($user->id, [
-            'status' => self::PIVOT_ENROLLED,
-            'enrolled_at' => now(),
-        ]);
-
-        $this->attendanceGradeService->ensureScoreForStudent($section, $user->id, $section->lecturer_id);
-
-        $this->userStateService->syncStudentRole($user);
-
-        return [
-            'type' => 'success',
-            'section_id' => $section->id,
-            'message' => 'Tham gia lop hoc phan thanh cong.',
-        ];
+        });
     }
 
     public function leaveClass(CourseSection $courseSection, User $user): void

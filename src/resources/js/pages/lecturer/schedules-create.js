@@ -2,11 +2,13 @@ const quickExamConfig = JSON.parse(document.getElementById('quick-exam-config-da
 const scheduleCreateConfigEl = document.getElementById('schedule-create-config');
 const scheduleCreateConfig = scheduleCreateConfigEl ? JSON.parse(scheduleCreateConfigEl.textContent || '{}') : {};
 
-window.scheduleCreateManager = function scheduleCreateManager(initialSubjectId) {
+window.scheduleCreateManager = function scheduleCreateManager(initialSubjectId, initialScheduleMode = 'within_day', initialExamDate = '') {
     return {
         selectedSubjectId: initialSubjectId || '',
         selectedExamId: '',
         hasSelectedSection: false,
+        scheduleMode: initialScheduleMode === 'in_range' ? 'in_range' : 'within_day',
+        singleDayDate: initialExamDate || '',
         quickSubjectId: initialSubjectId || '',
         quickQuestionApiUrl: scheduleCreateConfig.quickQuestionApiUrl || '',
         quickQuestionCreateUrl: scheduleCreateConfig.quickQuestionCreateUrl || '',

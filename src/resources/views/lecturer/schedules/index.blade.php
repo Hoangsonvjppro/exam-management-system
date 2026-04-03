@@ -238,33 +238,78 @@
                     </div>
 
                     {{-- 4. Thông tin chi tiết --}}
-                    <div x-show="selectedSubjectId && hasSelectedSection && selectedExamId" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform -translate-y-2" class="space-y-5 pt-2">
+                    <div x-show="selectedSubjectId && hasSelectedSection && selectedExamId" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform -translate-y-2" class="space-y-5 pt-2"
+                        x-data="{ scheduleMode: 'within_day', singleDayDate: '' }">
                         <label class="block text-[12px] font-bold text-navy-900 uppercase tracking-wider mb-1">Bước 4: Thời gian & Cấu hình</label>
 
-                        <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Chế độ mở đề <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <label class="border border-gray-300 rounded-lg px-3 py-2 flex items-start gap-2 cursor-pointer"
+                                    :class="scheduleMode === 'in_range' ? 'bg-blue-50 border-blue-500' : 'bg-white'">
+                                    <input type="radio" name="schedule_mode" value="in_range" x-model="scheduleMode" class="mt-0.5">
+                                    <span>
+                                        <span class="block text-[12px] font-semibold text-navy-900">Trong khoảng thời gian</span>
+                                        <span class="block text-[11px] text-text-muted">Mở liên tục từ ngày bắt đầu đến ngày kết thúc.</span>
+                                    </span>
+                                </label>
+                                <label class="border border-gray-300 rounded-lg px-3 py-2 flex items-start gap-2 cursor-pointer"
+                                    :class="scheduleMode === 'within_day' ? 'bg-blue-50 border-blue-500' : 'bg-white'">
+                                    <input type="radio" name="schedule_mode" value="within_day" x-model="scheduleMode" class="mt-0.5">
+                                    <span>
+                                        <span class="block text-[12px] font-semibold text-navy-900">Kiểm tra trong ngày</span>
+                                        <span class="block text-[11px] text-text-muted">Chỉ cho phép tham gia trong khung giờ của 1 ngày.</span>
+                                    </span>
+                                </label>
+                            </div>
+                            <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="schedule_mode"></p>
+                        </div>
+
+                        <div class="space-y-4" x-show="scheduleMode === 'within_day'">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ngày kiểm tra <span class="text-red-500">*</span></label>
+                                <input type="date" name="exam_date" x-model="singleDayDate" :required="scheduleMode === 'within_day'" :disabled="scheduleMode !== 'within_day'" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
+                                <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="exam_date"></p>
+                            </div>
+
+                            <input type="hidden" name="end_date" :value="singleDayDate" :disabled="scheduleMode !== 'within_day'">
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Giờ bắt đầu <span class="text-red-500">*</span></label>
+                                    <input type="text" name="start_time" :required="scheduleMode === 'within_day'" :disabled="scheduleMode !== 'within_day'" inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" title="Nhập giờ theo định dạng 24h, ví dụ 08:30">
+                                    <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="start_time"></p>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Giờ kết thúc <span class="text-red-500">*</span></label>
+                                    <input type="text" name="end_time" :required="scheduleMode === 'within_day'" :disabled="scheduleMode !== 'within_day'" inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" title="Nhập giờ theo định dạng 24h, ví dụ 17:45">
+                                    <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_time"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4" x-show="scheduleMode === 'in_range'">
                             <div>
                                 <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ngày bắt đầu <span class="text-red-500">*</span></label>
-                                <input type="date" name="exam_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
+                                <input type="date" name="exam_date" :required="scheduleMode === 'in_range'" :disabled="scheduleMode !== 'in_range'" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
                                 <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="exam_date"></p>
                             </div>
                             <div>
                                 <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Ngày kết thúc <span class="text-red-500">*</span></label>
-                                <input type="date" name="end_date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
+                                <input type="date" name="end_date" :required="scheduleMode === 'in_range'" :disabled="scheduleMode !== 'in_range'" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200">
                                 <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_date"></p>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Giờ bắt đầu <span class="text-red-500">*</span></label>
-                                <input type="text" name="start_time" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" title="Nhập giờ theo định dạng 24h, ví dụ 08:30">
-                                <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="start_time"></p>
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-semibold text-text-muted mb-1.5">Giờ kết thúc <span class="text-red-500">*</span></label>
-                                <input type="text" name="end_time" required inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:mm" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-[13px]" title="Nhập giờ theo định dạng 24h, ví dụ 17:45">
-                                <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="end_time"></p>
-                            </div>
+                        <div class="p-3 border border-border-clean rounded-lg bg-surface-1">
+                            <label class="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox" name="disable_attempt_timer" value="1" class="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span>
+                                    <span class="block text-[13px] font-bold text-navy-900">Không tính thời gian làm bài</span>
+                                    <span class="block text-[11px] text-text-muted mt-0.5">Sinh viên làm bài đến khi hết cửa sổ mở đề, không đếm ngược theo thời lượng đề.</span>
+                                </span>
+                            </label>
+                            <p class="mt-1 text-[11px] font-medium text-red-600 hidden" data-error="disable_attempt_timer"></p>
                         </div>
 
                         <div>
