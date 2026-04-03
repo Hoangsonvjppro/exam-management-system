@@ -8,6 +8,7 @@ use App\Models\ExamAttempt;
 use App\Enums\ExamAttemptStatus;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ExamScheduleService
 {
@@ -201,19 +202,58 @@ class ExamScheduleService
         $schedule->loadMissing('courseSection.semester');
         $this->semesterGovernanceService->assertScheduleCanMutate($schedule);
 
-        return DB::transaction(function () use ($schedule, $studentIds) {
+        if (! $schedule->can_edit) {
+            throw ValidationException::withMessages([
+                'schedule' => 'Không thể thay đổi danh sách sinh viên khi ca thi đã bắt đầu hoặc đã kết thúc.',
+            ]);
+        }
+
+        $courseSection = $schedule->courseSection;
+
+        if (! $courseSection) {
+            throw ValidationException::withMessages([
+                'schedule' => 'Ca thi chưa gắn với lớp học phần hợp lệ.',
+            ]);
+        }
+
+        $normalizedStudentIds = $studentIds
+            ->map(fn($id) => (int) $id)
+            ->filter(fn($id) => $id > 0)
+            ->unique()
+            ->values();
+
+        $allowedStudentIds = $courseSection->students()
+            ->wherePivot('status', 'enrolled')
+            ->pluck('users.id')
+            ->map(fn($id) => (int) $id)
+            ->values();
+
+        $invalidStudentIds = $normalizedStudentIds->diff($allowedStudentIds);
+        if ($invalidStudentIds->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'student_ids' => 'Danh sách sinh viên chứa tài khoản không thuộc lớp hoặc không còn trạng thái đang học.',
+            ]);
+        }
+
+        if ($schedule->max_students !== null && $normalizedStudentIds->count() > (int) $schedule->max_students) {
+            throw ValidationException::withMessages([
+                'student_ids' => 'Số lượng sinh viên vượt quá sức chứa của ca thi.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($schedule, $normalizedStudentIds) {
             // Xóa toàn bộ assignment cũ
             $schedule->scheduleStudents()->delete();
 
             // Tạo assignment mới cho từng SV
-            foreach ($studentIds as $studentId) {
+            foreach ($normalizedStudentIds as $studentId) {
                 $schedule->scheduleStudents()->create([
                     'student_id'        => $studentId,
                     'attendance_status' => 'pending',
                 ]);
             }
 
-            return $studentIds->count();
+            return $normalizedStudentIds->count();
         });
     }
 

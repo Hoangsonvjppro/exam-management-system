@@ -18,6 +18,8 @@ class StudentExamService
     public function startAttempt(ExamSchedule $schedule, int $userId, string $ipAddress, ?string $userAgent = null): void
     {
         $exam = $schedule->exam;
+        $this->assertStudentCanAccessSchedule($schedule, $userId);
+
         $now = now();
         $scheduleStart = $schedule->start_datetime;
         $scheduleEnd = $schedule->end_datetime;
@@ -231,5 +233,39 @@ class StudentExamService
                 return ['http_code' => 500, 'message' => 'Lỗi hệ thống khi lưu đáp án.'];
             }
         });
+    }
+
+    private function assertStudentCanAccessSchedule(ExamSchedule $schedule, int $userId): void
+    {
+        if ($schedule->status === 'cancelled') {
+            throw new DomainException('Ca thi đã bị hủy.');
+        }
+
+        $courseSection = $schedule->courseSection;
+        if (! $courseSection) {
+            throw new DomainException('Ca thi không hợp lệ.');
+        }
+
+        $isEnrolled = $courseSection->students()
+            ->where('users.id', $userId)
+            ->where('course_section_students.status', EnrollmentService::PIVOT_ENROLLED)
+            ->exists();
+
+        if (! $isEnrolled) {
+            throw new DomainException('Bạn không thuộc lớp học phần của ca thi này.');
+        }
+
+        $hasAssignments = $schedule->scheduleStudents()->exists();
+        if (! $hasAssignments) {
+            return;
+        }
+
+        $isAssigned = $schedule->scheduleStudents()
+            ->where('student_id', $userId)
+            ->exists();
+
+        if (! $isAssigned) {
+            throw new DomainException('Bạn chưa được phân vào ca thi này.');
+        }
     }
 }

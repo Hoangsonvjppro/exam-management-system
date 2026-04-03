@@ -25,7 +25,9 @@ class NotificationService
         }
 
         try {
-            $students = $section->students;
+            $students = $section->students()
+                ->wherePivot('status', EnrollmentService::PIVOT_ENROLLED)
+                ->get();
 
             if ($students->isEmpty()) {
                 throw new \DomainException('Lớp học phần này chưa có sinh viên nào để gửi thông báo.');

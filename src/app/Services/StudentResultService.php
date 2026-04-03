@@ -17,7 +17,8 @@ class StudentResultService
         // Danh sách học kỳ sinh viên có học
         $semesters = Semester::whereHas('courseSections', function ($q) use ($user) {
             $q->whereHas('students', function ($q2) use ($user) {
-                $q2->where('student_id', $user->id);
+                $q2->where('student_id', $user->id)
+                    ->where('course_section_students.status', EnrollmentService::PIVOT_ENROLLED);
             });
         })->orderByDesc('start_date')->get();
 
@@ -47,7 +48,8 @@ class StudentResultService
         // Lấy danh sách lớp học phần trong học kỳ đó
         $sections = CourseSection::where('semester_id', $currentSemester->id)
             ->whereHas('students', function ($q) use ($user) {
-                $q->where('student_id', $user->id);
+                $q->where('student_id', $user->id)
+                    ->where('course_section_students.status', EnrollmentService::PIVOT_ENROLLED);
             })
             ->with([
                 'subject',

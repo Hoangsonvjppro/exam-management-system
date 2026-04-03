@@ -12,6 +12,7 @@ use App\Services\ExamAttemptService;
 use App\Services\StudentExamService;
 use App\Services\StudentExamQueryService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use DomainException;
 
 class ExamController extends Controller
@@ -34,7 +35,7 @@ class ExamController extends Controller
     public function show(ExamSchedule $schedule): \Illuminate\View\View
     {
         $exam = $schedule->exam;
-        $this->authorize('viewAsStudent', $exam);
+        $this->authorize('viewAsStudent', $schedule);
 
         $showData = $this->studentExamQueryService->getShowData($schedule, (int) Auth::id());
         $inProgressAttempt = $showData['inProgressAttempt'];
@@ -48,7 +49,7 @@ class ExamController extends Controller
     public function start(ExamSchedule $schedule): \Illuminate\Http\RedirectResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('attemptExam', $exam);
+        $this->authorize('attemptExam', $schedule);
 
         try {
             $this->studentExamService->startAttempt(
@@ -68,7 +69,7 @@ class ExamController extends Controller
     public function room(ExamSchedule $schedule): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('attemptExam', $exam);
+        $this->authorize('attemptExam', $schedule);
 
         $attempt = $this->studentExamQueryService->getInProgressAttempt($schedule, (int) Auth::id());
 
@@ -110,7 +111,7 @@ class ExamController extends Controller
     public function saveAnswer(SaveAnswerRequest $request, ExamSchedule $schedule): \Illuminate\Http\JsonResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('attemptExam', $exam);
+        $this->authorize('attemptExam', $schedule);
 
         $result = $this->studentExamService->saveAnswer(
             $schedule,
@@ -130,7 +131,7 @@ class ExamController extends Controller
     public function submit(SubmitExamRequest $request, ExamSchedule $schedule): \Illuminate\Http\RedirectResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('attemptExam', $exam);
+        $this->authorize('attemptExam', $schedule);
 
         $attempt = ExamAttempt::forSchedule($schedule->id)
             ->forUser(Auth::id())
@@ -138,8 +139,18 @@ class ExamController extends Controller
             ->first();
 
         if (!$attempt) {
-            return redirect()->route('student.exams.result', $schedule->id)
-                ->with('info', 'Bài thi đã được nộp');
+            $hasCompletedAttempt = ExamAttempt::forSchedule($schedule->id)
+                ->forUser(Auth::id())
+                ->completed()
+                ->exists();
+
+            if ($hasCompletedAttempt) {
+                return redirect()->route('student.exams.result', $schedule->id)
+                    ->with('info', 'Bài thi đã được nộp.');
+            }
+
+            return redirect()->route('student.exams.show', $schedule->id)
+                ->with('warning', 'Bạn chưa bắt đầu làm bài cho ca thi này.');
         }
 
         // 1. Kiểm tra thời gian làm bài tối thiểu (bỏ qua nếu nộp phạt vi phạm quy chế)
@@ -183,12 +194,18 @@ class ExamController extends Controller
     }
 
     // Xem kết quả bài thi sau khi nộp
-    public function result(ExamSchedule $schedule): \Illuminate\View\View
+    public function result(ExamSchedule $schedule): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
         $exam = $schedule->exam;
-        $this->authorize('viewAsStudent', $exam);
+        $this->authorize('viewAsStudent', $schedule);
 
-        $attempt = $this->studentExamQueryService->getCompletedAttempt($schedule, (int) Auth::id());
+        try {
+            $attempt = $this->studentExamQueryService->getCompletedAttempt($schedule, (int) Auth::id());
+        } catch (ModelNotFoundException) {
+            return redirect()->route('student.exams.show', $schedule->id)
+                ->with('info', 'Bạn chưa có kết quả cho ca thi này.');
+        }
+
         $resultData = $this->studentExamQueryService->getResultData($schedule, $attempt);
         $answers = $resultData['answers'];
         $correctCount = $resultData['correctCount'];

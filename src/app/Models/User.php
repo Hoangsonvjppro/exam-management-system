@@ -124,7 +124,7 @@ class User extends Authenticatable
             'subject_id'
         )->withTimestamps();
     }
-    
+
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
@@ -141,9 +141,9 @@ class User extends Authenticatable
             StudentClass::class,
             'id',              // FK của StudentClass trên bảng student_classes
             'id',              // FK của Major trên bảng majors
-            'student_class_id',// local key của User
+            'student_class_id', // local key của User
             'major_id'         // local key của StudentClass
-        );  
+        );
     }
 
     /**
@@ -177,6 +177,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(CourseSection::class, 'course_section_students', 'student_id')
             ->withPivot('status', 'enrolled_at')
+            ->wherePivot('status', 'enrolled')
             ->withTimestamps();
     }
 
@@ -320,7 +321,7 @@ class User extends Authenticatable
             ->groupBy('status')
             ->pluck('total', 'status');
     }
-    
+
     public static function findByStudentCode(string $code): ?static
     {
         return static::where('student_code', trim($code))->first();

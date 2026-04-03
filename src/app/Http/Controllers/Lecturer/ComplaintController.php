@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Lecturer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
+use App\Models\GradeColumn;
+use App\Models\StudentGrade;
 use App\Models\UserNotification;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -89,6 +91,24 @@ class ComplaintController extends Controller
                     $attempt->correct_count = $updatedCorrectCount;
                     $attempt->total_score   = $newScore;
                     $attempt->save();
+
+                    $gradeColumn = GradeColumn::query()
+                        ->where('exam_schedule_id', $complaint->exam_schedule_id)
+                        ->where('is_exam_linked', true)
+                        ->first();
+
+                    if ($gradeColumn) {
+                        StudentGrade::updateOrCreate(
+                            [
+                                'grade_column_id' => $gradeColumn->id,
+                                'student_id' => $complaint->student_id,
+                            ],
+                            [
+                                'score' => $newScore,
+                                'note' => 'Đồng bộ tự động từ xử lý khiếu nại điểm thi',
+                            ]
+                        );
+                    }
                 }
 
                 $complaint->save();
