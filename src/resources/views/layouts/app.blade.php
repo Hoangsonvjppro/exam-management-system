@@ -14,19 +14,11 @@ $lecturerSidebarSections = \App\Models\CourseSection::query()
 ->orderByDesc('id')
 ->get();
 
-$lecturerSidebarSubjects = $lecturerSidebarSections
-->pluck('subject')
-->filter()
-->unique('id')
-->sortBy('name')
-->values();
-
-if ($lecturerSidebarSubjects->isEmpty()) {
-$lecturerSidebarSubjects = \App\Models\Subject::query()
-->orderBy('name')
-->limit(20)
-->get(['id', 'name', 'code']);
-}
+// Sidebar môn học phải bám theo phân công hiện tại, không phụ thuộc đã mở lớp hay chưa.
+$lecturerSidebarSubjects = auth()->user()
+->subjects()
+->orderBy('subjects.name')
+->get(['subjects.id', 'subjects.name', 'subjects.code']);
 }
 
 $isStudentUser = auth()->check() && auth()->user()->hasRole('student');
