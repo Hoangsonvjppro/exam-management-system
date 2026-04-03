@@ -138,27 +138,39 @@
                         </span>
                      </td>
                      <td class="px-6 py-4 text-right">
-                        <div class="flex justify-end gap-2" x-data="confirmActionState()">
-                           <template x-if="!confirming">
-                              <div class="flex items-center gap-2">
-                                 <a href="{{ route('lecturer.questions.edit', $question) }}"
-                                    class="p-2 text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-all" title="Sửa">
-                                    <span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
-                                 </a>
-                                 <button type="button" @click="confirming = true"
-                                    class="p-2 text-secondary hover:text-error hover:bg-error-container/20 rounded-lg transition-all" title="Xóa">
-                                    <span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
-                                 </button>
-                              </div>
-                           </template>
+                        <div class="relative inline-flex justify-end" x-data="confirmActionState()" @keydown.escape.window="confirming = false">
+                           <div class="flex items-center gap-2" x-show="!confirming">
+                              <a href="{{ route('lecturer.questions.edit', $question) }}"
+                                 class="p-2 text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-all" title="Sửa">
+                                 <span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+                              </a>
+                              <button type="button" @click="confirming = true"
+                                 class="p-2 text-secondary hover:text-error hover:bg-error-container/20 rounded-lg transition-all" title="Xóa">
+                                 <span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+                              </button>
+                           </div>
 
-                           <div x-show="confirming" x-cloak class="inline-flex items-center gap-2 bg-red-50 px-2 py-1 rounded border border-red-100">
-                              <span class="text-[10px] text-red-600 font-bold">Xoá ?</span>
-                              <form method="POST" action="{{ route('lecturer.questions.destroy', $question) }}" class="inline">
-                                 @csrf @method('DELETE')
-                                 <button type="submit" class="text-[11px] font-bold text-red-700 hover:underline">Xoá</button>
-                              </form>
-                              <button type="button" @click="confirming = false" class="text-[11px] text-navy-400 hover:underline">Hủy</button>
+                           <div x-show="confirming"
+                              x-cloak
+                              x-transition.opacity.duration.150ms
+                              @click.outside="confirming = false"
+                              class="absolute right-0 top-full mt-2 z-20 w-[270px] rounded-xl border border-red-200 bg-white p-3 text-left shadow-[0_12px_30px_rgba(15,23,42,0.14)]">
+                              <p class="text-[12px] font-bold text-red-700">Xác nhận xóa câu hỏi</p>
+                              <p class="mt-1 text-[11px] leading-relaxed text-text-muted">Bạn có chắc chắn muốn xóa câu hỏi này? Hành động này không thể hoàn tác.</p>
+                              <div class="mt-3 flex items-center justify-end gap-2">
+                                 <button type="button"
+                                    @click="confirming = false"
+                                    class="inline-flex items-center rounded-md border border-border-clean px-2.5 py-1.5 text-[11px] font-semibold text-text-muted hover:bg-surface-1 transition-colors">
+                                    Hủy
+                                 </button>
+                                 <form method="POST" action="{{ route('lecturer.questions.destroy', $question) }}" class="inline">
+                                    @csrf @method('DELETE')
+                                    <button type="submit"
+                                       class="inline-flex items-center rounded-md bg-red-600 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-red-700 transition-colors">
+                                       Xác nhận xóa
+                                    </button>
+                                 </form>
+                              </div>
                            </div>
                         </div>
                      </td>
