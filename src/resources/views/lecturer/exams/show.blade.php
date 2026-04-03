@@ -118,6 +118,31 @@
         </x-card>
 
         {{-- Thông tin đề thi --}}
+        @php
+        $questionCount = $exam->questions->count();
+        $difficultyCounts = $exam->questions
+        ->pluck('difficulty')
+        ->filter()
+        ->countBy();
+        $difficultyNameMap = $difficultyLabels ?? [];
+        $fallbackDifficultyLabels = [
+        'remember' => 'Nhận biết',
+        'understand' => 'Thông hiểu',
+        'apply' => 'Vận dụng',
+        'analyze' => 'Phân tích',
+        ];
+        $difficultyStats = collect(['remember', 'understand', 'apply', 'analyze'])
+        ->map(function (string $code) use ($difficultyCounts, $difficultyNameMap, $fallbackDifficultyLabels) {
+        return [
+        'code' => $code,
+        'label' => $difficultyNameMap[$code] ?? $fallbackDifficultyLabels[$code] ?? strtoupper($code),
+        'count' => (int) ($difficultyCounts[$code] ?? 0),
+        ];
+        });
+        $basicDifficultyStats = $difficultyStats->whereIn('code', ['remember', 'understand'])->values();
+        $advancedDifficultyStats = $difficultyStats->whereIn('code', ['apply', 'analyze'])->values();
+        @endphp
+
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <x-card padding="true">
                 <p class="text-xs font-medium text-text-muted mb-0.5">Thời gian làm bài</p>
@@ -126,18 +151,30 @@
             </x-card>
             <x-card padding="true">
                 <p class="text-xs font-medium text-text-muted mb-0.5">Số câu hỏi</p>
-                <p class="text-xl font-bold text-navy-900">{{ $exam->questions->count() }} <span
+                <p class="text-xl font-bold text-navy-900">{{ $questionCount }} <span
                         class="text-xs text-text-muted">câu</span></p>
             </x-card>
             <x-card padding="true">
-                <p class="text-xs font-medium text-text-muted mb-0.5">Tổng số câu</p>
-                <p class="text-xl font-bold text-navy-900">{{ $exam->questions->count() }} <span
-                        class="text-xs text-text-muted">câu</span></p>
+                <p class="text-xs font-medium text-text-muted mb-1">Mức độ cơ bản</p>
+                <div class="space-y-1.5">
+                    @foreach($basicDifficultyStats as $stat)
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-text-muted">{{ $stat['label'] }}</span>
+                        <span class="font-semibold text-navy-900">{{ $stat['count'] }} câu</span>
+                    </div>
+                    @endforeach
+                </div>
             </x-card>
             <x-card padding="true">
-                <p class="text-xs font-medium text-text-muted mb-0.5">Điểm/câu</p>
-                <p class="text-xl font-bold text-navy-900">1 <span
-                        class="text-xs text-text-muted">điểm</span></p>
+                <p class="text-xs font-medium text-text-muted mb-1">Mức độ vận dụng</p>
+                <div class="space-y-1.5">
+                    @foreach($advancedDifficultyStats as $stat)
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-text-muted">{{ $stat['label'] }}</span>
+                        <span class="font-semibold text-navy-900">{{ $stat['count'] }} câu</span>
+                    </div>
+                    @endforeach
+                </div>
             </x-card>
         </div>
 

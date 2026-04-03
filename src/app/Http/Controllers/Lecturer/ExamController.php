@@ -7,6 +7,7 @@ use App\Http\Requests\Exam\ReopenExamRequest;
 use App\Http\Requests\Exam\StoreExamRequest;
 use App\Http\Requests\Exam\UpdateExamRequest;
 use App\Models\CourseSection;
+use App\Models\Difficulty;
 use App\Models\Exam;
 use App\Models\Question;
 use App\Models\User;
@@ -124,8 +125,12 @@ class ExamController extends Controller
         $attemptStats = $this->lecturerExamQueryService->getAttemptStats($exam);
         $attemptCount = $attemptStats['attemptCount'];
         $completedCount = $attemptStats['completedCount'];
+        $difficultyLabels = Difficulty::query()
+            ->orderedForQuestionBank()
+            ->pluck('name', 'code')
+            ->toArray();
 
-        return view('lecturer.exams.show', compact('exam', 'attemptCount', 'completedCount'));
+        return view('lecturer.exams.show', compact('exam', 'attemptCount', 'completedCount', 'difficultyLabels'));
     }
 
     // Hiển thị form sửa đề thi
