@@ -318,14 +318,6 @@ window.classWorkspaceManager = function classWorkspaceManager(initialTab) {
         activeTab: initialTab || 'overview',
         isSubmittingSchedule: false,
         isSubmittingQuickExam: false,
-        isSubmittingReview: false,
-        complaintId: null,
-        reviewStudentName: '',
-        reviewReason: '',
-        reviewCurrentScore: 0,
-        resolutionStatus: 'resolved',
-        updatedScore: '',
-        reviewerNote: '',
 
         switchTab(tab) {
             this.activeTab = tab;
@@ -352,6 +344,8 @@ window.classWorkspaceManager = function classWorkspaceManager(initialTab) {
         },
 
         async submitScheduleForm(formElement) {
+            if (this.isSubmittingSchedule) return;
+            console.log('Manual submission triggered for form:', formElement);
             this.isSubmittingSchedule = true;
             this.clearErrors(formElement);
 
@@ -389,9 +383,10 @@ window.classWorkspaceManager = function classWorkspaceManager(initialTab) {
                     }));
                 }
             } catch (error) {
+                console.error('Schedule submission error:', error);
                 window.dispatchEvent(new CustomEvent('toast', {
                     detail: {
-                        message: 'Có lỗi hệ thống xảy ra!',
+                        message: 'Có lỗi hệ thống xảy ra: ' + error.message,
                         type: 'error'
                     }
                 }));
@@ -471,18 +466,75 @@ window.classWorkspaceManager = function classWorkspaceManager(initialTab) {
             }
         },
 
-        openReviewModal(id, studentName, reason, currentScore) {
-            this.complaintId = id;
-            this.reviewStudentName = studentName;
-            this.reviewReason = reason;
-            this.reviewCurrentScore = currentScore;
+    }
+}
+
+window.lecturerComplaintReviewModalState = function lecturerComplaintReviewModalState() {
+    return {
+        complaintId: null,
+        reviewStudentName: '',
+        reviewReason: '',
+        reviewCurrentScore: '',
+        reviewCurrentCorrectCount: 0,
+        reviewTotalQuestions: 0,
+        resolutionStatus: 'resolved',
+        updatedCorrectCount: '',
+        reviewerNote: '',
+        isSubmitting: false,
+
+        applyPrefill(payload = {}) {
+            this.complaintId = payload.complaintId ?? null;
+            this.reviewStudentName = payload.studentName ?? '';
+            this.reviewReason = payload.reason ?? '';
+            this.reviewCurrentScore = payload.currentScore ?? '';
+            this.reviewCurrentCorrectCount = Number.parseInt(payload.currentCorrectCount ?? 0, 10) || 0;
+            this.reviewTotalQuestions = Number.parseInt(payload.totalQuestions ?? 0, 10) || 0;
             this.resolutionStatus = 'resolved';
-            this.updatedScore = currentScore;
+            this.updatedCorrectCount = this.reviewCurrentCorrectCount;
             this.reviewerNote = '';
-            this.$dispatch('open-modal', 'review-modal');
+            this.isSubmitting = false;
+        },
+
+        displayCurrentScore() {
+            if (this.reviewCurrentScore === null || this.reviewCurrentScore === undefined || this.reviewCurrentScore === '') {
+                return '—';
+            }
+
+            return `${this.reviewCurrentScore}/10`;
+        },
+
+        displayCurrentCorrectRatio() {
+            if (!Number.isFinite(this.reviewCurrentCorrectCount) || this.reviewCurrentCorrectCount < 0) {
+                return '—';
+            }
+
+            if (!Number.isFinite(this.reviewTotalQuestions) || this.reviewTotalQuestions <= 0) {
+                return `${this.reviewCurrentCorrectCount}/—`;
+            }
+
+            return `${this.reviewCurrentCorrectCount}/${this.reviewTotalQuestions}`;
+        },
+
+        get previewScore() {
+            const count = Number.parseInt(this.updatedCorrectCount, 10);
+            if (!Number.isInteger(count) || this.reviewTotalQuestions <= 0) {
+                return '—';
+            }
+
+            return ((count / this.reviewTotalQuestions) * 10).toFixed(1);
         },
 
         async submitReview() {
+            if (!this.complaintId) {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: 'Không xác định được khiếu nại cần xử lý.',
+                        type: 'error'
+                    }
+                }));
+                return;
+            }
+
             if (!this.reviewerNote || this.reviewerNote.trim().length < 5) {
                 window.dispatchEvent(new CustomEvent('toast', {
                     detail: {
@@ -493,52 +545,61 @@ window.classWorkspaceManager = function classWorkspaceManager(initialTab) {
                 return;
             }
 
-            if (this.resolutionStatus === 'resolved' && (this.updatedScore === '' || this.updatedScore < 0)) {
-                window.dispatchEvent(new CustomEvent('toast', {
-                    detail: {
-                        message: 'Vui lòng nhập điểm mới hợp lệ.',
-                        type: 'error'
-                    }
-                }));
-                return;
+            let nextCorrectCount = null;
+            if (this.resolutionStatus === 'resolved') {
+                nextCorrectCount = Number.parseInt(this.updatedCorrectCount, 10);
+                if (!Number.isInteger(nextCorrectCount) || nextCorrectCount < 0 || nextCorrectCount > this.reviewTotalQuestions) {
+                    window.dispatchEvent(new CustomEvent('toast', {
+                        detail: {
+                            message: `Số câu đúng phải là số nguyên từ 0 đến ${this.reviewTotalQuestions}.`,
+                            type: 'error'
+                        }
+                    }));
+                    return;
+                }
             }
 
-            this.isSubmittingReview = true;
+            this.isSubmitting = true;
 
             try {
                 const response = await fetch(`/lecturer/complaints/${this.complaintId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
                     },
                     body: JSON.stringify({
                         status: this.resolutionStatus,
                         reviewer_note: this.reviewerNote,
-                        updated_score: this.resolutionStatus === 'resolved' ? parseFloat(this.updatedScore) : null
+                        updated_correct_count: this.resolutionStatus === 'resolved' ? nextCorrectCount : null
                     })
                 });
 
-                const result = await response.json();
+                const contentType = response.headers.get('content-type') || '';
+                const isJson = contentType.includes('application/json');
+                const result = isJson ? await response.json() : null;
 
                 if (response.ok) {
                     window.dispatchEvent(new CustomEvent('toast', {
                         detail: {
-                            message: result.message,
+                            message: result?.message || 'Đã lưu phản hồi trạng thái khiếu nại thành công.',
                             type: 'success'
                         }
                     }));
                     this.$dispatch('close-modal', 'review-modal');
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    window.dispatchEvent(new CustomEvent('toast', {
-                        detail: {
-                            message: result.message || 'Có lỗi xảy ra',
-                            type: 'error'
-                        }
-                    }));
+                    setTimeout(() => window.location.reload(), 1200);
+                    return;
                 }
-            } catch (error) {
+
+                const validationMessage = result?.errors ? Object.values(result.errors)?.[0]?.[0] : null;
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: validationMessage || result?.message || `Có lỗi xảy ra (HTTP ${response.status}).`,
+                        type: 'error'
+                    }
+                }));
+            } catch (_) {
                 window.dispatchEvent(new CustomEvent('toast', {
                     detail: {
                         message: 'Lỗi kết nối máy chủ',
@@ -546,11 +607,11 @@ window.classWorkspaceManager = function classWorkspaceManager(initialTab) {
                     }
                 }));
             } finally {
-                this.isSubmittingReview = false;
+                this.isSubmitting = false;
             }
-        }
-    }
-}
+        },
+    };
+};
 
 window.gradeManager = function gradeManager(sectionId) {
     return {
@@ -581,6 +642,23 @@ window.gradeManager = function gradeManager(sectionId) {
         },
 
         async submitColumnForm() {
+            const incomingWeight = Number.parseFloat(this.columnData.weight);
+            const safeIncomingWeight = Number.isFinite(incomingWeight) ? incomingWeight : 0;
+            const currentWeight = this.isEditingColumn
+                ? (Number.parseFloat(this.weights[String(this.editingColumnId)]) || 0)
+                : 0;
+            const projectedTotalWeight = this.totalWeight - currentWeight + safeIncomingWeight;
+
+            if (projectedTotalWeight > 100) {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: `Tổng trọng số sau khi lưu sẽ là ${projectedTotalWeight.toFixed(2)}%. Vui lòng giảm xuống tối đa 100%.`,
+                        type: 'error'
+                    }
+                }));
+                return;
+            }
+
             this.isSubmittingColumn = true;
             const url = this.isEditingColumn ?
                 `/lecturer/classes/${sectionId}/grade-columns/${this.editingColumnId}` :
@@ -686,8 +764,10 @@ window.gradeManager = function gradeManager(sectionId) {
                 }
             }
             if (!this.totalWeight || this.totalWeight <= 0 || !hasAnyScore) return '-';
-            // Quy đổi ra thang 10 so với totalWeight của Process Grade (Điểm quá trình do GV nắm)
-            return ((total * 100) / this.totalWeight).toFixed(2);
+
+            // Guard against legacy invalid configurations where total weight exceeded 100.
+            const normalized = (total * 100) / this.totalWeight;
+            return Math.max(0, Math.min(10, normalized)).toFixed(2);
         }
     }
 }

@@ -91,7 +91,11 @@ class CourseSectionController extends Controller
                     ->orderByDesc('id'),
                 'students' => fn($studentQuery) => $studentQuery->select('users.id'),
             ]),
-            'complaints.student' => fn($q) => $q->latest(),
+            'complaints' => fn($q) => $q->latest()->with([
+                'student:id,name',
+                'attempt:id,correct_count',
+                'schedule.exam' => fn($examQuery) => $examQuery->withCount('questions'),
+            ]),
             'attendanceSessions.records',
             'gradeColumns.studentGrades',
         ]);

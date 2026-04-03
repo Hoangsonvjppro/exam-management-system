@@ -58,6 +58,10 @@ class GradeManagerController extends Controller
             'weight' => 'required|numeric|min:0|max:100',
         ]);
 
+        if ($errorResponse = $this->validateTotalWeightLimit($section, (float) $validated['weight'])) {
+            return $errorResponse;
+        }
+
         $column = $section->gradeColumns()->create([
             'name' => $validated['name'],
             'weight' => $validated['weight'],
@@ -90,6 +94,14 @@ class GradeManagerController extends Controller
             'name' => 'required|string|max:255',
             'weight' => 'required|numeric|min:0|max:100',
         ]);
+
+        if ($errorResponse = $this->validateTotalWeightLimit(
+            $section,
+            (float) $validated['weight'],
+            (float) $column->weight
+        )) {
+            return $errorResponse;
+        }
 
         $column->update($validated);
 
@@ -186,5 +198,24 @@ class GradeManagerController extends Controller
                 'message' => collect($e->errors())->flatten()->first() ?? 'Không thể cập nhật điểm ở học kỳ này.',
             ], 422);
         }
+    }
+
+    private function validateTotalWeightLimit(
+        CourseSection $section,
+        float $incomingWeight,
+        float $currentWeight = 0
+    ): ?\Illuminate\Http\JsonResponse {
+        $existingTotalWeight = (float) $section->gradeColumns()->sum('weight');
+        $nextTotalWeight = $existingTotalWeight - $currentWeight + $incomingWeight;
+
+        if ($nextTotalWeight <= 100) {
+            return null;
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Tổng trọng số điểm quá trình không được vượt quá 100%.',
+            'next_total_weight' => round($nextTotalWeight, 2),
+        ], 422);
     }
 }

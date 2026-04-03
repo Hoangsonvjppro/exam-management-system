@@ -110,21 +110,28 @@ class StudentResultService
 
     public function computeSectionScores(CourseSection $section): array
     {
-        $sectionTotal10 = 0;
+        $weightedScore10 = 0;
         $hasAllGrades = true;
         $totalWeight = 0;
 
         foreach ($section->gradeColumns as $column) {
+            $weight = (float) $column->weight;
+            $totalWeight += $weight;
+
             $grade = $column->studentGrades->first();
             if ($grade && $grade->score !== null) {
-                $sectionTotal10 += ((float) $grade->score) * (((float) $column->weight) / 100);
+                $weightedScore10 += ((float) $grade->score) * ($weight / 100);
             } else {
                 $hasAllGrades = false;
             }
-            $totalWeight += (float) $column->weight;
         }
 
-        $finalScore10 = round($sectionTotal10, 2);
+        // Normalize by actual total weight and clamp to 0-10 for legacy inconsistent data.
+        $normalizedScore10 = $totalWeight > 0
+            ? ($weightedScore10 * 100) / $totalWeight
+            : 0;
+        $finalScore10 = round(max(0, min(10, $normalizedScore10)), 2);
+
         $conversion = $this->convertGradeTo4AndLetter($finalScore10);
 
         return [

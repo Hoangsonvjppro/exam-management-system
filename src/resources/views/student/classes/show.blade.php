@@ -330,7 +330,13 @@
                                             </span>
                                             @else
                                             <button type="button"
-                                                @click="openComplaintModal('{{ addslashes($exam->title) }}', '{{ $attempt->total_score }}', '{{ $attempt->id }}', '{{ $correctCount }}', '{{ $totalQuestions }}')"
+                                                @click="$dispatch('complaint-prefill', {
+                                                    examTitle: @js($exam->title),
+                                                    score: @js((string) $attempt->total_score),
+                                                    attemptId: @js((string) $attempt->id),
+                                                    correctCount: @js((string) $correctCount),
+                                                    totalQuestions: @js((string) $totalQuestions)
+                                                }); $dispatch('open-modal', 'complaint-modal')"
                                                 class="text-[12px] font-medium text-text-muted hover:text-red-600 transition-colors">
                                                 Gửi khiếu nại
                                             </button>
@@ -523,7 +529,7 @@
 
     {{-- ═══ Modal Khiếu nại (Không gian 4) ═══ --}}
     <x-modal name="complaint-modal" maxWidth="lg">
-        <div class="p-6 md:p-8">
+        <div class="p-6 md:p-8" x-data="complaintModalState()" x-on:complaint-prefill.window="applyPrefill($event.detail)">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-[20px] font-bold text-navy-900">Gửi khiếu nại điểm</h3>
                 <button @click="$dispatch('close-modal', 'complaint-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
@@ -545,11 +551,11 @@
                     </div>
                     <div class="flex justify-between text-[12px]">
                         <span class="text-text-muted font-medium">Điểm hiện tại:</span>
-                        <span class="font-bold text-navy-900" x-text="complaintCurrentScore + '/10'">—</span>
+                        <span class="font-bold text-navy-900" x-text="displayComplaintScore()">—</span>
                     </div>
                     <div class="flex justify-between text-[12px]">
                         <span class="text-text-muted font-medium">Số câu đúng:</span>
-                        <span class="font-bold text-navy-900" x-text="complaintCorrectCount + '/' + complaintTotalQuestions">—</span>
+                        <span class="font-bold text-navy-900" x-text="displayComplaintCorrectRatio()">—</span>
                     </div>
                 </div>
 

@@ -127,9 +127,8 @@ window.studentLeaveRequestForm = function studentLeaveRequestForm(sectionId, def
     };
 };
 
-window.studentClassWorkspace = function studentClassWorkspace(initialTab) {
+window.complaintModalState = function complaintModalState() {
     return {
-        activeTab: initialTab || 'feed',
         complaintExamTitle: '',
         complaintCurrentScore: '',
         complaintAttemptId: '',
@@ -137,24 +136,43 @@ window.studentClassWorkspace = function studentClassWorkspace(initialTab) {
         complaintTotalQuestions: '',
         complaintReason: '',
 
-        switchTab(tab) {
-            this.activeTab = tab;
-            const url = new URL(window.location.href);
-            url.searchParams.set('tab', tab);
-            window.history.replaceState({}, '', url);
-        },
-
-        openComplaintModal(examTitle, score, attemptId, correctCount, totalQuestions) {
-            this.complaintExamTitle = examTitle;
-            this.complaintCurrentScore = score;
-            this.complaintAttemptId = attemptId;
-            this.complaintCorrectCount = correctCount;
-            this.complaintTotalQuestions = totalQuestions;
+        applyPrefill(payload = {}) {
+            this.complaintExamTitle = payload.examTitle ?? '';
+            this.complaintCurrentScore = payload.score ?? '';
+            this.complaintAttemptId = payload.attemptId ?? '';
+            this.complaintCorrectCount = payload.correctCount ?? '';
+            this.complaintTotalQuestions = payload.totalQuestions ?? '';
             this.complaintReason = '';
-            this.$dispatch('open-modal', 'complaint-modal');
         },
 
-        submitComplaint() {
+        displayComplaintScore() {
+            if (this.complaintCurrentScore === null || this.complaintCurrentScore === undefined || this.complaintCurrentScore === '') {
+                return '—';
+            }
+
+            return `${this.complaintCurrentScore}/10`;
+        },
+
+        displayComplaintCorrectRatio() {
+            if (this.complaintCorrectCount === null || this.complaintCorrectCount === undefined || this.complaintCorrectCount === '') {
+                return '—';
+            }
+
+            if (this.complaintTotalQuestions === null || this.complaintTotalQuestions === undefined || this.complaintTotalQuestions === '') {
+                return `${this.complaintCorrectCount}/—`;
+            }
+
+            return `${this.complaintCorrectCount}/${this.complaintTotalQuestions}`;
+        },
+
+        async submitComplaint() {
+            if (!this.complaintAttemptId) {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: { message: 'Không xác định được bài làm để khiếu nại. Vui lòng đóng hộp thoại và thử lại.', type: 'error' }
+                }));
+                return;
+            }
+
             if (!this.complaintReason || this.complaintReason.trim().length < 10) {
                 window.dispatchEvent(new CustomEvent('toast', {
                     detail: { message: 'Vui lòng nhập lý do khiếu nại (ít nhất 10 ký tự).', type: 'error' }
@@ -162,37 +180,58 @@ window.studentClassWorkspace = function studentClassWorkspace(initialTab) {
                 return;
             }
 
-            fetch(studentClassShowConfig.complaintStoreUrl || '', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : ''
-                },
-                body: JSON.stringify({
-                    attempt_id: this.complaintAttemptId,
-                    reason: this.complaintReason
-                })
-            })
-                .then(response => response.json().then(data => ({ status: response.status, body: data })))
-                .then(res => {
-                    this.$dispatch('close-modal', 'complaint-modal');
-                    if (res.status === 201 || res.status === 200) {
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: res.body.message, type: 'success' }
-                        }));
-                        setTimeout(() => window.location.reload(), 1500);
-                    } else {
-                        window.dispatchEvent(new CustomEvent('toast', {
-                            detail: { message: res.body.message || 'Có lỗi xảy ra', type: 'error' }
-                        }));
-                    }
-                })
-                .catch(() => {
+            try {
+                const response = await fetch(studentClassShowConfig.complaintStoreUrl || '', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : ''
+                    },
+                    body: JSON.stringify({
+                        attempt_id: this.complaintAttemptId,
+                        reason: this.complaintReason
+                    })
+                });
+
+                const contentType = response.headers.get('content-type') || '';
+                const isJson = contentType.includes('application/json');
+                const body = isJson ? await response.json() : null;
+
+                if (response.ok) {
                     this.$dispatch('close-modal', 'complaint-modal');
                     window.dispatchEvent(new CustomEvent('toast', {
-                        detail: { message: 'Lỗi kết nối máy chủ', type: 'error' }
+                        detail: { message: body?.message || 'Đã gửi khiếu nại thành công.', type: 'success' }
                     }));
-                });
+                    setTimeout(() => window.location.reload(), 1500);
+                    return;
+                }
+
+                const validationMessage = body?.errors ? Object.values(body.errors)?.[0]?.[0] : null;
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        message: validationMessage || body?.message || `Gửi khiếu nại thất bại (HTTP ${response.status}).`,
+                        type: 'error'
+                    }
+                }));
+            } catch (_) {
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: { message: 'Lỗi kết nối máy chủ', type: 'error' }
+                }));
+            }
+        },
+    };
+};
+
+window.studentClassWorkspace = function studentClassWorkspace(initialTab) {
+    return {
+        activeTab: initialTab || 'feed',
+
+        switchTab(tab) {
+            this.activeTab = tab;
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', tab);
+            window.history.replaceState({}, '', url);
         },
     }
 }
