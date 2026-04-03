@@ -30,6 +30,7 @@ class CourseSectionController extends Controller
         $user = Auth::user();
 
         $sections = $user->courseSections()
+            ->with(['subject', 'semester'])
             ->withCount('students')
             ->latest()
             ->paginate(12);

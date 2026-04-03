@@ -56,12 +56,20 @@ class EnrollmentService
         $section = CourseSection::query()
             ->withInviteCode($normalizedCode)
             ->active()
+            ->with('semester')
             ->first();
 
         if (! $section) {
             return [
                 'type' => 'invalid_code',
                 'message' => 'Ma lop khong hop le hoac lop dang dong.',
+            ];
+        }
+
+        if (! $section->semester || ! $section->semester->isCurrentPeriod()) {
+            return [
+                'type' => 'invalid_code',
+                'message' => 'Lớp học phần chưa mở cho tham gia ở thời điểm hiện tại.',
             ];
         }
 

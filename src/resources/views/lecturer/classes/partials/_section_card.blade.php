@@ -3,6 +3,30 @@
         && (statusFilter === 'all' || statusFilter === '{{ $section->status }}')
         && (semesterFilter === 'all' || semesterFilter === '{{ (string) $section->semester_id }}')
         && (subjectFilter === 'all' || subjectFilter === '{{ (string) $section->subject_id }}')">
+    @php
+    $semesterLifecycle = $section->semester?->lifecycle_status;
+
+    if ($section->status === 'archived') {
+    $cardStatusText = 'Đã lưu trữ';
+    $cardStatusClass = 'bg-surface-1 text-text-muted border-[0.5px] border-border-clean';
+    } elseif ($section->status === 'cancelled') {
+    $cardStatusText = 'Đã huỷ';
+    $cardStatusClass = 'bg-red-50 text-red-700 border-[0.5px] border-red-200';
+    } elseif ($semesterLifecycle === \App\Models\Semester::STATUS_UPCOMING) {
+    $cardStatusText = 'Sắp mở';
+    $cardStatusClass = 'bg-amber-50 text-amber-800 border-[0.5px] border-amber-200';
+    } elseif ($semesterLifecycle === \App\Models\Semester::STATUS_CURRENT) {
+    $cardStatusText = 'Đang diễn ra';
+    $cardStatusClass = 'bg-teal-50 text-teal-800 border-[0.5px] border-teal-200';
+    } elseif ($semesterLifecycle === \App\Models\Semester::STATUS_ENDED) {
+    $cardStatusText = 'Đã kết thúc';
+    $cardStatusClass = 'bg-slate-100 text-slate-700 border-[0.5px] border-slate-300';
+    } else {
+    $cardStatusText = 'Đang hoạt động';
+    $cardStatusClass = 'bg-teal-50 text-teal-800 border-[0.5px] border-teal-200';
+    }
+    @endphp
+
     {{-- Card Top --}}
     <div class="px-5 py-4 border-b-[0.5px] border-border-clean
         @if($section->status === 'active') bg-surface-1
@@ -13,15 +37,8 @@
                 <p class="font-bold text-[10px] uppercase tracking-widest text-text-muted opacity-70">{{ $section->code }}</p>
                 <h3 class="font-bold text-lg text-navy-900 leading-tight mt-1 group-hover:text-blue-600 transition-colors">{{ $section->name ?? $section->code }}</h3>
             </div>
-            <span class="uppercase text-[10px] font-bold px-2 py-1 rounded-[4px] shrink-0
-                @if($section->status === 'active') bg-teal-50 text-teal-800 border-[0.5px] border-teal-200
-                @elseif($section->status === 'archived') bg-surface-1 text-text-muted border-[0.5px] border-border-clean
-                @else bg-red-50 text-red-700 border-[0.5px] border-red-200 @endif">
-                {{ match($section->status) {
-                    'active'   => 'Đang mở',
-                    'archived' => 'Đã lưu trữ',
-                    default    => 'Đã huỷ',
-                } }}
+            <span class="uppercase text-[10px] font-bold px-2 py-1 rounded-[4px] shrink-0 {{ $cardStatusClass }}">
+                {{ $cardStatusText }}
             </span>
         </div>
     </div>

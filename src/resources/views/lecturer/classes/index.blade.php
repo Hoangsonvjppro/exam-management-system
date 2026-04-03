@@ -80,7 +80,7 @@
                     <select id="status-filter" x-model="statusFilter"
                         class="h-9 px-3 rounded-[6px] border border-border-clean text-[13px] font-semibold text-navy-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-50 outline-none">
                         <option value="all">Tất cả</option>
-                        <option value="active">Đang mở</option>
+                        <option value="active">Đang hoạt động</option>
                         <option value="archived">Lưu trữ</option>
                         <option value="cancelled">Đã huỷ</option>
                     </select>
