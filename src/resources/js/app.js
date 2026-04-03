@@ -105,6 +105,29 @@ window.appLayoutSidebarState = function appLayoutSidebarState() {
         openQuestionBank: true,
         openExamBank: false,
 
+        persistMenuState() {
+            localStorage.setItem('ems_sidebar_menu_state', JSON.stringify({
+                openClassMenu: this.openClassMenu,
+                openQuestionBank: this.openQuestionBank,
+                openExamBank: this.openExamBank,
+            }));
+        },
+
+        toggleClassMenu() {
+            this.openClassMenu = !this.openClassMenu;
+            this.persistMenuState();
+        },
+
+        toggleQuestionBank() {
+            this.openQuestionBank = !this.openQuestionBank;
+            this.persistMenuState();
+        },
+
+        toggleExamBank() {
+            this.openExamBank = !this.openExamBank;
+            this.persistMenuState();
+        },
+
         get isExpanded() {
             return (this.isSidebarPinned || this.isSidebarHovered) || (window.innerWidth < 1024 && this.isSidebarPinned);
         },
@@ -125,6 +148,19 @@ window.appLayoutSidebarState = function appLayoutSidebarState() {
         },
 
         init() {
+            const storedMenuState = localStorage.getItem('ems_sidebar_menu_state');
+
+            if (storedMenuState) {
+                try {
+                    const parsed = JSON.parse(storedMenuState);
+                    this.openClassMenu = typeof parsed.openClassMenu === 'boolean' ? parsed.openClassMenu : this.openClassMenu;
+                    this.openQuestionBank = typeof parsed.openQuestionBank === 'boolean' ? parsed.openQuestionBank : this.openQuestionBank;
+                    this.openExamBank = typeof parsed.openExamBank === 'boolean' ? parsed.openExamBank : this.openExamBank;
+                } catch (_) {
+                    // Keep default values if local storage is malformed.
+                }
+            }
+
             const stored = localStorage.getItem('ems_sidebar_pinned');
             if (stored !== null) {
                 this.isSidebarPinned = stored === 'true';
