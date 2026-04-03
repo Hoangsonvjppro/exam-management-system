@@ -81,8 +81,11 @@
                         type="text"
                         value="{{ old('student_code') }}"
                         required
+                        inputmode="numeric"
+                        pattern="[0-9]{10}"
+                        maxlength="10"
                         class="w-full rounded-[10px] border border-border-clean px-4 py-2.5 text-navy-900 outline-none transition focus:border-navy-600 focus:ring-2 focus:ring-blue-200"
-                        placeholder="VD: 22123456">
+                        placeholder="VD: 2212345678">
                 </div>
 
                 <button

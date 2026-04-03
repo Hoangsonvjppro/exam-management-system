@@ -26,11 +26,20 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
             'student_code' => [
+                Rule::requiredIf(fn() => $this->user()?->hasRole('student')),
                 'nullable',
                 'string',
-                'max:20',
+                'regex:/^[0-9]{10}$/',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'student_code.required' => 'Vui lòng nhập MSSV.',
+            'student_code.regex' => 'MSSV phải gồm đúng 10 chữ số.',
         ];
     }
 }
