@@ -7,6 +7,7 @@ use App\Http\Requests\Exam\ReopenExamRequest;
 use App\Http\Requests\Exam\StoreExamRequest;
 use App\Http\Requests\Exam\UpdateExamRequest;
 use App\Models\CourseSection;
+use App\Models\Difficulty;
 use App\Models\Exam;
 use App\Models\Question;
 use App\Models\User;
@@ -35,7 +36,7 @@ class ExamController extends Controller
     }
 
     // Hiển thị form tạo đề thi mới
-    public function create(): View
+    public function create(Request $request, ?CourseSection $courseSection = null): View
     {
         /** @var User $user */
         $user = \Illuminate\Support\Facades\Auth::user();
@@ -44,6 +45,18 @@ class ExamController extends Controller
             ->subjects()
             ->pluck('subjects.id')
             ->unique();
+
+        $preselectedSubjectId = null;
+        if ($courseSection) {
+            Gate::authorize('manage', $courseSection);
+            $preselectedSubjectId = (int) $courseSection->subject_id;
+        } elseif ($request->filled('subject_id')) {
+            $preselectedSubjectId = (int) $request->query('subject_id');
+        }
+
+        if (! $assignedSubjectIds->contains($preselectedSubjectId)) {
+            $preselectedSubjectId = null;
+        }
 
         $subjects = \App\Models\Subject::whereIn('id', $assignedSubjectIds)->get();
         $chapters = \App\Models\Chapter::whereIn('subject_id', $assignedSubjectIds)->orderBy('order')->get();
@@ -62,7 +75,7 @@ class ExamController extends Controller
             $availabilityMap[$key] = (int) $row->cnt;
         }
 
-        return view("lecturer.exams.create", compact('subjects', 'chapters', 'difficulties', 'availabilityMap'));
+        return view("lecturer.exams.create", compact('subjects', 'chapters', 'difficulties', 'availabilityMap', 'preselectedSubjectId'));
     }
 
     // Tạo 1 đề thi mới: phân luồng manual vs matrix
@@ -124,8 +137,12 @@ class ExamController extends Controller
         $attemptStats = $this->lecturerExamQueryService->getAttemptStats($exam);
         $attemptCount = $attemptStats['attemptCount'];
         $completedCount = $attemptStats['completedCount'];
+        $difficultyLabels = Difficulty::query()
+            ->orderedForQuestionBank()
+            ->pluck('name', 'code')
+            ->toArray();
 
-        return view('lecturer.exams.show', compact('exam', 'attemptCount', 'completedCount'));
+        return view('lecturer.exams.show', compact('exam', 'attemptCount', 'completedCount', 'difficultyLabels'));
     }
 
     // Hiển thị form sửa đề thi

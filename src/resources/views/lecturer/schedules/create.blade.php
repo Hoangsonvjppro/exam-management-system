@@ -40,6 +40,9 @@
     ->toArray();
 
     $preSelectedSubjectId = (string) ($preSelectedSection?->subject_id ?? '');
+    $fullExamBuilderParams = $preSelectedSubjectId !== ''
+    ? ['subject_id' => $preSelectedSubjectId]
+    : [];
     @endphp
 
     <div class="py-8 bg-[#F8FAFD] min-h-screen"
@@ -274,7 +277,7 @@
                             <label class="text-[12px] font-semibold text-navy-900">Chọn câu hỏi <span class="text-red-500">*</span></label>
                             <div class="flex items-center gap-3">
                                 <button type="button" class="text-[12px] font-semibold text-emerald-700 hover:text-emerald-800" @click="openQuickQuestionCreateModal()">+ Tạo câu hỏi nhanh</button>
-                                <a href="{{ route('lecturer.exams.create') }}" class="text-[12px] font-semibold text-[#185FA5] hover:underline">Mở trình tạo đầy đủ</a>
+                                <a href="{{ route('lecturer.exams.create', $fullExamBuilderParams) }}" class="text-[12px] font-semibold text-[#185FA5] hover:underline">Mở trình tạo đầy đủ</a>
                             </div>
                         </div>
 
