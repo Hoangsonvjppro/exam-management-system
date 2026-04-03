@@ -746,7 +746,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h3 class="text-[18px] font-bold text-navy-900">Thống kê điểm bài thi</h3>
-                        <p class="text-[12px] text-text-muted font-medium mt-1">Theo từng bài thi: trung bình, cao nhất, thấp nhất và tỷ lệ đạt.</p>
+                        <p class="text-[12px] text-text-muted font-medium mt-1">Theo từng bài thi: số bài đã nộp, trung bình, cao nhất và thấp nhất.</p>
                     </div>
                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-1 text-text-muted border border-border-clean">
                         {{ $examStatistics->count() }} bài thi
@@ -759,16 +759,14 @@
                 </div>
                 @else
                 <div class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
-                    <table class="w-full text-left border-collapse min-w-[920px]">
+                    <table class="w-full text-left border-collapse min-w-[760px]">
                         <thead>
                             <tr class="bg-surface-1 border-b border-border-clean">
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Bài thi</th>
-                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Mốc đạt</th>
                                 <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Đã nộp</th>
                                 <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Trung bình</th>
                                 <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Cao nhất</th>
                                 <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Thấp nhất</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Tỷ lệ đạt</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border-clean/70">
@@ -790,9 +788,6 @@
                                     </span>
                                 </td>
                                 <td class="py-3 px-3 text-center text-[13px] font-semibold text-navy-900">
-                                    {{ number_format($stat->pass_threshold, 2) }}
-                                </td>
-                                <td class="py-3 px-3 text-center text-[13px] font-semibold text-navy-900">
                                     {{ $stat->submitted_count }}/{{ $stat->assigned_count }}
                                 </td>
                                 <td class="py-3 px-3 text-center text-[13px] font-bold text-navy-900">
@@ -804,20 +799,12 @@
                                 <td class="py-3 px-3 text-center text-[13px] font-bold text-amber-700">
                                     {{ $stat->lowest_score !== null ? number_format($stat->lowest_score, 2) : '—' }}
                                 </td>
-                                <td class="py-3 px-4 text-center">
-                                    @if($stat->pass_rate !== null)
-                                    <p class="text-[14px] font-black text-teal-700">{{ number_format($stat->pass_rate, 1) }}%</p>
-                                    <p class="text-[11px] text-text-muted mt-0.5">{{ $stat->passed_count }}/{{ $stat->submitted_count }} đạt</p>
-                                    @else
-                                    <span class="text-[12px] text-text-muted">—</span>
-                                    @endif
-                                </td>
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-                <p class="text-[12px] text-text-muted">Tỷ lệ đạt được tính trên số bài đã nộp của từng bài thi.</p>
+                <p class="text-[12px] text-text-muted">Các thống kê điểm chỉ được tính trên các bài đã nộp.</p>
                 @endif
             </div>
 

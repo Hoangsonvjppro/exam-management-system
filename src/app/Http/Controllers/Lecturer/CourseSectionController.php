@@ -116,13 +116,6 @@ class CourseSectionController extends Controller
 
                 $submittedCount = $scores->count();
                 $assignedCount = $schedule->students->count();
-                $passThreshold = (float) ($schedule->exam?->pass_points ?? 0);
-
-                if ($passThreshold <= 0) {
-                    $passThreshold = 5.0;
-                }
-
-                $passedCount = $scores->filter(fn(float $score) => $score >= $passThreshold)->count();
 
                 return (object) [
                     'schedule_id' => $schedule->id,
@@ -135,9 +128,6 @@ class CourseSectionController extends Controller
                     'average_score' => $submittedCount > 0 ? round((float) $scores->avg(), 2) : null,
                     'highest_score' => $submittedCount > 0 ? round((float) $scores->max(), 2) : null,
                     'lowest_score' => $submittedCount > 0 ? round((float) $scores->min(), 2) : null,
-                    'pass_threshold' => $passThreshold,
-                    'passed_count' => $passedCount,
-                    'pass_rate' => $submittedCount > 0 ? round(($passedCount / $submittedCount) * 100, 1) : null,
                 ];
             });
 
