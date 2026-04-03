@@ -11,6 +11,46 @@ use Illuminate\Validation\ValidationException;
 
 class SemesterGovernanceService
 {
+    public function assertCanArchiveSemester(Semester $semester): void
+    {
+        if ($semester->status === Semester::STATUS_ARCHIVED) {
+            throw ValidationException::withMessages([
+                'status' => 'Học kỳ này đã ở trạng thái lưu trữ.',
+            ]);
+        }
+
+        if (! $semester->isEndedPeriod()) {
+            throw ValidationException::withMessages([
+                'status' => 'Chỉ có thể lưu trữ học kỳ đã kết thúc.',
+            ]);
+        }
+
+        $hasOpenSchedules = ExamSchedule::query()
+            ->whereHas('courseSection', function ($query) use ($semester): void {
+                $query->where('semester_id', $semester->id);
+            })
+            ->whereIn('status', ['scheduled', 'in_progress'])
+            ->exists();
+
+        if ($hasOpenSchedules) {
+            throw ValidationException::withMessages([
+                'status' => 'Không thể lưu trữ khi học kỳ vẫn còn ca thi chưa hoàn tất.',
+            ]);
+        }
+    }
+
+    public function archiveSemester(Semester $semester): Semester
+    {
+        $this->assertCanArchiveSemester($semester);
+
+        $semester->forceFill([
+            'status' => Semester::STATUS_ARCHIVED,
+            'is_current' => false,
+        ])->save();
+
+        return $semester->refresh();
+    }
+
     public function assertSectionAllowsExamScheduling(CourseSection $section): void
     {
         $semester = $section->semester;

@@ -6,6 +6,7 @@ use App\Models\CourseSection;
 use App\Models\Semester;
 use App\Models\Subject;
 use App\Models\User;
+use App\Services\SemesterGovernanceService;
 use App\Services\SemesterLifecycleService;
 use App\Services\SemesterValidationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -65,6 +66,62 @@ class SemesterHardeningTest extends TestCase
         $this->expectExceptionMessage('Không thể cấu hình học kỳ đã kết thúc trong quá khứ.');
 
         app(SemesterValidationService::class)->validateForUpsert($payload);
+    }
+
+    public function test_rejects_start_year_in_the_past(): void
+    {
+        $currentYear = now()->year;
+
+        $payload = [
+            'name' => 'HK1 ' . ($currentYear - 1) . '-' . $currentYear,
+            'year' => $currentYear - 1,
+            'term' => 1,
+            'start_date' => now()->subMonth()->toDateString(),
+            'end_date' => now()->addMonths(3)->toDateString(),
+        ];
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Năm học bắt đầu chỉ được chọn từ năm hiện tại trở đi.');
+
+        app(SemesterValidationService::class)->validateForUpsert($payload);
+    }
+
+    public function test_cannot_archive_current_semester(): void
+    {
+        $semester = Semester::create([
+            'name' => 'HK1 2026-2027',
+            'year' => now()->year,
+            'term' => 1,
+            'start_date' => now()->subDays(15)->toDateString(),
+            'end_date' => now()->addDays(60)->toDateString(),
+            'status' => Semester::STATUS_CURRENT,
+            'is_current' => true,
+        ]);
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Chỉ có thể lưu trữ học kỳ đã kết thúc.');
+
+        app(SemesterGovernanceService::class)->archiveSemester($semester);
+    }
+
+    public function test_can_archive_ended_semester(): void
+    {
+        $semester = Semester::create([
+            'name' => 'HK2 2024-2025',
+            'year' => now()->year,
+            'term' => 2,
+            'start_date' => now()->subMonths(6)->toDateString(),
+            'end_date' => now()->subMonth()->toDateString(),
+            'status' => Semester::STATUS_ENDED,
+            'is_current' => false,
+        ]);
+
+        app(SemesterGovernanceService::class)->archiveSemester($semester);
+
+        $semester->refresh();
+
+        $this->assertSame(Semester::STATUS_ARCHIVED, $semester->status);
+        $this->assertFalse($semester->is_current);
     }
 
     public function test_allows_overlapping_current_semesters(): void

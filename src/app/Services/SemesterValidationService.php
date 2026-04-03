@@ -9,6 +9,8 @@ use Illuminate\Validation\ValidationException;
 
 class SemesterValidationService
 {
+    private const MAX_FUTURE_YEAR_OFFSET = 10;
+
     /**
      * @param array<string, mixed> $data
      */
@@ -16,13 +18,21 @@ class SemesterValidationService
     {
         Validator::make($data, [
             'name' => ['required', 'string', 'max:100'],
-            'year' => ['required', 'integer', 'min:' . (now()->year - 1), 'max:' . (now()->year + 5)],
+            'year' => ['required', 'integer', 'min:' . now()->year, 'max:' . (now()->year + self::MAX_FUTURE_YEAR_OFFSET)],
             'term' => ['required', 'integer', 'in:1,2,3'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
         ], [
-            'year.min' => 'Năm học bắt đầu không được lùi quá xa trong quá khứ.',
-            'year.max' => 'Năm học bắt đầu quá xa so với hiện tại.',
+            'year.required' => 'Vui lòng chọn năm học bắt đầu.',
+            'year.min' => 'Năm học bắt đầu chỉ được chọn từ năm hiện tại trở đi.',
+            'year.max' => 'Năm học bắt đầu vượt quá phạm vi cho phép (tối đa +10 năm).',
+            'term.required' => 'Vui lòng chọn học kỳ.',
+            'term.in' => 'Học kỳ được chọn không hợp lệ.',
+            'start_date.required' => 'Vui lòng chọn ngày bắt đầu.',
+            'start_date.date' => 'Ngày bắt đầu không đúng định dạng.',
+            'end_date.required' => 'Vui lòng chọn ngày kết thúc.',
+            'end_date.date' => 'Ngày kết thúc không đúng định dạng.',
+            'end_date.after_or_equal' => 'Ngày kết thúc phải sau hoặc trùng ngày bắt đầu.',
         ])->validate();
 
         $startDate = Carbon::parse((string) $data['start_date'])->startOfDay();
