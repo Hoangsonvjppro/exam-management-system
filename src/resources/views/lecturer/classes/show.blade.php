@@ -79,79 +79,76 @@
         </div>
 
 {{-- Cảnh báo học kỳ sắp mở (Từ nhánh main) --}}
-        @if($isUpcomingSemesterWorkspace)
-        <div class="rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900 mb-4">
-            <p class="font-semibold">Không gian lớp đang ở chế độ học kỳ sắp mở.</p>
-            <p class="mt-1 text-[12px] text-amber-800">Dữ liệu lớp được hiển thị ở dạng chuẩn bị trước khai giảng để phân biệt với lớp đang diễn ra.</p>
-        </div>
-        @endif
+        @if($isUpcomingSemesterWorkspace)
+        <div class="rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] text-amber-900 mb-4">
+            <p class="font-semibold">Không gian lớp đang ở chế độ học kỳ sắp mở.</p>
+            <p class="mt-1 text-[12px] text-amber-800">Dữ liệu lớp được hiển thị ở dạng chuẩn bị trước khai giảng để phân biệt với lớp đang diễn ra.</p>
+        </div>         
+        @endif
 
-        <div class="relative">
-            {{-- Lớp phủ làm mờ (Từ nhánh main) --}}
-            @if($isUpcomingSemesterWorkspace)
-            <div class="pointer-events-none absolute inset-0 z-20 rounded-[10px] bg-white/45 backdrop-blur-[1px]"></div>
-            <div class="pointer-events-none absolute right-3 top-3 z-30 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">
-                Sắp mở
-            </div>
-            @endif
+        <div class="relative">
+            {{-- Lớp phủ làm mờ (Từ nhánh main) --}}
+            @if($isUpcomingSemesterWorkspace)
+            <div class="pointer-events-none absolute inset-0 z-20 rounded-[10px] bg-white/45 backdrop-blur-[1px]"></div>
+            <div class="pointer-events-none absolute right-3 top-3 z-30 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                Sắp mở
+            </div>
+            @endif
 
-            {{-- ═══ Mã mời tham gia lớp (Từ nhánh khanh-update) ═══ --}}
-            @can('manage', $section)
-            <x-card
-                padding="true"
-                variant="featured"
-                x-data="inviteCodeCardState()"
-                data-invite-code="{{ $section->invite_code ?? '' }}"
-                data-join-qr-url="{{ route('student.join-class.qr') }}">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-1">Mã mời tham gia lớp</p>
-                        <p class="text-[12px] text-text-muted">Gửi mã này cho sinh viên để họ tham gia lớp học phần.</p>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        <div class="flex items-center bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] overflow-hidden">
-                            <span class="px-4 py-2 font-mono text-[16px] font-black text-[#1A3A6B] tracking-[0.2em] select-all" x-text="inviteCode || '—'"></span>
-                            @if($section->invite_code)
-                            <button type="button"
-                                @click="copyInviteCode()"
-                                class="px-3 py-2 border-l border-[#D6E2F0] text-[#1A3A6B] hover:bg-[#F4F7FC] transition-colors inline-flex items-center gap-1.5"
-                                :title="copied ? 'Đã sao chép!' : 'Copy mã'">
-                                <svg class="w-4 h-4" :class="copied ? 'text-teal-600' : 'text-[#6B7C99]'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                                <span class="text-[12px] font-semibold" x-text="copied ? 'Đã copy' : 'Copy mã'"></span>
-                            </button>
-                            @endif
-                        </div>
-                        @if($section->invite_code)
-                        <button type="button"
-                            @click="showInviteQr()"
-                            class="inline-flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold text-[#1A3A6B] bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] hover:border-[#185FA5] hover:bg-[#F4F7FC] transition-colors">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7V5a2 2 0 012-2h2M4 17v2a2 2 0 002 2h2m8-18h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M9 12h6" />
-                            </svg>
-                            Hiện QR và mã
-                        </button>
-                        @endif
-                        <form method="POST" action="{{ route('lecturer.classes.regenerate-code', $section) }}">
-                            @csrf
-                            <button type="submit"
-                                class="inline-flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold text-[#6B7C99] bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] hover:text-[#1A3A6B] hover:border-[#185FA5] transition-colors"
-                                data-confirm-message="Tạo mã mới sẽ vô hiệu hóa mã cũ. Tiếp tục?">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Tạo mã mới
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </x-card>
-            @endcan
-        </div>
+            {{-- ═══ Mã mời tham gia lớp (Từ nhánh khanh-update) ═══ --}}
+            @can('manage', $section)
+            <x-card
+                padding="true"
+                variant="featured"
+                x-data="inviteCodeCardState()"
+                data-invite-code="{{ $section->invite_code ?? '' }}"
+                data-join-qr-url="{{ route('student.join-class.qr') }}">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-text-muted mb-1">Mã mời tham gia lớp</p>
+                        <p class="text-[12px] text-text-muted">Gửi mã này cho sinh viên để họ tham gia lớp học phần.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] overflow-hidden">
+                            <span class="px-4 py-2 font-mono text-[16px] font-black text-[#1A3A6B] tracking-[0.2em] select-all" x-text="inviteCode || '—'"></span>
+                            @if($section->invite_code)
+                            <button type="button"
+                                @click="copyInviteCode()"
+                                class="px-3 py-2 border-l border-[#D6E2F0] text-[#1A3A6B] hover:bg-[#F4F7FC] transition-colors inline-flex items-center gap-1.5"
+                                :title="copied ? 'Đã sao chép!' : 'Copy mã'">
+                                <svg class="w-4 h-4" :class="copied ? 'text-teal-600' : 'text-[#6B7C99]'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                <span class="text-[12px] font-semibold" x-text="copied ? 'Đã copy' : 'Copy mã'"></span>
+                            </button>
+                            @endif
+                        </div>
+                        @if($section->invite_code)
+                        <button type="button"
+                            @click="showInviteQr()"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold text-[#1A3A6B] bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] hover:border-[#185FA5] hover:bg-[#F4F7FC] transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7V5a2 2 0 012-2h2M4 17v2a2 2 0 002 2h2m8-18h2a2 2 0 012 2v2m0 10v2a2 2 0 01-2 2h-2M9 12h6" />
+                            </svg>
+                            Hiện QR và mã
+                        </button>
+                        @endif
+                        <form method="POST" action="{{ route('lecturer.classes.regenerate-code', $section) }}">
+                            @csrf
+                            <button type="submit"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold text-[#6B7C99] bg-white border-[1.5px] border-[#D6E2F0] rounded-[6px] hover:text-[#1A3A6B] hover:border-[#185FA5] transition-colors"
+                                data-confirm-message="Tạo mã mới sẽ vô hiệu hóa mã cũ. Tiếp tục?">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Tạo mã mới
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </x-card>
             @endcan
+        </div>
 
             <x-card padding="false" class="overflow-hidden">
                 <div class="px-4 sm:px-6 border-b border-border-clean bg-surface-1">
