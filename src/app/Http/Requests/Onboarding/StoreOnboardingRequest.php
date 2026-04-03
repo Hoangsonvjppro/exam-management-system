@@ -15,7 +15,7 @@ class StoreOnboardingRequest extends FormRequest
     {
         return [
             'name'         => ['required', 'string', 'max:255'],
-            'student_code' => ['required', 'string', 'max:20', 'unique:users,student_code'],
+            'student_code' => ['required', 'string', 'regex:/^[0-9]{10}$/', 'unique:users,student_code'],
         ];
     }
 
@@ -26,7 +26,7 @@ class StoreOnboardingRequest extends FormRequest
             'name.max'              => 'Họ tên không được vượt quá 255 ký tự.',
             'student_code.required' => 'Vui lòng nhập mã số sinh viên.',
             'student_code.unique'   => 'Mã số sinh viên đã tồn tại trong hệ thống.',
-            'student_code.max'      => 'Mã số sinh viên không được vượt quá 20 ký tự.',
+            'student_code.regex'    => 'MSSV phải gồm đúng 10 chữ số.',
         ];
     }
 }
