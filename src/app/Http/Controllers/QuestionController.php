@@ -6,6 +6,7 @@ use App\Http\Requests\Question\IndexQuestionRequest;
 use App\Http\Requests\Question\StoreQuestionRequest;
 use App\Http\Requests\Question\UpdateQuestionRequest;
 use App\Models\Question;
+use App\Models\User;
 use App\Services\QuestionBankQueryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use App\Models\Subject;
+use Illuminate\Support\Facades\Auth;
 
 class QuestionController extends Controller
 {
@@ -21,6 +23,19 @@ class QuestionController extends Controller
      */
     public function getChaptersBySubject(int $subjectId): JsonResponse
     {
+        $user = Auth::user();
+        if ($user instanceof User && $user->hasRole('lecturer')) {
+            $isAssigned = $user->subjects()
+                ->where('subjects.id', $subjectId)
+                ->exists();
+
+            if (! $isAssigned) {
+                return response()->json([
+                    'message' => 'Bạn không có quyền truy cập môn học này.',
+                ], 403);
+            }
+        }
+
         $chapters = \App\Models\Chapter::where('subject_id', $subjectId)
             ->orderBy('order')
             ->get(['id', 'name']);

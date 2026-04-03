@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\CourseSection;
 use App\Models\User;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class CourseSectionService
 {
@@ -21,6 +22,17 @@ class CourseSectionService
      */
     public function createCourseSection(User $lecturer, array $data): CourseSection
     {
+        $assignedSubjectIds = $lecturer->subjects()
+            ->pluck('subjects.id')
+            ->map(fn($id) => (int) $id)
+            ->all();
+
+        if (! in_array((int) $data['subject_id'], $assignedSubjectIds, true)) {
+            throw ValidationException::withMessages([
+                'subject_id' => 'Bạn chỉ có thể tạo lớp học phần cho các môn được phân công.',
+            ]);
+        }
+
         $code = CourseSection::generateCode($data['subject_id'], $data['semester_id']);
 
         $section = CourseSection::create([

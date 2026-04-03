@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Chapter;
+use App\Models\Department;
 use App\Models\Subject;
 use Illuminate\Database\Seeder;
 
@@ -10,6 +11,14 @@ class SubjectSeeder extends Seeder
 {
     public function run(): void
     {
+        $departmentId = Department::query()
+            ->where('code', 'CT')
+            ->value('id');
+
+        if (! $departmentId) {
+            $this->command->warn('⚠ Không tìm thấy khoa CT. Môn học sẽ được seed với department_id = null.');
+        }
+
         $subjects = [
             [
                 'code' => 'IT001',
@@ -46,7 +55,7 @@ class SubjectSeeder extends Seeder
         foreach ($subjects as $sub) {
             $subject = Subject::updateOrCreate(
                 ['code' => $sub['code']],
-                ['name' => $sub['name'], 'credits' => $sub['credits'], 'department_id' => '1']
+                ['name' => $sub['name'], 'credits' => $sub['credits'], 'department_id' => $departmentId]
             );
 
             foreach ($sub['chapters'] as $index => $chapterName) {

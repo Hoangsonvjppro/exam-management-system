@@ -7,15 +7,14 @@ use App\Models\Semester;
 use App\Models\Subject;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 /**
  * ============================================================
- * CourseSectionSeeder — Tạo 5 lớp HP + gán SV
+ * CourseSectionSeeder — Tạo 5 lớp HP + gán SV đã onboarding
  * ============================================================
- * Dùng đúng mã môn IT001-IT005 từ SubjectSeeder.
- * Chia đều 3 giảng viên, mỗi lớp 8-12 SV từ pool 20 SV.
- * Mỗi lớp có invite_code.
+ * Quy tắc domain:
+ * - Mỗi lớp học phần chỉ được gán cho giảng viên đã có phân công môn.
+ * - Chỉ gán sinh viên đã có MSSV (đã hoàn tất onboarding).
  * ============================================================
  */
 class CourseSectionSeeder extends Seeder
@@ -29,34 +28,32 @@ class CourseSectionSeeder extends Seeder
             return;
         }
 
-        // ─── Lấy danh sách giảng viên (3 GV) ─────────────────
-        $lecturers = User::whereHas('roles', fn($q) => $q->where('name', 'lecturer'))
-            ->orderBy('id')
-            ->get();
-
-        if ($lecturers->isEmpty()) {
-            $this->command->warn('⚠ Không tìm thấy giảng viên. Bỏ qua CourseSectionSeeder.');
-            return;
-        }
-
-        // ─── Lấy danh sách sinh viên (20 SV) ─────────────────
+        // ─── Lấy danh sách sinh viên đã hoàn tất onboarding ──
         $students = User::whereHas('roles', fn($q) => $q->where('name', 'student'))
+            ->whereNotNull('student_code')
             ->orderBy('id')
             ->get();
 
         if ($students->count() < 8) {
-            $this->command->warn('⚠ Cần ít nhất 8 sinh viên. Bỏ qua CourseSectionSeeder.');
+            $this->command->warn('⚠ Cần ít nhất 8 sinh viên đã có MSSV. Bỏ qua CourseSectionSeeder.');
             return;
         }
 
-        // ─── Lấy tất cả môn học (IT001-IT005) ────────────────
-        $subjects = Subject::all()->keyBy('code');
+        // ─── Lấy môn học + giảng viên được phân công ─────────
+        $subjects = Subject::query()
+            ->with([
+                'lecturers' => fn($q) => $q
+                    ->whereHas('roles', fn($roleQuery) => $roleQuery->where('name', 'lecturer'))
+                    ->orderBy('users.id')
+            ])
+            ->get()
+            ->keyBy('code');
 
         // ─── Định nghĩa 5 lớp học phần ───────────────────────
         $sections = [
             [
                 'subject_code'  => 'IT001',
-                'lecturer_idx'  => 0,       // GV Sang
+                'lecturer_code' => 'GV_001',
                 'group'         => '01',
                 'max_students'  => 40,
                 'student_range' => [0, 9],  // SV 1-10
@@ -67,7 +64,7 @@ class CourseSectionSeeder extends Seeder
             ],
             [
                 'subject_code'  => 'IT002',
-                'lecturer_idx'  => 1,       // GV Hai
+                'lecturer_code' => 'GV_002',
                 'group'         => '01',
                 'max_students'  => 45,
                 'student_range' => [2, 13], // SV 3-14 (overlap)
@@ -78,7 +75,7 @@ class CourseSectionSeeder extends Seeder
             ],
             [
                 'subject_code'  => 'IT003',
-                'lecturer_idx'  => 2,       // GV Ba
+                'lecturer_code' => 'GV_003',
                 'group'         => '01',
                 'max_students'  => 40,
                 'student_range' => [0, 11], // SV 1-12
@@ -89,7 +86,7 @@ class CourseSectionSeeder extends Seeder
             ],
             [
                 'subject_code'  => 'IT004',
-                'lecturer_idx'  => 0,       // GV Sang
+                'lecturer_code' => 'GV_001',
                 'group'         => '01',
                 'max_students'  => 40,
                 'student_range' => [5, 16], // SV 6-17
@@ -100,7 +97,7 @@ class CourseSectionSeeder extends Seeder
             ],
             [
                 'subject_code'  => 'IT005',
-                'lecturer_idx'  => 1,       // GV Hai
+                'lecturer_code' => 'GV_002',
                 'group'         => '01',
                 'max_students'  => 35,
                 'student_range' => [8, 19], // SV 9-20
@@ -120,17 +117,23 @@ class CourseSectionSeeder extends Seeder
                 continue;
             }
 
-            // Lấy lecturer trong phạm vi an toàn
-            $lecturerIdx = min($sectionData['lecturer_idx'], $lecturers->count() - 1);
-            $lecturer = $lecturers[$lecturerIdx];
+            $lecturer = $subject->lecturers
+                ->firstWhere('lecturer_code', $sectionData['lecturer_code']);
+
+            if (! $lecturer) {
+                $this->command->warn(
+                    "  ⚠ {$sectionData['lecturer_code']} chưa được phân công dạy {$sectionData['subject_code']}. Bỏ qua lớp này."
+                );
+                continue;
+            }
 
             // Tạo mã lớp: IT001-01-HK2-2526
             $termCode = 'HK' . $semester->term;
             $yearCode = sprintf('%02d%02d', $semester->year % 100, ($semester->year + 1) % 100);
             $code = "{$subject->code}-{$sectionData['group']}-{$termCode}-{$yearCode}";
 
-            // Tạo invite_code duy nhất 6 ký tự
-            $inviteCode = strtoupper(Str::random(6));
+            // Invite code cố định theo mã lớp để seed idempotent.
+            $inviteCode = strtoupper(substr(md5($code), 0, 6));
 
             // Tạo lớp học phần
             $section = CourseSection::updateOrCreate(

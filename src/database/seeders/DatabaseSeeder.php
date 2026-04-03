@@ -13,12 +13,13 @@ use Illuminate\Support\Facades\App;
  *   1. Roles/Permissions (nền tảng phân quyền)
  *   2. Admin Root
  *   3. Difficulty, Settings, Semesters, QuestionTypes (dữ liệu hệ thống)
- *   4. Users (GV + SV)
+ *   4. Users (GV do admin cấp, SV theo Google-first)
  *   5. Subjects + Chapters
- *   6. CourseSections (phụ thuộc Subject, Semester, User)
- *   7. Tags
- *   8. Questions (phụ thuộc Subject, Chapter, QuestionType, User)
- *   9. Exams (phụ thuộc Subject, User, Question, CourseSection)
+ *   6. Assignments (phân công giảng viên - môn học)
+ *   7. CourseSections (phụ thuộc Subject, Semester, User, Assignment)
+ *   8. Tags
+ *   9. Questions (phụ thuộc Subject, Chapter, QuestionType, Assignment)
+ *  10. Exams (phụ thuộc Subject, Question, CourseSection)
  * ============================================================
  */
 class DatabaseSeeder extends Seeder
@@ -44,16 +45,21 @@ class DatabaseSeeder extends Seeder
 
         // ─── Bước 2: Users + Subjects ────────────────────────
         $this->call([
-            UserSeeder::class,              // 3 GV + 20 SV (đầy đủ thông tin)
+            UserSeeder::class,              // 3 GV + tập SV Google-first
             SubjectSeeder::class,           // 5 môn IT + Chương
         ]);
 
-        // ─── Bước 3: Lớp học phần (phụ thuộc Subject, Semester, User)
+        // ─── Bước 3: Phân công môn cho giảng viên
+        $this->call([
+            AssignmentSeeder::class,
+        ]);
+
+        // ─── Bước 4: Lớp học phần (phụ thuộc Subject, Semester, Assignment)
         $this->call([
             CourseSectionSeeder::class,     // 5 lớp HP + lịch học + gán SV
         ]);
 
-        // ─── Bước 4: Dữ liệu test (chỉ Local/Dev) ──────────
+        // ─── Bước 5: Dữ liệu test (chỉ Local/Dev) ──────────
         if (!App::environment('production')) {
             $this->command->warn('');
             $this->command->warn('⚠ Đang ở môi trường Local/Dev. Bắt đầu seed dữ liệu test...');
@@ -71,8 +77,8 @@ class DatabaseSeeder extends Seeder
         $this->command->info('════════════════════════════════════════════');
         $this->command->info('');
         $this->command->info('  📧 Admin:    admin@root.com / password');
-        $this->command->info('  📧 GV Sang:  Sang@gmail.com / password');
-        $this->command->info('  📧 SV 1:     sv1@gmail.com  / password');
+        $this->command->info('  👨‍🏫 GV demo:  GV_001 / password');
+        $this->command->info('  🎓 SV demo:  đăng nhập Google + hoàn tất onboarding MSSV');
         $this->command->info('');
     }
 }

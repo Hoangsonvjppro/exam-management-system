@@ -7,7 +7,6 @@ use App\Models\QuestionOption;
 use App\Models\QuestionType;
 use App\Models\Subject;
 use App\Models\Tag;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -20,15 +19,6 @@ class QuestionSeeder extends Seeder
 {
     public function run(): void
     {
-        // ─── Lấy giảng viên làm người tạo ────────────────────
-        $lecturers = User::whereHas('roles', fn($q) => $q->where('name', 'lecturer'))
-            ->orderBy('id')->get();
-
-        if ($lecturers->isEmpty()) {
-            $this->command->error('⚠ Không tìm thấy giảng viên. Hãy chạy UserSeeder trước.');
-            return;
-        }
-
         // ─── Lấy các question types ──────────────────────────
         $singleType = QuestionType::where('code', 'single_choice')->first();
 
@@ -53,19 +43,33 @@ class QuestionSeeder extends Seeder
         // ─── Câu hỏi mẫu thực tế cho từng môn ──────────────
         $questionBank = $this->getQuestionBank();
 
-        $subjects = Subject::with('chapters')->get();
+        $subjects = Subject::query()
+            ->with([
+                'chapters',
+                'lecturers' => fn($query) => $query
+                    ->whereHas('roles', fn($roleQuery) => $roleQuery->where('name', 'lecturer'))
+                    ->orderBy('users.id'),
+            ])
+            ->get();
+
         $difficulties = ['remember', 'understand', 'apply', 'analyze'];
         $totalCreated = 0;
 
-        foreach ($subjects as $subject) {
+        foreach ($subjects as $subjectIndex => $subject) {
             $chapters = $subject->chapters;
             if ($chapters->isEmpty()) {
-                 $this->command->warn("   ⚠️ Môn {$subject->code} chưa có chương, bỏ qua.");
-                 continue;
+                $this->command->warn("   ⚠️ Môn {$subject->code} chưa có chương, bỏ qua.");
+                continue;
             }
 
-            // Lấy giảng viên tạo câu hỏi (xoay vòng)
-            $lecturer = $lecturers[$totalCreated % $lecturers->count()];
+            $assignedLecturers = $subject->lecturers->values();
+            if ($assignedLecturers->isEmpty()) {
+                $this->command->warn("   ⚠️ Môn {$subject->code} chưa có giảng viên được phân công, bỏ qua.");
+                continue;
+            }
+
+            // Chọn giảng viên trong tập đã phân công môn.
+            $lecturer = $assignedLecturers[$subjectIndex % $assignedLecturers->count()];
 
             // Lấy câu hỏi mẫu cho môn này
             $bankQuestions = $questionBank[$subject->code] ?? [];
@@ -90,7 +94,7 @@ class QuestionSeeder extends Seeder
                 // ─── Gán tags ────────────
                 if ($question && $subjectTags->isNotEmpty()) {
                     $tagsToAttach = $subjectTags->random(min(1, $subjectTags->count()));
-                    
+
                     // Thêm tag mục đích (Thi giữa kỳ / cuối kỳ)
                     $purposeName = ($i <= 15) ? 'Thi giữa kỳ' : 'Thi cuối kỳ';
                     if (isset($tagsByName[$purposeName])) {
@@ -130,7 +134,7 @@ class QuestionSeeder extends Seeder
 
         $correctIdx = rand(0, 3);
         $labels = ['A', 'B', 'C', 'D'];
-        
+
         foreach ($labels as $idx => $label) {
             $isCorrect = ($idx === $correctIdx);
             $optContent = $isCorrect ? "Đáp án chính xác cho câu số {$index}" : "Phương án nhiễu {$label} cho câu {$index}";
