@@ -404,7 +404,6 @@
                     <div class="flex items-center justify-between mb-2">
                         <div>
                             <h3 class="text-[18px] font-bold text-navy-900">Lưới điểm danh ({{ $section->attendanceSessions->count() }} buổi)</h3>
-                            <p class="text-[12px] text-text-muted font-medium mt-1">Bấm vào ô để thay đổi: Có mặt (Xanh) - Vắng (Đỏ) - Muộn (Vàng) - Có phép (Xám).</p>
                         </div>
                         @can('manage', $section)
                         <x-button variant="primary" @click="$dispatch('open-modal', 'create-attendance-session-modal')">
