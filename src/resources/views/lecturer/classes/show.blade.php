@@ -41,7 +41,8 @@
     };
     @endphp
 
-    <div class="space-y-6" x-data="classWorkspaceManager('{{ $activeTab }}')">
+    <div class="space-y-6"
+        x-data="classWorkspaceManager('{{ $activeTab }}')">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <a href="{{ route('lecturer.classes.index') }}"
@@ -355,14 +356,13 @@
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">MSSV</th>
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Email</th>
                                 <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Trạng thái</th>
-                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Điều kiện thi</th>
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Hành động</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-border-clean/70">
                             @foreach($section->students->sortBy('name') as $student)
                             @php
                             $enrollStatus = $student->pivot->status ?? 'enrolled';
-                            $isBlocked = $enrollStatus !== 'enrolled';
                             @endphp
                             <tr class="hover:bg-surface-0 transition-colors">
                                 <td class="py-3 px-4 text-[13px] font-semibold text-navy-900">{{ $student->name }}</td>
@@ -376,11 +376,48 @@
                                         {{ $enrollStatus === 'enrolled' ? 'Đang học' : ($enrollStatus === 'dropped' ? 'Đã rời lớp' : 'Tạm dừng') }}
                                     </span>
                                 </td>
-                                <td class="py-3 px-4">
-                                    <span class="inline-flex items-center text-[10px] font-bold uppercase px-2 py-1 rounded-[4px]
-                                                {{ $isBlocked ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-blue-50 text-blue-700 border border-blue-200' }}">
-                                        {{ $isBlocked ? 'Cấm thi tạm thời' : 'Đủ điều kiện' }}
-                                    </span>
+                                <td class="py-3 px-4 text-center align-top">
+                                    <details class="relative inline-block text-left group">
+                                        <summary
+                                            class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#D6E2F0] bg-white text-[#6B7C99] hover:text-[#1A3A6B] hover:border-[#BFD4EA] transition-colors list-none cursor-pointer"
+                                            aria-label="Mở menu thao tác sinh viên">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <circle cx="12" cy="5" r="1.8" />
+                                                <circle cx="12" cy="12" r="1.8" />
+                                                <circle cx="12" cy="19" r="1.8" />
+                                            </svg>
+                                        </summary>
+
+                                        <div class="absolute right-0 mt-2 w-56 rounded-xl border border-[#D6E2F0] bg-white shadow-lg ring-1 ring-black/5 z-[80] overflow-hidden">
+                                            <div class="px-3 py-2.5 bg-[#F8FAFD] border-b border-[#EEF2F7] text-left">
+                                                <p class="text-[11px] font-bold uppercase tracking-wider text-[#1A3A6B]">Thao tác sinh viên</p>
+                                                <p class="text-[11px] text-[#6B7C99] mt-0.5">{{ $student->name }}</p>
+                                            </div>
+
+                                            <a href="{{ route('lecturer.classes.students.show', ['section' => $section, 'student' => $student]) }}"
+                                                class="block w-full text-left px-3 py-3 text-[12px] font-semibold text-[#1D4ED8] hover:bg-[#EFF6FF] transition-colors">
+                                                Xem chi tiết
+                                            </a>
+
+                                            <div class="border-t border-[#EEF2F7]"></div>
+
+                                            @if($enrollStatus === 'enrolled')
+                                            <form method="POST" action="{{ route('lecturer.classes.students.destroy', ['section' => $section, 'student' => $student]) }}"
+                                                onsubmit="return confirm('Xác nhận xoá {{ $student->name }} khỏi lớp?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    class="block w-full text-left px-3 py-3 text-[12px] font-semibold text-[#DC2626] hover:bg-[#FEF2F2] transition-colors">
+                                                    Xoá sinh viên khỏi lớp
+                                                </button>
+                                            </form>
+                                            @else
+                                            <div class="px-3 py-3 text-[11px] font-semibold text-[#94A3B8] bg-[#F8FAFD] cursor-not-allowed text-left">
+                                                Sinh viên đã rời lớp
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </details>
                                 </td>
                             </tr>
                             @endforeach
@@ -994,7 +1031,7 @@
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="text-[12px] font-semibold text-navy-900">Chọn ít nhất 1 câu hỏi <span class="text-red-500">*</span></label>
-                        <a href="{{ route('lecturer.exams.create', ['subject_id' => $section->subject_id]) }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">
+                    <a href="{{ route('lecturer.exams.create', ['subject_id' => $section->subject_id]) }}" class="text-[12px] font-semibold text-blue-600 hover:text-blue-700">
                         Mở trình tạo đầy đủ
                     </a>
                 </div>
@@ -1158,6 +1195,94 @@
         </div>
     </x-modal>
 
+    <x-modal name="student-detail-modal" maxWidth="4xl">
+        <div class="p-6 md:p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-[20px] font-bold text-navy-900" x-text="studentDetailStudentName ? 'Chi tiết điểm thi: ' + studentDetailStudentName : 'Chi tiết điểm thi sinh viên'"></h3>
+                <button @click="$dispatch('close-modal', 'student-detail-modal')" class="text-text-muted hover:text-navy-900 transition-colors">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div x-show="studentDetailLoading" class="rounded-[8px] border border-border-clean bg-surface-0 py-10 text-center text-sm text-text-muted">
+                Đang tải dữ liệu chi tiết...
+            </div>
+
+            <div x-show="!studentDetailLoading && studentDetailError" x-cloak class="rounded-[8px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" x-text="studentDetailError"></div>
+
+            <div x-show="!studentDetailLoading && !studentDetailError" x-cloak class="space-y-5">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <x-card padding="true">
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Trạng thái lớp</p>
+                        <p class="mt-2 text-[16px] font-bold text-navy-900" x-text="studentDetailEnrollmentLabel || '—'"></p>
+                    </x-card>
+                    <x-card padding="true">
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Lượt làm bài</p>
+                        <p class="mt-2 text-[16px] font-bold text-navy-900" x-text="studentDetailSummary.attempt_count"></p>
+                    </x-card>
+                    <x-card padding="true">
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Đã nộp</p>
+                        <p class="mt-2 text-[16px] font-bold text-navy-900" x-text="studentDetailSummary.completed_count"></p>
+                    </x-card>
+                    <x-card padding="true">
+                        <p class="text-[11px] font-semibold uppercase tracking-wider text-text-muted">TB / Cao nhất</p>
+                        <p class="mt-2 text-[16px] font-bold text-navy-900">
+                            <span x-text="formatAttemptScore(studentDetailSummary.average_score)"></span>
+                            <span class="text-text-muted"> / </span>
+                            <span x-text="formatAttemptScore(studentDetailSummary.highest_score)"></span>
+                        </p>
+                    </x-card>
+                </div>
+
+                <div x-show="studentExamAttempts.length === 0" class="rounded-[8px] border border-border-clean bg-surface-0 py-10 text-center text-sm text-text-muted">
+                    Sinh viên này chưa có lượt làm bài nào trong lớp học phần.
+                </div>
+
+                <div x-show="studentExamAttempts.length > 0" x-cloak class="overflow-x-auto border border-border-clean rounded-[8px] bg-white">
+                    <table class="w-full text-left border-collapse min-w-[920px]">
+                        <thead>
+                            <tr class="bg-surface-1 border-b border-border-clean">
+                                <th class="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-text-muted">Bài thi</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Lần thi</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Trạng thái</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Điểm</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Số câu đúng</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Bắt đầu</th>
+                                <th class="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted text-center">Nộp bài</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-clean/70">
+                            <template x-for="attempt in studentExamAttempts" :key="attempt.attempt_id">
+                                <tr class="hover:bg-surface-0 transition-colors">
+                                    <td class="py-3 px-4 align-top">
+                                        <p class="text-[13px] font-semibold text-navy-900" x-text="attempt.exam_title"></p>
+                                        <p class="text-[11px] text-text-muted mt-0.5" x-text="attempt.schedule_time || '—'"></p>
+                                    </td>
+                                    <td class="py-3 px-3 text-center text-[12px] font-semibold text-navy-900" x-text="attempt.attempt_number"></td>
+                                    <td class="py-3 px-3 text-center">
+                                        <span class="inline-flex items-center text-[10px] font-bold uppercase rounded-[4px] px-2 py-1 border"
+                                            :class="attempt.status === 'completed'
+                                                ? 'bg-teal-50 text-teal-700 border-teal-200'
+                                                : 'bg-amber-50 text-amber-700 border-amber-200'"
+                                            x-text="attempt.status_label"></span>
+                                    </td>
+                                    <td class="py-3 px-3 text-center text-[13px] font-bold text-navy-900" x-text="formatAttemptScore(attempt.score)"></td>
+                                    <td class="py-3 px-3 text-center text-[12px] text-text-muted">
+                                        <span x-text="formatCorrectCount(attempt.correct_count, attempt.question_count)"></span>
+                                    </td>
+                                    <td class="py-3 px-3 text-center text-[12px] text-text-muted" x-text="attempt.started_at || '—'"></td>
+                                    <td class="py-3 px-3 text-center text-[12px] text-text-muted" x-text="attempt.completed_at || '—'"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </x-modal>
+
     {{-- Modal Xử lý khiếu nại --}}
     <x-modal name="review-modal" maxWidth="lg">
         <div class="p-6 md:p-8" x-data="lecturerComplaintReviewModalState()" x-on:lecturer-complaint-review-prefill.window="applyPrefill($event.detail)">
@@ -1244,6 +1369,9 @@
     $lecturerClassShowConfig = [
     'scheduleStoreUrl' => route('lecturer.schedules.store'),
     'examStoreUrl' => route('lecturer.exams.store'),
+    'studentDetailUrlTemplate' => route('lecturer.classes.students.show', ['section' => $section, 'student' => '__STUDENT_ID__']),
+    'studentRemoveUrlTemplate' => route('lecturer.classes.students.destroy', ['section' => $section, 'student' => '__STUDENT_ID__']),
+    'csrfToken' => csrf_token(),
     'subjectCode' => $section->subject->code ?? 'SUB',
     'gradeTotalWeight' => (float) $section->gradeColumns->sum('weight'),
     'gradeWeights' => $section->gradeColumns->mapWithKeys(fn($col) => [(string) $col->id => (float) $col->weight]),
