@@ -5,9 +5,11 @@ namespace App\Filament\Resources\Lecturers;
 use App\Filament\Resources\Lecturers\Pages\ManageLecturers;
 use App\Filament\Resources\Lecturers\Pages\ManageLecturerSubjects;
 use App\Filament\Resources\Lecturers\Subjects\SubjectTable;
+use App\Filament\Support\HasAdminCrudPermissions;
 use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -20,9 +22,11 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\ModalTableSelect;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -36,6 +40,12 @@ use Illuminate\Support\Carbon;
 
 class LecturersResource extends Resource
 {
+    use HasAdminCrudPermissions;
+
+    protected static function getAdminPermissionModule(): string
+    {
+        return 'departments';
+    }
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
@@ -69,16 +79,20 @@ class LecturersResource extends Resource
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->columnSpanFull()
+                    ->regex('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/')
                     ->validationMessages([
-                        'unique' => ':Attribute đã tồn tại'
+                        'unique' => ':Attribute đã tồn tại',
+                        'regex' => ':Attribute không đúng định dạng'
                     ]),
 
                 TextInput::make('lecturer_code')
                     ->label('Mã giảng viên')
                     ->required()
                     ->unique(ignoreRecord: true)
+                    ->regex('/GV_\d{3}/')
                     ->validationMessages([
-                        'unique' => ':Attribute đã tồn tại'
+                        'unique' => ':Attribute đã tồn tại',
+                        'regex' => ':Attribute phải có dạng GV_xxx, trong đó x là chữ số'
                     ]),
 
                 TextInput::make('phone')
@@ -94,16 +108,23 @@ class LecturersResource extends Resource
                 DatePicker::make('date_of_birth')
                     ->label('Ngày sinh')
                     ->required()
-                    ->live()
-                    ->partiallyRenderComponentsAfterStateUpdated([
-                        'password_preview',
-                    ])
+                    ->live(debounce: 300)
+                    ->afterStateUpdated(function (Set $set, $state) {
+                        $set(
+                            'password_preview',
+                            $state
+                                ? Carbon::parse($state)->format('dmY')
+                                : 'Chưa chọn ngày sinh'
+                        );
+                    })
                     ->native(true)
                     ->displayFormat('d/m/Y')
                     ->format('Y-m-d')
                     ->maxDate(now())
+                    ->after('1900-01-01')
                     ->validationMessages([
-                        'required' => ':Attribute là bắt buộc'
+                        'required' => ':Attribute là bắt buộc',
+                        'after' => ':Attribute không hợp lệ'
                     ]),
 
                 TextInput::make('password_preview')
@@ -111,13 +132,6 @@ class LecturersResource extends Resource
                     ->disabled()
                     ->live()
                     ->dehydrated(false)
-                    ->formatStateUsing(
-                        fn($state, Get $get) =>
-                        $get('date_of_birth')
-                            ? \Carbon\Carbon::parse($get('date_of_birth'))->format('dmY')
-                            : 'Chưa chọn ngày sinh'
-                    ),
-
             ]);
     }
 
@@ -152,7 +166,7 @@ class LecturersResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 IconColumn::make('is_active')
-                    ->label('Kích hoạt')
+                    ->label('Trạng thái')
                     ->sortable()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
@@ -161,28 +175,48 @@ class LecturersResource extends Resource
             ->paginated([10, 25, 50, 'all'])
             ->defaultPaginationPageOption(25)
             ->striped()
+            ->defaultSort('lecturer_code')
             ->filters([
-                TrashedFilter::make(),
                 Filter::make('active')
-                    ->label('Chỉ active')
+                    ->label('Đang hoạt động')
                     ->query(fn(Builder $query) => $query->where('is_active', true)),
+                Filter::make('inactive')
+                    ->label('Đã khóa')
+                    ->query(fn(Builder $query) => $query->where('is_active', false)),
             ])
             ->recordActions([
+                Action::make('lock')
+                    ->label('Khóa')
+                    ->icon('heroicon-o-lock-closed')
+                    ->color('danger')
+                    ->visible(fn($record) => $record->is_active)
+                    ->requiresConfirmation()
+                    ->modalHeading('Khóa tài khoản')
+                    ->modalDescription('Bạn chắc chắn muốn KHÓA tài khoản này? Giảng viên sẽ không thể đăng nhập.')
+                    ->modalSubmitActionLabel('Xác nhận khóa')
+                    ->modalIcon('heroicon-o-exclamation-triangle')
+                    ->modalIconColor('danger')
+                    ->successNotificationTitle('Đã khóa tài khoản')
+                    ->action(fn($record) => $record->update(['is_active' => false])),
+
+                Action::make('unlock')
+                    ->label('Mở khóa')
+                    ->icon('heroicon-o-lock-open')
+                    ->color('success')
+                    ->visible(fn($record) => !$record->is_active)
+                    ->requiresConfirmation()
+                    ->modalHeading('Mở khóa tài khoản')
+                    ->modalDescription('Tài khoản sẽ được kích hoạt lại và có thể đăng nhập bình thường.')
+                    ->modalSubmitActionLabel('Xác nhận mở khóa')
+                    ->modalIcon('heroicon-o-lock-open')
+                    ->modalIconColor('success')
+                    ->successNotificationTitle('Đã mở khóa tài khoản')
+                    ->action(fn($record) => $record->update(['is_active' => true])),
                 EditAction::make(),
-                DeleteAction::make(),
-                ForceDeleteAction::make(),
-                RestoreAction::make(),
                 Action::make('assign')
                     ->label('Phân công')
+                    ->icon('heroicon-o-book-open')
                     ->schema([
-                        // ModalTableSelect::make('subjects')
-                        //     ->label('Các môn học đã phân công')
-                        //     ->relationship('subjects', 'name')
-                        //     ->multiple()
-                        //     ->tableConfiguration(SubjectTable::class)
-                        //     ->saveRelationshipsUsing(function ($recode, $state)) {
-                        //         $recode->subjects()->sync('hahaha');
-                        //     }
                         CheckboxList::make('subjects')
                             ->label('Môn học')
                             ->relationship('subjects', 'name')
@@ -207,9 +241,29 @@ class LecturersResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
+                    BulkAction::make('lock')
+                        ->label('Khóa hàng loạt')
+                        ->icon('heroicon-o-lock-closed')
+                        ->requiresConfirmation()
+                        ->modalHeading('Khóa nhiều tài khoản')
+                        ->modalDescription('Tất cả giảng viên được chọn sẽ bị khóa.')
+                        ->modalIcon('heroicon-o-exclamation-triangle')
+                        ->modalIconColor('danger')
+                        ->successNotificationTitle('Đã khóa thành công các tài khoản')
+                        ->action(fn($records) => $records->each->update(['is_active' => false]))
+                        ->deselectRecordsAfterCompletion(),
+
+                    BulkAction::make('unlock')
+                        ->label('Mở khóa hàng loạt')
+                        ->icon('heroicon-o-lock-open')
+                        ->requiresConfirmation()
+                        ->modalHeading('Mở khóa nhiều tài khoản')
+                        ->modalDescription('Các tài khoản sẽ hoạt động lại bình thường.')
+                        ->modalIcon('heroicon-o-check-circle')
+                        ->modalIconColor('success')
+                        ->successNotificationTitle('Đã mở khóa thành công các tài khoản')
+                        ->action(fn($records) => $records->each->update(['is_active' => true]))
+                        ->deselectRecordsAfterCompletion(),
                 ]),
             ]);
     }
