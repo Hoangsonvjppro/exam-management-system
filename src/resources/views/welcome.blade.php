@@ -8,6 +8,7 @@
     <title>{{ config('app.name', 'EMS') }} — Cổng Thông Tin</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
+        /* ── Background ── */
         .gateway-bg {
             background-image: url('/img/SGU.jpg');
             background-size: cover;
@@ -17,54 +18,54 @@
 
         .gateway-overlay {
             background: linear-gradient(
-                135deg,
-                rgba(11, 35, 71, 0.88) 0%,
-                rgba(26, 58, 107, 0.82) 40%,
-                rgba(24, 95, 165, 0.78) 100%
+                160deg,
+                rgba(8, 24, 52, 0.92) 0%,
+                rgba(15, 42, 82, 0.87) 35%,
+                rgba(20, 68, 130, 0.82) 70%,
+                rgba(30, 90, 160, 0.78) 100%
             );
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(3px);
         }
 
-        .gateway-btn {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .gateway-btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .gateway-btn:active {
-            transform: translateY(-1px);
-        }
-
+        /* ── Animations ── */
         .gateway-logo-pulse {
             animation: logoPulse 3s ease-in-out infinite;
         }
 
         @keyframes logoPulse {
-            0%, 100% { opacity: 0.8; }
+            0%, 100% { opacity: 0.85; }
             50% { opacity: 1; }
         }
 
-        .gateway-slogan {
-            animation: sloganFadeIn 1s ease-out forwards;
+        .animate-hero {
+            animation: heroIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             opacity: 0;
         }
 
-        .gateway-buttons {
-            animation: buttonsFadeUp 1s ease-out 0.3s forwards;
+        .animate-hero-delay-1 {
+            animation: heroIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
             opacity: 0;
         }
 
-        @keyframes sloganFadeIn {
-            to { opacity: 1; }
+        .animate-hero-delay-2 {
+            animation: heroIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+            opacity: 0;
         }
 
-        @keyframes buttonsFadeUp {
+        .animate-hero-delay-3 {
+            animation: heroIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+            opacity: 0;
+        }
+
+        .animate-hero-delay-4 {
+            animation: heroIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
+            opacity: 0;
+        }
+
+        @keyframes heroIn {
             from {
                 opacity: 0;
-                transform: translateY(24px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
@@ -72,27 +73,95 @@
             }
         }
 
+        /* ── Student CTA Button ── */
+        .cta-student {
+            position: relative;
+            background: rgba(255, 255, 255, 0.97);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .cta-student::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #4285F4, #34A853, #FBBC05, #EA4335);
+            transform: scaleX(0);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: left;
+        }
+
+        .cta-student:hover {
+            transform: translateY(-3px);
+            box-shadow:
+                0 12px 40px rgba(66, 133, 244, 0.2),
+                0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .cta-student:hover::before {
+            transform: scaleX(1);
+        }
+
+        .cta-student:active {
+            transform: translateY(-1px);
+        }
+
+        .cta-student .google-icon-wrap {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cta-student:hover .google-icon-wrap {
+            transform: scale(1.1) rotate(-4deg);
+        }
+
+        .cta-student .cta-arrow {
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: all 0.3s ease;
+        }
+
+        .cta-student:hover .cta-arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ── Header lecturer link ── */
+        .header-lecturer-link {
+            transition: all 0.25s ease;
+        }
+
+        .header-lecturer-link:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+        }
+
+        /* ── Floating particles ── */
         .floating-particle {
             position: absolute;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.06);
-            animation: floatUp 12s ease-in-out infinite;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+            animation: floatUp 14s ease-in-out infinite;
         }
 
         .floating-particle:nth-child(2) {
-            animation-delay: 2s;
-            animation-duration: 16s;
+            animation-delay: 3s;
+            animation-duration: 18s;
         }
 
         .floating-particle:nth-child(3) {
-            animation-delay: 5s;
-            animation-duration: 14s;
+            animation-delay: 6s;
+            animation-duration: 16s;
         }
 
         @keyframes floatUp {
-            0%, 100% { transform: translateY(0) scale(1); opacity: 0.06; }
-            50% { transform: translateY(-60px) scale(1.1); opacity: 0.12; }
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.05; }
+            50% { transform: translateY(-50px) scale(1.05); opacity: 0.1; }
         }
+
+
     </style>
 </head>
 
@@ -101,9 +170,9 @@
         <div class="gateway-overlay absolute inset-0"></div>
 
         {{-- Floating decorative particles --}}
-        <div class="floating-particle" style="width:200px;height:200px;top:10%;left:5%;"></div>
-        <div class="floating-particle" style="width:300px;height:300px;bottom:10%;right:5%;"></div>
-        <div class="floating-particle" style="width:150px;height:150px;top:50%;left:60%;"></div>
+        <div class="floating-particle" style="width:240px;height:240px;top:8%;left:3%;"></div>
+        <div class="floating-particle" style="width:320px;height:320px;bottom:8%;right:3%;"></div>
+        <div class="floating-particle" style="width:160px;height:160px;top:45%;left:65%;"></div>
 
         <div class="relative z-10 min-h-screen flex flex-col">
 
@@ -116,85 +185,81 @@
                     <span class="text-[17px] font-semibold tracking-wider uppercase text-white/90">EMS</span>
                 </div>
 
-                @auth
                 <div class="flex items-center gap-3">
-                    <a href="{{ route('dashboard') }}"
-                       class="text-[13px] font-medium text-white/70 hover:text-white transition-colors">
-                        Dashboard
-                    </a>
-                    <img src="{{ auth()->user()->avatar_url }}"
-                         alt="{{ auth()->user()->name }}"
-                         class="w-9 h-9 rounded-full border-[1.5px] border-white/30 object-cover"
-                         referrerpolicy="no-referrer">
+                    @auth
+                        <a href="{{ route('dashboard') }}"
+                           class="text-[13px] font-medium text-white/70 hover:text-white transition-colors">
+                            Dashboard
+                        </a>
+                        <img src="{{ auth()->user()->avatar_url }}"
+                             alt="{{ auth()->user()->name }}"
+                             class="w-9 h-9 rounded-full border-[1.5px] border-white/30 object-cover"
+                             referrerpolicy="no-referrer">
+                    @else
+                        <a href="{{ route('login') }}"
+                           id="btn-gateway-lecturer"
+                           class="header-lecturer-link flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.07] border-[0.5px] border-white/15 text-[13px] font-medium text-white/70">
+                            <span class="material-symbols-outlined text-[16px]">shield_person</span>
+                            Giảng viên
+                        </a>
+                    @endauth
                 </div>
-                @endauth
             </header>
 
             {{-- ===== MAIN CONTENT ===== --}}
-            <main class="flex-grow flex flex-col items-center justify-center px-6 text-center pb-12">
+            <main class="flex-grow flex flex-col items-center justify-center px-6 text-center pb-16">
 
-                {{-- Slogan --}}
-                <div class="gateway-slogan mb-16 max-w-4xl">
-                    <div class="inline-block mb-6 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border-[0.5px] border-white/20">
-                        <span class="text-[12px] font-medium tracking-widest uppercase text-blue-200">Trường Đại học Sài Gòn</span>
+                {{-- Badge --}}
+                <div class="animate-hero mb-8">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.07] backdrop-blur-sm border-[0.5px] border-white/15">
+                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                        <span class="text-[11px] font-semibold tracking-[0.18em] uppercase text-blue-200/90">Trường Đại học Sài Gòn</span>
                     </div>
-                    <h2 class="text-3xl sm:text-4xl md:text-5xl lg:text-[56px] font-bold leading-tight tracking-tight text-white">
-                        HỆ THỐNG ĐÁNH GIÁ VÀ<br>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 via-white to-blue-200">QUẢN LÝ HỌC VỤ TRỰC TUYẾN</span>
-                    </h2>
-                    <p class="mt-6 text-[15px] text-white/60 max-w-2xl mx-auto leading-relaxed">
-                        Nền tảng quản lý giảng dạy, khảo thí và đánh giá học vụ hiện đại. Đăng nhập để bắt đầu.
-                    </p>
                 </div>
 
-                {{-- Gateway Buttons --}}
-                <div class="gateway-buttons flex flex-col sm:flex-row gap-5 sm:gap-6 w-full max-w-xl">
+                {{-- Heading --}}
+                <h2 class="animate-hero-delay-1 text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-bold leading-[1.15] tracking-tight text-white max-w-4xl">
+                    Hệ Thống Đánh Giá Và<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-white to-blue-300">Quản Lý Học Vụ Trực Tuyến</span>
+                </h2>
 
-                    {{-- Nút Sinh viên (Google) → Chuyển thẳng sang Google OAuth --}}
+                {{-- Description --}}
+                <p class="animate-hero-delay-2 mt-5 text-[15px] text-white/50 max-w-lg mx-auto leading-relaxed">
+                    Nền tảng quản lý giảng dạy, khảo thí và đánh giá học vụ hiện đại dành cho sinh viên và giảng viên.
+                </p>
+
+                {{-- ===== CTA BUTTONS ===== --}}
+                <div class="animate-hero-delay-3 mt-12 flex flex-col items-center gap-6 w-full max-w-md">
+
+                    {{-- Primary: Sinh viên (Google OAuth trực tiếp) --}}
                     <a href="{{ route('google.redirect') }}"
                        id="btn-gateway-student"
-                       class="gateway-btn flex-1 group relative bg-white text-navy-900 rounded-[10px] overflow-hidden border-[0.5px] border-white/80">
-                        <div class="px-6 py-8 sm:py-10 flex flex-col items-center gap-4">
-                            {{-- Google Icon --}}
-                            <div class="w-14 h-14 rounded-full bg-surface-1 flex items-center justify-center border-[0.5px] border-border-clean group-hover:scale-110 transition-transform duration-300">
-                                <svg class="w-7 h-7" viewBox="0 0 24 24">
-                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-1">Đăng nhập bằng Google</p>
-                                <p class="text-[17px] font-bold text-navy-900">Cổng dành cho Sinh viên</p>
-                            </div>
+                       class="cta-student group w-full flex items-center gap-4 px-7 py-5 rounded-2xl">
+                        {{-- Google Icon --}}
+                        <div class="google-icon-wrap w-11 h-11 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                            </svg>
                         </div>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#4285F4] via-[#34A853] to-[#EA4335] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </a>
-
-                    {{-- Nút Giảng viên --}}
-                    <a href="{{ route('login') }}"
-                       id="btn-gateway-lecturer"
-                       class="gateway-btn flex-1 group relative bg-white/10 backdrop-blur-md text-white rounded-[10px] overflow-hidden border-[0.5px] border-white/20 hover:bg-white/15">
-                        <div class="px-6 py-8 sm:py-10 flex flex-col items-center gap-4">
-                            {{-- App Icon --}}
-                            <div class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center border-[0.5px] border-white/20 group-hover:scale-110 transition-transform duration-300">
-                                <span class="material-symbols-outlined text-white text-2xl">shield_person</span>
-                            </div>
-                            <div>
-                                <p class="text-[11px] font-medium text-white/50 uppercase tracking-wider mb-1">Tài khoản nội bộ</p>
-                                <p class="text-[17px] font-bold text-white">Cổng dành cho Giảng viên</p>
-                            </div>
+                        {{-- Label --}}
+                        <div class="flex-grow text-left">
+                            <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-[0.12em] mb-0.5">Sinh viên</p>
+                            <p class="text-[16px] font-bold text-gray-800">Đăng nhập bằng Google</p>
                         </div>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-navy-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        {{-- Arrow --}}
+                        <span class="cta-arrow material-symbols-outlined text-gray-400 text-[20px]">arrow_forward</span>
                     </a>
 
                 </div>
+
             </main>
 
             {{-- ===== FOOTER ===== --}}
-            <footer class="px-6 md:px-16 py-5 text-center">
-                <p class="text-[11px] font-medium text-white/30 tracking-wider">
+            <footer class="px-6 md:px-16 py-5 text-center animate-hero-delay-4">
+                <p class="text-[11px] font-medium text-white/25 tracking-wider">
                     © {{ date('Y') }} EMS — Trường Đại học Sài Gòn. All Rights Reserved.
                 </p>
             </footer>
