@@ -7,14 +7,20 @@ use App\Http\Controllers\Controller;
 use App\Models\CourseSection;
 use App\Models\GradeColumn;
 use App\Models\StudentGrade;
+use App\Services\SemesterGovernanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class GradeManagerController extends Controller
 {
+    public function __construct(
+        private readonly SemesterGovernanceService $semesterGovernanceService,
+    ) {}
+
     public function export(CourseSection $section): BinaryFileResponse
     {
         Gate::authorize('manage', $section);
@@ -43,6 +49,10 @@ class GradeManagerController extends Controller
     {
         Gate::authorize('manage', $section);
 
+        if ($errorResponse = $this->guardGradeEditing($section)) {
+            return $errorResponse;
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'weight' => 'required|numeric|min:0|max:100',
@@ -67,6 +77,10 @@ class GradeManagerController extends Controller
     public function updateColumn(Request $request, CourseSection $section, GradeColumn $column)
     {
         Gate::authorize('manage', $section);
+
+        if ($errorResponse = $this->guardGradeEditing($section)) {
+            return $errorResponse;
+        }
 
         if ($column->course_section_id !== $section->id) {
             abort(404);
@@ -93,6 +107,10 @@ class GradeManagerController extends Controller
     {
         Gate::authorize('manage', $section);
 
+        if ($errorResponse = $this->guardGradeEditing($section)) {
+            return $errorResponse;
+        }
+
         if ($column->course_section_id !== $section->id) {
             abort(404);
         }
@@ -111,6 +129,10 @@ class GradeManagerController extends Controller
     public function saveGrades(Request $request, CourseSection $section, GradeColumn $column)
     {
         Gate::authorize('manage', $section);
+
+        if ($errorResponse = $this->guardGradeEditing($section)) {
+            return $errorResponse;
+        }
 
         if ($column->course_section_id !== $section->id) {
             abort(404);
@@ -149,5 +171,20 @@ class GradeManagerController extends Controller
             'message' => 'Đã lưu điểm',
             'grade' => $grade
         ]);
+    }
+
+    private function guardGradeEditing(CourseSection $section): ?\Illuminate\Http\JsonResponse
+    {
+        try {
+            $section->loadMissing('semester');
+            $this->semesterGovernanceService->assertSectionAllowsGradeEditing($section);
+
+            return null;
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first() ?? 'Không thể cập nhật điểm ở học kỳ này.',
+            ], 422);
+        }
     }
 }

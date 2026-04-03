@@ -92,6 +92,7 @@ class CourseSectionResource extends Resource
                 Select::make('semester_id')
                     ->label('Học kỳ')
                     ->relationship('semester', 'name')
+                    ->modifyQueryUsing(fn(Builder $query): Builder => $query->openForCourseSectionCreation())
                     ->searchable()
                     ->preload()
                     ->live()

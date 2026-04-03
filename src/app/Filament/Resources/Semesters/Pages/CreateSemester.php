@@ -3,7 +3,8 @@
 namespace App\Filament\Resources\Semesters\Pages;
 
 use App\Filament\Resources\Semesters\SemesterResource;
-use App\Models\Semester;
+use App\Services\SemesterLifecycleService;
+use App\Services\SemesterValidationService;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateSemester extends CreateRecord
@@ -12,10 +13,13 @@ class CreateSemester extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if (! empty($data['is_current'])) {
-            Semester::query()->update(['is_current' => false]);
-        }
+        app(SemesterValidationService::class)->validateForUpsert($data);
 
         return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        app(SemesterLifecycleService::class)->syncAll();
     }
 }
