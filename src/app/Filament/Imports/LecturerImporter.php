@@ -116,9 +116,9 @@ class LecturerImporter extends Importer
 
         // Mật khẩu mặc định = ddmmyyyy của ngày sinh (chỉ set khi tạo mới)
         if (! $this->record->exists) {
-            $password = $this->buildPassword($this->data['ngay_sinh']);
-            $this->record->password              = Hash::make($password);
-            $this->record->must_change_password  = true;
+            $password = Carbon::parse($this->data['ngay_sinh'])->format('dmY');
+            $this->record->password = Hash::make($password);
+            $this->record->must_change_password = true;
         }
 
         unset(

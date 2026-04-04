@@ -24,10 +24,10 @@ class ListSubjects extends ListRecords
                 ->modalWidth(Width::TwoExtraLarge),
             ImportAction::make('import_subjects')
                 ->importer(SubjectImporter::class)
-                ->label('Nhập môn học từ CSV')
-                ->icon('heroicon-o-user-plus')
+                ->label('Import môn học')
+                ->icon('heroicon-o-arrow-up-tray')
                 ->color('info')
-                ->modalHeading('Import môn học'),
+                ->modalHeading('Import môn học từ CSV'),
         ];
     }
 }
