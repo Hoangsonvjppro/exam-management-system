@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
+
 class GoogleLoginController extends Controller
 {
     public function __construct(
@@ -79,6 +80,12 @@ class GoogleLoginController extends Controller
             }
         }
 
+        if (! $user->is_active) {
+            return redirect()->route('login')->withErrors([
+                'google_auth' => 'Tài khoản của bạn đã bị khoá. Vui lòng liên hệ quản trị viên.',
+            ]);
+        }
+        
         Auth::login($user);
 
         return redirect()->route($this->userStateService->determineHomeRouteName($user));

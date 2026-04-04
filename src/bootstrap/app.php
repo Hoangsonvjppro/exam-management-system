@@ -13,8 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         
-        // Append middleware vào global web stack
-        $middleware->append(\App\Http\Middleware\EnsureUserIsActive::class);
+        // Append middleware vào web group (để có thể check Auth/Session)
+        $middleware->web(append: [
+            \App\Http\Middleware\EnsureUserIsActive::class,
+        ]);
 
         // Alias middleware để dùng trong routes
         $middleware->alias([
