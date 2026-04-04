@@ -17,6 +17,7 @@ class UserPolicy
         return $this->viewAny($admin);
     }
 
+    
     public function create(Admin $admin): bool
     {
         return $admin->is_active && $admin->checkPermissionTo('admin.users.create', 'admin');
