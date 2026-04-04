@@ -105,7 +105,7 @@ class SemesterResource extends Resource
                 ->options([
                     1 => 'HK1',
                     2 => 'HK2',
-                    3 => 'HK He',
+                    3 => 'HK3',
                 ])
                 ->default(static::suggestCurrentTerm())
                 ->live()
@@ -208,7 +208,7 @@ class SemesterResource extends Resource
         $termLabel = match ($term) {
             1 => 'HK1',
             2 => 'HK2',
-            3 => 'HK He',
+            3 => 'HK3',
             default => 'HK' . $term,
         };
 
@@ -234,7 +234,7 @@ class SemesterResource extends Resource
                     ->formatStateUsing(fn(int $state): string => match ($state) {
                         1 => 'HK1',
                         2 => 'HK2',
-                        3 => 'HK He',
+                        3 => 'HK3',
                         default => (string) $state,
                     }),
 
@@ -288,7 +288,7 @@ class SemesterResource extends Resource
                     ->options([
                         1 => 'HK1',
                         2 => 'HK2',
-                        3 => 'HK He',
+                        3 => 'HK3',
                     ]),
             ])
             ->defaultSort('start_date', 'desc')
@@ -333,8 +333,8 @@ class SemesterResource extends Resource
     {
         return [
             'index' => ListSemesters::route('/'),
-            'create' => CreateSemester::route('/create'),
-            'edit' => EditSemester::route('/{record}/edit'),
+            // 'create' => CreateSemester::route('/create'),
+            // 'edit' => EditSemester::route('/{record}/edit'),
         ];
     }
 }
