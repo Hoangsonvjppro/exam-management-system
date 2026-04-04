@@ -19,10 +19,10 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserResource extends Resource
 {
-    public static function shouldRegisterNavigation(): bool
-    {
-        return false;
-    }
+    // public static function shouldRegisterNavigation(): bool
+    // {
+    //     return false;
+    // }
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
@@ -95,8 +95,8 @@ class UserResource extends Resource
         return $admin ? Gate::forUser($admin)->allows('admin.users.delete') : false;
     }
 
-    // public static function shouldRegisterNavigation(): bool
-    // {
-    //     return static::canViewAny();
-    // }
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canViewAny();
+    }
 }

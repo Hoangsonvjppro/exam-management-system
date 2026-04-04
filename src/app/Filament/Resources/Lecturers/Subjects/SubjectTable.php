@@ -11,10 +11,10 @@ use Illuminate\Database\Eloquent\Builder;
 
 class SubjectTable
 {
-    public static function configure(Table $table): Table
+    public static function configure(Table $table, ?object $page = null): Table
     {
         return $table
-           ->columns([
+            ->columns([
                 TextColumn::make('code')->searchable(),
                 TextColumn::make('name')->searchable(),
             ])

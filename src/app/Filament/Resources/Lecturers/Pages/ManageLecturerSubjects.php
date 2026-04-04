@@ -27,6 +27,11 @@ class ManageLecturerSubjects extends ManageRelatedRecords
 
     protected static ?string $navigationLabel = 'Môn học';
 
+    public static function canAccess(array $parameters = []): bool
+    {
+        return parent::canAccess($parameters) && LecturersResource::canAssignLecturerSubject();
+    }
+
     public function table(Table $table): Table
     {
         return SubjectTable::configure($table, $this);
@@ -38,6 +43,7 @@ class ManageLecturerSubjects extends ManageRelatedRecords
             CreateAction::make()
                 ->label('Phân công môn học')
                 ->icon('heroicon-m-plus')
+                ->authorize(fn(): bool => LecturersResource::canAssignLecturerSubject())
                 ->modalHeading('Chọn môn học')
                 ->modalSubmitActionLabel('Phân công')
                 ->createAnotherAction(

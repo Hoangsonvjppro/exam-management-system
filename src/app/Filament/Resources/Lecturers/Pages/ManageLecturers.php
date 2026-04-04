@@ -19,6 +19,7 @@ class ManageLecturers extends ManageRecords
             CreateAction::make('createLecturer')
                 ->label('Thêm giảng viên')
                 ->icon('heroicon-m-plus')
+                ->authorize(fn(): bool => LecturersResource::canCreate())
                 ->mutateDataUsing(function (array $data): array {
                     if (!empty($data['date_of_birth'])) {
                         $password = Carbon::parse($data['date_of_birth'])->format('dmY');
@@ -37,6 +38,7 @@ class ManageLecturers extends ManageRecords
                 ->label('Import giảng viên')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('primary')
+                ->authorize(fn(): bool => LecturersResource::canImportLecturer())
                 ->modalHeading('Import giảng viên từ CSV'),
         ];
     }

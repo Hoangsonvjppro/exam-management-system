@@ -44,7 +44,7 @@ class LecturersResource extends Resource
 
     protected static function getAdminPermissionModule(): string
     {
-        return 'departments';
+        return 'lecturers';
     }
     protected static ?string $model = User::class;
 
@@ -64,6 +64,27 @@ class LecturersResource extends Resource
     {
         return parent::getEloquentQuery()->lecturers();
     }
+
+    public static function canBlockLecturer(): bool
+    {
+        return static::canForAction('block');
+    }
+
+    public static function canAssignLecturerSubject(): bool
+    {
+        return static::canForAction('assign');
+    }
+
+    public static function canImportLecturer(): bool
+    {
+        return static::canForAction('import');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canForAction('update') || static::canForAction('edit');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -189,7 +210,8 @@ class LecturersResource extends Resource
                     ->label('Khóa')
                     ->icon('heroicon-o-lock-closed')
                     ->color('danger')
-                    ->visible(fn($record) => $record->is_active)
+                    ->authorize(fn(): bool => static::canBlockLecturer())
+                    ->visible(fn($record): bool => static::canBlockLecturer() && $record->is_active)
                     ->requiresConfirmation()
                     ->modalHeading('Khóa tài khoản')
                     ->modalDescription('Bạn chắc chắn muốn KHÓA tài khoản này? Giảng viên sẽ không thể đăng nhập.')
@@ -203,7 +225,8 @@ class LecturersResource extends Resource
                     ->label('Mở khóa')
                     ->icon('heroicon-o-lock-open')
                     ->color('success')
-                    ->visible(fn($record) => !$record->is_active)
+                    ->authorize(fn(): bool => static::canBlockLecturer())
+                    ->visible(fn($record): bool => static::canBlockLecturer() && ! $record->is_active)
                     ->requiresConfirmation()
                     ->modalHeading('Mở khóa tài khoản')
                     ->modalDescription('Tài khoản sẽ được kích hoạt lại và có thể đăng nhập bình thường.')
@@ -212,10 +235,14 @@ class LecturersResource extends Resource
                     ->modalIconColor('success')
                     ->successNotificationTitle('Đã mở khóa tài khoản')
                     ->action(fn($record) => $record->update(['is_active' => true])),
-                EditAction::make(),
+                EditAction::make()
+                    ->label('Edit')
+                    ->authorize(fn($record): bool => static::canEdit($record)),
                 Action::make('assign')
                     ->label('Phân công')
                     ->icon('heroicon-o-book-open')
+                    ->authorize(fn(): bool => static::canAssignLecturerSubject())
+                    ->visible(fn(): bool => static::canAssignLecturerSubject())
                     ->schema([
                         CheckboxList::make('subjects')
                             ->label('Môn học')
@@ -244,6 +271,8 @@ class LecturersResource extends Resource
                     BulkAction::make('lock')
                         ->label('Khóa hàng loạt')
                         ->icon('heroicon-o-lock-closed')
+                        ->authorize(fn(): bool => static::canBlockLecturer())
+                        ->visible(fn(): bool => static::canBlockLecturer())
                         ->requiresConfirmation()
                         ->modalHeading('Khóa nhiều tài khoản')
                         ->modalDescription('Tất cả giảng viên được chọn sẽ bị khóa.')
@@ -256,6 +285,8 @@ class LecturersResource extends Resource
                     BulkAction::make('unlock')
                         ->label('Mở khóa hàng loạt')
                         ->icon('heroicon-o-lock-open')
+                        ->authorize(fn(): bool => static::canBlockLecturer())
+                        ->visible(fn(): bool => static::canBlockLecturer())
                         ->requiresConfirmation()
                         ->modalHeading('Mở khóa nhiều tài khoản')
                         ->modalDescription('Các tài khoản sẽ hoạt động lại bình thường.')

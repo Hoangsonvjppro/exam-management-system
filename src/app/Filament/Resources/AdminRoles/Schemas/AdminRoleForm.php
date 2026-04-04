@@ -55,17 +55,18 @@ class AdminRoleForm
             'majors' => 'Ngành học',
             'subjects' => 'Môn học',
             'chapters' => 'Chương',
-            'settings' => 'Cấu hình hệ thống',
-            'reports' => 'Báo cáo',
+            'lecturers' => 'Giảng viên',
         ];
 
         $actionLabels = [
             'view' => 'Xem',
             'create' => 'Tạo',
             'update' => 'Cập nhật',
+            'edit' => 'Chỉnh sửa',
             'delete' => 'Xóa',
             'block' => 'Khóa/Mở khóa',
-            'assign' => 'Gán vai trò',
+            'assign' => 'Gán vai trò/Phân công',
+            'import' => 'Import',
             'reset-password' => 'Đặt lại mật khẩu',
         ];
 

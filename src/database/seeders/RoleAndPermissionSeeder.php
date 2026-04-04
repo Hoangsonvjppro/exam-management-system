@@ -31,63 +31,47 @@ class RoleAndPermissionSeeder extends Seeder
             'notification.view',
         ];
 
-        $adminPermissions = [
-            'admin.users.view',
-            'admin.users.create',
-            'admin.users.update',
-            'admin.users.delete',
+        $adminCrudModules = [
+            'users',
+            'admins',
+            'roles',
+            'announcements',
+            'students',
+            'student-classes',
+            'course-sections',
+            'semesters',
+            'departments',
+            'majors',
+            'subjects',
+            'chapters',
+            'lecturers',
+        ];
+
+        $adminPermissions = [];
+        foreach ($adminCrudModules as $module) {
+            foreach (['view', 'create', 'update', 'delete'] as $action) {
+                $adminPermissions[] = "admin.{$module}.{$action}";
+            }
+        }
+
+        $adminPermissions = array_merge($adminPermissions, [
             'admin.users.block',
             'admin.users.reset-password',
-            'admin.admins.view',
-            'admin.admins.create',
-            'admin.admins.update',
-            'admin.admins.delete',
             'admin.admins.block',
-            'admin.roles.view',
-            'admin.roles.create',
-            'admin.roles.update',
-            'admin.roles.delete',
             'admin.roles.assign',
-            'admin.announcements.view',
-            'admin.announcements.create',
-            'admin.announcements.update',
-            'admin.announcements.delete',
-            'admin.students.view',
-            'admin.students.create',
-            'admin.students.update',
-            'admin.students.delete',
-            'admin.student-classes.view',
-            'admin.student-classes.create',
-            'admin.student-classes.update',
-            'admin.student-classes.delete',
-            'admin.course-sections.view',
-            'admin.course-sections.create',
-            'admin.course-sections.update',
-            'admin.course-sections.delete',
-            'admin.semesters.view',
-            'admin.semesters.create',
-            'admin.semesters.update',
-            'admin.semesters.delete',
-            'admin.departments.view',
-            'admin.departments.create',
-            'admin.departments.update',
-            'admin.departments.delete',
-            'admin.majors.view',
-            'admin.majors.create',
-            'admin.majors.update',
-            'admin.majors.delete',
-            'admin.subjects.view',
-            'admin.subjects.create',
-            'admin.subjects.update',
-            'admin.subjects.delete',
-            'admin.chapters.view',
-            'admin.chapters.create',
-            'admin.chapters.update',
-            'admin.chapters.delete',
-            'admin.settings.view',
-            'admin.settings.update',
-            'admin.reports.view',
-        ];
+            'admin.lecturers.block',
+            'admin.lecturers.assign',
+            'admin.lecturers.import',
+            'admin.lecturers.edit',
+        ]);
+
+        sort($adminPermissions);
+
+        Permission::query()
+            ->where('guard_name', 'admin')
+            ->whereNotIn('name', $adminPermissions)
+            ->get()
+            ->each(fn(Permission $permission) => $permission->delete());
 
         foreach ($webPermissions as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
@@ -130,58 +114,21 @@ class RoleAndPermissionSeeder extends Seeder
             'notification.view',
         ]);
 
-        $rootAdmin->syncPermissions(Permission::query()->where('guard_name', 'admin')->get());
-        $systemAdmin->syncPermissions([
-            'admin.users.view',
-            'admin.users.create',
-            'admin.users.update',
-            'admin.users.delete',
-            'admin.users.block',
-            'admin.users.reset-password',
-            'admin.admins.view',
-            'admin.admins.create',
-            'admin.admins.update',
-            'admin.admins.block',
-            'admin.roles.view',
-            'admin.roles.assign',
-            'admin.announcements.view',
-            'admin.announcements.create',
-            'admin.announcements.update',
-            'admin.announcements.delete',
-            'admin.students.view',
-            'admin.students.create',
-            'admin.students.update',
-            'admin.students.delete',
-            'admin.student-classes.view',
-            'admin.student-classes.create',
-            'admin.student-classes.update',
-            'admin.student-classes.delete',
-            'admin.course-sections.view',
-            'admin.course-sections.create',
-            'admin.course-sections.update',
-            'admin.course-sections.delete',
-            'admin.semesters.view',
-            'admin.semesters.create',
-            'admin.semesters.update',
-            'admin.semesters.delete',
-            'admin.departments.view',
-            'admin.departments.create',
-            'admin.departments.update',
-            'admin.departments.delete',
-            'admin.majors.view',
-            'admin.majors.create',
-            'admin.majors.update',
-            'admin.majors.delete',
-            'admin.subjects.view',
-            'admin.subjects.create',
-            'admin.subjects.update',
-            'admin.subjects.delete',
-            'admin.chapters.view',
-            'admin.chapters.create',
-            'admin.chapters.update',
-            'admin.chapters.delete',
-            'admin.reports.view',
-        ]);
+        $rootAdmin->syncPermissions($adminPermissions);
+
+        $systemAdminDeniedPermissions = [
+            'admin.admins.delete',
+            'admin.roles.create',
+            'admin.roles.update',
+            'admin.roles.delete',
+        ];
+
+        $systemAdminPermissions = array_values(array_filter(
+            $adminPermissions,
+            fn(string $permission): bool => ! in_array($permission, $systemAdminDeniedPermissions, true)
+        ));
+
+        $systemAdmin->syncPermissions($systemAdminPermissions);
 
         $this->command->info('✅ Roles & Permissions seeded successfully.');
     }
